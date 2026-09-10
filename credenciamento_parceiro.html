@@ -1,0 +1,524 @@
+<style>
+  .cred-container { animation: fadeIn 0.5s ease; padding: 20px; }
+  .step-card { background: white; border-radius: 15px; padding: 25px; border: 1px solid #e2e8f0; margin-bottom: 20px; }
+  
+  /* Status Badges */
+  .status-badge { padding: 5px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+  .status-pendente { background: #fef3c7; color: #d97706; }
+  .status-aprovado { background: #dcfce7; color: #166534; }
+  .status-reprovado { background: #fee2e2; color: #991b1b; }
+  
+  /* Grid de Gestão */
+  .gestao-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; }
+  .lista-candidatos { max-height: 650px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
+  
+  /* Custom Scrollbar Lista */
+  .lista-candidatos::-webkit-scrollbar { width: 4px; }
+  .lista-candidatos::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+  .candidato-item { 
+    padding: 15px; background: white; border: 1px solid #e2e8f0; border-radius: 12px; 
+    cursor: pointer; transition: 0.3s; 
+  }
+  .candidato-item:hover { border-color: var(--primary); background: #f8fafc; transform: translateX(5px); }
+  .candidato-item.active { border-left: 5px solid var(--primary); background: #f0f9ff; }
+
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
+  .form-group { display: flex; flex-direction: column; gap: 5px; }
+  .form-group label { font-size: 13px; font-weight: 600; color: #475569; }
+  .form-group input, .form-group select { padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; outline: none; }
+  .form-group input:focus { border-color: var(--primary); }
+
+  .btn-aprovar { background: #10b981; color: white; border: none; padding: 12px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: 0.3s; }
+  .btn-aprovar:hover { background: #059669; }
+  
+  .detail-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f1f5f9; }
+  .detail-row span:first-child { color: #64748b; font-size: 13px; }
+  .detail-row span:last-child { color: #1e293b; font-weight: 600; font-size: 14px; }
+</style>
+
+<div class="cred-container">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <h2><i class="fa-solid fa-address-card" style="color: var(--primary);"></i> Gestão de Credenciamento</h2>
+    <button id="btn-toggle-view" class="menu-item" style="display: none; font-size: 12px; padding: 8px 15px;" onclick="toggleNovaInscricao()">
+      <i class="fa-solid fa-plus"></i> Novo Cadastro Manual
+    </button>
+  </div>
+
+  <div id="view-master-cred" class="gestao-grid" style="display: none;">
+    <div class="lista-candidatos" id="lista-inscritos">
+      </div>
+
+    <div id="detalhes-candidato" class="step-card">
+      <div id="placeholder-detail" style="text-align: center; color: #94a3b8; padding: 80px 20px;">
+        <i class="fa-solid fa-mouse-pointer" style="font-size: 40px; margin-bottom: 15px; opacity: 0.3;"></i>
+        <p>Selecione um parceiro na lista para analisar</p>
+      </div>
+      
+      <div id="content-detail" style="display: none;">
+        <h3 id="det-nome" style="margin-bottom: 20px; color: var(--bg-side);">---</h3>
+        <div class="detail-row"><span>Documento:</span> <span id="det-doc">---</span></div>
+        <div class="detail-row"><span>WhatsApp:</span> <span id="det-tel">---</span></div>
+        <div class="detail-row"><span>Cidade/UF:</span> <span id="det-cidade">---</span></div>
+        <div class="detail-row"><span>Tipo:</span> <span id="det-tipo">---</span></div>
+        <div class="detail-row"><span>Data de Solicitação:</span> <span id="det-data">---</span></div>
+        
+        <div style="margin-top: 30px; display: flex; gap: 10px;">
+          <button class="btn-aprovar" style="flex: 2;" onclick="prepararAprovacao()">
+            <i class="fa-solid fa-user-check"></i> APROVAR E CRIAR ACESSO
+          </button>
+          <button class="btn-reprovar" style="flex: 1;" onclick="reprovarParceiro()">
+            <i class="fa-solid fa-user-xmark"></i> REPROVAR
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="view-candidato-form" style="max-width: 700px; margin: 0 auto; display: none;">
+    <div class="step-card">
+      <h3 style="margin-bottom: 5px;">Seja um Parceiro E&E Nordeste</h3>
+      <p style="font-size: 14px; color: #64748b; margin-bottom: 25px;">Preencha os dados abaixo. Você receberá um e-mail com o checklist de documentos necessários.</p>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Tipo de Pessoa</label>
+          <select id="c-tipo">
+            <option value="PJ">Pessoa Jurídica (Empresa)</option>
+            <option value="PF">Pessoa Física</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Nome / Razão Social</label>
+          <input type="text" id="c-nome" placeholder="Nome completo ou Razão Social">
+        </div>
+      </div>
+      
+      <div class="form-grid">
+        <div class="form-group">
+          <label>CPF / CNPJ</label>
+          <input type="text" id="c-documento" placeholder="Apenas números">
+        </div>
+        <div class="form-group">
+          <label>WhatsApp</label>
+          <input type="text" id="c-whatsapp" placeholder="(00) 00000-0000">
+        </div>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 15px;">
+        <label>E-mail Corporativo</label>
+        <input type="email" id="c-email" placeholder="seuemail@exemplo.com">
+      </div>
+
+      <div class="form-group">
+        <label>Cidade / UF</label>
+        <input type="text" id="c-cidade" placeholder="Ex: Garanhuns / PE">
+      </div>
+
+      <button class="btn-aprovar" style="width: 100%; margin-top: 25px; background: var(--primary);" onclick="window.enviarInscricao()">
+        <i class="fa-solid fa-paper-plane"></i> ENVIAR SOLICITAÇÃO E RECEBER CHECKLIST
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="modal-cadastro-user" style="display:none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+  <div class="step-card" style="width: 480px; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); position: relative; max-height: 90vh; overflow-y: auto;">
+     
+     <div style="text-align: center; margin-bottom: 20px;">
+       <div style="width: 60px; height: 60px; background: #dcfce7; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 24px; margin: 0 auto 10px;">
+         <i class="fa-solid fa-file-signature"></i>
+       </div>
+       <h3 style="color: #1e293b;">🎉 Finalizar Credenciamento</h3>
+       <p style="font-size: 13px; color: #64748b;">Configure os dados de acesso e anexe os documentos.</p>
+     </div>
+     
+     <div class="form-grid" style="grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+        <div class="form-group">
+          <label style="font-size: 11px; color: #64748b; font-weight: 700;">Nº MATRÍCULA</label>
+          <input type="text" id="u-matricula" placeholder="Ex: 2026001" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-weight: bold;">
+        </div>
+        <div class="form-group">
+          <label style="font-size: 11px; color: #64748b; font-weight: 700;">NÍVEL DE ACESSO</label>
+          <select id="u-role" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <option value="PARCEIRO">PARCEIRO</option>
+            <option value="MASTER">PARCEIRO MASTER</option>
+          </select>
+        </div>
+     </div>
+
+     <div class="form-group" style="margin-bottom: 15px;">
+       <label style="font-size: 11px; color: #64748b; font-weight: 700;">LOGIN DE ACESSO (E-MAIL)</label>
+       <input type="text" id="u-login" readonly style="background: #f8fafc; cursor: not-allowed; font-weight: 600; color: #3b82f6; border: 1px solid #e2e8f0; width: 100%; padding: 10px; border-radius: 8px;">
+     </div>
+
+     <div class="form-group" style="margin-bottom: 15px;">
+       <label style="font-size: 11px; color: #64748b; font-weight: 700;">ANEXAR TERMO ASSINADO (PDF)</label>
+       <div style="position: relative; border: 2px dashed #3b82f6; padding: 12px; border-radius: 8px; text-align: center; background: #f0f9ff;">
+         <input type="file" id="u-termo-file" accept="application/pdf" style="font-size: 12px; width: 100%; cursor: pointer;">
+       </div>
+     </div>
+
+     <div class="form-group" style="margin-bottom: 25px;">
+       <label style="font-size: 11px; color: #64748b; font-weight: 700;">CARREGAR LOGOMARCA (OPCIONAL)</label>
+       <input type="file" id="u-logo-file" accept="image/*" style="font-size: 12px; width: 100%; border: 1px solid #e2e8f0; padding: 8px; border-radius: 8px;">
+     </div>
+     
+     <button id="btn-finalizar-cred" class="btn-aprovar" style="width: 100%; padding: 16px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px; background: #10b981; border-radius: 12px; transition: 0.3s;" onclick="window.processarCredenciamentoFinal()">
+       <i class="fa-solid fa-user-check"></i> FINALIZAR E ATIVAR ACESSO
+     </button>
+
+     <button onclick="document.getElementById('modal-cadastro-user').style.display='none'" style="width: 100%; background: none; border: none; color: #94a3b8; cursor: pointer; margin-top: 15px; font-size: 13px;">
+       Cancelar e Voltar
+     </button>
+  </div>
+</div>
+
+<div id="custom-alert" style="display:none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.7); backdrop-filter: blur(4px); z-index: 10000; align-items: center; justify-content: center; animation: fadeIn 0.3s ease;">
+  <div style="background: white; padding: 40px; border-radius: 24px; text-align: center; max-width: 400px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); transform: scale(0.9); animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;">
+    
+    <div style="width: 80px; height: 80px; background: #dcfce7; color: #10b981; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 20px;">
+      <i class="fa-solid fa-check"></i>
+    </div>
+    
+    <h2 style="color: #1e293b; margin-bottom: 10px; font-weight: 800;">Solicitação Enviada!</h2>
+    <p style="color: #64748b; line-height: 1.6; margin-bottom: 25px;">Recebemos seus dados com sucesso. Nossa equipe analisará seu perfil e entrará em contato em breve.</p>
+    
+    <button onclick="fecharAlertaPersonalizado()" style="background: var(--primary); color: white; border: none; padding: 12px 30px; border-radius: 12px; font-weight: 700; cursor: pointer; width: 100%; transition: 0.3s;">
+      ENTENDIDO
+    </button>
+  </div>
+</div>
+
+<style>
+  @keyframes popIn {
+    to { transform: scale(1); }
+  }
+</style>
+
+<script>
+  // Variável de controle no escopo do módulo
+  let candidatoSelecionado = null;
+
+  /**
+   * 1. FUNÇÕES DE APOIO E UX
+   */
+  
+  window.fecharAlertaPersonalizado = function() {
+    document.getElementById('custom-alert').style.display = 'none';
+    
+    const user = JSON.parse(sessionStorage.getItem('usuarioLogado')) || {};
+    const tipo = sessionStorage.getItem('tipoAcessoLogado');
+
+    // Se for Master, reseta para a lista de gestão
+    if (tipo === 'MASTER' || user.role === 'MASTER') {
+      document.getElementById('view-master-cred').style.display = 'grid';
+      document.getElementById('view-candidato-form').style.display = 'none';
+      document.getElementById('content-detail').style.display = 'none';
+      document.getElementById('placeholder-detail').style.display = 'block';
+      window.carregarInscritos(); 
+    } else {
+      // Se for link externo, recarrega a página limpa
+      location.reload(); 
+    }
+  };
+
+  /**
+   * 2. GESTÃO DE INSCRITOS (MASTER)
+   */
+
+window.carregarInscritos = function() {
+    const lista = document.getElementById('lista-inscritos');
+    if(!lista) return;
+
+    lista.innerHTML = '<div style="text-align:center; padding:20px;"><i class="fa-solid fa-spinner fa-spin"></i> Atualizando lista...</div>';
+
+    google.script.run
+      .withSuccessHandler(inscritos => {
+        if (!inscritos || inscritos.length === 0) {
+          lista.innerHTML = '<p style="text-align:center; padding:20px; color:#94a3b8;">Nenhuma solicitação pendente.</p>';
+          return;
+        }
+        
+        lista.innerHTML = inscritos.map(c => `
+          <div class="candidato-item" onclick="window.verDetalhes('${c.id}', '${c.nome}', '${c.documento}', '${c.whatsapp}', '${c.cidade}', '${c.tipo}', '${c.data}', '${c.email || ''}')">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:5px;">
+              <strong style="font-size:14px;">${c.nome}</strong>
+              <span class="status-badge status-${c.status.toLowerCase()}">${c.status}</span>
+            </div>
+            <div style="display:flex; flex-direction:column; gap:2px;">
+              <small style="color:#64748b;"><i class="fa-solid fa-location-dot"></i> ${c.cidade}</small>
+              <small style="color:#3b82f6; font-size:11px;"><i class="fa-solid fa-envelope"></i> ${c.email || 'Sem e-mail'}</small>
+            </div>
+          </div>
+        `).join('');
+      })
+      .p_listarInscritos();
+  };
+
+window.verDetalhes = function(id, nome, doc, tel, cidade, tipo, data, email) {
+  // Guardamos o objeto completo para a aprovação final
+  candidatoSelecionado = { id, nome, doc, tel, cidade, tipo, email };
+  
+  // Controle de exibição do painel lateral
+  document.getElementById('placeholder-detail').style.display = 'none';
+  const content = document.getElementById('content-detail');
+  content.style.display = 'block';
+  content.classList.add('fadeIn'); // Efeito visual suave
+
+  // Distribuição correta dos dados nos IDs
+  document.getElementById('det-nome').innerText = nome;
+  document.getElementById('det-doc').innerText = doc;
+  document.getElementById('det-tel').innerText = tel;
+  document.getElementById('det-cidade').innerText = cidade; 
+  document.getElementById('det-tipo').innerText = tipo;
+  document.getElementById('det-data').innerText = data;
+
+  // Se você tiver um campo det-email no HTML, descomente a linha abaixo:
+  // if(document.getElementById('det-email')) document.getElementById('det-email').innerText = email;
+
+  // Gerenciamento visual da lista esquerda
+  document.querySelectorAll('.candidato-item').forEach(el => el.classList.remove('active'));
+  
+  // Garante que o item clicado fique azul (active)
+  if(event && event.currentTarget) {
+    event.currentTarget.classList.add('active');
+  } else if (event && event.target) {
+    event.target.closest('.candidato-item').classList.add('active');
+  }
+};
+
+  /**
+   * 3. SOLICITAÇÃO (VISÃO CANDIDATO / MANUAL)
+   */
+
+  window.enviarInscricao = function() {
+    const btn = event.currentTarget;
+    const dados = {
+      tipo: document.getElementById('c-tipo').value,
+      nome: document.getElementById('c-nome').value,
+      documento: document.getElementById('c-documento').value,
+      whatsapp: document.getElementById('c-whatsapp').value,
+      email: document.getElementById('c-email').value, // 🟢 Coleta o e-mail
+      cidade: document.getElementById('c-cidade').value
+    };
+
+    if(!dados.nome || !dados.documento || !dados.email) {
+      return alert("Por favor, preencha Nome, Documento e E-mail.");
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ENVIANDO...';
+
+    google.script.run
+      .withSuccessHandler(() => {
+        // 🟢 1. Dispara o e-mail de atração e checklist em background
+        google.script.run.p_enviarEmailChecklist(dados);
+        
+        // 🟢 2. Mostra o alerta personalizado
+        document.getElementById('custom-alert').style.display = 'flex';
+        
+        // Limpa campos
+        ['c-nome', 'c-documento', 'c-whatsapp', 'c-email', 'c-cidade'].forEach(id => {
+            const el = document.getElementById(id);
+            if(el) el.value = '';
+        });
+        
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR SOLICITAÇÃO';
+      })
+      .p_salvarCredenciamento(dados);
+  };
+
+  /**
+   * 4. APROVAÇÃO FINAL (PÓS-DOCUMENTAÇÃO)
+   */
+
+  window.prepararAprovacao = function() {
+    if(!candidatoSelecionado) return;
+    const loginSugerido = candidatoSelecionado.nome.split(' ')[0].toLowerCase() + candidatoSelecionado.doc.slice(-4);
+    document.getElementById('u-login').value = loginSugerido;
+    document.getElementById('modal-cadastro-user').style.display = 'flex';
+  };
+
+  window.finalizarCadastro = function() {
+    const btn = document.querySelector('#modal-cadastro-user .btn-aprovar');
+    const dados = {
+      nome: candidatoSelecionado.nome,
+      login: document.getElementById('u-login').value,
+      senha:  document.getElementById('u-pass').value,
+      role: document.getElementById('u-role').value,
+      documento: candidatoSelecionado.doc,
+      email: candidatoSelecionado.email 
+    };
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ATIVANDO...';
+
+    google.script.run
+      .withSuccessHandler(() => {
+        // Envia e-mail de boas-vindas com acesso e termo
+        google.script.run.p_enviarEmailBoasVindas(dados);
+        
+        document.getElementById('modal-cadastro-user').style.display = 'none';
+        
+        // Ajusta texto do alerta para Aprovação
+        const alertTitle = document.querySelector('#custom-alert h2');
+        const alertText = document.querySelector('#custom-alert p');
+        if(alertTitle) alertTitle.innerText = "Parceiro Aprovado!";
+        if(alertText) alertText.innerText = `Acesso criado para ${dados.nome}. O e-mail de boas-vindas com o termo assinado foi enviado.`;
+        
+        document.getElementById('custom-alert').style.display = 'flex';
+      })
+      .p_aprovarParceiroFinal(dados);
+  };
+
+  window.toggleNovaInscricao = function() {
+    const vM = document.getElementById('view-master-cred');
+    const vF = document.getElementById('view-candidato-form');
+    const btn = document.getElementById('btn-toggle-view');
+
+    if (vM.style.display === 'none') {
+      vM.style.display = 'grid';
+      vF.style.display = 'none';
+      btn.innerHTML = '<i class="fa-solid fa-plus"></i> Novo Cadastro Manual';
+      window.carregarInscritos();
+    } else {
+      vM.style.display = 'none';
+      vF.style.display = 'block';
+      btn.innerHTML = '<i class="fa-solid fa-list"></i> Ver Lista de Inscritos';
+    }
+  };
+
+  /**
+   * 5. INICIALIZAÇÃO
+   */
+  (function init() {
+    document.getElementById('modal-cadastro-user').style.display = 'none';
+    document.getElementById('custom-alert').style.display = 'none';
+
+    const user = JSON.parse(sessionStorage.getItem('usuarioLogado')) || {};
+    const tipo = sessionStorage.getItem('tipoAcessoLogado');
+
+    const vM = document.getElementById('view-master-cred');
+    const vF = document.getElementById('view-candidato-form');
+    const btnT = document.getElementById('btn-toggle-view');
+
+    if (tipo === 'MASTER' || user.role === 'MASTER') {
+      vM.style.display = 'grid';
+      vF.style.display = 'none';
+      btnT.style.display = 'block';
+      window.carregarInscritos();
+    } else {
+      vM.style.display = 'none';
+      vF.style.display = 'block';
+      btnT.style.display = 'none';
+    }
+  })();
+
+  // Função para gerar senha aleatória
+function gerarSenhaAleatoria(tamanho = 8) {
+  const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Removidos caracteres confusos (0, O, 1, l)
+  let senha = '';
+  for (let i = 0; i < tamanho; i++) {
+    senha += caracteres.charAt(Math.floor(caracteres.random() * caracteres.length));
+  }
+  return senha;
+}
+
+window.prepararAprovacao = function() {
+  if(!candidatoSelecionado) return;
+  // Agora o login é o e-mail do parceiro
+  document.getElementById('u-login').value = candidatoSelecionado.email;
+  document.getElementById('modal-cadastro-user').style.display = 'flex';
+};
+
+// Função para gerar senha aleatória segura (sem caracteres ambíguos)
+function gerarSenhaAleatoria(tamanho = 8) {
+  const caracteres = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; 
+  let senha = '';
+  for (let i = 0; i < tamanho; i++) {
+    senha += caracteres.charAt(Math.floor(Math.random() * caracteres.length));
+  }
+  return senha;
+}
+
+window.processarCredenciamentoFinal = function() {
+  const btn = document.getElementById('btn-finalizar-cred');
+  const matricula = document.getElementById('u-matricula').value;
+  const termoInput = document.getElementById('u-termo-file');
+  const logoInput = document.getElementById('u-logo-file');
+  
+  // Validação básica
+  if (!matricula) return alert("Por favor, informe o número da matrícula.");
+  if (termoInput.files.length === 0) return alert("Por favor, anexe o termo assinado (PDF).");
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PROCESSANDO...';
+
+  // Helper para converter arquivos em Base64
+  const lerArquivo = (file) => new Promise((resolve, reject) => {
+    if (!file) resolve(null);
+    const reader = new FileReader();
+    reader.onload = (e) => resolve({
+      data: e.target.result.split(',')[1],
+      name: file.name,
+      type: file.type
+    });
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  // Processa Termo e Logomarca em paralelo
+  Promise.all([
+    lerArquivo(termoInput.files[0]),
+    lerArquivo(logoInput.files[0] || null)
+  ]).then(([termo, logo]) => {
+    
+    const senhaGerada = gerarSenhaAleatoria();
+    
+    const dados = {
+      matricula: matricula,
+      senha: senhaGerada,
+      nome: candidatoSelecionado.nome,
+      email: candidatoSelecionado.email,
+      login: candidatoSelecionado.email,
+      role: document.getElementById('u-role').value,
+      documento: candidatoSelecionado.doc,
+      termo: termo, // Objeto com data e name
+      logo: logo    // Objeto com data e name (pode ser null)
+    };
+
+    google.script.run
+      .withSuccessHandler(() => {
+        document.getElementById('modal-cadastro-user').style.display = 'none';
+        
+        // Alerta visual de sucesso
+        const alertTitle = document.querySelector('#custom-alert h2');
+        const alertText = document.querySelector('#custom-alert p');
+        alertTitle.innerText = "Credenciamento Concluído!";
+        alertText.innerText = `O acesso de ${dados.nome} foi ativado na matrícula ${dados.matricula}. Senha enviada: [ ${senhaGerada} ]`;
+        
+        document.getElementById('custom-alert').style.display = 'flex';
+        
+        // Limpa os campos do modal para o próximo
+        document.getElementById('u-matricula').value = '';
+        termoInput.value = '';
+        logoInput.value = '';
+        
+        window.carregarInscritos(); // Atualiza a lista lateral
+      })
+      .withFailureHandler((err) => {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-rocket"></i> CONCLUIR E ENVIAR ACESSO';
+        alert("Erro ao finalizar: " + err.message);
+      })
+      .p_finalizarTudoComTermo(dados);
+      
+  }).catch(err => {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-rocket"></i> CONCLUIR E ENVIAR ACESSO';
+    alert("Erro ao ler arquivos: " + err);
+  });
+};
+</script>

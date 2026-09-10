@@ -1,0 +1,1146 @@
+<style>
+  /* --- ANIMAÇÕES DE ENTRADA --- */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .home-container {
+    animation: fadeInUp 0.6s ease-out;
+  }
+
+  /* --- CARDS DE KPI (GLASS STYLE) --- */
+  .stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+  }
+
+  .kpi-card {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+    border-color: #3b82f6;
+  }
+
+  .kpi-icon {
+    width: 45px;
+    height: 45px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 15px;
+  }
+
+  .kpi-value { font-size: 24px; font-weight: 700; color: #1e293b; margin-bottom: 5px; }
+  .kpi-label { font-size: 13px; color: #64748b; font-weight: 500; }
+
+  .kpi-trend {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 4px 8px;
+    border-radius: 20px;
+    margin-top: 10px;
+    width: fit-content;
+  }
+  .up { background: #dcfce7; color: #166534; }
+
+  /* --- CARDS DE COMISSÃO POR MODALIDADE --- */
+  .comissao-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin: 25px 0 30px;
+  }
+
+  .comissao-card {
+    background: white;
+    border-radius: 20px;
+    padding: 20px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .comissao-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 25px rgba(0,0,0,0.06);
+    border-color: #8b5cf6;
+  }
+
+  .comissao-card .modalidade {
+    font-weight: 700;
+    font-size: 14px;
+    color: #1e293b;
+  }
+
+  .comissao-card .percentual {
+    font-size: 28px;
+    font-weight: 800;
+    color: #3b82f6;
+    line-height: 1.2;
+  }
+
+  .comissao-card .detalhes {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    color: #64748b;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 12px;
+    margin-top: 6px;
+  }
+
+  .comissao-card .detalhes span {
+    font-weight: 600;
+    color: #1e293b;
+  }
+
+  .comissao-card.total {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%);
+    color: white;
+  }
+
+  .comissao-card.total .modalidade,
+  .comissao-card.total .detalhes span,
+  .comissao-card.total .percentual {
+    color: white;
+  }
+
+  .comissao-card.total .detalhes {
+    border-top-color: rgba(255,255,255,0.2);
+  }
+
+  /* --- SEÇÃO PRINCIPAL --- */
+  .main-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 25px;
+  }
+
+  .chart-container {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    min-height: 350px;
+  }
+
+  /* --- META MENSAL (GAMIFICATION) --- */
+  .goal-box {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    padding: 25px;
+    border-radius: 20px;
+    color: white;
+  }
+
+  .progress-bar-bg {
+    width: 100%;
+    height: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 10px;
+    margin-top: 15px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    width: 0%;
+    transition: width 1s ease-in-out;
+  }
+
+  /* --- BOTÕES DE AÇÃO RÁPIDA --- */
+  .quick-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 30px;
+  }
+
+  .action-btn {
+    flex: 1;
+    padding: 20px;
+    border-radius: 15px;
+    border: none;
+    background: white;
+    color: #1e293b;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.02);
+    transition: 0.3s;
+    border: 1px solid #e2e8f0;
+  }
+
+  .action-btn:hover { background: #3b82f6; color: white; transform: scale(1.02); }
+
+  @media (max-width: 768px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .comissao-grid { grid-template-columns: 1fr; }
+  }
+  /* --- BOTÃO DE EXPANDIR/RECOLHER --- */
+.toggle-comissao-btn {
+  background: none;
+  border: 1px solid #e2e8f0;
+  border-radius: 30px;
+  padding: 6px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: white;
+}
+
+.toggle-comissao-btn:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #1e293b;
+}
+
+.toggle-comissao-btn .icone {
+  font-size: 14px;
+  transition: transform 0.3s ease;
+}
+
+.toggle-comissao-btn.recolhido .icone {
+  transform: rotate(-90deg);
+}
+
+.comissao-grid.recolhido {
+  display: none !important;
+}
+</style>
+
+<div class="home-container">
+  
+  <div style="margin-bottom: 30px;">
+    <h1 style="font-size: 28px; color: #1e293b;">Olá, <span id="partner-name" style="color: #3b82f6;">Parceiro</span>! 👋</h1>
+    <p style="color: #64748b;">Aqui está o resumo da sua operação e das suas comissões.</p>
+  </div>
+<!-- SELETOR DE MÊS/ANO -->
+<div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px; flex-wrap: wrap; background: white; padding: 12px 20px; border-radius: 16px; border: 1px solid #e2e8f0;">
+  <label style="font-size: 13px; font-weight: 600; color: #475569;">
+    <i class="fa-regular fa-calendar"></i> Período:
+  </label>
+  <select id="mes-selecionado" style="padding: 8px 14px; border-radius: 10px; border: 1px solid #e2e8f0; font-weight: 600; background: white; cursor: pointer;">
+    <option value="1">Janeiro</option>
+    <option value="2">Fevereiro</option>
+    <option value="3">Março</option>
+    <option value="4">Abril</option>
+    <option value="5">Maio</option>
+    <option value="6">Junho</option>
+    <option value="7">Julho</option>
+    <option value="8">Agosto</option>
+    <option value="9">Setembro</option>
+    <option value="10">Outubro</option>
+    <option value="11">Novembro</option>
+    <option value="12">Dezembro</option>
+  </select>
+  <select id="ano-selecionado" style="padding: 8px 14px; border-radius: 10px; border: 1px solid #e2e8f0; font-weight: 600; background: white; cursor: pointer;">
+    <!-- preenchido via JS -->
+  </select>
+  <button id="btn-aplicar-periodo" style="background: #3b82f6; color: white; border: none; padding: 8px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.3s;">
+    <i class="fa-regular fa-magnifying-glass"></i> Aplicar
+  </button>
+</div>
+
+  <!-- CARDS DE KPI (resumo) -->
+  <div class="stats-grid">
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background: #eff6ff; color: #3b82f6;"><i class="fa-solid fa-cart-shopping"></i></div>
+    <div class="kpi-value" id="val-vendas">Carregando...</div>
+    <div class="kpi-label">Faturamento no Mês</div>
+    <div class="kpi-trend up">+0% vs mês anterior</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background: #dbeafe; color: #2563eb;"><i class="fa-solid fa-check-circle"></i></div>
+    <div class="kpi-value" id="val-aprovado-tim-pj">Carregando...</div>
+    <div class="kpi-label">Vendas aprovadas TIM PJ</div>
+    <div class="kpi-trend" style="background:#dbeafe; color:#1e40af;">Aprovadas no mês</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background: #f0fdf4; color: #16a34a;"><i class="fa-solid fa-users"></i></div>
+    <div class="kpi-value" id="val-gross-ativo">Carregando...</div>
+    <div class="kpi-label">Gross Ativo no Mês</div>
+    <div class="kpi-trend up" style="background:#dcfce7; color:#166534;">Linhas ativadas</div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon" style="background: #fef3c7; color: #d97706;"><i class="fa-solid fa-clock"></i></div>
+    <div class="kpi-value" id="val-controle">Em breve</div>
+    <div class="kpi-label">Vendas TIM CONTROLE</div>
+    <div class="kpi-trend" style="background:#ffedd5; color:#9a3412;">Em implementação</div>
+  </div>
+</div>
+
+  <!-- CARDS DE COMISSÃO POR MODALIDADE COM BOTÃO EXPANDIR/RECOLHER -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+    <h3 style="color: #1e293b; font-size: 20px; display: flex; align-items: center; gap: 10px; margin: 0;">
+      <i class="fa-solid fa-percent" style="color: #3b82f6;"></i> Comissão por Modalidade
+    </h3>
+    <button id="toggle-comissao-btn" class="toggle-comissao-btn" onclick="toggleComissaoCards()">
+      <span class="icone">▼</span> <span id="toggle-text">Recolher</span>
+    </button>
+  </div>
+  <div class="comissao-grid" id="comissao-cards">
+    <div style="grid-column: 1/-1; text-align: center; padding: 40px; color: #94a3b8;">
+      <i class="fa-solid fa-spinner fa-spin" style="font-size: 24px;"></i> Carregando...
+    </div>
+  </div>
+
+  <!-- GRID PRINCIPAL (Desafio mensal + Comunicados) -->
+  <div class="main-grid">
+    
+    <div class="goal-box">
+      <div style="display: flex; justify-content: space-between; align-items: center;">
+        <h3>Desafio Mensal</h3>
+        <span style="font-size: 12px; opacity: 0.7;">Expira em 18 dias</span>
+      </div>
+      
+      <div style="margin-top: 30px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+          <span style="font-size: 14px;">Meta de Faturamento</span>
+          <span id="goal-percentage-text" style="font-size: 14px; font-weight: 700;">0%</span>
+        </div>
+        <div class="progress-bar-bg">
+          <div class="progress-fill" id="goal-progress" style="width: 0%;"></div>
+        </div>
+        <p id="goal-message" style="font-size: 12px; margin-top: 15px; color: #94a3b8;">Calculando sua meta...</p>
+      </div>
+
+      <div style="margin-top: 30px; display: flex; gap: 20px;">
+        <div style="flex: 1; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; text-align: center;">
+          <small style="display:block; margin-bottom: 5px; opacity: 0.6;">Sua Posição</small>
+          <strong>----</strong>
+        </div>
+        <div style="flex: 1; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 12px; text-align: center;">
+          <small style="display:block; margin-bottom: 5px; opacity: 0.6;">Nível</small>
+          <strong>NOVO PARCEIRO</strong>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-container" style="min-height: auto;">
+      <h3 style="font-size: 16px; color: #1e293b; margin-bottom: 20px;">Comunicados E&E</h3>
+      
+      <div id="home-comunicados-feed" style="display: flex; flex-direction: column; gap: 15px;">
+        <div style="text-align: center; color: #94a3b8; font-size: 12px; padding: 20px 0;">
+          <i class="fa-solid fa-circle-notch fa-spin"></i> Carregando novidades...
+        </div>
+      </div>
+
+      <button onclick="const menuBtn = Array.from(document.querySelectorAll('.menu-item')).find(el => el.innerText.includes('Comunicação')); navegar('comunicacao', menuBtn);" style="width: 100%; margin-top: 20px; padding: 10px; background: none; border: 1px dashed #cbd5e1; border-radius: 10px; color: #64748b; font-size: 12px; cursor: pointer; transition: 0.3s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='none'">
+        Ver todos os comunicados
+      </button>
+    </div>
+
+  </div>
+
+  <!-- AÇÕES RÁPIDAS -->
+  <div class="quick-actions">
+    <button class="action-btn" onclick="navegar('vendas', document.getElementById('btn-menu-vendas'))">
+      <i class="fa-solid fa-plus"></i> Nova Venda TIM
+    </button>
+    <button class="action-btn">
+      <i class="fa-solid fa-file-arrow-up"></i> Subir Contrato (Implantação)
+    </button>
+    <button class="action-btn" onclick="navegar('suporte', document.getElementById('btn-menu-suporte'))">
+  <i class="fa-solid fa-headset"></i> Abrir Suporte
+</button>
+   <button class="action-btn" onclick="abrirModalArquivos()">
+  <i class="fa-solid fa-download"></i> Mapa de Ofertas e Tabela de Preços
+</button>
+  </div>
+
+<!-- MODAL ARQUIVOS COMERCIAIS -->
+<div id="modal-arquivos-comerciais" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:10000; justify-content:center; align-items:center; padding:20px; opacity:0; transition:opacity 0.3s ease;">
+  <div style="background:white; width:100%; max-width:1000px; max-height:90vh; border-radius:24px; overflow:hidden; display:flex; flex-direction:column; transform:scale(0.95); transition:transform 0.3s ease; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    
+    <!-- CABEÇALHO -->
+    <div style="padding:20px 24px; background:linear-gradient(135deg, #0f172a 0%, #1e3c72 100%); color:white; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div>
+        <h3 style="margin:0; font-weight:800; display:flex; align-items:center; gap:10px;">
+          <i class="fa-regular fa-folder-open"></i> ARQUIVOS COMERCIAIS
+        </h3>
+        <p style="margin:4px 0 0 0; font-size:12px; opacity:0.8;">Tabelas, mapas e books TIM SMB</p>
+      </div>
+      <button onclick="fecharModalArquivos()" style="background:rgba(255,255,255,0.1); border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; color:white; font-size:22px; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">✕</button>
+    </div>
+
+    <!-- CORPO -->
+    <div style="padding:24px; overflow-y:auto; flex:1;">
+      
+      <!-- ABAS -->
+      <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:2px solid #e2e8f0; flex-wrap:wrap; align-items:center;">
+        <button class="aba-arquivo ativa" data-categoria="tabela_precos" onclick="mudarAbaArquivo('tabela_precos')" style="padding:10px 20px; border:none; background:none; font-weight:700; font-size:13px; color:#64748b; cursor:pointer; border-bottom:3px solid transparent; transition:0.3s;">
+          📊 Tabela de Preços
+        </button>
+        <button class="aba-arquivo" data-categoria="mapa_ofertas" onclick="mudarAbaArquivo('mapa_ofertas')" style="padding:10px 20px; border:none; background:none; font-weight:700; font-size:13px; color:#64748b; cursor:pointer; border-bottom:3px solid transparent; transition:0.3s;">
+          🗺️ Mapa de Ofertas
+        </button>
+        <button class="aba-arquivo" data-categoria="book_aparelhos" onclick="mudarAbaArquivo('book_aparelhos')" style="padding:10px 20px; border:none; background:none; font-weight:700; font-size:13px; color:#64748b; cursor:pointer; border-bottom:3px solid transparent; transition:0.3s;">
+          📱 Book de Aparelhos
+        </button>
+        
+        <!-- ÁREA DE UPLOAD (APENAS MASTER) -->
+        <div id="area-upload-master" style="display:none; margin-left:auto;">
+          <select id="tipo-arquivo-upload" style="padding:8px 12px; border-radius:10px; border:1px solid #e2e8f0; font-size:12px; background:white; margin-right:8px;">
+            <option value="tabela_precos">📊 Tabela</option>
+            <option value="mapa_ofertas">🗺️ Mapa</option>
+            <option value="book_aparelhos">📱 Book</option>
+          </select>
+          <input type="file" id="input-arquivo" style="display:none;" onchange="uploadArquivo()">
+          <button onclick="document.getElementById('input-arquivo').click()" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:700; font-size:13px; transition:0.3s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+            ➕ Enviar Arquivo
+          </button>
+        </div>
+      </div>
+
+      <!-- STATUS DO UPLOAD -->
+      <div id="upload-status" style="display:none; padding:12px; border-radius:10px; margin-bottom:16px; font-weight:600; font-size:13px;"></div>
+
+      <!-- LISTA DE ARQUIVOS -->
+      <div id="lista-arquivos" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="text-align:center; padding:40px; color:#94a3b8;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i>
+          <p style="margin-top:10px;">Carregando arquivos...</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RODAPÉ -->
+    <div style="padding:16px 24px; border-top:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:flex-end; flex-shrink:0;">
+      <button onclick="fecharModalArquivos()" style="padding:10px 24px; background:#f1f5f9; border:none; border-radius:10px; font-weight:600; cursor:pointer; color:#64748b; transition:0.3s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Fechar</button>
+    </div>
+
+  </div>
+</div>
+
+
+
+<!-- MODAL HISTÓRICO (APENAS MASTER) -->
+<div id="modal-historico-arquivos" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:10001; justify-content:center; align-items:center; padding:20px; opacity:0; transition:opacity 0.3s ease;">
+  <div style="background:white; width:100%; max-width:900px; max-height:90vh; border-radius:24px; overflow:hidden; display:flex; flex-direction:column; transform:scale(0.95); transition:transform 0.3s ease; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    
+    <div style="padding:20px 24px; background:linear-gradient(135deg, #0f172a 0%, #1e3c72 100%); color:white; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div>
+        <h3 style="margin:0; font-weight:800; display:flex; align-items:center; gap:10px;">
+          <i class="fa-solid fa-clock-rotate-left"></i> HISTÓRICO DE ARQUIVOS
+        </h3>
+        <p style="margin:4px 0 0 0; font-size:12px; opacity:0.8;" id="historico-categoria-nome">Carregando...</p>
+      </div>
+      <button onclick="fecharHistoricoArquivos()" style="background:rgba(255,255,255,0.1); border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; color:white; font-size:22px; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">✕</button>
+    </div>
+
+    <div style="padding:24px; overflow-y:auto; flex:1;" id="historico-lista-container">
+      <div style="text-align:center; padding:40px; color:#94a3b8;">
+        <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i>
+        <p style="margin-top:10px;">Carregando histórico...</p>
+      </div>
+    </div>
+
+    <div style="padding:16px 24px; border-top:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:flex-end; flex-shrink:0;">
+      <button onclick="fecharHistoricoArquivos()" style="padding:10px 24px; background:#f1f5f9; border:none; border-radius:10px; font-weight:600; cursor:pointer; color:#64748b;">Fechar</button>
+    </div>
+  </div>
+</div>
+
+</div>
+
+<script>
+  // ============================================
+  // FUNÇÃO GLOBAL PARA CARREGAR COMISSÃO
+  // (usada pelo onclick do botão "Aplicar")
+  // ============================================
+  window.carregarComissaoParceiro = function() {
+    const user = JSON.parse(sessionStorage.getItem('usuarioLogado'));
+    if (!user) {
+      console.error('❌ Usuário não logado');
+      return;
+    }
+    const nomeParceiro = (user.nome || user.username || "").toUpperCase().trim();
+    const bancoDeDadosId = user.bancoDeDadosId || null;
+    const mes = parseInt(document.getElementById('mes-selecionado').value);
+    const ano = parseInt(document.getElementById('ano-selecionado').value);
+
+    const container = document.getElementById('comissao-cards');
+    container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#94a3b8;">
+      <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i> Carregando comissões...
+    </div>`;
+
+    console.log('📤 Enviando para o backend:', { bancoDeDadosId, nomeParceiro, mes, ano });
+
+    google.script.run
+      .withSuccessHandler(function(dados) {
+        console.log('✅ Dados de comissão recebidos:', dados);
+        console.log('   ➤ faturamentoMes:', dados.faturamentoMes);
+        console.log('   ➤ faturamentoAprovadoMes:', dados.faturamentoAprovadoMes);
+        console.log('   ➤ grossAtivoMes:', dados.grossAtivoMes);
+        console.log('   ➤ totalComissao:', dados.totalComissao);
+        renderizarComissaoCards(dados);
+        atualizarKPIs(dados);
+        atualizarMeta(dados);
+      })
+      .withFailureHandler(function(err) {
+        console.error('❌ Erro ao carregar comissão:', err);
+        container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#ef4444;">
+          ❌ Erro ao carregar comissões. Tente novamente.
+        </div>`;
+        atualizarKPIs({});
+      })
+      .p_buscarDashboardComissaoParceiro(bancoDeDadosId, nomeParceiro, mes, ano);
+  };
+
+  // ============================================
+  // FUNÇÕES DE RENDERIZAÇÃO
+  // ============================================
+  function renderizarComissaoCards(dados) {
+    const container = document.getElementById('comissao-cards');
+    const modalidades = Object.keys(dados.percentuaisExibicao || {});
+    let html = '';
+
+    if (modalidades.length === 0) {
+      container.innerHTML = `<div style="grid-column:1/-1; text-align:center; padding:40px; color:#94a3b8;">
+        Nenhuma modalidade configurada.
+      </div>`;
+      return;
+    }
+
+    modalidades.forEach(chave => {
+      const perc = dados.percentuaisExibicao[chave] || 0;
+      const fat = dados.faturamentoPorModalidade[chave] || 0;
+      const comissao = dados.comissaoPorModalidade[chave] || 0;
+
+      const corFundo = fat > 0 ? 'white' : '#f8fafc';
+      const opacidade = fat > 0 ? '1' : '0.6';
+
+      html += `
+        <div class="comissao-card" style="background:${corFundo}; opacity:${opacidade};">
+          <div class="modalidade">${chave}</div>
+          <div class="percentual">${perc}%</div>
+          <div style="font-size:13px; color:#475569;">
+            <strong>Faturamento:</strong> R$ ${fat.toFixed(2)}
+          </div>
+          <div class="detalhes">
+            <span>Comissão estimada</span>
+            <span>R$ ${comissao.toFixed(2)}</span>
+          </div>
+        </div>
+      `;
+    });
+
+    // Card total
+    html += `
+      <div class="comissao-card total">
+        <div class="modalidade">💰 TOTAL</div>
+        <div class="percentual">R$ ${dados.totalComissao.toFixed(2)}</div>
+        <div style="font-size:13px; opacity:0.8;">
+          Faturamento total: R$ ${dados.totalFaturamento.toFixed(2)}
+        </div>
+        <div class="detalhes">
+          <span>Comissão estimada</span>
+          <span>R$ ${dados.totalComissao.toFixed(2)}</span>
+        </div>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  }
+
+  function atualizarKPIs(dados) {
+    const faturamentoMes = dados.faturamentoMes || 0;
+    document.getElementById('val-vendas').innerText = `R$ ${faturamentoMes.toFixed(2)}`;
+
+    const faturamentoAprovado = dados.faturamentoAprovadoMes || 0;
+    document.getElementById('val-aprovado-tim-pj').innerText = `R$ ${faturamentoAprovado.toFixed(2)}`;
+
+    const grossAtivo = dados.grossAtivoMes || 0;
+    document.getElementById('val-gross-ativo').innerText = grossAtivo;
+
+    document.getElementById('val-controle').innerText = 'Em breve';
+  }
+
+  function atualizarMeta(dados) {
+    const meta = 0;
+    const faturamento = dados.faturamentoMes || 0;
+    const perc = Math.min((faturamento / meta) * 100, 100);
+    document.getElementById('goal-progress').style.width = perc + '%';
+    document.getElementById('goal-percentage-text').innerText = perc.toFixed(0) + '%';
+    const falta = meta - faturamento;
+    const textMeta = document.getElementById('goal-message');
+    if (falta > 0) {
+      textMeta.innerHTML = `Faltam apenas <b>R$ ${falta.toFixed(2)}</b> para você atingir o bônus!`;
+    } else {
+      textMeta.innerHTML = `Acompanhamento de metas!`;
+      document.getElementById('goal-progress').style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+    }
+  }
+
+  // ============================================
+  // CARREGAR COMUNICADOS
+  // ============================================
+  function carregarComunicados() {
+    const container = document.getElementById('home-comunicados-feed');
+    google.script.run
+      .withSuccessHandler(posts => {
+        if (!posts || posts.length === 0) {
+          container.innerHTML = '<p style="font-size: 13px; color: #94a3b8; text-align: center; padding: 10px;">Nenhum comunicado recente.</p>';
+          return;
+        }
+        const ultimos = posts.slice(0, 2);
+        container.innerHTML = ultimos.map(p => {
+          let corBase = '#3b82f6';
+          const cat = String(p.categoria).toUpperCase();
+          if (cat === 'URGENTE') corBase = '#ef4444';
+          else if (cat === 'TREINAMENTO') corBase = '#10b981';
+          return `
+            <div style="padding: 12px; border-left: 4px solid ${corBase}; background: #f8fafc; border-radius: 0 8px 8px 0; transition: 0.3s;">
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                <small style="color: ${corBase}; font-weight: 800; font-size: 10px;">${cat}</small>
+                <small style="color: #94a3b8; font-size: 10px;">${p.data.split(' ')[0]}</small>
+              </div>
+              <p style="font-size: 13px; font-weight: 600; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;" title="${p.titulo}">${p.titulo}</p>
+            </div>
+          `;
+        }).join('');
+      })
+      .withFailureHandler(err => {
+        console.error('Erro ao carregar comunicados:', err);
+        container.innerHTML = '<p style="font-size: 13px; color: #ef4444; text-align: center; padding: 10px;">Erro ao carregar comunicados.</p>';
+      })
+      .p_listarComunicados();
+  }
+
+  // ============================================
+  // EXPANDIR/RECOLHER CARDS
+  // ============================================
+  function toggleComissaoCards() {
+    const grid = document.getElementById('comissao-cards');
+    const btn = document.getElementById('toggle-comissao-btn');
+    const text = document.getElementById('toggle-text');
+    const icone = btn.querySelector('.icone');
+
+    if (!grid) return;
+
+    const isRecolhido = grid.classList.toggle('recolhido');
+    
+    if (isRecolhido) {
+      text.innerText = 'Expandir';
+      icone.innerText = '▶';
+      btn.classList.add('recolhido');
+      localStorage.setItem('vexo_comissao_recolhido', 'true');
+    } else {
+      text.innerText = 'Recolher';
+      icone.innerText = '▼';
+      btn.classList.remove('recolhido');
+      localStorage.setItem('vexo_comissao_recolhido', 'false');
+    }
+  }
+
+  function restaurarEstadoComissao() {
+    const recolhido = localStorage.getItem('vexo_comissao_recolhido') === 'true';
+    const grid = document.getElementById('comissao-cards');
+    const btn = document.getElementById('toggle-comissao-btn');
+    const text = document.getElementById('toggle-text');
+    const icone = btn ? btn.querySelector('.icone') : null;
+
+    if (!grid || !btn || !text || !icone) return;
+
+    if (recolhido) {
+      grid.classList.add('recolhido');
+      text.innerText = 'Expandir';
+      icone.innerText = '▶';
+      btn.classList.add('recolhido');
+    } else {
+      grid.classList.remove('recolhido');
+      text.innerText = 'Recolher';
+      icone.innerText = '▼';
+      btn.classList.remove('recolhido');
+    }
+  }
+
+  // ============================================
+  // INICIALIZAÇÃO
+  // ============================================
+  (function initHome() {
+    const user = JSON.parse(sessionStorage.getItem('usuarioLogado'));
+    if (user) {
+      document.getElementById('partner-name').innerText = (user.username || user.nome).split(' ')[0];
+    }
+
+    // Configurar seletor de ano
+    const hoje = new Date();
+    const anoAtual = hoje.getFullYear();
+    const selectAno = document.getElementById('ano-selecionado');
+    if (selectAno) {
+      const anoAtualNum = parseInt(anoAtual);
+      selectAno.innerHTML = '';
+      for (let i = anoAtualNum - 2; i <= anoAtualNum + 1; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.innerText = i;
+        if (i === anoAtualNum) opt.selected = true;
+        selectAno.appendChild(opt);
+      }
+    }
+
+    // Definir mês atual
+    const selectMes = document.getElementById('mes-selecionado');
+    if (selectMes) {
+      selectMes.value = hoje.getMonth() + 1;
+    }
+
+    // Carregar dados iniciais
+    restaurarEstadoComissao();
+    window.carregarComissaoParceiro(); // chamada global
+    carregarComunicados();
+
+    // Atualizar ao mudar os selects (agora chamando a função global)
+    if (selectMes) {
+      selectMes.addEventListener('change', window.carregarComissaoParceiro);
+    }
+    if (selectAno) {
+      selectAno.addEventListener('change', window.carregarComissaoParceiro);
+    }
+  })();
+
+// ============================================
+// VARIÁVEL GLOBAL
+// ============================================
+let abaAtualArquivos = 'tabela_precos';
+
+// ============================================
+// ABRIR / FECHAR MODAL
+// ============================================
+function abrirModalArquivos() {
+  const modal = document.getElementById('modal-arquivos-comerciais');
+  modal.style.display = 'flex';
+  setTimeout(() => {
+    modal.style.opacity = '1';
+    modal.querySelector('div').style.transform = 'scale(1)';
+  }, 10);
+  
+  // Verifica permissão MASTER
+  const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargo = (user.role || '').toUpperCase().trim();
+  const isMaster = (cargo === 'MASTER' || cargo === 'ADMINISTRADOR');
+  const areaUpload = document.getElementById('area-upload-master');
+  if (isMaster) {
+    areaUpload.style.display = 'block';
+  } else {
+    areaUpload.style.display = 'none';
+  }
+  
+  // Carrega a lista da aba atual
+  carregarListaArquivos(abaAtualArquivos);
+}
+
+function fecharModalArquivos() {
+  const modal = document.getElementById('modal-arquivos-comerciais');
+  modal.style.opacity = '0';
+  modal.querySelector('div').style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    modal.style.display = 'none';
+  }, 300);
+}
+
+// ============================================
+// TROCA DE ABA
+// ============================================
+function mudarAbaArquivo(categoria) {
+  abaAtualArquivos = categoria;
+  
+  // Atualiza estilo das abas
+  document.querySelectorAll('.aba-arquivo').forEach(btn => {
+    btn.classList.remove('ativa');
+    btn.style.color = '#64748b';
+    btn.style.borderBottom = '3px solid transparent';
+  });
+  
+  const btnAtivo = document.querySelector(`.aba-arquivo[data-categoria="${categoria}"]`);
+  btnAtivo.classList.add('ativa');
+  btnAtivo.style.color = '#3b82f6';
+  btnAtivo.style.borderBottom = '3px solid #3b82f6';
+  
+  // Carrega a lista da categoria selecionada
+  carregarListaArquivos(categoria);
+}
+
+// ============================================
+// CARREGAR LISTA DE ARQUIVOS
+// ============================================
+function carregarListaArquivos(categoria) {
+  const container = document.getElementById('lista-arquivos');
+  container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8;">
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i>
+    <p style="margin-top:10px;">Carregando...</p>
+  </div>`;
+
+  console.log('📤 Carregando arquivos da categoria:', categoria);
+
+  google.script.run
+    .withSuccessHandler(function(arquivos) {
+      console.log('✅ Arquivos recebidos:', arquivos);
+      
+      // Filtra pela categoria
+      const filtrados = arquivos.filter(a => a.tipo === categoria);
+      
+      if (!filtrados || filtrados.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:40px; color:#94a3b8;">
+            <i class="fa-regular fa-folder-open" style="font-size:40px; display:block; margin-bottom:10px;"></i>
+            <p>Nenhum arquivo encontrado nesta categoria.</p>
+          </div>
+        `;
+        return;
+      }
+      
+      // Ordena por data (mais recente primeiro)
+      filtrados.sort((a, b) => b.data - a.data);
+      
+      // 🔥 PEGA APENAS O MAIS RECENTE
+      const ultimo = filtrados[0];
+      const temHistorico = filtrados.length > 1;
+      
+      const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+      const cargo = (user.role || '').toUpperCase().trim();
+      const isMaster = (cargo === 'MASTER' || cargo === 'ADMINISTRADOR');
+      
+      const dataFormatada = ultimo.data ? new Date(ultimo.data).toLocaleDateString('pt-BR') + ' ' + new Date(ultimo.data).toLocaleTimeString('pt-BR') : '';
+      const tamanhoKB = (ultimo.tamanho / 1024).toFixed(1);
+      
+      let icone = '📄';
+      if (ultimo.extensao === 'pdf') icone = '📄';
+      else if (['xlsx', 'xls'].includes(ultimo.extensao)) icone = '📊';
+      else if (['jpg', 'jpeg', 'png'].includes(ultimo.extensao)) icone = '🖼️';
+      
+      let botoes = `
+        <button onclick="baixarArquivo('${ultimo.id}')" style="padding:6px 14px; background:#3b82f6; color:white; border:none; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px; transition:0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+          <i class="fa-solid fa-download"></i> Baixar
+        </button>
+        <button onclick="visualizarArquivo('${ultimo.id}')" style="padding:6px 14px; background:#8b5cf6; color:white; border:none; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px; transition:0.2s;" onmouseover="this.style.background='#7c3aed'" onmouseout="this.style.background='#8b5cf6'">
+          <i class="fa-regular fa-eye"></i> Visualizar
+        </button>
+      `;
+      
+      // 🔥 BOTÃO DE HISTÓRICO (APENAS MASTER)
+      if (isMaster && temHistorico) {
+        botoes += `
+          <button onclick="abrirHistoricoArquivos('${categoria}')" style="padding:6px 14px; background:#f59e0b; color:white; border:none; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px; transition:0.2s;" onmouseover="this.style.background='#d97706'" onmouseout="this.style.background='#f59e0b'">
+            <i class="fa-solid fa-clock-rotate-left"></i> Histórico (${filtrados.length})
+          </button>
+        `;
+      }
+      
+      container.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; background:white; border:2px solid #3b82f6; border-radius:12px; transition:0.2s; gap:12px; flex-wrap:wrap;">
+          <div style="display:flex; align-items:center; gap:12px; min-width:200px;">
+            <span style="font-size:28px;">${icone}</span>
+            <div>
+              <div style="font-weight:700; color:#1e293b; font-size:14px;">${ultimo.nome}.${ultimo.extensao}</div>
+              <div style="font-size:11px; color:#94a3b8; display:flex; gap:12px; flex-wrap:wrap;">
+                <span><i class="fa-regular fa-clock"></i> ${dataFormatada}</span>
+                <span>📦 ${tamanhoKB} KB</span>
+                <span style="background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:12px; font-weight:600;">ÚLTIMA VERSÃO</span>
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+            ${botoes}
+          </div>
+        </div>
+        ${isMaster && temHistorico ? `<div style="margin-top:8px; font-size:11px; color:#94a3b8; text-align:right;"><i class="fa-regular fa-info-circle"></i> ${filtrados.length - 1} versão(ões) anterior(es) disponível(is) no histórico</div>` : ''}
+      `;
+    })
+    .withFailureHandler(function(err) {
+      console.error('❌ Erro ao carregar arquivos:', err);
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px; color:#ef4444;">
+          <i class="fa-solid fa-exclamation-triangle" style="font-size:40px; display:block; margin-bottom:10px;"></i>
+          <p>Erro ao carregar arquivos: ${err}</p>
+          <button onclick="carregarListaArquivos('${categoria}')" style="margin-top:10px; padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:8px; cursor:pointer;">Tentar Novamente</button>
+        </div>
+      `;
+    })
+    .listarArquivosEmpresariais();
+}
+
+// ============================================
+// UPLOAD DE ARQUIVO
+// ============================================
+function uploadArquivo() {
+  const fileInput = document.getElementById('input-arquivo');
+  const tipoSelect = document.getElementById('tipo-arquivo-upload');
+  const statusDiv = document.getElementById('upload-status');
+  
+  if (!fileInput.files || fileInput.files.length === 0) {
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#fee2e2';
+    statusDiv.style.color = '#991b1b';
+    statusDiv.innerHTML = '❌ Selecione um arquivo.';
+    return;
+  }
+  
+  const file = fileInput.files[0];
+  const tipo = tipoSelect.value;
+  const extensao = file.name.split('.').pop();
+  
+  // Valida extensão
+  const extensoesValidas = {
+    'tabela_precos': ['xlsx', 'xls'],
+    'mapa_ofertas': ['pdf'],
+    'book_aparelhos': ['jpg', 'jpeg', 'png']
+  };
+  
+  if (!extensoesValidas[tipo].includes(extensao.toLowerCase())) {
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#fee2e2';
+    statusDiv.style.color = '#991b1b';
+    statusDiv.innerHTML = `❌ Formato inválido. Use: ${extensoesValidas[tipo].join(', ')}`;
+    fileInput.value = '';
+    return;
+  }
+  
+  // 🔥 NOME AUTOMÁTICO
+  const hoje = new Date();
+  const dia = String(hoje.getDate()).padStart(2, '0');
+  const mes = String(hoje.getMonth() + 1).padStart(2, '0');
+  const ano = hoje.getFullYear();
+  const dataStr = `${dia}/${mes}/${ano}`;
+  
+  let nomePadrao = '';
+  if (tipo === 'tabela_precos') nomePadrao = `TABELA DE PREÇOS SMB - ${dataStr}`;
+  else if (tipo === 'mapa_ofertas') nomePadrao = `MAPA DE OFERTAS SMB - ${dataStr}`;
+  else if (tipo === 'book_aparelhos') nomePadrao = `BOOK APARELHOS - ${dataStr}`;
+  
+  statusDiv.style.display = 'block';
+  statusDiv.style.background = '#dbeafe';
+  statusDiv.style.color = '#1e40af';
+  statusDiv.innerHTML = `⏳ Enviando ${nomePadrao}...`;
+  
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result;
+    const dados = {
+      tipo: tipo,
+      nome: nomePadrao,  // 🔥 NOME AUTOMÁTICO
+      arquivo: base64,
+      extensao: extensao
+    };
+    
+    console.log('📤 Enviando arquivo:', dados);
+    
+    google.script.run
+      .withSuccessHandler(function(res) {
+        console.log('✅ Resposta do upload:', res);
+        if (res.success) {
+          statusDiv.style.background = '#d1fae5';
+          statusDiv.style.color = '#065f46';
+          statusDiv.innerHTML = '✅ Arquivo enviado com sucesso!';
+          fileInput.value = '';
+          // Recarrega a lista da aba atual
+          setTimeout(() => carregarListaArquivos(abaAtualArquivos), 500);
+        } else {
+          statusDiv.style.background = '#fee2e2';
+          statusDiv.style.color = '#991b1b';
+          statusDiv.innerHTML = '❌ Erro: ' + (res.message || 'Falha no upload');
+        }
+      })
+      .withFailureHandler(function(err) {
+        console.error('❌ Erro no upload:', err);
+        statusDiv.style.background = '#fee2e2';
+        statusDiv.style.color = '#991b1b';
+        statusDiv.innerHTML = '❌ Erro de comunicação: ' + err;
+      })
+      .uploadArquivoEmpresarial(dados);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ============================================
+// BAIXAR ARQUIVO
+// ============================================
+function baixarArquivo(id) {
+  console.log('📥 Baixando arquivo ID:', id);
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res.success) {
+        const link = document.createElement('a');
+        link.href = 'data:application/octet-stream;base64,' + res.base64;
+        link.download = res.nome;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      } else {
+        alert('Erro ao baixar: ' + res.message);
+      }
+    })
+    .withFailureHandler(function(err) {
+      alert('Erro de comunicação: ' + err);
+    })
+    .baixarArquivoEmpresarial(id);
+}
+
+// ============================================
+// VISUALIZAR ARQUIVO
+// ============================================
+function visualizarArquivo(id) {
+  console.log('👁️ Visualizando arquivo ID:', id);
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res.success && res.url) {
+        window.open(res.url, '_blank');
+      } else {
+        alert('Erro ao visualizar: ' + (res.message || 'Arquivo não encontrado'));
+      }
+    })
+    .withFailureHandler(function(err) {
+      alert('Erro de comunicação: ' + err);
+    })
+    .visualizarArquivoEmpresarial(id);
+}
+
+// ============================================
+// EXCLUIR ARQUIVO (APENAS MASTER)
+// ============================================
+function excluirArquivo(id) {
+  if (!confirm('Tem certeza que deseja excluir este arquivo permanentemente?')) return;
+  
+  console.log('🗑️ Excluindo arquivo ID:', id);
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res.success) {
+        alert('Arquivo excluído com sucesso!');
+        carregarListaArquivos(abaAtualArquivos);
+      } else {
+        alert('Erro ao excluir: ' + res.message);
+      }
+    })
+    .withFailureHandler(function(err) {
+      alert('Erro de comunicação: ' + err);
+    })
+    .excluirArquivoEmpresarial(id);
+}
+
+// ============================================
+// INICIALIZAR ABAS (estilo)
+// ============================================
+document.addEventListener('DOMContentLoaded', function() {
+  // Estilo inicial das abas
+  document.querySelectorAll('.aba-arquivo').forEach(btn => {
+    if (btn.classList.contains('ativa')) {
+      btn.style.color = '#3b82f6';
+      btn.style.borderBottom = '3px solid #3b82f6';
+    }
+  });
+});
+let historicoCategoriaAtual = '';
+
+function abrirHistoricoArquivos(categoria) {
+  historicoCategoriaAtual = categoria;
+  const modal = document.getElementById('modal-historico-arquivos');
+  modal.style.display = 'flex';
+  setTimeout(() => {
+    modal.style.opacity = '1';
+    modal.querySelector('div').style.transform = 'scale(1)';
+  }, 10);
+  
+  // Nome da categoria
+  const nomes = {
+    'tabela_precos': '📊 Tabela de Preços',
+    'mapa_ofertas': '🗺️ Mapa de Ofertas',
+    'book_aparelhos': '📱 Book de Aparelhos'
+  };
+  document.getElementById('historico-categoria-nome').innerText = nomes[categoria] || categoria;
+  
+  carregarHistoricoArquivos(categoria);
+}
+
+function fecharHistoricoArquivos() {
+  const modal = document.getElementById('modal-historico-arquivos');
+  modal.style.opacity = '0';
+  modal.querySelector('div').style.transform = 'scale(0.95)';
+  setTimeout(() => {
+    modal.style.display = 'none';
+  }, 300);
+}
+
+function carregarHistoricoArquivos(categoria) {
+  const container = document.getElementById('historico-lista-container');
+  container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8;">
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i>
+    <p style="margin-top:10px;">Carregando histórico...</p>
+  </div>`;
+
+  google.script.run
+    .withSuccessHandler(function(arquivos) {
+      const filtrados = arquivos.filter(a => a.tipo === categoria);
+      filtrados.sort((a, b) => b.data - a.data);
+      
+      if (!filtrados || filtrados.length === 0) {
+        container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8;">Nenhum arquivo encontrado.</div>`;
+        return;
+      }
+      
+      container.innerHTML = filtrados.map(function(a, index) {
+        const dataFormatada = a.data ? new Date(a.data).toLocaleDateString('pt-BR') + ' ' + new Date(a.data).toLocaleTimeString('pt-BR') : '';
+        const tamanhoKB = (a.tamanho / 1024).toFixed(1);
+        const isUltimo = index === 0;
+        
+        let icone = '📄';
+        if (a.extensao === 'pdf') icone = '📄';
+        else if (['xlsx', 'xls'].includes(a.extensao)) icone = '📊';
+        else if (['jpg', 'jpeg', 'png'].includes(a.extensao)) icone = '🖼️';
+        
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:14px; background:${isUltimo ? '#f0fdf4' : 'white'}; border:${isUltimo ? '2px solid #10b981' : '1px solid #e2e8f0'}; border-radius:10px; transition:0.2s; gap:12px; flex-wrap:wrap; margin-bottom:8px;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='${isUltimo ? '#10b981' : '#e2e8f0'}'">
+            <div style="display:flex; align-items:center; gap:12px; min-width:150px;">
+              <span style="font-size:24px;">${icone}</span>
+              <div>
+                <div style="font-weight:700; color:#1e293b; font-size:13px;">${a.nome}.${a.extensao}</div>
+                <div style="font-size:10px; color:#94a3b8; display:flex; gap:8px; flex-wrap:wrap;">
+                  <span><i class="fa-regular fa-clock"></i> ${dataFormatada}</span>
+                  <span>📦 ${tamanhoKB} KB</span>
+                  ${isUltimo ? '<span style="background:#d1fae5; color:#065f46; padding:1px 8px; border-radius:10px; font-weight:600; font-size:9px;">ÚLTIMA VERSÃO</span>' : ''}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button onclick="baixarArquivo('${a.id}')" style="padding:4px 12px; background:#3b82f6; color:white; border:none; border-radius:6px; cursor:pointer; font-size:10px; font-weight:600;">Baixar</button>
+              <button onclick="visualizarArquivo('${a.id}')" style="padding:4px 12px; background:#8b5cf6; color:white; border:none; border-radius:6px; cursor:pointer; font-size:10px; font-weight:600;">Visualizar</button>
+              <button onclick="excluirArquivo('${a.id}')" style="padding:4px 12px; background:#ef4444; color:white; border:none; border-radius:6px; cursor:pointer; font-size:10px; font-weight:600;">Excluir</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+    })
+    .withFailureHandler(function(err) {
+      container.innerHTML = `<div style="text-align:center; padding:40px; color:#ef4444;">❌ Erro ao carregar histórico: ${err}</div>`;
+    })
+    .listarArquivosEmpresariais();
+}
+</script>

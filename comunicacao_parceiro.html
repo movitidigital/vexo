@@ -1,0 +1,225 @@
+<style>
+  .comm-container { animation: fadeInUp 0.5s ease; }
+  
+  /* --- ESTILO DOS CARDS DE FEED --- */
+  .feed-grid { display: flex; flex-direction: column; gap: 20px; max-width: 800px; margin: 0 auto; }
+  
+  .post-card {
+    background: white;
+    border-radius: 20px;
+    border: 1px solid #e2e8f0;
+    overflow: hidden;
+    transition: 0.3s;
+  }
+  
+  .post-header {
+    padding: 20px 25px;
+    border-bottom: 1px solid #f1f5f9;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .post-category {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  .cat-novidade { background: #eff6ff; color: #3b82f6; }
+  .cat-urgente { background: #fef2f2; color: #ef4444; }
+  .cat-treinamento { background: #f0fdf4; color: #16a34a; }
+
+  .post-body { padding: 25px; }
+  .post-title { font-size: 20px; font-weight: 700; color: #1e293b; margin-bottom: 10px; }
+  .post-text { color: #64748b; font-size: 14px; line-height: 1.6; white-space: pre-wrap; }
+
+  .post-footer {
+    padding: 15px 25px;
+    background: #f8fafc;
+    font-size: 12px;
+    color: #94a3b8;
+    display: flex;
+    gap: 15px;
+  }
+
+  /* --- VISÃO MASTER: FORMULÁRIO --- */
+  .admin-box {
+    background: white;
+    padding: 30px;
+    border-radius: 20px;
+    border: 2px dashed #cbd5e1;
+    margin-bottom: 40px;
+    max-width: 800px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  .form-group { margin-bottom: 15px; }
+  .form-group label { display: block; font-size: 13px; font-weight: 600; color: #475569; margin-bottom: 5px; }
+  .form-group input, .form-group textarea, .form-group select {
+    width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 12px; outline: none; transition: 0.3s;
+  }
+  .form-group input:focus { border-color: var(--primary); }
+
+  .btn-post {
+    background: var(--primary); color: white; border: none; padding: 15px 30px;
+    border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; width: 100%;
+  }
+  .btn-post:hover { background: var(--primary-hover); transform: scale(1.01); }
+</style>
+
+<div class="comm-container">
+  
+  <div style="text-align: center; margin-bottom: 40px;">
+    <h1 style="color: #1e293b;">Central de Comunicados</h1>
+    <p style="color: #64748b;">Fique por dentro das novidades da E&E Nordeste</p>
+  </div>
+
+  <div id="admin-view" style="display: none;">
+    <div class="admin-box">
+      <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-pen-nib"></i> Criar Nova Publicação</h3>
+      <div class="form-group">
+        <label>Título do Comunicado</label>
+        <input type="text" id="post-titulo" placeholder="Ex: Nova meta de ativação para Abril">
+      </div>
+      <div class="form-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div class="form-group">
+          <label>Categoria</label>
+          <select id="post-categoria">
+            <option value="NOVIDADE">Novidade</option>
+            <option value="URGENTE">Urgente</option>
+            <option value="TREINAMENTO">Treinamento</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Autor</label>
+          <input type="text" id="post-autor" readonly>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Conteúdo da Mensagem</label>
+        <textarea id="post-conteudo" rows="5" placeholder="Escreva aqui os detalhes para os parceiros..."></textarea>
+      </div>
+      <button class="btn-post" onclick="window.publicarNoticia()">
+        <i class="fa-solid fa-paper-plane"></i> PUBLICAR PARA TODOS OS PARCEIROS
+      </button>
+    </div>
+  </div>
+
+  <div id="feed-container" class="feed-grid">
+    <div style="text-align: center; padding: 50px; color: #94a3b8;">
+      <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 30px;"></i>
+      <p style="margin-top: 10px;">Carregando novidades...</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  /** * 1. DEFINIÇÃO DAS FUNÇÕES GLOBAIS
+   * Definimos primeiro para garantir que o onclick as encontre
+   */
+  window.publicarNoticia = function() {
+    const btn = document.querySelector('.btn-post');
+    const titulo = document.getElementById('post-titulo').value;
+    const categoria = document.getElementById('post-categoria').value;
+    const autor = document.getElementById('post-autor').value;
+    const conteudo = document.getElementById('post-conteudo').value;
+
+    if (!titulo || !conteudo) {
+      alert("⚠️ Por favor, preencha o título e o conteúdo da mensagem.");
+      return;
+    }
+
+    // Bloqueia o botão para evitar cliques duplos
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> PUBLICANDO NO BANCO...';
+
+    const dados = {
+      titulo: titulo,
+      categoria: categoria,
+      autor: autor,
+      conteudo: conteudo
+    };
+
+    google.script.run
+      .withSuccessHandler(() => {
+        alert("✅ Comunicado publicado com sucesso!");
+        // Limpa os campos
+        document.getElementById('post-titulo').value = '';
+        document.getElementById('post-conteudo').value = '';
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> PUBLICAR PARA TODOS OS PARCEIROS';
+        
+        // Atualiza o feed imediatamente
+        window.carregarFeed();
+      })
+      .withFailureHandler(err => {
+        alert("❌ Erro de Comunicação: " + err.message);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> PUBLICAR PARA TODOS OS PARCEIROS';
+      })
+      .p_salvarComunicado(dados);
+  };
+
+  window.carregarFeed = function() {
+    const container = document.getElementById('feed-container');
+    
+    google.script.run
+      .withSuccessHandler(posts => {
+        if (!posts || posts.length === 0) {
+          container.innerHTML = '<div style="text-align:center; padding:50px; color:#94a3b8;">Nenhum comunicado encontrado no banco de dados.</div>';
+          return;
+        }
+
+        container.innerHTML = posts.map(p => `
+          <div class="post-card">
+            <div class="post-header">
+              <span class="post-category cat-${String(p.categoria).toLowerCase()}">${p.categoria}</span>
+              <span style="font-size: 12px; color: #94a3b8;"><i class="fa-regular fa-clock"></i> ${p.data}</span>
+            </div>
+            <div class="post-body">
+              <h2 class="post-title">${p.titulo}</h2>
+              <div class="post-text">${p.conteudo}</div>
+            </div>
+            <div class="post-footer">
+              <span><i class="fa-solid fa-user-tie"></i> Postado por: <b>${p.autor}</b></span>
+            </div>
+          </div>
+        `).join('');
+      })
+      .withFailureHandler(err => {
+        container.innerHTML = `<div style="color:red; text-align:center; padding:20px;">Falha ao carregar feed: ${err.message}</div>`;
+      })
+      .p_listarComunicados();
+  };
+
+  /**
+   * 2. INICIALIZAÇÃO SEGURA (IIFE)
+   */
+  (function() {
+    try {
+      // Recupera dados com fallback para objeto vazio para não quebrar
+      const user = JSON.parse(sessionStorage.getItem('usuarioLogado')) || {};
+      const tipo = sessionStorage.getItem('tipoAcessoLogado');
+
+      // 1. Controle de Visão (MASTER ou Administrativo)
+      if (tipo === 'MASTER' || (user && user.role === 'MASTER')) {
+        const adminView = document.getElementById('admin-view');
+        if(adminView) adminView.style.display = 'block';
+        
+        const inputAutor = document.getElementById('post-autor');
+        if(inputAutor) inputAutor.value = user.username || user.nome || "Diretoria E&E";
+      }
+
+      // 2. Carrega as notícias
+      window.carregarFeed();
+      
+    } catch (error) {
+      console.error("Erro ao inicializar módulo de comunicação:", error);
+    }
+  })();
+</script>

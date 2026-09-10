@@ -1,0 +1,764 @@
+<div class="modulo-card" style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: 'Poppins', sans-serif;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f2f5; padding-bottom: 15px; margin-bottom: 25px; flex-wrap: wrap; gap: 10px;">
+    <h2 style="color: #1e3c72; margin: 0;">🎯 Gestor de Metas - TIM Empresas</h2>
+    <button onclick="gerarImagemMeta()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+      📸 Baixar Imagem da Loja
+    </button>
+  </div>
+
+  <!-- TABS -->
+  <div style="display: flex; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #e2e8f0;">
+    <button id="tab-loja-btn" onclick="ativarTabMetas('loja')" style="padding: 10px 20px; background: #1e3c72; color: white; border: none; border-radius: 8px 8px 0 0; font-weight: bold; cursor: pointer;">🏢 Meta da Loja</button>
+    <button id="tab-individual-btn" onclick="ativarTabMetas('individual')" style="padding: 10px 20px; background: #e2e8f0; color: #1e3c72; border: none; border-radius: 8px 8px 0 0; font-weight: bold; cursor: pointer;">👥 Time do Mês</button>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- PAINEL 1: META DA LOJA -->
+  <!-- ========================================== -->
+  <div id="painel-meta-loja" style="display: block;">
+    <div id="form-metas" style="background: #f8f9ff; padding: 20px; border-radius: 12px; border: 1px solid #cbd5e0; margin-bottom: 20px;">
+      <h4 style="margin-top: 0; color: #1e3c72;">Configurar / Consultar Meta da Loja</h4>
+      
+      <div style="background: #eef2f7; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; gap: 10px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 120px;">
+          <label style="font-size: 11px; font-weight: bold; color: #1e3c72;">MÊS</label>
+          <select id="m_referencia_mes" onchange="onPeriodoChange()" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+            <option value="JANEIRO">Janeiro</option>
+            <option value="FEVEREIRO">Fevereiro</option>
+            <option value="MARÇO">Março</option>
+            <option value="ABRIL">Abril</option>
+            <option value="MAIO">Maio</option>
+            <option value="JUNHO">Junho</option>
+            <option value="JULHO">Julho</option>
+            <option value="AGOSTO">Agosto</option>
+            <option value="SETEMBRO">Setembro</option>
+            <option value="OUTUBRO">Outubro</option>
+            <option value="NOVEMBRO">Novembro</option>
+            <option value="DEZEMBRO">Dezembro</option>
+          </select>
+        </div>
+        <div style="flex: 1; min-width: 100px;">
+          <label style="font-size: 11px; font-weight: bold; color: #1e3c72;">ANO</label>
+          <select id="m_referencia_ano" onchange="onPeriodoChange()" style="width: 100%; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+            <option value="2025">2025</option>
+            <option value="2026" selected>2026</option>
+            <option value="2027">2027</option>
+          </select>
+        </div>
+      </div>
+
+      <p style="font-weight: bold; font-size: 11px; color: #555; margin-bottom: 5px;">FATURAMENTO (R$)</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+        <input type="number" id="m_fat_min" oninput="atualizarCanvas(); atualizarPreviewTime()" placeholder="Mínimo" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+        <input type="number" id="m_fat_target" oninput="atualizarCanvas(); atualizarPreviewTime()" placeholder="Target" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+        <input type="number" id="m_fat_sup" oninput="atualizarCanvas(); atualizarPreviewTime()" placeholder="Superado" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+      </div>
+
+      <p style="font-weight: bold; font-size: 11px; color: #555; margin-bottom: 5px;">PORTABILIDADE (R$)</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 15px;">
+        <input type="number" id="m_port_min" oninput="atualizarCanvas(); atualizarPreviewTime()" placeholder="Mínimo" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+        <input type="number" id="m_port_target" oninput="atualizarCanvas(); atualizarPreviewTime()" placeholder="Target" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+        <input type="number" id="m_port_sup" oninput="atualizarCanvas(); atualizarPreviewTime()" placeholder="Superado" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+      </div>
+
+      <p style="font-weight: bold; font-size: 11px; color: #555; margin-bottom: 5px;">RENEGOCIAÇÃO MID (QTD)</p>
+      <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px;">
+        <input type="number" id="m_reneg_min" oninput="atualizarCanvas(); atualizarPreviewTime()" placeholder="Mínimo" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+        <input type="number" id="m_reneg_target" oninput="atualizarCanvas(); atualizarPreviewTime()" placeholder="Target" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+        <input type="number" id="m_reneg_sup" oninput="atualizarCanvas(); atualizarPreviewTime()" placeholder="Superado" style="flex: 1; padding: 8px; border-radius: 6px; border: 1px solid #ddd;">
+      </div>
+      
+      <button onclick="salvarMetas()" style="width: 100%; padding: 12px; background: #1e3c72; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+        💾 Salvar / Atualizar Meta da Loja
+      </button>
+    </div>
+
+    <div style="background: white; border: 1px solid #eee; border-radius: 12px; padding: 15px;">
+      <h5 style="margin: 0 0 10px 0; color: #1e3c72; font-size: 12px;">Últimas Metas Salvas (Loja)</h5>
+      <div id="lista-historico-metas" style="font-size: 11px;"></div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- PAINEL 2: TIME DO MÊS -->
+  <!-- ========================================== -->
+  <div id="painel-metas-individuais" style="display: none;">
+    <div style="background: #f8f9ff; padding: 20px; border-radius: 12px; border: 1px solid #cbd5e0;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+        <div>
+          <h4 style="margin: 0; color: #1e3c72;">👥 TIME DO MÊS - METAS INDIVIDUAIS</h4>
+          <p style="font-size: 11px; color: #64748b; margin: 5px 0 0;">
+            Meta da Loja (referência): 
+            <strong>FAT R$ <span id="ref_fat_loja">0</span></strong> | 
+            PORT R$ <span id="ref_port_loja">0</span> | 
+            MID <span id="ref_mid_loja">0</span>
+          </p>
+        </div>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <button onclick="gerarImagemTimeMetas()" style="padding: 8px 18px; background: #25D366; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">📸 Baixar Imagem do Time</button>
+          <button onclick="adicionarVendedorTime()" style="padding: 8px 18px; background: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">➕ Adicionar Vendedor</button>
+          <button onclick="limparTime()" style="padding: 8px 18px; background: #dc3545; color: white; border: none; border-radius: 8px; cursor: pointer;">🗑️ Limpar Time</button>
+        </div>
+      </div>
+
+      <div id="lista-time-vendedores" style="margin-bottom: 20px; max-height: 550px; overflow-y: auto;">
+        <!-- Será preenchido dinamicamente -->
+      </div>
+
+      <div id="modal-add-vendedor" style="display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: white; border-radius: 16px; padding: 25px; width: 400px; max-width: 90%; z-index: 1000; box-shadow: 0 20px 40px rgba(0,0,0,0.2);">
+        <h3 style="margin: 0 0 15px;">➕ Selecionar Vendedor</h3>
+        <select id="select-vendedor-disponivel" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd; margin-bottom: 15px;">
+          <option value="">-- Escolha um vendedor --</option>
+        </select>
+        <div style="display: flex; gap: 10px; justify-content: flex-end;">
+          <button onclick="fecharModalVendedor()" style="padding: 8px 16px; background: #e2e8f0; border: none; border-radius: 6px; cursor: pointer;">Cancelar</button>
+          <button onclick="confirmarAdicionarVendedor()" style="padding: 8px 16px; background: #1e3c72; color: white; border: none; border-radius: 6px; cursor: pointer;">Adicionar</button>
+        </div>
+      </div>
+      <div id="overlay-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 999;"></div>
+
+      <div style="margin-top: 20px; display: flex; gap: 15px; justify-content: flex-end;">
+        <button onclick="salvarTimeMetas()" style="padding: 12px 25px; background: #1e3c72; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">💾 Salvar Time e Metas</button>
+        <button onclick="recarregarCompleto()" style="padding: 12px 25px; background: #64748b; color: white; border: none; border-radius: 8px; cursor: pointer;">🔄 Recarregar Tudo</button>
+      </div>
+      <div id="status-individual" style="margin-top: 15px; font-size: 12px; padding: 10px; border-radius: 8px; display: none;"></div>
+    </div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- PREVIEW ÚNICO: Meta da Loja + Preview do Time -->
+  <!-- ========================================== -->
+  <div style="margin-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h3 style="color: #1e3c72; margin: 0;">📸 Pré-visualização</h3>
+      <button onclick="atualizarPreviewTime()" style="padding: 6px 12px; background: #64748b; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px;">🔄 Atualizar Prévia do Time</button>
+    </div>
+    <div style="display: flex; flex-wrap: wrap; gap: 30px; justify-content: flex-start; align-items: flex-start;">
+      <!-- Canvas da Loja -->
+      <div style="flex: 1; min-width: 300px; background: #eee; border-radius: 12px; padding: 15px; text-align: center;">
+        <canvas id="canvasMeta" width="400" height="400" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);"></canvas>
+        <p style="margin-top: 10px; font-size: 12px; color: #666;">Meta da Loja</p>
+        <button onclick="gerarImagemMeta()" style="margin-top: 5px; padding: 6px 12px; background: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px;">📸 Baixar</button>
+      </div>
+
+      <!-- Canvas Único do Time (todos vendedores juntos) -->
+      <div id="preview-time-container" style="flex: 2; min-width: 400px; background: #eee; border-radius: 12px; padding: 15px; text-align: center;">
+        <canvas id="canvasTimePreview" width="700" height="400" style="max-width: 100%; height: auto; border-radius: 8px; box-shadow: 0 4px 15px rgba(0,0,0,0.2);"></canvas>
+        <p style="margin-top: 10px; font-size: 12px; color: #666;">Prévia das Metas do Time (todos os vendedores)</p>
+        <button onclick="gerarImagemTimeMetas()" style="margin-top: 5px; padding: 6px 12px; background: #25D366; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 11px;">📸 Baixar Imagem do Time</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==========================================
+// VARIÁVEIS GLOBAIS
+// ==========================================
+let todosVendedoresDisponiveis = [];
+let timeAtual = [];
+
+// Cache da Logo
+let logoTim = new Image();
+logoTim.crossOrigin = "Anonymous";
+logoTim.src = "https://www.weebly.com/editor/uploads/1/3/4/2/134260582/custom_themes/739339945850558639/files/LOGOMARCAOFICIALEEE-TIMSMB.png";
+
+// ==========================================
+// FUNÇÕES DE INICIALIZAÇÃO E CARREGAMENTO
+// ==========================================
+function onPeriodoChange() {
+  carregarMetaPorPeriodo();
+  carregarTimeMetas();
+}
+
+function carregarMetaPorPeriodo() {
+  const mes = document.getElementById('m_referencia_mes').value;
+  const ano = document.getElementById('m_referencia_ano').value;
+  const formMetas = document.getElementById('form-metas');
+  if (formMetas) formMetas.style.opacity = "0.6";
+  
+  google.script.run
+    .withSuccessHandler(function(meta) {
+      if (formMetas) formMetas.style.opacity = "1";
+      if (meta) {
+        preencherFormulario(meta);
+      } else {
+        resetarCampos();
+      }
+      atualizarCanvas();
+      carregarListaHistorico();
+    })
+    .consultarMetaExistente(mes, ano);
+}
+
+function carregarTimeMetas() {
+  const mes = document.getElementById('m_referencia_mes').value;
+  const ano = document.getElementById('m_referencia_ano').value;
+  const statusDiv = document.getElementById('status-individual');
+  
+  if (statusDiv) {
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#e3f2fd';
+    statusDiv.innerHTML = `⏳ Carregando time para ${mes}/${ano}...`;
+  }
+  
+  google.script.run
+    .withSuccessHandler(function(dados) {
+      if (dados && dados.time && dados.time.length > 0) {
+        timeAtual = dados.time;
+        if (statusDiv) statusDiv.innerHTML = `✅ Time carregado: ${timeAtual.length} vendedor(es).`;
+      } else {
+        timeAtual = [];
+        if (statusDiv) statusDiv.innerHTML = `📭 Nenhum time configurado para ${mes}/${ano}.`;
+      }
+      renderizarTime();              // atualiza os cards (aba Time do Mês)
+      atualizarPreviewTime();       // redesenha o canvas único do time
+      setTimeout(() => { if (statusDiv) statusDiv.style.display = 'none'; }, 2000);
+    })
+    .withFailureHandler(function(err) {
+      console.error("Erro ao carregar time:", err);
+      timeAtual = [];
+      renderizarTime();
+      atualizarPreviewTime();
+      if (statusDiv) {
+        statusDiv.style.background = '#ffebee';
+        statusDiv.style.color = '#c62828';
+        statusDiv.innerHTML = '❌ Erro ao carregar: ' + err.message;
+        setTimeout(() => statusDiv.style.display = 'none', 4000);
+      }
+    })
+    .buscarTimeMetas(mes, ano);
+}
+
+function recarregarCompleto() {
+  carregarMetaPorPeriodo();
+  carregarTimeMetas();
+}
+
+// ==========================================
+// FUNÇÕES DE RENDERIZAÇÃO DOS CARDS (ABA TIME)
+// ==========================================
+function renderizarTime() {
+  const container = document.getElementById('lista-time-vendedores');
+  if (!container) return;
+  document.getElementById('ref_fat_loja').innerText = (parseFloat(document.getElementById('m_fat_target').value) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+  document.getElementById('ref_port_loja').innerText = (parseFloat(document.getElementById('m_port_target').value) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
+  document.getElementById('ref_mid_loja').innerText = parseInt(document.getElementById('m_reneg_target').value) || 0;
+  
+  if (timeAtual.length === 0) {
+    container.innerHTML = `<div style="text-align:center; padding:40px; background:#f8fafc; border-radius:12px; border:1px dashed #cbd5e0;">
+      <span style="font-size:40px;">👥</span>
+      <p style="margin-top:10px; color:#64748b;">Nenhum vendedor no time deste mês.</p>
+      <button onclick="adicionarVendedorTime()" style="margin-top:10px; padding:8px 20px; background:#1e3c72; color:white; border:none; border-radius:8px; cursor:pointer;">➕ Adicionar Vendedor</button>
+    </div>`;
+    return;
+  }
+  let html = '';
+  timeAtual.forEach(v => {
+    html += `
+      <div id="card-${v.id}" style="background:white; border:1px solid #e2e8f0; border-radius:12px; margin-bottom:15px; padding:15px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; border-bottom:1px dashed #e2e8f0; padding-bottom:8px;">
+          <div><span style="font-weight:800; color:#1e3c72; font-size:14px;">👤 ${v.nome}</span><span style="font-size:10px; background:#e2e8f0; padding:2px 8px; border-radius:12px; margin-left:10px;">${v.cargo || 'Vendedor'}</span></div>
+          <button onclick="removerVendedorTime('${v.id}')" style="background:none; border:none; color:#dc3545; cursor:pointer; font-size:16px;">🗑️</button>
+        </div>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:15px;">
+          <div style="background:#f8fafc; padding:10px; border-radius:8px;">
+            <div style="font-size:10px; font-weight:700; color:#3b82f6; margin-bottom:8px;">💰 FATURAMENTO (R$)</div>
+            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+              <input type="number" id="fat_min_${v.id}" value="${v.meta.fat_min}" placeholder="Mínimo" onchange="atualizarPreviewTime()" style="flex:1; min-width:70px; padding:6px; border-radius:4px; border:1px solid #ddd; font-size:11px;">
+              <input type="number" id="fat_target_${v.id}" value="${v.meta.fat_target}" placeholder="Target" onchange="atualizarPreviewTime()" style="flex:1; min-width:70px; padding:6px; border-radius:4px; border:1px solid #ddd; font-size:11px; font-weight:bold; background:#fff8e1;">
+              <input type="number" id="fat_sup_${v.id}" value="${v.meta.fat_sup}" placeholder="Superado" onchange="atualizarPreviewTime()" style="flex:1; min-width:70px; padding:6px; border-radius:4px; border:1px solid #ddd; font-size:11px;">
+            </div>
+          </div>
+          <div style="background:#f8fafc; padding:10px; border-radius:8px;">
+            <div style="font-size:10px; font-weight:700; color:#a855f7; margin-bottom:8px;">🔄 PORTABILIDADE (R$)</div>
+            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+              <input type="number" id="port_min_${v.id}" value="${v.meta.port_min}" placeholder="Mínimo" onchange="atualizarPreviewTime()" style="flex:1; min-width:70px; padding:6px; border-radius:4px; border:1px solid #ddd; font-size:11px;">
+              <input type="number" id="port_target_${v.id}" value="${v.meta.port_target}" placeholder="Target" onchange="atualizarPreviewTime()" style="flex:1; min-width:70px; padding:6px; border-radius:4px; border:1px solid #ddd; font-size:11px; font-weight:bold; background:#fff8e1;">
+              <input type="number" id="port_sup_${v.id}" value="${v.meta.port_sup}" placeholder="Superado" onchange="atualizarPreviewTime()" style="flex:1; min-width:70px; padding:6px; border-radius:4px; border:1px solid #ddd; font-size:11px;">
+            </div>
+          </div>
+          <div style="background:#f8fafc; padding:10px; border-radius:8px;">
+            <div style="font-size:10px; font-weight:700; color:#f59e0b; margin-bottom:8px;">📱 RENEGOCIAÇÃO MID (Qtd)</div>
+            <div style="display:flex; gap:5px; flex-wrap:wrap;">
+              <input type="number" id="mid_min_${v.id}" value="${v.meta.mid_min}" placeholder="Mínimo" onchange="atualizarPreviewTime()" style="flex:1; min-width:70px; padding:6px; border-radius:4px; border:1px solid #ddd; font-size:11px;">
+              <input type="number" id="mid_target_${v.id}" value="${v.meta.mid_target}" placeholder="Target" onchange="atualizarPreviewTime()" style="flex:1; min-width:70px; padding:6px; border-radius:4px; border:1px solid #ddd; font-size:11px; font-weight:bold; background:#fff8e1;">
+              <input type="number" id="mid_sup_${v.id}" value="${v.meta.mid_sup}" placeholder="Superado" onchange="atualizarPreviewTime()" style="flex:1; min-width:70px; padding:6px; border-radius:4px; border:1px solid #ddd; font-size:11px;">
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:10px; text-align:right;">
+          <button onclick="copiarMetaLojaParaVendedor('${v.id}')" style="background:none; border:1px solid #cbd5e0; padding:4px 12px; border-radius:6px; font-size:10px; cursor:pointer; color:#64748b;">📋 Copiar valores da Meta da Loja</button>
+        </div>
+      </div>`;
+  });
+  container.innerHTML = html;
+}
+
+// ==========================================
+// PREVIEW ÚNICO DO TIME (CANVAS COM TODOS VENDEDORES)
+// ==========================================
+function atualizarPreviewTime() {
+  const canvas = document.getElementById('canvasTimePreview');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const mes = document.getElementById('m_referencia_mes').value;
+  const ano = document.getElementById('m_referencia_ano').value;
+  
+  const alturaPorVendedor = 150;
+  const alturaBase = 350;
+  const alturaTotal = Math.max(400, alturaBase + (timeAtual.length * alturaPorVendedor));
+  canvas.width = 900;
+  canvas.height = alturaTotal;
+  
+  // Fundo gradiente
+  const gradiente = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+  gradiente.addColorStop(0, '#1e3c72');
+  gradiente.addColorStop(1, '#0f172a');
+  ctx.fillStyle = gradiente;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  
+  // Logo
+  if (logoTim.complete && logoTim.naturalWidth !== 0) {
+    ctx.drawImage(logoTim, canvas.width - 190, 30, 150, 80);
+  } else {
+    logoTim.onload = () => atualizarPreviewTime();
+  }
+  
+  // Títulos
+  ctx.fillStyle = "white";
+  ctx.font = "bold 28px Poppins";
+  ctx.fillText("TIM EMPRESAS - METAS DO TIME", 40, 60);
+  ctx.font = "20px Poppins";
+  ctx.fillStyle = "#94a3b8";
+  ctx.fillText(`${mes} / ${ano}`, 40, 100);
+  
+  const fatLoja = parseFloat(document.getElementById('m_fat_target').value) || 0;
+  const portLoja = parseFloat(document.getElementById('m_port_target').value) || 0;
+  const midLoja = parseFloat(document.getElementById('m_reneg_target').value) || 0;
+  ctx.font = "14px Poppins";
+  ctx.fillStyle = "#fbbf24";
+  ctx.fillText(`🎯 Meta da Loja: FAT R$ ${fatLoja.toLocaleString('pt-BR')} | PORT R$ ${portLoja.toLocaleString('pt-BR')} | MID ${midLoja} unid.`, 40, 135);
+  
+  if (timeAtual.length === 0) {
+    ctx.font = "16px Poppins";
+    ctx.fillStyle = "#ef4444";
+    ctx.fillText("⚠️ Nenhum vendedor no time para este período.", 40, 200);
+    return;
+  }
+  
+  ctx.font = "12px Poppins";
+  ctx.fillStyle = "#94a3b8";
+  ctx.fillText(`📊 ${timeAtual.length} vendedor(es) no time • Metas individuais:`, 40, 165);
+  
+  let y = 210;
+  timeAtual.forEach((v, idx) => {
+    // Busca valores atuais dos inputs (se existirem) ou do objeto timeAtual
+    const fatMin = document.getElementById(`fat_min_${v.id}`)?.value || v.meta.fat_min;
+    const fatTarget = document.getElementById(`fat_target_${v.id}`)?.value || v.meta.fat_target;
+    const fatSup = document.getElementById(`fat_sup_${v.id}`)?.value || v.meta.fat_sup;
+    const portMin = document.getElementById(`port_min_${v.id}`)?.value || v.meta.port_min;
+    const portTarget = document.getElementById(`port_target_${v.id}`)?.value || v.meta.port_target;
+    const portSup = document.getElementById(`port_sup_${v.id}`)?.value || v.meta.port_sup;
+    const midMin = document.getElementById(`mid_min_${v.id}`)?.value || v.meta.mid_min;
+    const midTarget = document.getElementById(`mid_target_${v.id}`)?.value || v.meta.mid_target;
+    const midSup = document.getElementById(`mid_sup_${v.id}`)?.value || v.meta.mid_sup;
+    
+    ctx.fillStyle = "white";
+    drawRoundedRect(ctx, 30, y, 840, 135, 12);
+    ctx.fill();
+    
+    ctx.font = "bold 16px Poppins";
+    ctx.fillStyle = "#1e3c72";
+    ctx.fillText(`${idx+1}. 👤 ${v.nome}`, 50, y+28);
+    
+    ctx.font = "bold 11px Poppins";
+    ctx.fillStyle = "#3b82f6";
+    ctx.fillText("💰 FATURAMENTO (R$)", 50, y+52);
+    ctx.font = "12px Poppins";
+    ctx.fillStyle = "#1e293b";
+    ctx.fillText(`Min: R$ ${Number(fatMin).toLocaleString('pt-BR',{minimumFractionDigits:2})}`, 50, y+72);
+    ctx.fillText(`Target: R$ ${Number(fatTarget).toLocaleString('pt-BR',{minimumFractionDigits:2})}`, 200, y+72);
+    ctx.fillText(`Sup: R$ ${Number(fatSup).toLocaleString('pt-BR',{minimumFractionDigits:2})}`, 380, y+72);
+    
+    ctx.font = "bold 11px Poppins";
+    ctx.fillStyle = "#a855f7";
+    ctx.fillText("🔄 PORTABILIDADE (R$)", 50, y+95);
+    ctx.font = "12px Poppins";
+    ctx.fillStyle = "#1e293b";
+    ctx.fillText(`Min: R$ ${Number(portMin).toLocaleString('pt-BR',{minimumFractionDigits:2})}`, 50, y+115);
+    ctx.fillText(`Target: R$ ${Number(portTarget).toLocaleString('pt-BR',{minimumFractionDigits:2})}`, 200, y+115);
+    ctx.fillText(`Sup: R$ ${Number(portSup).toLocaleString('pt-BR',{minimumFractionDigits:2})}`, 380, y+115);
+    
+    ctx.font = "bold 11px Poppins";
+    ctx.fillStyle = "#f59e0b";
+    ctx.fillText("📱 RENEGOCIAÇÃO MID", 550, y+52);
+    ctx.font = "12px Poppins";
+    ctx.fillStyle = "#1e293b";
+    ctx.fillText(`Min: ${Number(midMin)} unid.`, 550, y+72);
+    ctx.fillText(`Target: ${Number(midTarget)} unid.`, 550, y+92);
+    ctx.fillText(`Sup: ${Number(midSup)} unid.`, 550, y+112);
+    
+    y += 150;
+  });
+  
+  ctx.font = "10px Poppins";
+  ctx.fillStyle = "#64748b";
+  ctx.fillText(`Gerado em ${new Date().toLocaleString('pt-BR')} • VEXO Intelligent Management`, 40, y+20);
+}
+
+// ==========================================
+// DEMAIS FUNÇÕES DE APOIO
+// ==========================================
+function preencherFormulario(meta) {
+  document.getElementById('m_fat_min').value = meta.fatMin || 0;
+  document.getElementById('m_fat_target').value = meta.fatTarget || 0;
+  document.getElementById('m_fat_sup').value = meta.fatSup || 0;
+  document.getElementById('m_port_min').value = meta.portMin || 0;
+  document.getElementById('m_port_target').value = meta.portTarget || 0;
+  document.getElementById('m_port_sup').value = meta.portSup || 0;
+  document.getElementById('m_reneg_min').value = meta.renegMin || 0;
+  document.getElementById('m_reneg_target').value = meta.renegTarget || 0;
+  document.getElementById('m_reneg_sup').value = meta.renegSup || 0;
+}
+
+function resetarCampos() {
+  document.querySelectorAll('#form-metas input').forEach(c => c.value = "");
+}
+
+function carregarListaHistorico() {
+  google.script.run.withSuccessHandler(function(lista) {
+    const container = document.getElementById('lista-historico-metas');
+    if (!lista || lista.length === 0) {
+      container.innerHTML = "<p style='color:#999; margin:0;'>Nenhuma meta registrada.</p>";
+      return;
+    }
+    const cargo = (JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}').role || "").toUpperCase().trim();
+    container.innerHTML = "";
+    lista.forEach(item => {
+      const div = document.createElement('div');
+      div.style = "display:flex; justify-content:space-between; align-items:center; padding:10px; border-bottom:1px solid #f5f5f5; border-radius:8px;";
+      div.onmouseover = () => div.style.background = "#fff0f0";
+      div.onmouseout = () => div.style.background = "transparent";
+      const botaoExcluir = (cargo === "ADMINISTRADOR") ? `<button onclick="confirmarExclusao('${item.mes_nome}', '${item.ano}')" style="background:none; border:none; color:#dc3545; cursor:pointer; font-size:16px;">🗑️</button>` : "";
+      div.innerHTML = `<div onclick="carregarEstaMeta('${item.mes_nome}', '${item.ano}')" style="cursor:pointer; flex-grow:1;"><strong style="color:#1e3c72;">${item.periodo}</strong></div>${botaoExcluir}`;
+      container.appendChild(div);
+    });
+  }).buscarUltimasMetas();
+}
+
+function carregarEstaMeta(mes, ano) {
+  document.getElementById('m_referencia_mes').value = mes;
+  document.getElementById('m_referencia_ano').value = ano;
+  carregarMetaPorPeriodo();
+  carregarTimeMetas();
+}
+
+function confirmarExclusao(mes, ano) {
+  if (confirm(`Apagar meta de ${mes}/${ano}?`)) {
+    google.script.run.withSuccessHandler(res => { alert(res); carregarListaHistorico(); resetarCampos(); atualizarCanvas(); }).excluirMetaSistêmica(mes, ano);
+  }
+}
+
+function atualizarCanvas() {
+  const canvas = document.getElementById('canvasMeta');
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const mes = document.getElementById('m_referencia_mes').value;
+  const ano = document.getElementById('m_referencia_ano').value;
+  
+  canvas.width = 400;
+  canvas.height = 400;
+  
+  ctx.fillStyle = "#1e3c72";
+  ctx.fillRect(0, 0, 400, 400);
+  ctx.fillStyle = "white";
+  ctx.font = "bold 14px Poppins";
+  ctx.fillText("TIM EMPRESAS - META", 20, 30);
+  ctx.font = "bold 12px Poppins";
+  ctx.fillText(`${mes} / ${ano}`, 20, 55);
+  ctx.font = "bold 20px Poppins";
+  ctx.fillText("TIM", 330, 40);
+  ctx.font = "8px Poppins";
+  ctx.fillText("EMPRESAS", 330, 50);
+  
+  ctx.fillStyle = "white";
+  drawRoundedRect(ctx, 20, 70, 360, 310, 10);
+  ctx.fill();
+  
+  desenharTabelaPequena(ctx, "FATURAMENTO", 90, 'm_fat_min', 'm_fat_target', 'm_fat_sup', "R$ ");
+  desenharTabelaPequena(ctx, "PORTABILIDADE", 190, 'm_port_min', 'm_port_target', 'm_port_sup', "R$ ");
+  desenharTabelaPequena(ctx, "RENEGOCIAÇÃO MID", 290, 'm_reneg_min', 'm_reneg_target', 'm_reneg_sup', "");
+}
+
+function desenharTabelaPequena(ctx, titulo, y, idMin, idTarget, idSup, prefixo) {
+  const x = 35, w = 330;
+  const min = document.getElementById(idMin).value || 0;
+  const target = document.getElementById(idTarget).value || 0;
+  const sup = document.getElementById(idSup).value || 0;
+  ctx.fillStyle = "#ebecf0";
+  ctx.fillRect(x, y, w, 20);
+  ctx.fillStyle = "black";
+  ctx.font = "bold 9px Poppins";
+  ctx.textAlign = "center";
+  ctx.fillText(titulo, x + w/2, y + 14);
+  const rows = [
+    { label: "MÍNIMO", val: min, color: "#1e3c72" },
+    { label: "TARGET", val: target, color: "#3a60a8" },
+    { label: "SUPERADO", val: sup, color: "#1e3c72" }
+  ];
+  ctx.textAlign = "left";
+  rows.forEach((r, i) => {
+    const rowY = y + 20 + (i * 20);
+    ctx.fillStyle = r.color;
+    ctx.fillRect(x, rowY, w, 20);
+    ctx.strokeStyle = "white";
+    ctx.strokeRect(x, rowY, w, 20);
+    ctx.fillStyle = "white";
+    ctx.font = "bold 8px Poppins";
+    ctx.fillText(r.label, x + 5, rowY + 13);
+    ctx.textAlign = "right";
+    let valor = (prefixo === "R$ ") ? Number(r.val).toLocaleString('pt-BR', {minimumFractionDigits: 2}) : r.val;
+    ctx.fillText(prefixo + valor, x + w - 5, rowY + 13);
+    ctx.textAlign = "left";
+  });
+}
+
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.quadraticCurveTo(x + width, y, x + width, y + radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.quadraticCurveTo(x + width, y + height, x + width - radius, y + height);
+  ctx.lineTo(x + radius, y + height);
+  ctx.quadraticCurveTo(x, y + height, x, y + height - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+function salvarMetas() {
+  const dados = {
+    mes: document.getElementById('m_referencia_mes').value,
+    ano: document.getElementById('m_referencia_ano').value,
+    fatMin: document.getElementById('m_fat_min').value,
+    fatTarget: document.getElementById('m_fat_target').value,
+    fatSup: document.getElementById('m_fat_sup').value,
+    portMin: document.getElementById('m_port_min').value,
+    portTarget: document.getElementById('m_port_target').value,
+    portSup: document.getElementById('m_port_sup').value,
+    renegMin: document.getElementById('m_reneg_min').value,
+    renegTarget: document.getElementById('m_reneg_target').value,
+    renegSup: document.getElementById('m_reneg_sup').value
+  };
+  google.script.run.withSuccessHandler(res => { alert("✅ " + res); carregarListaHistorico(); }).salvarMetasConfig(dados);
+}
+
+function gerarImagemMeta() {
+  atualizarCanvas();
+  const canvas = document.getElementById('canvasMeta');
+  const link = document.createElement('a');
+  link.download = `META_LOJA_${document.getElementById('m_referencia_mes').value}_${document.getElementById('m_referencia_ano').value}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
+function gerarImagemTimeMetas() {
+  if (timeAtual.length === 0) {
+    alert('Nenhum vendedor no time!');
+    return;
+  }
+  const canvas = document.getElementById('canvasTimePreview');
+  const link = document.createElement('a');
+  link.download = `METAS_TIME_${document.getElementById('m_referencia_mes').value}_${document.getElementById('m_referencia_ano').value}.png`;
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+}
+
+// ==========================================
+// FUNÇÕES DO TIME DO MÊS (ADICIONAR, REMOVER, COPIAR, SALVAR)
+// ==========================================
+function carregarVendedoresDisponiveis() {
+  google.script.run.withSuccessHandler(vendedores => {
+    todosVendedoresDisponiveis = vendedores || [];
+    popularSelectVendedores();
+  }).buscarTodosVendedores();
+}
+
+function popularSelectVendedores() {
+  const select = document.getElementById('select-vendedor-disponivel');
+  if (!select) return;
+  const idsNoTime = new Set(timeAtual.map(v => v.id));
+  const disponiveis = todosVendedoresDisponiveis.filter(v => !idsNoTime.has(v.id));
+  select.innerHTML = '<option value="">-- Escolha um vendedor --</option>';
+  disponiveis.forEach(v => select.innerHTML += `<option value="${v.id}">${v.nome} ${v.cargo ? `(${v.cargo})` : ''}</option>`);
+}
+
+function adicionarVendedorTime() {
+  if (todosVendedoresDisponiveis.length === 0) carregarVendedoresDisponiveis();
+  popularSelectVendedores();
+  document.getElementById('modal-add-vendedor').style.display = 'block';
+  document.getElementById('overlay-modal').style.display = 'block';
+}
+
+function fecharModalVendedor() {
+  document.getElementById('modal-add-vendedor').style.display = 'none';
+  document.getElementById('overlay-modal').style.display = 'none';
+}
+
+function confirmarAdicionarVendedor() {
+  const vendedorId = document.getElementById('select-vendedor-disponivel').value;
+  if (!vendedorId) { alert('Selecione um vendedor'); return; }
+  const vendedor = todosVendedoresDisponiveis.find(v => v.id === vendedorId);
+  if (!vendedor) return;
+  timeAtual.push({
+    id: vendedor.id,
+    nome: vendedor.nome,
+    cargo: vendedor.cargo,
+    meta: { fat_min:0, fat_target:0, fat_sup:0, port_min:0, port_target:0, port_sup:0, mid_min:0, mid_target:0, mid_sup:0 }
+  });
+  fecharModalVendedor();
+  renderizarTime();
+  atualizarPreviewTime();
+}
+
+function removerVendedorTime(vendedorId) {
+  timeAtual = timeAtual.filter(v => v.id !== vendedorId);
+  renderizarTime();
+  atualizarPreviewTime();
+}
+
+function limparTime() {
+  if (confirm('Limpar todo o time do mês? Essa ação não afeta os dados salvos no banco.')) { 
+    timeAtual = []; 
+    renderizarTime(); 
+    atualizarPreviewTime(); 
+  }
+}
+
+function copiarMetaLojaParaVendedor(vendedorId) {
+  const qtd = timeAtual.length;
+  if (qtd === 0) { alert('Adicione vendedores ao time primeiro!'); return; }
+  const get = id => parseFloat(document.getElementById(id).value) || 0;
+  const fatMin = get('m_fat_min') / qtd, fatTarget = get('m_fat_target') / qtd, fatSup = get('m_fat_sup') / qtd;
+  const portMin = get('m_port_min') / qtd, portTarget = get('m_port_target') / qtd, portSup = get('m_port_sup') / qtd;
+  const midMin = get('m_reneg_min') / qtd, midTarget = get('m_reneg_target') / qtd, midSup = get('m_reneg_sup') / qtd;
+  const set = (id, val) => { let el = document.getElementById(id); if(el) el.value = val.toFixed(2); };
+  const setInt = (id, val) => { let el = document.getElementById(id); if(el) el.value = Math.max(1, Math.ceil(val)); };
+  set(`fat_min_${vendedorId}`, fatMin);
+  set(`fat_target_${vendedorId}`, fatTarget);
+  set(`fat_sup_${vendedorId}`, fatSup);
+  set(`port_min_${vendedorId}`, portMin);
+  set(`port_target_${vendedorId}`, portTarget);
+  set(`port_sup_${vendedorId}`, portSup);
+  setInt(`mid_min_${vendedorId}`, midMin);
+  setInt(`mid_target_${vendedorId}`, midTarget);
+  setInt(`mid_sup_${vendedorId}`, midSup);
+  const statusDiv = document.getElementById('status-individual');
+  statusDiv.style.display = 'block';
+  statusDiv.style.background = '#e8f5e9';
+  statusDiv.style.color = '#2e7d32';
+  statusDiv.innerHTML = `📊 Meta dividida para ${qtd} vendedor(es)! FAT Target: R$ ${fatTarget.toFixed(2)} cada`;
+  setTimeout(() => statusDiv.style.display = 'none', 3000);
+  atualizarPreviewTime();
+}
+
+function salvarTimeMetas() {
+  const mes = document.getElementById('m_referencia_mes').value;
+  const ano = document.getElementById('m_referencia_ano').value;
+  const timeParaSalvar = timeAtual.map(v => ({
+    id: v.id, nome: v.nome, cargo: v.cargo,
+    meta: {
+      fat_min: parseFloat(document.getElementById(`fat_min_${v.id}`)?.value) || 0,
+      fat_target: parseFloat(document.getElementById(`fat_target_${v.id}`)?.value) || 0,
+      fat_sup: parseFloat(document.getElementById(`fat_sup_${v.id}`)?.value) || 0,
+      port_min: parseFloat(document.getElementById(`port_min_${v.id}`)?.value) || 0,
+      port_target: parseFloat(document.getElementById(`port_target_${v.id}`)?.value) || 0,
+      port_sup: parseFloat(document.getElementById(`port_sup_${v.id}`)?.value) || 0,
+      mid_min: parseInt(document.getElementById(`mid_min_${v.id}`)?.value) || 0,
+      mid_target: parseInt(document.getElementById(`mid_target_${v.id}`)?.value) || 0,
+      mid_sup: parseInt(document.getElementById(`mid_sup_${v.id}`)?.value) || 0
+    }
+  }));
+  const statusDiv = document.getElementById('status-individual');
+  statusDiv.style.display = 'block';
+  statusDiv.style.background = '#fff3e0';
+  statusDiv.innerHTML = '💾 Salvando configuração do time...';
+  google.script.run
+    .withSuccessHandler(res => {
+      statusDiv.style.background = '#e8f5e9';
+      statusDiv.style.color = '#2e7d32';
+      statusDiv.innerHTML = res.message;
+      setTimeout(() => statusDiv.style.display = 'none', 3000);
+    })
+    .withFailureHandler(err => {
+      statusDiv.style.background = '#ffebee';
+      statusDiv.style.color = '#c62828';
+      statusDiv.innerHTML = '❌ Erro: ' + err.message;
+    })
+    .salvarTimeMetas(mes, ano, timeParaSalvar);
+}
+
+// ==========================================
+// ATIVAÇÃO DE ABAS
+// ==========================================
+function ativarTabMetas(tab) {
+  const painelLoja = document.getElementById('painel-meta-loja');
+  const painelIndividual = document.getElementById('painel-metas-individuais');
+  const btnLoja = document.getElementById('tab-loja-btn');
+  const btnIndividual = document.getElementById('tab-individual-btn');
+  if (tab === 'loja') {
+    painelLoja.style.display = 'block';
+    painelIndividual.style.display = 'none';
+    btnLoja.style.background = '#1e3c72';
+    btnLoja.style.color = 'white';
+    btnIndividual.style.background = '#e2e8f0';
+    btnIndividual.style.color = '#1e3c72';
+  } else {
+    painelLoja.style.display = 'none';
+    painelIndividual.style.display = 'block';
+    btnIndividual.style.background = '#1e3c72';
+    btnIndividual.style.color = 'white';
+    btnLoja.style.background = '#e2e8f0';
+    btnLoja.style.color = '#1e3c72';
+    carregarVendedoresDisponiveis();
+    renderizarTime();
+  }
+}
+
+// ==========================================
+// INICIALIZAÇÃO PRINCIPAL
+// ==========================================
+function inicializarModuloMetas() {
+  const dataAtual = new Date();
+  const mesesNomes = ["JANEIRO","FEVEREIRO","MARÇO","ABRIL","MAIO","JUNHO","JULHO","AGOSTO","SETEMBRO","OUTUBRO","NOVEMBRO","DEZEMBRO"];
+  const mesAtual = mesesNomes[dataAtual.getMonth()];
+  const anoAtual = dataAtual.getFullYear();
+  const selectMes = document.getElementById('m_referencia_mes');
+  const selectAno = document.getElementById('m_referencia_ano');
+  if (selectMes) {
+    for (let i=0; i<selectMes.options.length; i++) {
+      if (selectMes.options[i].value === mesAtual) {
+        selectMes.selectedIndex = i;
+        break;
+      }
+    }
+  }
+  if (selectAno) {
+    for (let i=0; i<selectAno.options.length; i++) {
+      if (parseInt(selectAno.options[i].value) === anoAtual) {
+        selectAno.selectedIndex = i;
+        break;
+      }
+    }
+  }
+  carregarVendedoresDisponiveis();
+  carregarMetaPorPeriodo();
+  carregarTimeMetas();
+}
+
+setTimeout(() => inicializarModuloMetas(), 500);
+</script>

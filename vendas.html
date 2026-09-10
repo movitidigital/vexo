@@ -1,0 +1,3694 @@
+<div class="modulo-card" style="background: white; padding: 30px; border-radius: 15px; max-width: 950px; margin: 0 auto; box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: 'Poppins', sans-serif;">
+  
+<div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; flex-wrap: wrap;">
+  <button onclick="mudarAba('vendas')" id="btn-tab-vendas" style="flex: 1; padding: 12px 20px; border: none; background: #1e3c72; color: white; border-radius: 8px; font-weight: bold; cursor: pointer;">🛒 Lançar Venda</button>
+  <button onclick="mudarAba('gestao')" id="btn-tab-gestao" style="flex: 1; padding: 12px 20px; border: none; background: #f1f5f9; color: #1e3c72; border-radius: 8px; font-weight: bold; cursor: pointer;">📋 Gestão de Pedidos</button>
+  <button onclick="mudarAba('consulta')" id="btn-tab-consulta" style="flex: 1; padding: 12px 20px; border: none; background: #f1f5f9; color: #1e3c72; border-radius: 8px; font-weight: bold; cursor: pointer;">🔍 Consultar</button>
+  <button onclick="mudarAba('renovacoes')" id="btn-tab-renovacoes" style="flex: 1; padding: 12px 20px; border: none; background: #f1f5f9; color: #1e3c72; border-radius: 8px; font-weight: bold; cursor: pointer;">♻️ RENOVAÇÕES/RENEG.</button>
+  <button onclick="mudarAba('futuros')" id="btn-tab-futuros" style="flex: 1; padding: 12px 20px; border: none; background: #f1f5f9; color: #1e3c72; border-radius: 8px; font-weight: bold; cursor: pointer;">🎯 Clientes Futuros</button>
+  
+  <button onclick="mudarAba('pedidos_input')" id="btn-tab-input" style="flex: 1; padding: 12px 20px; border: none; background: #f1f5f9; color: #1e3c72; border-radius: 8px; font-weight: bold; cursor: pointer; min-width: 150px; display: none;">📥 PEDIDOS PARA INPUT</button>
+</div>
+
+<div id="aba-input" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
+  <h2 style="color: #1e3c72; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; margin-bottom: 25px;">📥 Pedidos para Input</h2>
+  <div style="background: #fff; padding: 20px; border-radius: 12px; border: 1px solid #e2e8f0;">
+    <p style="color: #64748b;">Lista de pedidos aguardando processamento...</p>
+    </div>
+</div>
+
+<div id="aba-admin" style="display: none;">
+  <h2 style="color: #dc2626; border-bottom: 2px solid #fee2e2; padding-bottom: 10px; margin-bottom: 25px;">⚙️ Painel de Controle Administrativo</h2>
+  <p>Bem-vindo ao painel restrito. Aqui você poderá gerenciar usuários, visualizar relatórios avançados e configurar o sistema.</p>
+  </div>
+<div id="aba-vendas">
+    <h2 style="color: #1e3c72; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; margin-bottom: 25px;">🛒 Registro de Vendas VEXO</h2>
+
+    <div style="margin-bottom: 30px; padding: 25px; background: #f8fafc; border-radius: 15px; border: 1px solid #e2e8f0;">
+  <label style="font-weight: 800; color: #1e3c72; display: block; margin-bottom: 20px; font-size: 16px;">
+    🏢 Selecione as Modalidades (Múltipla Escolha):
+  </label>
+  
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+    
+    <!-- Função auxiliar para gerenciar o visual ao clicar -->
+    <script>
+      function toggleCard(element) {
+        const checkbox = element.querySelector('input');
+        checkbox.checked = !checkbox.checked;
+        element.querySelector('.modalidade-box').style.borderColor = checkbox.checked ? '#3b82f6' : '#e2e8f0';
+        element.querySelector('.modalidade-box').style.background = checkbox.checked ? '#eff6ff' : 'white';
+        // Chama a função para desenhar os formulários dinâmicos
+        if (typeof gerarFormularioVenda === 'function') gerarFormularioVenda();
+      }
+    </script>
+
+    <label class="card-modalidade" onclick="toggleCard(this)" style="cursor: pointer;">
+      <input type="checkbox" name="v_escolha" value="PRIMEIRA ATIVAÇÃO" style="display: none;">
+      <div class="modalidade-box" style="border: 2px solid #e2e8f0; padding: 15px; border-radius: 12px; transition: 0.3s; text-align: center; background: white;">
+        <span style="font-size: 24px;">🚀</span><br>
+        <strong>PRIMEIRA ATIVAÇÃO</strong>
+      </div>
+    </label>
+
+    <label class="card-modalidade" onclick="toggleCard(this)" style="cursor: pointer;">
+      <input type="checkbox" name="v_escolha" value="PORTABILIDADE" style="display: none;">
+      <div class="modalidade-box" style="border: 2px solid #e2e8f0; padding: 15px; border-radius: 12px; transition: 0.3s; text-align: center; background: white;">
+        <span style="font-size: 24px;">🔄</span><br>
+        <strong>PORTABILIDADE</strong>
+      </div>
+    </label>
+
+    <label class="card-modalidade" onclick="toggleCard(this)" style="cursor: pointer;">
+      <input type="checkbox" name="v_escolha" value="MIGRAÇÃO" style="display: none;">
+      <div class="modalidade-box" style="border: 2px solid #e2e8f0; padding: 15px; border-radius: 12px; transition: 0.3s; text-align: center; background: white;">
+        <span style="font-size: 24px;">⚡</span><br>
+        <strong>MIGRAÇÃO</strong>
+      </div>
+    </label>
+
+    <label class="card-modalidade" onclick="toggleCard(this)" style="cursor: pointer;">
+      <input type="checkbox" name="v_escolha" value="ADITIVO" style="display: none;">
+      <div class="modalidade-box" style="border: 2px solid #e2e8f0; padding: 15px; border-radius: 12px; transition: 0.3s; text-align: center; background: white;">
+        <span style="font-size: 24px;">📄</span><br>
+        <strong>ADITIVO</strong>
+      </div>
+    </label>
+
+    <label class="card-modalidade" onclick="toggleCard(this)" style="cursor: pointer;">
+      <input type="checkbox" name="v_escolha" value="M2M (IoT)" style="display: none;">
+      <div class="modalidade-box" style="border: 2px solid #e2e8f0; padding: 15px; border-radius: 12px; transition: 0.3s; text-align: center; background: white;">
+        <span style="font-size: 24px;">📡</span><br>
+        <strong>M2M (IoT)</strong>
+      </div>
+    </label>
+
+    <label class="card-modalidade" onclick="toggleCard(this)" style="cursor: pointer;">
+      <input type="checkbox" name="v_escolha" value="RENEG." style="display: none;">
+      <div class="modalidade-box" style="border: 2px solid #e2e8f0; padding: 15px; border-radius: 12px; transition: 0.3s; text-align: center; background: white;">
+        <span style="font-size: 24px;">🤝</span><br>
+        <strong>RENEGOCIAÇÃO</strong>
+      </div>
+    </label>
+
+  </div>
+</div>
+
+<div id="bloco-cliente-global" style="display: none; background: #f8fafc; padding: 25px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #cbd5e1; box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);">
+   <h3 style="margin-top: 0; color: #0f172a; font-size: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 10px;"><i class="fas fa-building"></i> 1. Dados Globais do Cliente</h3>
+   <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 15px; margin-top: 15px;">
+       <div>
+           <label style="font-weight: 600; color: #475569;">CNPJ</label>
+           <input type="text" id="v_cnpj_global" class="form-control" placeholder="00.000.000/0000-00" onblur="if(typeof buscarDadosCNPJ === 'function') buscarDadosCNPJ(this.value)">
+       </div>
+       <div>
+           <label style="font-weight: 600; color: #475569;">Razão Social</label>
+           <input type="text" id="v_razao_global" class="form-control" placeholder="Nome da Empresa">
+       </div>
+   </div>
+</div>
+
+<div id="containerLinhasVenda" style="margin-bottom: 30px;"></div>
+
+    <div id="area_campos_venda" style="margin-top: 25px; display: none;"></div>
+</div>
+
+  <div id="aba-renovacoes" style="display: none;">
+  <div style="display: grid; grid-template-columns: 1fr 350px; gap: 20px;">
+    
+    <div>
+      <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px;">
+        <h3 style="color: #1e3c72; margin-top: 0;">♻️ Contratos Prontos para Renovação (+24 meses)</h3>
+        <div id="lista-renovacoes-automaticas" style="display: grid; gap: 10px;">
+          <p style="color: #64748b;">Carregando alertas do sistema...</p>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div style="background: #f8fafc; border: 2px solid #1e3c72; border-radius: 12px; padding: 20px;">
+        <h4 style="margin-top:0; color: #1e3c72;">📅 Agendar Renovação</h4>
+        <label>CLIENTE/RAZÃO</label>
+        <input type="text" id="renov_cliente" class="v-input" style="margin-bottom:10px;">
+        <label>CNPJ</label>
+        <input type="text" id="renov_cnpj" class="v-input" style="margin-bottom:10px;">
+        <label>DATA PREVISTA</label>
+        <input type="date" id="renov_data" class="v-input" style="margin-bottom:10px;">
+        <label>OBSERVAÇÕES</label>
+        <textarea id="renov_obs" class="v-input" style="height: 60px; margin-bottom:15px;"></textarea>
+        <button onclick="salvarNovoAgendamento()" style="width:100%; padding:12px; background:#10b981; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;">Salvar Lembrete</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  <div id="aba-gestao" style="display: none;">
+    <div style="background: #f8f9fa; padding: 15px; border-radius: 12px; margin-bottom: 20px; border: 1px solid #e2e8f0;">
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px;">
+        <div>
+          <h2 style="color: #1e3c72; margin: 0; font-size: 18px;">📋 Gestão de Pedidos</h2>
+          <p style="margin: 0; font-size: 11px; color: #64748b;">Fluxo de aprovação e logística TIM Business</p>
+        </div>
+        
+        <div style="display: flex; gap: 10px; align-items: center;">
+          <label style="margin: 0; font-size: 10px;">FILTRAR POR:</label>
+          <select id="filtro-status" onchange="carregarPedidosGestao()" class="v-input" style="width: 200px; padding: 5px; height: 35px; border-color: #1e3c72; font-weight: bold;">
+            <option value="ATIVOS">⚡ SOMENTE ATIVOS (Etapas 1 a 5)</option>
+            <option value="TODOS">📂 TODOS OS PEDIDOS</option>
+            <option value="1. INPUT REALIZADO">1. INPUT REALIZADO</option>
+            <option value="2. ANTIFRAUDE APROVADO">2. ANTIFRAUDE APROVADO</option>
+            <option value="3. DOCS VALIDADOS BOC">3. DOCS VALIDADOS BOC</option>
+            <option value="4. NOTA FISCAL EMITIDA">4. NOTA FISCAL EMITIDA</option>
+            <option value="5. CONFIRMAÇÃO LOGÍSTICA">5. CONFIRMAÇÃO LOGÍSTICA</option>
+            <option value="6. ATIVADO">✅ 6. ATIVADO (COMISSIONÁVEL)</option>
+          </select>
+          <button onclick="carregarPedidosGestao()" style="background: #fff; border: 1px solid #ddd; padding: 8px 12px; border-radius: 6px; cursor: pointer; transition: 0.3s;" title="Recarregar Lista">🔄</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="lista-pedidos-gestao" style="display: grid; gap: 12px;">
+      <p style="text-align:center; color:#999; padding:40px;">Buscando no banco de dados VEXO...</p>
+    </div>
+
+    <div id="modal-boc-vexo" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100000000; align-items: center; justify-content: center; backgroundColor: rgba(15, 23, 42, 0.85); margin: 0; padding: 0;">
+  <div style="background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 2px solid #1e3c72; animation: fadeInModal 0.3s ease-out;">
+    <h3 style="margin-top: 0; color: #1e3c72; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+      <span>📅</span> Validação BOC Vendas
+    </h3>
+    <p style="font-size: 13px; color: #64748b; margin-bottom: 20px;">Informe a data exata em que o pedido foi <b>APROVADO</b> pelo BOC:</p>
+    
+    <label style="font-size: 11px; font-weight: bold; color: #1e3c72; display: block; margin-bottom: 5px;">DATA DA APROVAÇÃO</label>
+    <input type="date" id="data-boc-manual" style="width: 100%; padding: 12px; border: 2px solid #e2e8f0; border-radius: 8px; font-family: 'Poppins', sans-serif; font-weight: bold; margin-bottom: 20px; outline: none; focus: border-color: #1e3c72;">
+
+    <div style="display: flex; gap: 10px;">
+      <button onclick="fecharModalBoc()" style="flex: 1; padding: 12px; border: none; background: #f1f5f9; color: #64748b; border-radius: 8px; font-weight: bold; cursor: pointer;">Cancelar</button>
+      <button onclick="confirmarBocVexo()" style="flex: 1; padding: 12px; border: none; background: #1e3c72; color: white; border-radius: 8px; font-weight: bold; cursor: pointer;">Confirmar</button>
+    </div>
+  </div>
+</div>
+
+  </div>
+
+  <div id="aba-consulta" style="display: none;">
+    <div style="background: #f0f7ff; border: 1px solid #d1e3f8; padding: 25px; border-radius: 12px; margin-bottom: 25px;">
+      <h2 style="color: #1e3c72; margin: 0 0 15px 0; font-size: 20px;">🔍 Buscar Histórico do Cliente</h2>
+      <p style="margin: 0 0 20px 0; font-size: 13px; color: #64748b;">Consulte todas as compras, contratos e linhas ativas de uma empresa.</p>
+      
+      <div style="display: flex; gap: 10px;">
+        <input type="text" id="input-busca-cliente" class="v-input" placeholder="Digite o CNPJ ou parte da Razão Social..." style="flex: 1; padding: 15px; font-size: 16px; border: 2px solid #e2e8f0; border-radius: 10px;" onkeydown="if(event.key === 'Enter') buscarCliente()">
+        <button onclick="buscarCliente()" style="background: #1e3c72; color: white; border: none; border-radius: 10px; padding: 0 30px; font-weight: bold; font-size: 16px; cursor: pointer; transition: 0.3s; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">Pesquisar</button>
+      </div>
+    </div>
+
+    <div id="resultado-busca-cliente">
+      <div style="text-align: center; padding: 50px 20px; color: #94a3b8;">
+        <span style="font-size: 50px; display: block; margin-bottom: 10px;">🏢</span>
+        Utilize a barra de pesquisa acima para carregar o histórico.
+      </div>
+    </div>
+  </div>
+
+<div id="aba-futuros" style="display: none; animation: fadeIn 0.4s; padding: 10px;">
+  
+  <div style="background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%); padding: 30px; border-radius: 20px; margin-bottom: 30px; position: relative; overflow: hidden; box-shadow: 0 10px 20px rgba(139, 92, 246, 0.2);">
+    <div style="position: relative; z-index: 2;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px;">
+        <span style="background: rgba(255,255,255,0.2); padding: 10px; border-radius: 12px; font-size: 24px;">🎯</span>
+        <h2 style="margin: 0; color: white; font-weight: 800; letter-spacing: -0.5px;">Cofre de Clientes Futuros</h2>
+      </div>
+      <p style="margin: 0; font-size: 14px; color: rgba(255,255,255,0.9); max-width: 600px; line-height: 1.6;">
+        Gestão de leads com restrição temporária para ativação. O VEXO monitora os prazos de cancelamento recente e notifica você no dia exato da liberação.
+      </p>
+    </div>
+    <div style="position: absolute; right: -50px; bottom: -50px; font-size: 150px; opacity: 0.1; transform: rotate(-15deg);">💎</div>
+  </div>
+
+ <div style="background: white; border-radius: 20px; padding: 30px; box-shadow: 0 4px 25px rgba(0,0,0,0.05); border: 1px solid #f1f5f9; margin-bottom: 40px;">
+  
+  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 25px; border-bottom: 1px solid #f8fafc; padding-bottom: 15px;">
+    <span style="color: #8b5cf6; font-weight: 800; font-size: 13px; text-transform: uppercase; letter-spacing: 1px;">⚡ Novo Registro de Espera</span>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: 20px;">
+    
+    <div style="display: grid; grid-template-columns: 1.2fr 2fr; gap: 20px;">
+      <div class="field-box">
+        <label class="label-premium">CNPJ do Cliente</label>
+        <div style="position: relative;">
+          <span class="icon-input">🏢</span>
+          <input type="text" id="fut_cnpj" class="input-premium" placeholder="00.000.000/0000-00" oninput="formatarCNPJ(this)">
+        </div>
+      </div>
+      <div class="field-box">
+        <label class="label-premium">Nome da Empresa / Razão Social</label>
+        <input type="text" id="fut_nome" class="input-premium" style="padding-left: 15px;" placeholder="Digite o nome completo da empresa">
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <div class="field-box">
+        <label class="label-premium">WhatsApp de Contato</label>
+        <div style="position: relative;">
+          <span class="icon-input">📱</span>
+          <input type="text" id="fut_telefone" class="input-premium" placeholder="(00) 00000-0000" oninput="formatarTelefone(this)">
+        </div>
+      </div>
+      <div class="field-box">
+        <label class="label-premium">Data Programada para Retomada</label>
+        <div style="position: relative;">
+          <input type="date" id="fut_data" class="input-premium" style="padding-left: 15px; color: #1e293b;">
+        </div>
+      </div>
+    </div>
+
+    <div class="field-box">
+      <label class="label-premium">Motivo da Restrição (Aqui você digita como será a venda, e as linhas e detalhes da negociação)</label>
+      <textarea id="fut_motivo" rows="3" class="input-premium" style="resize: none; padding: 12px 15px;" placeholder="Descreva aqui o motivo do impedimento (Ex: carência de cancelamento, contrato fidelizado até data X...)"></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; align-items: center; background: #f8fafc; padding: 15px 25px; border-radius: 12px; border: 1px dashed #e2e8f0; margin-top: 10px;">
+      <div style="display: flex; align-items: center; gap: 10px; color: #64748b; font-size: 12px; font-weight: 500;">
+        <span style="font-size: 18px;">💡</span> O VEXO monitora este prazo e notificará você no Dashboard.
+      </div>
+      <button onclick="salvarFuturo()" class="btn-guardar-cofre">
+        <span>💾</span> Guardar no Cofre
+      </button>
+    </div>
+
+  </div>
+</div>
+
+  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+    <h4 style="margin: 0; color: #1e3c72; font-size: 18px; font-weight: 800;">📅 Cronograma de Retomada</h4>
+    <span style="font-size: 11px; background: #e0e7ff; color: #4338ca; padding: 4px 12px; border-radius: 20px; font-weight: 700;">Sincronizado em tempo real</span>
+  </div>
+  
+  <div id="lista-clientes-futuros" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+    </div>
+
+</div>
+
+
+<div id="aba-pedidos_input" class="item-aba" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
+  <div class="modulo-card" style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: 'Poppins', sans-serif;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #f0f2f5; padding-bottom: 15px;">
+      <div>
+        <h2 style="color: #1e3c72; margin: 0;">📥 Pedidos para Input</h2>
+        <p style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 600;">FILA DE PROCESSAMENTO (VENDAS LANÇADAS PELOS VENDEDORES)</p>
+      </div>
+      <button onclick="carregarPedidosParaInput()" style="background: #f1f5f9; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; color: #1e3c72; font-weight: bold; font-size: 12px; transition: 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+        🔄 Atualizar Fila
+      </button>
+    </div>
+
+    <div id="lista-pedidos-input" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+      <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+        <p style="color: #94a3b8; font-size: 14px;">⏳ Buscando pedidos pendentes para input...</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+
+</div>
+
+
+
+<div id="v-modal-sucesso" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); align-items: center; justify-content: center; z-index: 9999;">
+  <div style="background: white; padding: 40px; border-radius: 20px; text-align: center; max-width: 450px; width: 90%; animation: fadeInModal 0.3s ease-out;">
+    <div style="font-size: 60px; margin-bottom: 20px;">✅</div>
+    <h2 style="color: #1e3c72; margin: 0 0 10px 0; font-weight: 800;">VENDA REGISTRADA!</h2>
+    <p style="color: #64748b; font-size: 16px; margin-bottom: 30px;">Operação concluída com sucesso no banco de dados.</p>
+    <button onclick="resetarFormulario()" style="width: 100%; padding: 15px; background: #1e3c72; color: white; border: none; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 16px;">REGISTRAR NOVA VENDA</button>
+  </div>
+</div>
+
+<div id="modal-ativacao-vexo" 
+     onclick="fecharModalAtivacao()" 
+     style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.8); z-index:9999999; backdrop-filter:blur(5px); justify-content:center; align-items:center; margin:0; padding:0;">
+  
+  <div style="position:absolute; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.1);"></div>
+  
+  <div onclick="event.stopPropagation()" 
+       style="position:absolute; top:50%; left:50%; transform:translate(-50%, -50%); background:white; width:90%; max-width:400px; padding:30px; border-radius:20px; box-shadow:0 20px 60px rgba(0,0,0,0.5); border-top:10px solid #10b981; z-index:1000000000;">
+    
+    <div style="text-align: center; margin-bottom: 20px;">
+      <span style="font-size: 50px; display:block;">🚀</span>
+      <h3 style="margin:10px 0 5px 0; color:#1e3c72; font-weight: 800; font-family:'Poppins', sans-serif;">FINALIZAR ATIVAÇÃO</h3>
+      <p style="color:#64748b; font-size:13px;">Informe a data de ativação oficial da TIM</p>
+    </div>
+
+    <div style="margin-bottom: 25px;">
+      <label style="font-size:11px; font-weight:bold; color:#10b981; text-transform:uppercase; display:block; margin-bottom:8px;">📅 Data de Ativação</label>
+      <input type="date" id="data-ativacao-manual" 
+             onkeydown="if(event.key === 'Enter') confirmarAtivacaoModal()"
+             style="width:100%; padding:15px; border-radius:12px; border:2px solid #e2e8f0; font-size:16px; outline:none; box-sizing:border-box; font-family:'Poppins', sans-serif;">
+    </div>
+
+    <div style="display:flex; gap:12px;">
+      <button onclick="confirmarAtivacaoModal()" 
+              style="flex:2; padding:15px; background:#10b981; color:white; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:14px; transition: 0.3s;"
+              onmouseover="this.style.opacity='0.9'" onmouseout="this.style.opacity='1'">
+        Confirmar Ativação
+      </button>
+      <button onclick="fecharModalAtivacao()" 
+              style="flex:1; padding:15px; background:#f1f5f9; color:#64748b; border:none; border-radius:12px; font-weight:bold; cursor:pointer; font-size:14px; transition: 0.3s;"
+              onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+        Cancelar
+      </button>
+    </div>
+  </div>
+</div>
+
+
+
+
+<div id="vexo-toast-container" style="position: fixed; top: 20px; right: 20px; z-index: 99999; display: flex; flex-direction: column; gap: 10px;"></div>
+
+
+
+
+<style>
+  .vexo-toast {
+    background: #ffffff;
+    border-left: 5px solid #1e3c72; /* Azul padrão VEXO */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: 15px 20px;
+    font-family: 'Poppins', sans-serif;
+    font-size: 14px;
+    color: #334155;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: slideInToast 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+  }
+  .vexo-toast.success { border-left-color: #10b981; } /* Verde */
+  .vexo-toast.error { border-left-color: #ef4444; } /* Vermelho */
+  .vexo-toast.warning { border-left-color: #f59e0b; } /* Amarelo */
+
+  @keyframes slideInToast {
+    from { transform: translateX(100%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes fadeOutToast {
+    to { transform: translateX(100%); opacity: 0; }
+  }
+  .toast-vexo-sucesso {
+    position: fixed;
+    bottom: 30px;
+    right: 30px;
+    background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+    color: white;
+    padding: 16px 25px;
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(16, 185, 129, 0.3);
+    z-index: 10000;
+    font-family: 'Poppins', sans-serif;
+    animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    transition: transform 0.4s ease;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+.toast-icon-check {
+    background: rgba(255, 255, 255, 0.2);
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+@keyframes slideInRight {
+    from { opacity: 0; transform: translateX(100%); }
+    to { opacity: 1; transform: translateX(0); }
+}
+  /* --- ANIMAÇÕES E ESTILOS --- */
+  @keyframes fadeInModal { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+  @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  
+  .v-input { width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 6px; outline: none; box-sizing: border-box; font-size: 13px; transition: 0.3s; }
+  .v-input:focus { border-color: #1e3c72; box-shadow: 0 0 5px rgba(30,60,114,0.2); }
+  label { font-size: 11px; font-weight: bold; color: #666; display: block; margin-bottom: 5px; text-transform: uppercase; }
+  .v-toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; background: #1e3c72; color: white; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.2); z-index: 10000; animation: slideInRight 0.3s ease-out; font-size: 14px; font-weight: bold; }
+  .v-confirm-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center; z-index: 10000; }
+  .v-confirm-card { background: white; padding: 30px; border-radius: 15px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); animation: fadeInModal 0.2s ease-out; }
+  .card-pedido-gestao { border: 1px solid #e2e8f0; padding: 15px; border-radius: 12px; display: grid; grid-template-columns: 1.5fr 1fr 180px; align-items: center; gap: 15px; background: #fff; transition: all 0.3s ease; }
+  .card-pedido-gestao:hover { border-color: #1e3c72; box-shadow: 0 4px 12px rgba(0,0,0,0.05); transform: translateY(-2px); }
+  .status-text { transition: color 0.3s ease; }
+  .btn-proxima-etapa { padding: 8px 12px; border: none; border-radius: 6px; color: white; font-weight: bold; font-size: 11px; cursor: pointer; width: 100%; transition: all 0.2s; }
+  .btn-proxima-etapa:hover { opacity: 0.9; transform: scale(1.02); }
+  @media (max-width: 768px) {
+    .card-pedido-gestao { grid-template-columns: 1fr; text-align: center; gap: 10px; }
+    .card-pedido-gestao > div:nth-child(2) { border-left: none !important; border-right: none !important; border-top: 1px solid #f0f2f5; border-bottom: 1px solid #f0f2f5; padding: 10px 0; }
+    .modulo-card { padding: 15px !important; }
+  }
+  body {
+  overflow-x: hidden !important;
+  width: 100%;
+}
+.label-premium {
+  display: block; 
+  font-size: 11px; 
+  font-weight: 700; 
+  color: #64748b; 
+  margin-bottom: 8px; 
+  text-transform: uppercase; 
+  letter-spacing: 0.5px;
+}
+.input-premium {
+  width: 100%;
+  height: 48px; /* Altura fixa para todos os inputs ficarem iguais */
+  padding: 0 15px 0 42px;
+  border-radius: 12px;
+  border: 1.5px solid #e2e8f0;
+  font-size: 14px;
+  background: #fdfdfd;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  font-family: 'Poppins', sans-serif;
+  color: #1e293b;
+}
+/* Ajuste específico para o Textarea */
+textarea.input-premium {
+  height: auto !important;
+  padding: 12px 15px !important;
+}
+  
+ .input-premium:focus {
+  border-color: #8b5cf6;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+}
+.btn-guardar-cofre {
+  background: #1e293b; 
+  color: white; 
+  border: none; 
+  padding: 14px 40px; 
+  border-radius: 12px; 
+  font-weight: 700; 
+  font-size: 14px; 
+  cursor: pointer; 
+  transition: 0.3s; 
+  display: flex; 
+  align-items: center; 
+  gap: 10px;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.2);
+}
+.btn-guardar-cofre:hover {
+  background: #0f172a;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 15px rgba(15, 23, 42, 0.3);
+}
+
+.icon-input {
+  position: absolute; 
+  left: 14px; 
+  top: 50%; 
+  transform: translateY(-50%); 
+  font-size: 16px;
+  z-index: 5;
+}
+
+  .input-premium[type="text"] {
+    padding-left: 38px;
+  }
+
+  /* Efeito de hover nos cards que serão gerados */
+  #lista-clientes-futuros > div {
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+  }
+  #lista-clientes-futuros > div:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.1) !important;
+  }
+  .input-doc-vexo {
+    width: 100%;
+    padding: 8px;
+    background: white;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 11px;
+    cursor: pointer;
+  }
+  .input-doc-vexo::-webkit-file-upload-button {
+    background: #1e3c72;
+    color: white;
+    border: none;
+    padding: 4px 8px;
+    border-radius: 4px;
+    margin-right: 10px;
+    cursor: pointer;
+    font-size: 10px;
+  }
+  .card-modalidade {
+    cursor: pointer;
+  }
+  .modalidade-box {
+    padding: 20px;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    text-align: center;
+    background: white;
+    transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  }
+  .card-modalidade input:checked + .modalidade-box {
+    border-color: #1e3c72;
+    background: #eef2ff;
+    transform: translateY(-3px);
+    box-shadow: 0 5px 15px rgba(30, 60, 114, 0.1);
+  }
+  .modalidade-box strong {
+    color: #475569;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+  }
+  .card-modalidade input:checked + .modalidade-box strong {
+    color: #1e3c72;
+  }
+  .modalidade-box:hover {
+    border-color: #cbd5e1;
+    background: #f1f5f9;
+  }
+</style>
+
+<script>
+// ============================================
+// CARREGAR PEDIDO PENDENTE DE INPUT (BACKOFFICE)
+// ============================================
+let pedidoCarregadoParaInput = null;
+
+function carregarPedidoParaInput() {
+  console.log("📥 === INICIANDO CARREGAMENTO DE PEDIDO ===");
+  
+  return new Promise((resolve, reject) => {
+    let pedido = null;
+    
+    // Estratégia 1: sessionStorage (primário)
+    try {
+      const sessaoData = sessionStorage.getItem('pedidoParaInput');
+      if (sessaoData) {
+        pedido = JSON.parse(sessaoData);
+        console.log("✅ Pedido carregado de sessionStorage");
+      }
+    } catch (e) {
+      console.warn("⚠️ Erro ao ler sessionStorage:", e);
+    }
+    
+    // Estratégia 2: localStorage (fallback)
+    if (!pedido) {
+      try {
+        const localData = localStorage.getItem('ultimoPedidoParaInput');
+        if (localData) {
+          pedido = JSON.parse(localData);
+          console.log("✅ Pedido recuperado de localStorage (fallback)");
+        }
+      } catch (e) {
+        console.warn("⚠️ Erro ao ler localStorage:", e);
+      }
+    }
+    
+    if (!pedido || !pedido.linha) {
+      console.warn("⚠️ Nenhum pedido encontrado para carregar");
+      notificacaoVexo('💡 Nenhum pedido pendente. Selecione um na Gestão de Pedidos.', 'info');
+      resolve(false);
+      return;
+    }
+    
+    // ============================================
+    // 🔥 GARANTIR QUE id_unico NÃO TENHA MODALIDADE
+    // ============================================
+    if (pedido.id_unico && pedido.id_unico.includes('|')) {
+      const partes = pedido.id_unico.split('|');
+      if (partes.length > 2) {
+        pedido.id_unico = partes.slice(0, 2).join('|');
+        console.log("🔄 id_unico limpo (sem modalidade):", pedido.id_unico);
+      }
+    }
+    
+    // ============================================
+    // 🔥 GARANTIR ESTRUTURA DE MODALIDADES (MESMO PARA DADOS ANTIGOS)
+    // ============================================
+    if (!pedido.modalidadesList || !pedido.linhasPorModalidade) {
+      console.log("🔄 Pedido sem estrutura de modalidades. Construindo a partir das linhas...");
+      
+      const linhasOriginais = pedido.linhas || pedido.linhas_agrupadas || [];
+      const map = new Map();
+      
+      linhasOriginais.forEach(linha => {
+        const mod = linha.modalidade || pedido.modalidade || 'PRIMEIRA ATIVAÇÃO';
+        if (!map.has(mod)) map.set(mod, []);
+        map.get(mod).push(linha);
+      });
+      
+      pedido.modalidadesList = Array.from(map.keys());
+      pedido.linhasPorModalidade = {};
+      pedido.modalidadesList.forEach(mod => {
+        pedido.linhasPorModalidade[mod] = map.get(mod);
+      });
+      
+      if (pedido.modalidadeIndex === undefined) {
+        pedido.modalidadeIndex = 0;
+      }
+      
+      pedido._linhasOriginais = linhasOriginais;
+      
+      console.log("✅ Estrutura de modalidades reconstruída:", pedido.modalidadesList);
+    } else {
+      if (!pedido._linhasOriginais) {
+        pedido._linhasOriginais = pedido.linhas || pedido.linhas_agrupadas || [];
+      }
+    }
+    
+    // ============================================
+    // 🔥 EXTRAIR DADOS DA MODALIDADE ATUAL
+    // ============================================
+    const modalidadesList = pedido.modalidadesList || [];
+    const modalidadeIndex = pedido.modalidadeIndex || 0;
+    const modalidadeAtual = modalidadesList[modalidadeIndex] || pedido.modalidade || 'PRIMEIRA ATIVAÇÃO';
+    
+    let linhasDaModalidade = [];
+    if (pedido.linhasPorModalidade && pedido.linhasPorModalidade[modalidadeAtual]) {
+      linhasDaModalidade = pedido.linhasPorModalidade[modalidadeAtual];
+    } else {
+      const todasLinhas = pedido._linhasOriginais || pedido.linhas || pedido.linhas_agrupadas || [];
+      linhasDaModalidade = todasLinhas.filter(linha => {
+        const mod = linha.modalidade || pedido.modalidade || 'PRIMEIRA ATIVAÇÃO';
+        return mod === modalidadeAtual;
+      });
+      
+      if (linhasDaModalidade.length === 0 && todasLinhas.length > 0) {
+        console.warn(`⚠️ Nenhuma linha encontrada para a modalidade "${modalidadeAtual}". Usando todas as linhas como fallback.`);
+        linhasDaModalidade = todasLinhas;
+      }
+    }
+    
+    console.log(`📌 Processando modalidade ${modalidadeIndex+1}/${modalidadesList.length}: ${modalidadeAtual}`);
+    console.log(`📱 ${linhasDaModalidade.length} linha(s) para esta modalidade`);
+    
+    if (linhasDaModalidade.length === 0) {
+      notificacaoVexo(`⚠️ Nenhuma linha encontrada para a modalidade "${modalidadeAtual}".`, 'warning');
+    }
+    
+    // ============================================
+    // 🔥 NORMALIZAR LINHAS (GARANTIR PROPRIEDADE 'operadora')
+    // ============================================
+    console.log("🔍 Normalizando linhas para verificar operadora:");
+    const linhasNormalizadas = linhasDaModalidade.map((linha, idx) => {
+      // Tenta capturar operadora de qualquer variação
+      const operadora = linha.operadora || 
+                        linha.operadora_doadora || 
+                        linha.operadoraDoadora || 
+                        '';
+      
+      // Exibe log detalhado para cada linha
+      console.log(`  Linha ${idx+1}:`);
+      console.log(`    - operadora: "${linha.operadora || 'N/A'}"`);
+      console.log(`    - operadora_doadora: "${linha.operadora_doadora || 'N/A'}"`);
+      console.log(`    - operadoraDoadora: "${linha.operadoraDoadora || 'N/A'}"`);
+      console.log(`    -> Valor final: "${operadora}"`);
+      
+      return {
+        ...linha,
+        operadora: operadora,
+        // Mantém a original se existir, senão define como operadora
+        operadora_doadora: linha.operadora_doadora || operadora
+      };
+    });
+    
+    // ============================================
+    // 🔥 MONTAR OBJETO PARA O FORMULÁRIO
+    // ============================================
+    const pedidoModalidade = {
+      // Dados comuns (cópia do pedido original)
+      linha: pedido.linha,
+      origem: pedido.origem,
+      id_unico: pedido.id_unico,
+      bancoDeDadosId: pedido.bancoDeDadosId || null,
+      cnpj: pedido.cnpj || '',
+      cliente: pedido.cliente || '',
+      ie: pedido.ie || '',
+      vencimento: pedido.vencimento || '',
+      dataVenda: pedido.dataVenda || '',
+      cep: pedido.cep || '',
+      endereco: pedido.endereco || '',
+      numero: pedido.numero || '',
+      complemento: pedido.complemento || '',
+      bairro: pedido.bairro || '',
+      cidade: pedido.cidade || '',
+      uf: pedido.uf || '',
+      cpfAdmin: pedido.cpfAdmin || '',
+      nome_admin: pedido.nome_admin || '',
+      email: pedido.email || '',
+      contato_financeiro: pedido.contato_financeiro || '',
+      codigoCliente: pedido.codigoCliente || '',
+      codigoAdmin: pedido.codigoAdmin || '',
+      // Dados específicos da modalidade atual (com operadora normalizada)
+      modalidade: modalidadeAtual,
+      linhas: linhasNormalizadas,
+      // Controle de progresso
+      modalidadesList: modalidadesList,
+      modalidadeIndex: modalidadeIndex,
+      linhasPorModalidade: pedido.linhasPorModalidade || {},
+      _linhasOriginais: pedido._linhasOriginais || pedido.linhas || pedido.linhas_agrupadas || []
+    };
+    
+    console.log("📦 Objeto preparado para o formulário:", {
+      modalidade: modalidadeAtual,
+      totalLinhas: linhasNormalizadas.length,
+      progresso: `${modalidadeIndex+1}/${modalidadesList.length}`
+    });
+    console.log("📦 Amostra da primeira linha normalizada:", linhasNormalizadas[0] || 'Nenhuma linha');
+    
+    // Salvar no sessionStorage para referência durante a edição
+    sessionStorage.setItem('pedidoModalidadeAtual', JSON.stringify(pedidoModalidade));
+    
+    // Atualizar a variável global
+    pedidoCarregadoParaInput = pedidoModalidade;
+    
+    // ============================================
+    // 🔥 AGUARDAR E PREENCHER O FORMULÁRIO
+    // ============================================
+    aguardarFuncoesDisponiveis()
+      .then(() => {
+        console.log("✅ Funções necessárias carregadas");
+        if (typeof mudarAba === 'function') {
+          mudarAba('vendas');
+          console.log("📑 Aba de vendas ativada");
+        }
+        return selecionarModalidadeSegura(modalidadeAtual);
+      })
+      .then(() => {
+        console.log("✅ Modalidade selecionada");
+        return aguardarFormularioGerado(800);
+      })
+      .then(() => {
+        console.log("✅ Formulário gerado");
+        return preencherCamposPedido(pedidoModalidade);
+      })
+      .then(() => {
+        console.log("✅ Campos preenchidos");
+        rolarParaFormulario();
+        
+        const total = modalidadesList.length || 1;
+        const atual = modalidadeIndex + 1;
+        const btn = document.getElementById('btn_finalizar');
+        if (btn) {
+          btn.innerText = `🚀 Finalizar Pedido (${atual}/${total}) - ${modalidadeAtual}`;
+          btn.style.background = '#1e3c72';
+        }
+        
+        notificacaoVexo(`📝 Preenchendo modalidade ${atual}/${total}: ${modalidadeAtual}`, 'info');
+        
+        resolve(true);
+      })
+      .catch(err => {
+        console.error("❌ Erro ao carregar pedido:", err);
+        notificacaoVexo('❌ Erro ao carregar pedido. Tente novamente.', 'error');
+        reject(err);
+      });
+  });
+}
+
+function aguardarFuncoesDisponiveis(timeout = 5000) {
+  return new Promise((resolve, reject) => {
+    const funcoes = ['mudarAba', 'gerarFormularioVenda', 'notificacaoVexo'];
+    const inicio = Date.now();
+    
+    function verificar() {
+      const todasDisponiveis = funcoes.every(f => typeof window[f] === 'function');
+      
+      if (todasDisponiveis) {
+        console.log("✅ Todas as funções estão disponíveis");
+        resolve();
+        return;
+      }
+      
+      if (Date.now() - inicio > timeout) {
+        console.error("❌ Timeout aguardando funções:", funcoes);
+        reject(new Error('Funções não disponíveis'));
+        return;
+      }
+      
+      setTimeout(verificar, 100);
+    }
+    
+    verificar();
+  });
+}
+
+function selecionarModalidadeSegura(modalidade) {
+  return new Promise((resolve, reject) => {
+    if (!modalidade) {
+      console.warn("⚠️ Modalidade não fornecida");
+      resolve();
+      return;
+    }
+    
+    const modNormalizada = String(modalidade).trim().toUpperCase();
+    console.log(`🔍 Procurando modalidade: ${modNormalizada}`);
+    
+    const radios = document.getElementsByName('v_escolha');
+    let encontrado = false;
+    
+    for (let radio of radios) {
+      const valorRadio = String(radio.value).trim().toUpperCase();
+      
+      if (valorRadio === modNormalizada) {
+        radio.checked = true;
+        encontrado = true;
+        console.log(`✅ Radio button encontrado: ${radio.value}`);
+        
+        if (typeof gerarFormularioVenda === 'function') {
+          gerarFormularioVenda();
+          console.log("✅ gerarFormularioVenda() disparado");
+        } else {
+          radio.dispatchEvent(new Event('change', { bubbles: true }));
+          radio.dispatchEvent(new Event('click', { bubbles: true }));
+        }
+        
+        break;
+      }
+    }
+    
+    if (!encontrado) {
+      console.warn(`⚠️ Modalidade não encontrada: ${modNormalizada}`);
+      console.log("Modalidades disponíveis:", Array.from(radios).map(r => r.value));
+    }
+    
+    resolve();
+  });
+}
+
+function aguardarFormularioGerado(timeout = 3000) {
+  return new Promise((resolve, reject) => {
+    const inicio = Date.now();
+    const areaCampos = document.getElementById('area_campos_venda');
+    
+    function verificar() {
+      if (areaCampos && areaCampos.innerHTML.trim().length > 0) {
+        console.log("✅ Formulário detectado na DOM");
+        resolve();
+        return;
+      }
+      
+      if (Date.now() - inicio > timeout) {
+        console.warn("⚠️ Timeout esperando formulário (continuando mesmo assim)");
+        resolve();
+        return;
+      }
+      
+      setTimeout(verificar, 100);
+    }
+    
+    verificar();
+  });
+}
+
+function preencherCamposPedido(pedido) {
+  return new Promise((resolve, reject) => {
+    console.log("🖊️ Iniciando preenchimento de campos com:", pedido);
+    
+    const campos = {
+      'v_cnpj': pedido.cnpj,
+      'v_razao': pedido.cliente,
+      'v_ie': pedido.ie,
+      'v_cpf_admin': pedido.cpfAdmin,
+      'v_nome_admin': pedido.nome_admin,
+      'v_email': pedido.email,
+      'v_contato_fin': pedido.contato_financeiro,
+      'v_codigo_cliente': pedido.codigoCliente,
+      'v_codigo_admin': pedido.codigoAdmin,
+      'v_cep': pedido.cep,
+      'v_endereco': pedido.endereco,
+      'v_numero': pedido.numero,
+      'v_compl': pedido.complemento,
+      'v_bairro': pedido.bairro,
+      'v_cidade': pedido.cidade,
+      'v_uf': pedido.uf,
+      'v_data': pedido.dataVenda
+    };
+    
+    let preenchidos = 0;
+    
+    // Preenche os campos comuns
+    Object.keys(campos).forEach(id => {
+      const valor = campos[id];
+      if (valor !== undefined && valor !== null && valor !== '') {
+        const el = document.getElementById(id);
+        if (el) {
+          el.value = valor;
+          console.log(`✅ Campo ${id} preenchido com: ${valor}`);
+          preenchidos++;
+        } else {
+          console.warn(`⚠️ Campo ${id} não encontrado no DOM`);
+        }
+      }
+    });
+    
+    // 🔥 Função para tentar preencher o vencimento com retry
+    function preencherVencimento(tentativas = 3) {
+      const vencEl = document.getElementById('v_venc');
+      if (!vencEl) {
+        if (tentativas > 0) {
+          console.warn(`⚠️ Elemento v_venc não encontrado, tentando novamente em 200ms... (restam ${tentativas} tentativas)`);
+          setTimeout(() => preencherVencimento(tentativas - 1), 200);
+        } else {
+          console.error("❌ Elemento v_venc não encontrado após várias tentativas.");
+        }
+        return;
+      }
+      
+      console.log("📅 Valor recebido para vencimento:", pedido.vencimento, "tipo:", typeof pedido.vencimento);
+      if (pedido.vencimento && pedido.vencimento !== '') {
+        // Converte para string e garante dois dígitos (ex: "5" -> "05")
+        let vencValor = String(pedido.vencimento).trim();
+        if (vencValor.length === 1 && !isNaN(vencValor)) {
+          vencValor = vencValor.padStart(2, '0');
+        }
+        let encontrado = false;
+        for (let i = 0; i < vencEl.options.length; i++) {
+          if (vencEl.options[i].value === vencValor) {
+            vencEl.selectedIndex = i;
+            encontrado = true;
+            console.log(`✅ v_venc selecionado com sucesso para o valor: ${vencValor}`);
+            preenchidos++;
+            break;
+          }
+        }
+        if (!encontrado) {
+          console.warn(`⚠️ Valor ${vencValor} não encontrado nas opções do select. Opções disponíveis:`, 
+            Array.from(vencEl.options).map(o => o.value));
+          // Tenta selecionar a opção que contém o número (ex: se valor "5" e opção "05")
+          const numero = parseInt(vencValor);
+          if (!isNaN(numero)) {
+            for (let i = 0; i < vencEl.options.length; i++) {
+              if (parseInt(vencEl.options[i].value) === numero) {
+                vencEl.selectedIndex = i;
+                console.log(`✅ v_venc selecionado via fallback (parseInt) para o valor: ${vencEl.options[i].value}`);
+                preenchidos++;
+                encontrado = true;
+                break;
+              }
+            }
+          }
+          if (!encontrado) {
+            // Se mesmo assim não encontrar, tenta definir o valor diretamente (se o select permitir)
+            vencEl.value = vencValor;
+            console.log(`⚠️ Valor definido diretamente (pode não funcionar se não estiver nas opções): ${vencValor}`);
+          }
+        }
+      } else {
+        console.warn("⚠️ pedido.vencimento está vazio ou inválido. Verifique o objeto pedido.");
+      }
+    }
+    
+    // Aguarda 100ms para garantir que o DOM do select esteja pronto e chama
+    setTimeout(() => preencherVencimento(3), 100);
+    
+    console.log(`✅ ${preenchidos}/${Object.keys(campos).length + (pedido.vencimento ? 1 : 0)} campos preenchidos diretamente (vencimento será preenchido em breve)`);
+    
+    // 🔥 NORMALIZA AS LINHAS ANTES DE PASSAR PARA preencherLinhas
+    // Garante que 'operadora' exista (usando qualquer variação do nome)
+    const linhasNormalizadas = (pedido.linhas || []).map(linha => {
+      // Captura a operadora de qualquer variação do nome da propriedade
+      const operadora = linha.operadora || 
+                        linha.operadora_doadora || 
+                        linha.operadoraDoadora || 
+                        '';
+      if (operadora) {
+        console.log(`📱 Linha ${linha.numero || ''}: operadora = "${operadora}"`);
+      }
+      return {
+        plano: linha.plano || '',
+        numero: linha.numero || '',
+        valor: linha.valor || '',
+        operadora: operadora,
+        // Mantém propriedades extras se existirem
+        ...linha
+      };
+    });
+    
+    if (linhasNormalizadas.length > 0) {
+      preencherLinhas(linhasNormalizadas).then(resolve).catch(reject);
+    } else {
+      resolve();
+    }
+  });
+}
+
+function preencherLinhas(linhas) {
+  return new Promise((resolve, reject) => {
+    console.log("📱 Preenchendo linhas de planos...", linhas);
+    
+    if (!linhas || linhas.length === 0) {
+      console.warn("⚠️ Nenhuma linha para preencher");
+      resolve();
+      return;
+    }
+    
+    // 🔥 Busca o container de forma robusta (suporte para backoffice e parceiro)
+    let container = document.getElementById('container_linhas_planos');
+    
+    if (!container) {
+      console.warn("⚠️ container_linhas_planos não encontrado, procurando alternativas...");
+      container = document.querySelector('[id*="container"][id*="linhas"]');
+    }
+    
+    if (!container) {
+      // Fallback para o container usado no vendas_parceiro.html
+      container = document.getElementById('containerLinhas');
+    }
+    
+    if (!container) {
+      console.warn("⚠️ Nenhum container de linhas encontrado");
+      resolve();
+      return;
+    }
+    
+    console.log("✅ Container de linhas encontrado");
+    
+    try {
+      // 🔥 Remove todas as linhas existentes
+      container.innerHTML = '';
+      
+      // Obtém a modalidade atual de forma robusta
+      let modalidade = '';
+      const modalidadeElement = document.querySelector('input[name="v_escolha"]:checked');
+      if (modalidadeElement) {
+        modalidade = modalidadeElement.value;
+      } else {
+        // Fallback: tentar obter do campo hidden ou do pedidoModalidade
+        const hiddenModalidade = document.getElementById('tipoOferta');
+        if (hiddenModalidade) {
+          modalidade = hiddenModalidade.value;
+        }
+      }
+      
+      const isPrimeiraAtivacao = (modalidade === 'PRIMEIRA ATIVAÇÃO' || modalidade === 'M2M (IoT)');
+      const mostrarDoadora = !isPrimeiraAtivacao;
+      const gridTemplate = isPrimeiraAtivacao 
+          ? "grid-template-columns: 2fr 2fr 1fr 40px;" 
+          : "grid-template-columns: 2fr 2fr 1fr 1fr 40px;";
+      
+      // Cria cada linha a partir dos dados
+      linhas.forEach((linhaData) => {
+        const div = document.createElement('div');
+        div.className = 'linha-plano-item';
+        div.style.cssText = `display: grid; ${gridTemplate} gap: 10px; margin-bottom: 10px; animation: fadeInModal 0.3s;`;
+        
+        // 🔥 NORMALIZAÇÃO: aceita qualquer variação do nome da propriedade
+        const operadora = linhaData.operadora || 
+                          linhaData.operadora_doadora || 
+                          linhaData.operadoraDoadora || 
+                          '';
+        
+        if (operadora) {
+          console.log(`🔍 Linha ${linhaData.numero || '?'}: operadora = "${operadora}"`);
+        } else {
+          console.warn(`⚠️ Linha ${linhaData.numero || '?'}: operadora não encontrada`);
+        }
+        
+        let innerHTML = `
+          <input type="text" placeholder="Plano" list="lista-planos" class="input-plano v-input" value="${linhaData.plano || ''}" oninput="window.verificarValorPlano(this)">
+          <input type="text" placeholder="Número" class="input-numero v-input" value="${linhaData.numero || ''}">
+          <input type="number" step="0.01" placeholder="Valor R$" class="input-valor v-input" value="${linhaData.valor || ''}">
+        `;
+        if (mostrarDoadora) {
+          innerHTML += `<input type="text" placeholder="Doadora" class="input-operadora v-input" value="${operadora}">`;
+        }
+        innerHTML += `<button type="button" onclick="this.parentElement.remove()" style="background:#fee2e2; color:#ef4444; border:none; border-radius:8px; cursor:pointer;" title="Remover linha">🗑️</button>`;
+        
+        div.innerHTML = innerHTML;
+        container.appendChild(div);
+      });
+      
+      console.log(`✅ ${linhas.length} linhas preenchidas`);
+      resolve();
+      
+    } catch (e) {
+      console.error("❌ Erro ao preencher linhas:", e);
+      reject(e);
+    }
+  });
+}
+
+function preencherLinha(linhaElement, dados) {
+  try {
+    const inputPlano = linhaElement.querySelector('.input-plano');
+    const inputNumero = linhaElement.querySelector('.input-numero');
+    const inputValor = linhaElement.querySelector('.input-valor');
+    const inputOperadora = linhaElement.querySelector('.input-operadora');
+    
+    if (inputPlano && dados.plano) inputPlano.value = dados.plano;
+    if (inputNumero && dados.numero) inputNumero.value = dados.numero;
+    if (inputValor && dados.valor) inputValor.value = dados.valor;
+    if (inputOperadora && dados.operadora) inputOperadora.value = dados.operadora;
+    
+    console.log(`✅ Linha preenchida: ${dados.numero}`);
+  } catch (e) {
+    console.error("❌ Erro ao preencher linha:", e);
+  }
+}
+
+function rolarParaFormulario() {
+  setTimeout(() => {
+    const areaForm = document.getElementById('area_campos_venda');
+    if (areaForm) {
+      areaForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      console.log("🔄 Scroll para o formulário realizado");
+    }
+  }, 500);
+}
+
+// Inicialização
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    console.log("📄 DOM carregado, verificando pedido...");
+    carregarPedidoParaInput();
+  });
+} else {
+  console.log("📄 DOM já estava carregado, verificando pedido...");
+  carregarPedidoParaInput();
+}
+
+
+// ==========================================
+// --- VARIÁVEIS GLOBAIS BLINDADAS ---
+// Todas as variáveis do sistema organizadas no topo para evitar falhas de leitura
+// ==========================================
+let consultoresAtivos = [];
+let pedidoParaAtivar = null;
+let statusParaAtivar = null;
+let pedidoParaBoc = null;
+let statusParaBoc = null;
+let planosVexoMemoria = []; 
+
+(function init() {
+  google.script.run.withSuccessHandler(lista => { 
+    consultoresAtivos = lista; 
+    popularSelectConsultores();  // ← adicionar
+  }).buscarNomesUsuarios();
+})();
+
+// ==========================================
+// --- UTILITÁRIOS E COMPONENTES DE UI ---
+// ==========================================
+function mostrarToast(msg) {
+  const toast = document.createElement('div');
+  toast.className = 'v-toast';
+  toast.innerText = msg;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.remove(), 3000);
+}
+
+function notificacaoVexo(mensagem, tipo = 'success') {
+    const container = document.getElementById('vexo-toast-container');
+    if (!container) return; 
+
+    const toast = document.createElement('div');
+    toast.className = `vexo-toast ${tipo}`;
+    
+    let icone = '✅';
+    if (tipo === 'error') icone = '❌';
+    if (tipo === 'warning') icone = '⚠️';
+
+    toast.innerHTML = `<span style="font-size: 18px;">${icone}</span> <span style="font-weight: 600;">${mensagem}</span>`;
+    
+    container.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.animation = 'fadeOutToast 0.4s ease forwards';
+      setTimeout(() => toast.remove(), 400);
+    }, 4000);
+}
+
+function mostrarNotificacaoVexo(titulo, mensagem) {
+    const antigas = document.querySelectorAll('.toast-vexo-sucesso');
+    antigas.forEach(n => n.remove());
+
+    const toast = document.createElement('div');
+    toast.className = 'toast-vexo-sucesso';
+    toast.innerHTML = `
+        <div style="display: flex; align-items: center; gap: 15px;">
+            <div class="toast-icon-check">${titulo.includes('🎯') ? '✓' : 'ℹ️'}</div>
+            <div>
+                <strong style="display: block; font-size: 14px;">${titulo}</strong>
+                <span style="font-size: 12px; opacity: 0.9;">${mensagem}</span>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(toast);
+
+    setTimeout(() => {
+        toast.style.transform = 'translateX(120%)';
+        setTimeout(() => toast.remove(), 500);
+    }, 4000);
+}
+
+function confirmarAcao(titulo, msg, callback) {
+  const overlay = document.createElement('div');
+  overlay.className = 'v-confirm-overlay';
+  overlay.id = 'v-confirm-box';
+  overlay.innerHTML = `
+    <div class="v-confirm-card">
+      <h3 style="margin:0 0 10px 0; color:#1e3c72;">${titulo}</h3>
+      <p style="color:#64748b; font-size:14px; margin-bottom:20px;">${msg}</p>
+      <div style="display:flex; gap:10px;">
+        <button onclick="document.getElementById('v-confirm-box').remove()" style="flex:1; padding:12px; border:none; border-radius:8px; background:#f1f5f9; color:#64748b; cursor:pointer; font-weight:bold;">Cancelar</button>
+        <button id="btn-confirmar-v" style="flex:1; padding:12px; border:none; border-radius:8px; background:#1e3c72; color:white; cursor:pointer; font-weight:bold;">Confirmar</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  document.getElementById('btn-confirmar-v').onclick = () => { overlay.remove(); callback(); };
+}
+
+// ==========================================
+// --- NAVEGAÇÃO AVANÇADA DE ABAS ---
+// ==========================================
+function mudarAba(aba) {
+  const configAbas = {
+    'vendas': 'btn-tab-vendas',
+    'gestao': 'btn-tab-gestao',
+    'consulta': 'btn-tab-consulta',
+    'renovacoes': 'btn-tab-renovacoes',
+    'futuros': 'btn-tab-futuros',
+    'pedidos_input': 'btn-tab-input'
+  };
+
+  Object.keys(configAbas).forEach(id => {
+    const abaEl = document.getElementById('aba-' + id);
+    const btnEl = document.getElementById(configAbas[id]);
+    
+    if (abaEl) {
+      abaEl.style.display = 'none';
+      abaEl.style.opacity = '0';
+      abaEl.style.transition = 'opacity 0.4s ease'; 
+    }
+    
+    if (btnEl) {
+      btnEl.style.background = '#f1f5f9';
+      btnEl.style.color = '#1e3c72';
+      btnEl.style.transform = 'scale(1)';
+      btnEl.style.boxShadow = 'none';
+      btnEl.style.fontWeight = '500';
+    }
+  });
+
+  const abaAtiva = document.getElementById('aba-' + aba);
+  const btnAtivo = document.getElementById(configAbas[aba]);
+
+  if (abaAtiva) {
+    abaAtiva.style.display = 'block';
+    setTimeout(() => { abaAtiva.style.opacity = '1'; }, 20);
+  }
+
+  if (btnAtivo) {
+    btnAtivo.style.background = '#1e3c72';
+    btnAtivo.style.color = 'white';
+    btnAtivo.style.transform = 'scale(1.05)';
+    btnAtivo.style.fontWeight = 'bold';
+    btnAtivo.style.boxShadow = '0 4px 12px rgba(30, 60, 114, 0.25)'; 
+  }
+
+  try {
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const cargo = (sessao.role || "").toUpperCase().trim();
+    const btnInput = document.getElementById('btn-tab-input');
+
+    if (btnInput) {
+      const temPermissao = ["ADMINISTRADOR", "BACKOFFICE", "ADMIN"].includes(cargo);
+      btnInput.style.setProperty('display', temPermissao ? 'inline-flex' : 'none', 'important');
+    }
+  } catch (e) {
+    console.error("Erro na verificação de permissões:", e);
+  }
+
+  console.log("🎯 Módulo Ativo: " + aba.toUpperCase());
+
+  switch (aba) {
+    case 'gestao':
+      if (typeof carregarPedidosGestao === 'function') carregarPedidosGestao();
+      break;
+    case 'consulta':
+      const inputBusca = document.getElementById('input-busca-cliente');
+      if (inputBusca) setTimeout(() => inputBusca.focus(), 200);
+      break;
+    case 'renovacoes':
+      if (typeof carregarAlertasRenovacao === 'function') carregarAlertasRenovacao();
+      break;
+    case 'futuros':
+      const containerFuturos = document.getElementById('lista-clientes-futuros');
+      if (containerFuturos) containerFuturos.innerHTML = "<p style='color:#64748b; font-size:12px; text-align:center;'>⏳ Sincronizando cofre de vendas...</p>";
+      if (typeof carregarFuturos === 'function') carregarFuturos();
+      break;
+    case 'pedidos_input':
+      if (typeof carregarPedidosParaInput === 'function') carregarPedidosParaInput();
+      break;
+  }
+}
+
+// ==========================================
+// --- MÓDULO DE RENOVAÇÕES ---
+// ==========================================
+function carregarAlertasRenovacao() {
+  const lista = document.getElementById('lista-renovacoes-automaticas');
+  
+  lista.innerHTML = `
+    <div style="text-align: center; padding: 40px; color: #64748b;">
+      <span style="font-size: 30px; display: block; animation: pulse 1.5s infinite;">⏳</span>
+      <p style="font-size: 14px; font-weight: bold; margin-top:10px;">Buscando contratos no sistema...</p>
+    </div>`;
+  
+  google.script.run.withSuccessHandler(res => {
+    if (!res || !res.success || !res.dados || res.dados.length === 0) {
+      lista.innerHTML = `
+        <div style="text-align:center; padding:40px; border:2px dashed #cbd5e1; border-radius:16px; background:#f8fafc;">
+          <span style="font-size: 35px;">✅</span>
+          <h3 style="color:#475569; margin: 10px 0 5px 0;">Tudo em dia!</h3>
+          <p style="color:#94a3b8; font-size: 13px; margin: 0;">Nenhum contrato precisando de renovação no momento.</p>
+        </div>`;
+      return;
+    }
+
+    const grupos = {};
+    res.dados.forEach(item => {
+      const nomeDaColunaF = item.vendedor || item.consultor || item[5] || "---";
+      if (!grupos[item.cnpj]) {
+        grupos[item.cnpj] = { razao: item.razao, vendedor: nomeDaColunaF, tempo: item.tempo, linhas: [] };
+      }
+      grupos[item.cnpj].linhas.push({ numero: item.linha, plano: item.plano, data: item.dataOriginal });
+    });
+
+    lista.innerHTML = "";
+
+    for (const cnpj in grupos) {
+      const cliente = grupos[cnpj];
+      const qtdLinhas = cliente.linhas.length;
+      
+      const detalhesLinhas = cliente.linhas.map(l => `
+        <div style="display: flex; justify-content: space-between; align-items: center; background: #ffffff; padding: 10px 12px; margin-bottom: 8px; border-radius: 8px; border: 1px solid #e2e8f0; border-left: 3px solid #10b981; transition: 0.2s;">
+          <div style="font-size: 13px; color: #334155;">
+            📱 <b>${l.numero}</b> <span style="color:#94a3b8; font-size: 11px;">(${l.plano})</span> 
+            <span style="margin-left: 8px; font-size: 10px; background: #f1f5f9; padding: 3px 6px; border-radius: 4px;">Ativação: ${l.data}</span>
+          </div>
+          <button onclick="iniciarRenegociacao('${cnpj}', '${cliente.razao.replace(/'/g, "\\'")}')" 
+        style="background: #10b981; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 10px; box-shadow: 0 2px 4px rgba(16,185,129,0.2); transition: 0.2s;"
+        onmouseover="this.style.background='#059669'" onmouseout="this.style.background='#10b981'">RENEGOCIAR ❯
+</button>
+        </div>
+      `).join('');
+
+      lista.innerHTML += `
+        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border-left: 6px solid #1e3c72;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #f1f5f9; padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 6px;">
+                <h3 style="margin: 0; color: #0f172a; font-size: 18px; font-weight: 800; text-transform: uppercase;">🏢 ${cliente.razao}</h3>
+                <span style="background: #dcfce7; color: #166534; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; border: 1px solid #bbf7d0;">
+                  ${qtdLinhas} ${qtdLinhas > 1 ? 'LINHAS' : 'LINHA'}
+                </span>
+                <span style="background: #fef3c7; color: #92400e; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: bold; border: 1px solid #fde68a;">
+                  ${cliente.tempo} MESES
+                </span>
+              </div>
+              <div style="margin-bottom: 12px;">
+                <span style="font-size: 12px; color: #64748b;">👤 Consultor: <b style="color: #475569; font-size: 13px;">${cliente.vendedor}</b> | CNPJ: ${cnpj}</span>
+              </div>
+            </div>
+            <button onclick="irParaConsultaRapida('${cnpj}')" 
+                    style="background: transparent; color: #1e3c72; border: 2px solid #e2e8f0; padding: 8px 16px; border-radius: 8px; font-weight: bold; font-size: 11px; cursor: pointer; transition: 0.2s;" 
+                    onmouseover="this.style.background='#f8fafc'; this.style.borderColor='#1e3c72'" onmouseout="this.style.background='transparent'; this.style.borderColor='#e2e8f0'">
+              🔎 HISTÓRICO
+            </button>
+          </div>
+          <div style="background: #f8fafc; padding: 15px; border-radius: 8px; border: 1px dashed #cbd5e1;">
+            <p style="font-size: 11px; font-weight: 800; color: #64748b; margin: 0 0 10px 0; text-transform: uppercase;">Linhas Prontas para Renegociação:</p>
+            ${detalhesLinhas}
+          </div>
+        </div>
+      `;
+    }
+  }).buscarRenovacoesAutomaticas();
+}
+
+function irParaConsultaRapida(cnpj) {
+  const inputBusca = document.getElementById('input-busca-cliente');
+  if(inputBusca) {
+    inputBusca.value = cnpj;
+    mudarAba('consulta');
+    if(typeof buscarCliente === 'function') buscarCliente();
+  }
+}
+
+function salvarNovoAgendamento() {
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const nome = sessao.nome || "";
+  const sobrenome = sessao.sobrenome || "";
+  const nomeCompleto = (nome + " " + sobrenome).trim();
+  const identificacaoConsultor = (nomeCompleto || sessao.username || "USUÁRIO").toUpperCase().trim();
+
+  const dados = {
+    cliente: document.getElementById('renov_cliente').value,
+    cnpj: document.getElementById('renov_cnpj').value,
+    dataRenovacao: document.getElementById('renov_data').value,
+    obs: document.getElementById('renov_obs').value,
+    usuarioSistema: identificacaoConsultor
+  };
+
+  if (!dados.cliente || !dados.dataRenovacao) {
+    return alert("⚠️ Preencha o nome do cliente e a data!");
+  }
+  
+  if (typeof mostrarToast === "function") mostrarToast("💾 Salvando agendamento...");
+
+  google.script.run
+    .withSuccessHandler((res) => {
+      if(res.success) {
+        alert("✅ Agendamento registrado com sucesso por: " + identificacaoConsultor);
+        document.getElementById('renov_cliente').value = "";
+        document.getElementById('renov_cnpj').value = "";
+        document.getElementById('renov_data').value = "";
+        document.getElementById('renov_obs').value = "";
+      } else {
+        alert("❌ Erro ao salvar: " + res.error);
+      }
+    })
+    .salvarAgendamentoRenovacao(dados);
+}
+
+// ==========================================
+// --- MÓDULO DE GESTÃO DE STATUS ---
+// ==========================================
+function getStatusVisual(status) {
+  const s = status ? status.toUpperCase() : "1. INPUT REALIZADO";
+  if(s.includes("1.")) return { cor: "#3b82f6", txtBtn: "Antifraude Aprovado ➔", prox: "2. ANTIFRAUDE APROVADO", ante: null, isFinal: false };
+  if(s.includes("2.")) return { cor: "#8b5cf6", txtBtn: "Validar Docs BOC ➔", prox: "3. DOCS VALIDADOS BOC", ante: "1. INPUT REALIZADO", isFinal: false };
+  if(s.includes("3.")) return { cor: "#6366f1", txtBtn: "Nota Fiscal Emitida ➔", prox: "4. NOTA FISCAL EMITIDA", ante: "2. ANTIFRAUDE APROVADO", isFinal: false };
+  if(s.includes("4.")) return { cor: "#f59e0b", txtBtn: "Confirmar Entrega ➔", prox: "5. CONFIRMAÇÃO LOGÍSTICA", ante: "3. DOCS VALIDADOS BOC", isFinal: false };
+  if(s.includes("5.")) return { cor: "#10b981", txtBtn: "Ativar Contrato ✅", prox: "6. ATIVADO", ante: "4. NOTA FISCAL EMITIDA", isFinal: false };
+  return { cor: "#059669", txtBtn: "", prox: "", ante: "5. CONFIRMAÇÃO LOGÍSTICA", isFinal: true };
+}
+
+function carregarPedidosGestao() {
+  const container = document.getElementById('lista-pedidos-gestao');
+  const seletorFiltro = document.getElementById('filtro-status');
+  const filtro = seletorFiltro ? seletorFiltro.value : 'ATIVOS';
+  
+  container.style.opacity = "0.6";
+  
+  google.script.run.withSuccessHandler(function(res) {
+    container.style.opacity = "1";
+    if(!res.vendas || res.vendas.length === 0) {
+      container.innerHTML = `<p style="text-align:center; padding:40px;">Nenhuma venda encontrada na base.</p>`;
+      return;
+    }
+    
+    container.innerHTML = "";
+    const vendasInvertidas = [...res.vendas].reverse();
+    let cardsExibidos = 0;
+
+    vendasInvertidas.forEach((v, index) => {
+      const rowId = res.vendas.length - index; 
+      const status = v[24] || "1. INPUT REALIZADO";
+      const visual = getStatusVisual(status);
+
+      if (filtro === "ATIVOS" && visual.isFinal) return;
+      if (filtro !== "TODOS" && filtro !== "ATIVOS" && status !== filtro) return;
+      
+      cardsExibidos++;
+
+      container.innerHTML += `
+        <div class="card-pedido-gestao" id="card-${rowId}" style="animation: fadeInModal 0.2s ease-out; border-left: 5px solid ${visual.cor};">
+          <div>
+            <div style="font-weight:bold; color:#1e3c72; font-size:14px;">${v[3]}</div>
+            <div style="font-size:11px; color:#2563eb; font-weight:bold; margin-top:2px;">📄 CNPJ: ${v[2]}</div>
+            <div style="font-size:10px; color:#64748b; margin-top:5px; line-height: 1.5;">
+                👤 Vendedor: <b style="color:#334155;">${v[9]}</b><br>
+                🏷️ Modalidade: <b style="color:#1e3c72;">${v[4]}</b><br>
+                📅 Input: <b style="color:#334155;">${v[1]}</b>
+            </div>
+          </div>
+          <div style="text-align: center; border-left: 1px solid #eee; border-right: 1px solid #eee; padding: 0 15px;">
+            <div style="background: #f0f7ff; padding: 4px 8px; border-radius: 6px; display: inline-block; margin-bottom: 6px; border: 1px solid #dbeafe;">
+               <span style="font-size: 9px; color: #1e3c72; font-weight: 800; display: block; text-transform: uppercase;">Linha</span>
+               <b style="font-size: 13px; color: #1e3c72;">${v[6]}</b>
+            </div>
+            <div id="status-${rowId}" style="font-size:10px; font-weight:bold; color:${visual.cor}; transition: color 0.3s;">${status}</div>
+            <div style="font-size:9px; color:#999; margin-top:4px;">P2B: ${v[23] || '-'} | RADAR: ${v[22] || '-'}</div>
+          </div>
+          <div id="btn-container-${rowId}" style="display: flex; gap: 8px; align-items: center; min-width: 180px;">
+            ${visual.ante ? `<button onclick="atualizarStatus(${rowId}, '${visual.ante}', true)" style="background: #f1f5f9; border: 1px solid #cbd5e0; color: #64748b; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: 0.2s;" title="Voltar para: ${visual.ante}">↩️</button>` : ''}
+            
+            ${!visual.isFinal ? 
+              `<button class="btn-proxima-etapa" style="background:${visual.cor}; flex: 1; height: 38px; color:white; border:none; border-radius:8px; font-weight:bold; cursor:pointer;" onclick="atualizarStatus(${rowId}, '${visual.prox}')">${visual.txtBtn}</button>` 
+              : 
+              `<div style="text-align:center; color:#22c55e; font-size:11px; font-weight:bold; background: #f1fbf3; padding: 10px; border-radius: 8px; flex: 1; border: 1px solid #d1fae5;">✅ ATIVADO</div>`
+            }
+          </div>
+        </div>
+      `;
+    });
+
+    if(cardsExibidos === 0) {
+      container.innerHTML = `<p style="text-align:center; color:#999; padding:40px;">Nenhum pedido encontrado para o filtro: <b>${filtro}</b></p>`;
+    }
+  }).buscarDadosRelatorioGeral();
+}
+
+function confirmarBocVexo() {
+  let inputData = document.getElementById('input-data-boc') || document.getElementById('data-boc-manual');
+  
+  if (!inputData) {
+    alert("Erro crítico: O campo de data com ID 'input-data-boc' ou 'data-boc-manual' não existe no seu HTML do modal.");
+    return;
+  }
+  
+  const dataDigitada = inputData.value;
+  
+  if (!dataDigitada) {
+    if (typeof notificacaoVexo === 'function') {
+      notificacaoVexo("Por favor, informe a data de aprovação!", "warning");
+    } else {
+      alert("Por favor, informe a data de aprovação!");
+    }
+    return;
+  }
+
+  const partes = dataDigitada.split("-");
+  const dataFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+  fecharModalBoc();
+  executarEnvioStatus(pedidoParaBoc, statusParaBoc, false, null, dataFormatada);
+}
+
+function atualizarStatus(rowId, novoStatus, isRetrocesso = false) {
+  const titulo = isRetrocesso ? "⚠️ Voltar Etapa" : "Avançar Etapa";
+  const msg = isRetrocesso 
+    ? `Deseja RETORNAR o pedido para a etapa: ${novoStatus}?` 
+    : `Deseja confirmar a evolução para: ${novoStatus}?`;
+
+  if (novoStatus.includes("3. DOCS VALIDADOS BOC") && !isRetrocesso) {
+    pedidoParaBoc = rowId;
+    statusParaBoc = novoStatus;
+    
+    const modal = document.getElementById('modal-boc-vexo');
+    const inputData = document.getElementById('input-data-boc');
+    
+    if (modal) {
+      if (inputData) inputData.value = new Date().toISOString().split('T')[0];
+      
+      Object.assign(modal.style, {
+        display: 'flex',
+        position: 'fixed',
+        top: '0', left: '0', width: '100%', height: '100vh',
+        zIndex: '100000000',
+        alignItems: 'center', justifyContent: 'center',
+        backgroundColor: 'rgba(15, 23, 42, 0.85)'
+      });
+      
+      document.body.style.overflow = 'hidden';
+    } else {
+      alert("Erro: Modal BOC não encontrado no HTML!");
+    }
+  } 
+  else if (novoStatus.includes("6. ATIVADO")) {
+    pedidoParaAtivar = rowId;
+    statusParaAtivar = novoStatus;
+    
+    const modal = document.getElementById('modal-ativacao-vexo');
+    const inputData = document.getElementById('data-ativacao-manual');
+    
+    if (modal && inputData) {
+      inputData.value = new Date().toISOString().split('T')[0];
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+  } 
+  else {
+    confirmarAcao(titulo, msg, () => {
+      executarEnvioStatus(rowId, novoStatus, isRetrocesso, null, null);
+    });
+  }
+}
+
+function fecharModalBoc() {
+  const modal = document.getElementById('modal-boc-vexo');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = 'auto';
+    document.documentElement.style.overflow = 'auto';
+  }
+  carregarPedidosGestao(); 
+}
+
+function confirmarProcessoBoc() {
+  const dataDigitada = document.getElementById('input-data-boc').value;
+  
+  if (!dataDigitada) {
+    notificacaoVexo("Por favor, informe a data de aprovação!", "warning");
+    return;
+  }
+
+  const partes = dataDigitada.split("-");
+  const dataFormatada = `${partes[2]}/${partes[1]}/${partes[0]}`;
+
+  fecharModalBoc();
+
+  confirmarAcao("Aprovação BOC", `Confirmar aprovação em ${dataFormatada}?`, () => {
+    executarEnvioStatus(pedidoParaBoc, statusParaBoc, false, null, dataFormatada);
+  });
+}
+
+function fecharModalAtivacao() {
+  const modal = document.getElementById('modal-ativacao-vexo');
+  if (modal) {
+    modal.style.display = 'none';
+    document.body.style.overflow = '';
+    document.documentElement.style.overflow = '';
+  }
+  pedidoParaAtivar = null;
+  statusParaAtivar = null;
+}
+
+function confirmarAtivacaoModal() {
+  const dataInput = document.getElementById('data-ativacao-manual').value;
+  
+  if (!dataInput) {
+    mostrarToast("⚠️ Selecione a data de ativação!");
+    return;
+  }
+
+  const linhaParaAtualizar = pedidoParaAtivar;
+  const novoStatus = statusParaAtivar;
+  const [ano, mes, dia] = dataInput.split("-");
+  const dataFormatada = `${dia}/${mes}/${ano}`;
+
+  mostrarToast("🚀 Processando ativação...");
+  fecharModalAtivacao();
+
+  executarEnvioStatus(linhaParaAtualizar, novoStatus, false, dataFormatada);
+}
+
+function executarEnvioStatus(rowId, novoStatus, isRetrocesso, dataAtivacao, dataBocManual) {
+  const nomeUsuarioLogado = localStorage.getItem('usuarioNome') || "Sistema";
+  console.log("Tentando enviar status como:", nomeUsuarioLogado);
+
+  const visual = getStatusVisual(novoStatus);
+  const statusDiv = document.getElementById(`status-${rowId}`);
+  
+  if(statusDiv) {
+    statusDiv.innerText = novoStatus;
+    statusDiv.style.color = visual.cor;
+  }
+
+  if (typeof notificacaoVexo === 'function') {
+    notificacaoVexo("Processando atualização...", "success");
+  }
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if(res && res.success) {
+        carregarPedidosGestao();
+      } else {
+        alert("Erro: " + (res ? res.message : "Erro desconhecido"));
+        carregarPedidosGestao();
+      }
+    })
+    .withFailureHandler(function(err) {
+      console.error("Erro no servidor:", err);
+      carregarPedidosGestao();
+    })
+    .atualizarColunaStatus(rowId, novoStatus, dataAtivacao, dataBocManual, nomeUsuarioLogado);
+}
+
+// ==========================================
+// --- MÓDULO DE LANÇAMENTO DE VENDAS ---
+// ==========================================
+const configuracoes = { 'PF': ['PRIMEIRA ATIVAÇÃO', 'PORTABILIDADE', 'RENEGOCIAÇÃO'], 'PJ': ['PRIMEIRA ATIVAÇÃO', 'PORTABILIDADE', 'ADITIVO', 'RENEG.'] };
+
+function selecionarTipo(tipo) {
+  document.getElementById('label_pf').style.borderColor = "#eee";
+  document.getElementById('label_pj').style.borderColor = "#eee";
+  document.getElementById('label_' + tipo.toLowerCase()).style.borderColor = "#1e3c72";
+  const container = document.getElementById('container_checkboxes');
+  document.getElementById('secao_opcoes').style.display = "block";
+  document.getElementById('area_campos_venda').style.display = "none";
+  document.getElementById('container_btn_prosseguir').style.display = "none";
+  container.innerHTML = "";
+  configuracoes[tipo].forEach(opcao => {
+    container.innerHTML += `<div style="background: white; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px;"><input type="radio" name="v_escolha" value="${opcao}" id="${opcao}" onchange="document.getElementById('container_btn_prosseguir').style.display = 'block'"><label style="font-size: 13px; font-weight: 600; cursor: pointer; margin:0;" for="${opcao}">${opcao}</label></div>`;
+  });
+}
+
+// =====================================================================
+// FUNÇÃO PRINCIPAL: GERA O FORMULÁRIO COM SUPORTE A MÚLTIPLAS MODALIDADES
+// =====================================================================
+window.gerarFormularioVenda = function() {
+  const areaVenda = document.getElementById('area_campos_venda');
+  const selecionados = document.querySelectorAll('input[name="v_escolha"]:checked');
+  
+  if (selecionados.length === 0) { 
+    if (typeof mostrarNotificacao === 'function') mostrarNotificacao("Por favor, selecione uma modalidade antes de continuar.");
+    else alert("Por favor, selecione uma modalidade antes de continuar."); 
+    areaVenda.style.display = "none";
+    areaVenda.innerHTML = "";
+    return; 
+  }
+  
+  areaVenda.style.display = "block";
+  
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const userLogado = (sessao.username || "").toUpperCase();
+  const cargo = (sessao.role || "").toUpperCase().trim();
+  const eConsultor = (cargo === "CONSULTOR DE VENDAS" || cargo === "CONSULTOR");
+
+  // Nomes das modalidades selecionadas para o título e regras
+  const nomesModalidades = Array.from(selecionados).map(cb => cb.value);
+  const tituloModalidades = nomesModalidades.join(' | ');
+
+  // 🔥 REGRA DO CÓDIGO CLIENTE (AF): 
+  // Só esconde se a ÚNICA modalidade selecionada for RENEG.
+  const mostrarCodigoCliente = nomesModalidades.some(mod => mod !== "RENEG.");
+  
+  let html = `
+    <div style="background: #fff; border: 2px solid #1e3c72; border-radius: 15px; padding: 25px; animation: fadeInModal 0.4s ease-out;">
+      <h3 style="color: #1e3c72; margin-top: 0; font-weight: 800;">📋 Dados do Contrato: ${tituloModalidades}</h3>
+      
+      <datalist id="lista-planos"></datalist>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 15px; margin-bottom: 20px;">
+        <div><label>DIA VENCIMENTO</label><select id="v_venc" class="v-input" style="border: 1px solid #1e3c72; font-weight: bold;"> <option value="">Dia...</option> ${[1, 5, 7, 10, 15, 20, 25].map(dia => `<option value="${dia.toString().padStart(2, '0')}">${dia.toString().padStart(2, '0')}</option>`).join('')} </select></div>
+        <div><label>DATA DA VENDA</label><input type="date" id="v_data" value="${new Date().toISOString().split('T')[0]}" class="v-input"></div>
+        <div><label style="color: #2563eb;">📦 PEDIDO P2B</label><input type="text" id="v_p2b" class="v-input" style="border: 1px solid #2563eb;"></div>
+        <div><label style="color: #dc2626;">📡 PEDIDO RADAR</label><input type="text" id="v_radar" class="v-input" style="border: 1px solid #dc2626;"></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1.2fr 1.2fr 2fr; gap: 15px; margin-bottom: 20px;">
+        <div><label>CNPJ / CPF</label><input type="text" id="v_cnpj" onblur="if(typeof buscarDadosCNPJ === 'function') buscarDadosCNPJ(this.value)" class="v-input"></div>
+        <div><label>INSCRIÇÃO ESTADUAL</label><input type="text" id="v_ie" class="v-input" placeholder="Nº ou ISENTO"></div>
+        <div><label>RAZÃO SOCIAL / NOME</label><input type="text" id="v_razao" class="v-input"></div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px;">
+        ${mostrarCodigoCliente ? `
+        <div style="background: #f0f7ff; padding: 15px; border-radius: 10px; border: 1px solid #d1e3f8;">
+          <label style="color: #1e3c72; font-weight: 800;">🆔 CÓDIGO DO CLIENTE</label>
+          <input type="text" id="v_codigo_cliente" class="v-input" placeholder="Código AF" style="border: 1px solid #1e3c72;">
+        </div>` : '<div></div>'}
+        <div style="background: #fdf2f2; padding: 15px; border-radius: 10px; border: 1px solid #fecaca;">
+          <label style="color: #991b1b; font-weight: 800;">👤 CÓD. ADMINISTRADOR</label>
+          <input type="text" id="v_codigo_admin" class="v-input" placeholder="Código AG" style="border: 1px solid #991b1b;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; background: #fff4e5; padding: 15px; border-radius: 10px; margin-bottom: 20px; border: 1px solid #ffe3c1;">
+        <div><label style="color: #854d0e;">CPF ADMIN</label><input type="text" id="v_cpf_admin" class="v-input"></div>
+        <div><label style="color: #854d0e;">NOME ADMIN</label><input type="text" id="v_nome_admin" class="v-input"></div>
+        <div><label style="color: #854d0e;">EMAIL</label><input type="email" id="v_email" class="v-input"></div>
+        <div><label style="color: #854d0e;">CONTATO FINANCEIRO</label><input type="text" id="v_contato_fin" class="v-input"></div>
+      </div>
+
+      <div id="container-todas-linhas" style="margin-bottom: 25px;">
+  `;
+
+  // Cria um bloco de adição de linhas para cada modalidade que foi clicada
+  selecionados.forEach(cb => {
+    const modalidade = cb.value;
+    const modID = modalidade.replace(/[^a-zA-Z0-9]/g, '');
+
+    html += `
+        <div style="background: #f8f9fa; padding: 15px; border-radius: 10px; margin-bottom: 15px; border: 1px solid #e2e8f0;">
+          <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 15px;">
+            <h4 style="margin: 0; color: #1e3c72; font-size: 14px; display: flex; align-items: center; gap: 8px;">
+              📱 Linhas: ${modalidade}
+              <span style="background: #1e3c72; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px;" id="qtd-${modID}">0</span>
+            </h4>
+            <button type="button" onclick="adicionarLinhaVexo('${modalidade}', '${modID}')" style="background: #e7f0fd; color: #1e3c72; border: none; padding: 8px 15px; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 11px; transition: 0.2s;">
+              + Adicionar linha
+            </button>
+          </div>
+          
+          <div id="box-linhas-${modID}" style="display: flex; flex-direction: column; gap: 10px;"></div>
+        </div>
+    `;
+  });
+
+  html += `
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 15px; margin-bottom: 20px;">
+        <div><label>CEP</label><input type="text" id="v_cep" class="v-input" onblur="if(typeof buscarEnderecoPorCEP === 'function') buscarEnderecoPorCEP(this.value)"></div>
+        <div style="grid-column: span 2;"><label>ENDEREÇO</label><input type="text" id="v_endereco" class="v-input"></div>
+        <div><label>Nº</label><input type="text" id="v_numero" class="v-input"></div>
+        <div><label>UF</label><input type="text" id="v_uf" maxlength="2" class="v-input"></div>
+        <div><label>CIDADE</label><input type="text" id="v_cidade" class="v-input"></div>
+        <div><label>BAIRRO</label><input type="text" id="v_bairro" class="v-input"></div>
+        <div><label>COMPL.</label><input type="text" id="v_compl" class="v-input"></div>
+      </div>
+
+      <div id="secao-documentos-vexo" style="display: ${eConsultor ? 'none' : 'block'}; margin-top: 25px; padding: 20px; background: #f8fafc; border: 2px dashed #e2e8f0; border-radius: 15px; margin-bottom: 20px;">
+        <h4 style="color: #1e3c72; margin-bottom: 5px; display: flex; align-items: center; gap: 10px; font-size: 15px; font-weight: 800;">
+          <span>📂</span> DOCUMENTAÇÃO DO CLIENTE (DIGITALIZADA)
+        </h4>
+        <p style="font-size: 11px; color: #64748b; margin-bottom: 20px; font-weight: 600;">
+          * Você pode selecionar vários arquivos de uma vez em qualquer um dos campos abaixo (Ex: Fotos de um contrato longo).
+        </p>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px;">
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">CARTÃO CNPJ</label><input type="file" class="input-doc-vexo" data-tipo="CARTAO_CNPJ" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">INSCRIÇÃO ESTADUAL</label><input type="file" class="input-doc-vexo" data-tipo="INSCRICAO_ESTADUAL" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">COMPROVANTE RESIDÊNCIA</label><input type="file" class="input-doc-vexo" data-tipo="COMPROVANTE_RESIDENCIA" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">CONTRATO SOCIAL / CCMEI</label><input type="file" class="input-doc-vexo" data-tipo="CONTRATO_SOCIAL" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">REQUERIMENTO EMPRESÁRIO</label><input type="file" class="input-doc-vexo" data-tipo="REQUERIMENTO_EMPRESARIO" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">FATURA OUTRA OPERADORA</label><input type="file" class="input-doc-vexo" data-tipo="FATURA_OPERADORA" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">3 ÚLTIMOS EXTRATOS (BANCO)</label><input type="file" class="input-doc-vexo" data-tipo="EXTRATOS_BANCARIOS" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">TERMO DE CONTRATAÇÃO</label><input type="file" class="input-doc-vexo" data-tipo="TERMO_CONTRATACAO" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">CONTRATO DE PERMANÊNCIA</label><input type="file" class="input-doc-vexo" data-tipo="CONTRATO_PERMANENCIA" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+          <div class="campo-upload"><label style="font-size: 10px; font-weight: bold; color: #475569;">PROPOSTA COMERCIAL</label><input type="file" class="input-doc-vexo" data-tipo="PROPOSTA_COMERCIAL" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px; margin-top: 5px;"></div>
+
+          <div style="grid-column: 1 / -1; margin-top: 10px; padding-top: 15px; border-top: 1px solid #e2e8f0;">
+            <label style="font-size: 11px; font-weight: bold; color: #1e3c72; display: flex; justify-content: space-between; align-items: center;">
+              RG / CNH DOS SÓCIOS RESPONSÁVEIS
+              <button type="button" onclick="if(typeof addNovoSocioDoc === 'function') addNovoSocioDoc()" style="background: #1e3c72; color: white; border: none; padding: 5px 12px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold;">+ Adicionar Outro Sócio</button>
+            </label>
+            <div id="container-rg-socios" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+              <div class="linha-socio" style="display: flex; gap: 10px; align-items: center;">
+                <input type="file" class="input-doc-vexo" data-tipo="RG_SOCIO" accept="image/*,application/pdf" multiple style="flex: 1; font-size: 11px;">
+              </div>
+            </div>
+          </div>
+
+          <div style="grid-column: 1 / -1; margin-top: 10px; padding-top: 15px; border-top: 2px dashed #e2e8f0;">
+            <label style="font-size: 11px; font-weight: bold; color: #64748b; display: flex; align-items: center; gap: 8px;">
+              <span>📎</span> OUTROS DOCUMENTOS / ANEXOS DIVERSOS
+            </label>
+            <div style="margin-top: 10px;">
+              <input type="file" class="input-doc-vexo" data-tipo="OUTROS" accept="image/*,application/pdf" multiple style="width: 100%; font-size: 11px;">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="secao-consultor-input" style="display: ${eConsultor ? 'none' : 'block'}; margin-top: 20px; padding: 20px; background: #f8fafc; border: 2px solid #cbd5e1; border-radius: 15px; margin-bottom: 20px;">
+        <h4 style="color: #0f172a; margin-top: 0; margin-bottom: 15px; display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 800;">
+          <span>👤</span> ATRIBUIÇÃO DE INPUT (SISTEMA TIM)
+        </h4>
+        <select id="v_consultor_input" class="v-input" style="border: 1px solid #64748b; font-weight: bold; width: 100%; padding: 12px; border-radius: 8px; background: #ffffff;">
+          <option value="">Selecione o consultor usado no Input...</option>
+        </select>
+        <p style="font-size: 10px; color: #64748b; margin-top: 8px; font-weight: 600;">* Informe qual usuário/matrícula foi utilizado para lançar este pedido no sistema da operadora.</p>
+      </div>
+
+      <button type="button" id="btn_finalizar" style="margin-top: 10px; width: 100%; padding: 18px; background: #1e3c72; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px;">
+        ${eConsultor ? '🚀 Enviar Pedido para o Backoffice' : '🚀 Finalizar e Gravar Venda'}
+      </button>
+    </div>
+  `;
+
+  areaVenda.innerHTML = html;
+
+  if (typeof window.carregarPlanosVexo === 'function') { window.carregarPlanosVexo(); }
+  if (typeof popularSelectConsultores === 'function') { popularSelectConsultores(); }
+
+  // Após desenhar o HTML, injeta automaticamente 1 linha para cada modalidade marcada
+  selecionados.forEach(cb => {
+    const modID = cb.value.replace(/[^a-zA-Z0-9]/g, '');
+    adicionarLinhaVexo(cb.value, modID);
+  });
+
+  // 🔥 EVENTO DE CLIQUE ANEXADO AQUI
+  const btnFinalizar = document.getElementById('btn_finalizar');
+  if (btnFinalizar) {
+    btnFinalizar.addEventListener('click', function() {
+      if (window.validarFormulario()) {
+        enviarVenda(); // Agora a função que varre os lotes é ativada de forma limpa!
+      }
+    });
+  }
+};
+
+// 🔥 FUNÇÃO DE VALIDAÇÃO GERAL
+window.validarFormulario = function() {
+  const excecoes = ['v_p2b', 'v_radar', 'v_ie', 'v_codigo_cliente', 'v_codigo_admin', 'v_compl'];
+  const inputs = document.querySelectorAll('#area_campos_venda .v-input');
+
+  for (let input of inputs) {
+    // 💡 O SEGREDO AQUI: 'input.offsetParent === null' pula os campos invisíveis!
+    if (excecoes.includes(input.id) || input.disabled || input.offsetParent === null) continue;
+
+    // Trava se estiver vazio OU se o Select de Operadora estiver na opção "-"
+    if (input.value.trim() === "" || input.value === "-") {
+      
+      // Descobre qual o nome do campo para dar o alerta amigável
+      let nomeCampo = "obrigatório";
+      if (input.previousElementSibling && input.previousElementSibling.tagName === 'LABEL') {
+        nomeCampo = input.previousElementSibling.innerText;
+      } else if (input.placeholder) {
+        nomeCampo = input.placeholder;
+      } else if (input.options && input.options.length > 0) {
+        nomeCampo = input.options[0].text; // Pega o nome do select caso falhe os outros
+      }
+      
+      alert(`⚠️ O campo "${nomeCampo}" precisa ser preenchido!`);
+      
+      // UX avançada: Destaque vermelho e foco no campo vazio
+      input.style.border = "2px solid #ef4444";
+      input.focus();
+      return false; // Interrompe o envio e não deixa prosseguir
+    } else {
+      input.style.border = ""; // Retira o vermelho se já estiver OK
+    }
+  }
+  return true; // Se passar por todos, está liberado para o envio!
+};
+
+
+// =====================================================================
+// FUNÇÕES AUXILIARES PARA ADICIONAR E REMOVER AS LINHAS E OS GRIDS
+// (Cole logo abaixo da função gerarFormularioVenda)
+// =====================================================================
+
+window.adicionarLinhaVexo = function(modalidade, modID) {
+  const container = document.getElementById(`box-linhas-${modID}`);
+  if (!container) return;
+
+  const isPrimeiraAtivacao = (modalidade === "PRIMEIRA ATIVAÇÃO");
+  
+  // 🔥 A NOVA REGRA: A Doadora SÓ aparece se a modalidade for PORTABILIDADE
+  const mostrarDoadora = (modalidade === "PORTABILIDADE");
+  
+  // O layout se ajusta automaticamente: 5 colunas se tiver Doadora, 4 colunas se não tiver
+  const gridTemplate = mostrarDoadora 
+      ? "grid-template-columns: 2fr 2fr 1fr 1fr 40px;" 
+      : "grid-template-columns: 2fr 2fr 1fr 40px;";
+
+  const linhaHtml = document.createElement('div');
+  linhaHtml.className = 'linha-plano-item form-linha-venda'; 
+  linhaHtml.dataset.modalidade = modalidade;
+  linhaHtml.style.cssText = `display: grid; ${gridTemplate} gap: 10px; align-items: center; animation: fadeInUp 0.3s ease; margin-bottom: 10px;`;
+
+  // Mantemos o bloqueio para a Primeira Ativação
+  const numBloqueado = isPrimeiraAtivacao ? 'disabled' : '';
+  const estiloBloqueio = isPrimeiraAtivacao ? 'background:#f1f5f9; cursor: not-allowed;' : '';
+
+  const selectOperadora = `
+    <select class="input-operadora v-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1;">
+      <option value="-">Operadora...</option>
+      <option value="CLARO">CLARO</option>
+      <option value="VIVO">VIVO</option>
+      <option value="OI">OI</option>
+      <option value="OUTRAS">OUTRAS</option>
+    </select>
+  `;
+
+  linhaHtml.innerHTML = `
+    <input type="text" placeholder="Plano" list="lista-planos" class="input-plano v-input" onchange="if(typeof window.verificarValorPlano === 'function') window.verificarValorPlano(this)">
+    <input type="text" placeholder="Número" class="input-numero v-input" ${numBloqueado} style="${estiloBloqueio}">
+    <input type="number" step="0.01" placeholder="Valor R$" class="input-valor v-input">
+    ${mostrarDoadora ? selectOperadora : ""}
+    <button type="button" onclick="if(typeof removerLinhaVexo === 'function') removerLinhaVexo(this, '${modID}')" style="background: #fee2e2; color: #ef4444; border: none; padding: 10px; border-radius: 5px; cursor: pointer;" title="Remover"><i class="fas fa-trash"></i></button>
+  `;
+
+  container.appendChild(linhaHtml);
+  if(typeof atualizarContadorVexo === 'function') atualizarContadorVexo(modID);
+};
+
+window.removerLinhaVexo = function(botao, modID) {
+  botao.closest('.linha-plano-item').remove();
+  atualizarContadorVexo(modID);
+};
+
+window.atualizarContadorVexo = function(modID) {
+  const container = document.getElementById(`box-linhas-${modID}`);
+  const span = document.getElementById(`qtd-${modID}`);
+  if (container && span) {
+    span.innerText = container.children.length;
+  }
+};
+
+function carregarDadosVendaParaFinalizar(numLinha) {
+  if (typeof notificar === 'function') notificar("📥 Sincronizando dados com a planilha...");
+  console.log("Buscando dados da linha:", numLinha);
+
+  google.script.run
+    .withSuccessHandler(res => {
+      console.log("Resposta do servidor:", res);
+
+      if (!res || !res.success || !res.base) { 
+        alert("⚠️ Erro ao buscar dados do pedido. O pedido pode já ter sido processado ou a linha está vazia."); 
+        return; 
+      }
+
+      const modalidadePlanilha = String(res.base.modalidade).trim().toUpperCase();
+      const radios = document.getElementsByName('v_escolha');
+      let modalidadeEncontrada = false;
+
+      for (let r of radios) {
+        const valorRadio = String(r.value).trim().toUpperCase();
+        if (valorRadio === modalidadePlanilha) { 
+          r.checked = true; 
+          modalidadeEncontrada = true;
+          break; 
+        }
+      }
+      
+      if (!modalidadeEncontrada) {
+        alert(`⚠️ Modalidade do pedido não reconhecida (${modalidadePlanilha}).`);
+        return;
+      }
+
+      try {
+        gerarFormularioVenda();
+      } catch(e) {
+        console.error("Erro ao gerar o formulário HTML:", e);
+        alert("Erro interno ao montar a tela de vendas.");
+        return;
+      }
+
+      setTimeout(() => {
+        const setVal = (id, valor) => {
+          const el = document.getElementById(id);
+          if (el) el.value = valor || "";
+        };
+
+        let diaVenc = res.base.vencimento ? String(res.base.vencimento).trim().padStart(2, '0') : "";
+        setVal('v_venc', diaVenc);
+        setVal('v_data', res.base.dataVenda);
+        setVal('v_p2b', res.base.p2b);
+        setVal('v_radar', res.base.radar);
+        setVal('v_cnpj', res.base.cnpj);
+        setVal('v_razao', res.base.razao);
+        setVal('v_ie', res.base.ie); 
+        setVal('v_codigo_cliente', res.base.codigoCliente);
+        setVal('v_codigo_admin', res.base.codigoAdmin);
+        setVal('v_cpf_admin', res.base.cpfAdmin);
+        setVal('v_nome_admin', res.base.nomeAdmin);
+        setVal('v_email', res.base.email);
+        setVal('v_contato_fin', res.base.contatoFin);
+        setVal('v_cep', res.base.cep);
+        setVal('v_endereco', res.base.endereco);
+        setVal('v_numero', res.base.numeroEndereco);
+        setVal('v_uf', res.base.uf);
+        setVal('v_cidade', res.base.cidade);
+        setVal('v_bairro', res.base.bairro);
+        setVal('v_compl', res.base.complemento);
+
+        const containerPlanos = document.getElementById('container_linhas_planos');
+        if (containerPlanos) {
+          containerPlanos.innerHTML = ""; 
+          const gridTemplate = (modalidadePlanilha === "PRIMEIRA ATIVAÇÃO") 
+                                ? "grid-template-columns: 2fr 2fr 1fr 40px;" 
+                                : "grid-template-columns: 2fr 2fr 1fr 1fr 40px;";
+          
+          res.linhasPlanos.forEach(linha => {
+               containerPlanos.innerHTML += `
+                <div class="linha-plano-item" style="display: grid; ${gridTemplate} gap: 10px; margin-bottom: 10px;">
+                  <input type="text" class="input-plano v-input" value="${linha.plano || ''}">
+                  <input type="text" class="input-numero v-input" value="${linha.numero || ''}">
+                  <input type="text" class="input-valor v-input" value="${linha.valor || ''}">
+                  ${modalidadePlanilha !== "PRIMEIRA ATIVAÇÃO" ? `<input type="text" class="input-operadora v-input" value="${linha.operadora || ''}">` : ""}
+                  <span></span>
+                </div>`;
+          });
+        }
+
+        const secaoDocs = document.getElementById('secao-documentos-vexo');
+        if (secaoDocs) secaoDocs.style.display = 'block';
+
+        const btn = document.getElementById('btn_finalizar');
+        if (btn) {
+          btn.innerText = "💾 Fazer Upload e Finalizar Input";
+          btn.style.background = "#059669"; 
+          btn.onclick = function() { finalizarEdicaoBackoffice(res.linhasAfetadas); };
+        }
+
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        if (typeof notificar === 'function') notificar("✅ Pedido aberto com sucesso!");
+
+      }, 500); 
+
+    })
+    .withFailureHandler(err => {
+      console.error("Erro na comunicação com o Apps Script:", err);
+      alert("❌ Falha ao tentar conectar com a planilha. Tente novamente.");
+    })
+    .buscarDadosVendaParaEdicao(numLinha);
+}
+
+let processandoBackoffice = false;
+
+async function finalizarEdicaoBackoffice(linhasAfetadas) {
+  // Impede múltiplos cliques simultâneos
+  if (processandoBackoffice) {
+    notificacaoVexo("⏳ Processando, aguarde...", "warning");
+    return;
+  }
+
+  // Gera token único para esta requisição e verifica se já não existe um token pendente
+  const requestToken = Date.now() + '-' + Math.random().toString(36).substr(2, 8);
+  const storedToken = sessionStorage.getItem('ultimoRequestToken');
+  if (storedToken) {
+    notificacaoVexo("Um pedido já está sendo processado. Aguarde.", "warning");
+    return;
+  }
+  sessionStorage.setItem('ultimoRequestToken', requestToken);
+  processandoBackoffice = true;
+
+  const btn = document.getElementById('btn_finalizar');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = "⏳ Processando...";
+    btn.style.cursor = "not-allowed";
+  }
+
+  const notificarSistema = (msg, tipo = 'success') => {
+    if (typeof notificacaoVexo === 'function') notificacaoVexo(msg, tipo);
+    else alert(msg);
+  };
+
+  const getVal = (id) => {
+    const el = document.getElementById(id);
+    return el ? el.value.trim() : "";
+  };
+
+  const cnpj = getVal('v_cnpj');
+  const razao = getVal('v_razao');
+  const consultorInput = getVal('v_consultor_input');
+
+  if (!cnpj || !razao) {
+    notificarSistema("CNPJ e Razão Social são obrigatórios.", "warning");
+    sessionStorage.removeItem('ultimoRequestToken');
+    processandoBackoffice = false;
+    if (btn) { btn.disabled = false; btn.innerText = "💾 Fazer Upload e Finalizar Input"; btn.style.cursor = "pointer"; }
+    return;
+  }
+
+  const secaoInput = document.getElementById('secao-consultor-input');
+  if (secaoInput && secaoInput.style.display !== 'none' && !consultorInput) {
+    notificarSistema("Selecione o Consultor Responsável pelo Input.", "warning");
+    sessionStorage.removeItem('ultimoRequestToken');
+    processandoBackoffice = false;
+    if (btn) { btn.disabled = false; btn.innerText = "💾 Fazer Upload e Finalizar Input"; btn.style.cursor = "pointer"; }
+    return;
+  }
+
+  try {
+    if (btn) btn.innerText = "⏳ Fazendo Upload dos Documentos...";
+    await processarUploadsVexo(cnpj, razao);
+
+    if (btn) btn.innerText = "⏳ Atualizando banco de dados...";
+
+    const dadosEditados = {
+      vencimento: getVal('v_venc'),
+      p2b: getVal('v_p2b'),
+      radar: getVal('v_radar'),
+      codigoCliente: getVal('v_codigo_cliente'),
+      codigoAdmin: getVal('v_codigo_admin'),
+      cpfAdmin: getVal('v_cpf_admin'),
+      nomeAdmin: getVal('v_nome_admin'),
+      email: getVal('v_email'),
+      contatoFin: getVal('v_contato_fin'),
+      cep: getVal('v_cep'),
+      endereco: getVal('v_endereco'),
+      numero: getVal('v_numero'),
+      bairro: getVal('v_bairro'),
+      cidade: getVal('v_cidade'),
+      uf: getVal('v_uf'),
+      complemento: getVal('v_compl'),
+      consultorInput: consultorInput
+    };
+
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const nomeComp = ((sessao.nome || "") + " " + (sessao.sobrenome || "")).trim().toUpperCase();
+    const nomeInput = nomeComp || (sessao.username || "SISTEMA").toUpperCase();
+
+    google.script.run
+      .withSuccessHandler(r => {
+        sessionStorage.removeItem('ultimoRequestToken');
+        processandoBackoffice = false;
+        if (btn) {
+          btn.disabled = false;
+          btn.style.cursor = "pointer";
+        }
+        if (r && r.success) {
+          notificarSistema("Input finalizado com sucesso!", "success");
+          document.getElementById('area_campos_venda').style.display = 'none';
+          mudarAba('pedidos_input');
+          if (typeof carregarPedidosParaInput === 'function') carregarPedidosParaInput();
+        } else {
+          notificarSistema("Erro ao atualizar: " + (r ? r.message : "Erro desconhecido"), "error");
+          if (btn) btn.innerText = "💾 Tentar Novamente";
+        }
+      })
+      .withFailureHandler(err => {
+        sessionStorage.removeItem('ultimoRequestToken');
+        processandoBackoffice = false;
+        notificarSistema("Falha crítica no servidor. Tente novamente.", "error");
+        console.error(err);
+        if (btn) {
+          btn.disabled = false;
+          btn.innerText = "💾 Tentar Novamente";
+          btn.style.cursor = "pointer";
+        }
+      })
+      .atualizarStatusInputBackoffice(linhasAfetadas, nomeInput, dadosEditados, requestToken);
+
+  } catch (e) {
+    sessionStorage.removeItem('ultimoRequestToken');
+    processandoBackoffice = false;
+    notificarSistema("Erro durante o processamento. Verifique os dados.", "error");
+    console.error(e);
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = "💾 Tentar Novamente";
+      btn.style.cursor = "pointer";
+    }
+  }
+}
+
+function adicionarNovaLinha() {
+    const container = document.getElementById('container_linhas_planos');
+    const div = document.createElement('div');
+    div.className = 'linha-plano-item';
+    
+    const modalidadeElement = document.querySelector('input[name="v_escolha"]:checked');
+    const modalidade = modalidadeElement ? modalidadeElement.value : '';
+    
+    // 🔥 Regra para M2M (não exibir Doadora)
+    const isM2M = (modalidade === "M2M (IoT)");
+    const isPrimeiraAtivacao = (modalidade === "PRIMEIRA ATIVAÇÃO");
+    const mostrarDoadora = (!isPrimeiraAtivacao && !isM2M);
+    
+    const gridTemplate = (isPrimeiraAtivacao || isM2M) 
+        ? "grid-template-columns: 2fr 2fr 1fr 40px;" 
+        : "grid-template-columns: 2fr 2fr 1fr 1fr 40px;";
+    
+    div.style.cssText = `display: grid; ${gridTemplate} gap: 10px; margin-bottom: 10px; animation: fadeInModal 0.3s;`;
+
+    div.innerHTML = `
+      <input type="text" placeholder="Plano" list="lista-planos" class="input-plano v-input" oninput="window.verificarValorPlano(this)">
+      <input type="text" placeholder="Número" class="input-numero v-input">
+      <input type="number" step="0.01" placeholder="Valor R$" class="input-valor v-input">
+      ${mostrarDoadora ? '<input type="text" placeholder="Doadora" class="input-operadora v-input">' : ''}
+      <button type="button" onclick="this.parentElement.remove()" style="background:#fee2e2; color:#ef4444; border:none; border-radius:8px; cursor:pointer;" title="Remover linha">🗑️</button>
+    `;
+    
+    container.appendChild(div);
+}
+
+async function enviarVenda() {
+  const btn = document.getElementById('btn_finalizar');
+  if (!btn) return;
+
+  // 🔥 Se veio da Gestão de Pedidos, chama a função de atualização (não criar nova venda)
+  const pedidoPendente = sessionStorage.getItem('pedidoParaInput');
+  if (pedidoPendente) {
+    console.log("🚨 Pedido pendente detectado. Chamando finalizarPedidoExistente...");
+    await finalizarPedidoExistente();
+    return;
+  }
+
+  try {
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const cargo = (sessao.role || "").toUpperCase().trim();
+    
+    const nome = sessao.nome || "";
+    const sobrenome = sessao.sobrenome || "";
+    const nomeCompleto = (nome + " " + sobrenome).trim();
+    const identificacaoConsultor = (nomeCompleto || sessao.username || "USUÁRIO").toUpperCase().trim();
+
+    // ====================================================================
+    // 1. O SEGREDO: SEPARAR AS LINHAS POR MODALIDADE ANTES DE ENVIAR
+    // ====================================================================
+    const lotesPorModalidade = {};
+
+    document.querySelectorAll('.linha-plano-item').forEach(div => {
+      const p = div.querySelector('.input-plano').value.trim();
+      
+      if(p) {
+        // Puxa a modalidade escondida no código de cada linha
+        const modLinha = div.getAttribute('data-modalidade'); 
+        
+        // Cria a "caixa" da modalidade se ainda não existir
+        if(!lotesPorModalidade[modLinha]) {
+          lotesPorModalidade[modLinha] = [];
+        }
+
+        // --- A CORREÇÃO DEFINITIVA DO VALOR (Seu código mantido 100%) ---
+        let valorRaw = div.querySelector('.input-valor').value.trim();
+        if (valorRaw.includes(',')) {
+          valorRaw = valorRaw.replace(/\./g, ''); 
+          valorRaw = valorRaw.replace(',', '.');  
+        }
+        let valorLimpo = valorRaw.replace(/[^\d.-]/g, '');
+        let valorNumerico = parseFloat(valorLimpo);
+
+        // Guarda a linha dentro do pacote da sua própria modalidade
+        lotesPorModalidade[modLinha].push({ 
+          plano: p, 
+          numero: div.querySelector('.input-numero').value.trim(), 
+          valor: isNaN(valorNumerico) ? 0 : valorNumerico, 
+          operadora: div.querySelector('.input-operadora') ? div.querySelector('.input-operadora').value.trim() : "-" 
+        });
+      }
+    });
+
+    // Pega os nomes das modalidades que realmente tiveram linhas preenchidas
+    const modalidadesEncontradas = Object.keys(lotesPorModalidade);
+
+    if(modalidadesEncontradas.length === 0) { 
+      alert("⚠️ Preencha pelo menos o plano de uma linha!"); 
+      return; 
+    }
+
+    const getVal = (id) => { const el = document.getElementById(id); return el ? el.value.trim() : ""; };
+    const cnpj = getVal('v_cnpj');
+    const razao = getVal('v_razao');
+    const ie = getVal('v_ie'); 
+
+    if(!cnpj || !razao) { alert("⚠️ CNPJ e Razão Social são obrigatórios!"); return; }
+
+    btn.disabled = true;
+    
+    if (cargo !== "CONSULTOR DE VENDAS") {
+      btn.innerText = "⏳ Carregando documentos no banco de dados...";
+      await processarUploadsVexo(cnpj, razao);
+    }
+
+    btn.innerText = "💾 Gravando Dados...";
+
+    // ====================================================================
+    // 2. LOOP MÁGICO: ENVIA UM PEDIDO POR MODALIDADE PARA O PLANILHA
+    // ====================================================================
+    for (let i = 0; i < modalidadesEncontradas.length; i++) {
+      
+      const modalidadeAtual = modalidadesEncontradas[i];
+      const linhasDestaModalidade = lotesPorModalidade[modalidadeAtual];
+
+      const dadosVenda = { 
+        vencimento: getVal('v_venc'), 
+        dataVenda: getVal('v_data'), 
+        p2b: getVal('v_p2b'), 
+        radar: getVal('v_radar'), 
+        cnpj: cnpj, 
+        razao: razao, 
+        ie: ie, 
+        codigoCliente: getVal('v_codigo_cliente'), 
+        codigoAdmin: getVal('v_codigo_admin'), 
+        modalidade: modalidadeAtual, // 🎯 AQUI A MÁGICA: A modalidade limpa que vai direto pra Coluna E!
+        cep: getVal('v_cep'), 
+        endereco: getVal('v_endereco'), 
+        numeroEndereco: getVal('v_numero'), 
+        complemento: getVal('v_compl'), 
+        bairro: getVal('v_bairro'), 
+        cidade: getVal('v_cidade'), 
+        uf: getVal('v_uf'), 
+        cpfAdmin: getVal('v_cpf_admin'), 
+        nomeAdmin: getVal('v_nome_admin'), 
+        email: getVal('v_email'), 
+        contatoFin: getVal('v_contato_fin'), 
+        consultorVenda: identificacaoConsultor, 
+        consultorInput: getVal('v_consultor_input'), 
+        linhas: linhasDestaModalidade // Envia só as linhas dessa modalidade
+      };
+
+      // Dispara para o Sheets e aguarda gravar antes de mandar o próximo pacote
+      await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(res => {
+            if(res && res.success) resolve();
+            else reject(new Error(res.message));
+          })
+          .withFailureHandler(err => reject(err))
+          .salvarVendaNoSheet(dadosVenda);
+      });
+    }
+
+    // Só exibe o sucesso quando TODAS as modalidades forem salvas perfeitamente na planilha
+    document.getElementById('v-modal-sucesso').style.display = 'flex';
+
+  } catch (e) { 
+    alert("Erro ao gravar dados: " + e.message); 
+    btn.disabled = false; 
+    btn.innerText = "🚀 Tentar Novamente";
+  }
+}
+/**
+ * Finaliza um pedido que já existe na planilha (vindo da Gestão de Pedidos)
+ * Atualiza os dados na mesma linha e muda o status para "1. INPUT REALIZADO"
+ */
+async function finalizarPedidoExistente() {
+  console.log("🔧 [finalizarPedidoExistente] Iniciando...");
+  
+  const pedidoSalvo = sessionStorage.getItem('pedidoParaInput');
+  if (!pedidoSalvo) {
+    notificacaoVexo('Nenhum pedido pendente encontrado.', 'error');
+    return false;
+  }
+
+  let pedido;
+  try {
+    pedido = JSON.parse(pedidoSalvo);
+    console.log("✅ Pedido carregado:", pedido);
+    console.log("📌 bancoDeDadosId do pedido:", pedido.bancoDeDadosId || 'NULL');
+  } catch(e) {
+    console.error("❌ Erro ao parsear:", e);
+    notificacaoVexo('Erro ao ler dados do pedido.', 'error');
+    return false;
+  }
+
+  // ============================================
+  // 🔥 EXTRAIR DADOS DA MODALIDADE ATUAL
+  // ============================================
+  const modalidadesList = pedido.modalidadesList || [];
+  const modalidadeIndex = pedido.modalidadeIndex || 0;
+  const modalidadeAtual = modalidadesList[modalidadeIndex] || pedido.modalidade || 'PRIMEIRA ATIVAÇÃO';
+  const totalModalidades = modalidadesList.length;
+
+  console.log(`📌 Processando modalidade ${modalidadeIndex+1}/${totalModalidades}: ${modalidadeAtual}`);
+
+  // 🔥 FORÇA A CRIAÇÃO DO id_unico se não existir
+  let idUnico = pedido.id_unico;
+  if (!idUnico && pedido.cnpj && pedido.data_key) {
+    idUnico = `${pedido.cnpj}|${pedido.data_key}`;
+    console.log("🔄 id_unico construído manualmente:", idUnico);
+  }
+  
+  // 🔥 CAPTURA O bancoDeDadosId DO PEDIDO
+  const bancoDeDadosId = pedido.bancoDeDadosId || null;
+  console.log(`🏦 bancoDeDadosId final: ${bancoDeDadosId || 'NULL (usará central)'}`);
+  
+  // Fallback para número da linha
+  const linha = pedido.linha;
+  
+  if (!idUnico && !linha) {
+    console.error("❌ Nenhum identificador encontrado no pedido:", pedido);
+    notificacaoVexo('Identificador do pedido não encontrado.', 'error');
+    return false;
+  }
+  
+  console.log(`📌 Identificador: ${idUnico ? 'id_unico=' + idUnico : 'linha=' + linha}`);
+
+  if (window.processandoFinalizacao) {
+    notificacaoVexo('Processando, aguarde...', 'warning');
+    return false;
+  }
+  window.processandoFinalizacao = true;
+
+  const btn = document.getElementById('btn_finalizar');
+  if (btn) {
+    btn.disabled = true;
+    btn.innerText = `⏳ Finalizando modalidade ${modalidadeIndex+1}/${totalModalidades}...`;
+  }
+
+  try {
+    const getVal = (id) => {
+      const el = document.getElementById(id);
+      const valor = el ? el.value.trim() : '';
+      console.log(`📥 Campo ${id} = "${valor}"`);
+      return valor;
+    };
+    
+    // 🔥 COLETA DADOS DAS LINHAS (NÚMEROS DE TELEFONE E PLANOS)
+    let linhasData = [];
+    document.querySelectorAll('.linha-plano-item').forEach(div => {
+      const plano = div.querySelector('.input-plano')?.value?.trim() || '';
+      const numero = div.querySelector('.input-numero')?.value?.trim() || '';
+      const valor = div.querySelector('.input-valor')?.value?.trim() || '';
+      const operadora = div.querySelector('.input-operadora')?.value?.trim() || '';
+      if (plano || numero) {
+        linhasData.push({ plano, numero, valor, operadora });
+      }
+    });
+    console.log(`📱 ${linhasData.length} linha(s) coletadas do formulário:`, linhasData);
+
+    // 🔥 FALLBACK: Se o formulário não tiver linhas, usar as linhas originais da modalidade
+    if (linhasData.length === 0) {
+      const linhasOriginais = pedido.linhasPorModalidade?.[modalidadeAtual] || [];
+      if (linhasOriginais.length > 0) {
+        console.warn(`⚠️ Formulário vazio, mas há ${linhasOriginais.length} linha(s) originais. Usando-as como fallback.`);
+        linhasData = linhasOriginais.map(linha => ({
+          plano: linha.plano || '',
+          numero: linha.numero || '',
+          valor: linha.valor || '',
+          // 🔥 GARANTE que a operadora seja mapeada
+          operadora: linha.operadora || linha.operadora_doadora || ''
+        }));
+        console.log(`📱 ${linhasData.length} linha(s) carregadas do fallback.`);
+      } else {
+        console.warn(`⚠️ Formulário vazio e não há linhas originais para a modalidade ${modalidadeAtual}.`);
+        linhasData = [{ plano: '', numero: '', valor: '', operadora: '' }];
+      }
+    }
+
+    const dadosEditados = {
+      vencimento: getVal('v_venc'),
+      radar: getVal('v_radar'),
+      p2b: getVal('v_p2b'),
+      ie: getVal('v_ie'),
+      cep: getVal('v_cep'),
+      endereco: getVal('v_endereco'),
+      numero: getVal('v_numero'),
+      complemento: getVal('v_compl'),
+      bairro: getVal('v_bairro'),
+      cidade: getVal('v_cidade'),
+      uf: getVal('v_uf'),
+      cpfAdmin: getVal('v_cpf_admin'),
+      nomeAdmin: getVal('v_nome_admin'),
+      email: getVal('v_email'),
+      contatoFin: getVal('v_contato_fin'),
+      codigoCliente: getVal('v_codigo_cliente'),
+      codigoAdmin: getVal('v_codigo_admin'),
+      consultorInput: getVal('v_consultor_input'),
+      bancoDeDadosId: bancoDeDadosId,
+      linhas: linhasData,
+      modalidade: modalidadeAtual
+    };
+
+    console.log("📦 Dados enviados ao backend:", JSON.stringify(dadosEditados));
+
+    const cnpj = getVal('v_cnpj');
+    const razao = getVal('v_razao');
+    if (cnpj && razao) {
+      if (btn) btn.innerText = '⏳ Enviando documentos...';
+      await processarUploadsVexo(cnpj, razao);
+    }
+
+    if (btn) btn.innerText = '⏳ Atualizando banco de dados...';
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const nomeUsuario = sessao.nome || sessao.username || 'Sistema';
+
+    let idUnicoComModalidade = idUnico;
+    if (idUnico && !idUnico.includes('|' + modalidadeAtual)) {
+      idUnicoComModalidade = idUnico + '|' + modalidadeAtual;
+    }
+
+    // 🔥 DECIDE QUAL FUNÇÃO CHAMAR (PRIORIZA id_unico)
+    if (idUnico) {
+      console.log(`🚀 Chamando backend com id_unico: ${idUnicoComModalidade}`);
+      console.log(`🏦 Com bancoDeDadosId: ${bancoDeDadosId || 'NULL'}`);
+      
+      google.script.run
+        .withSuccessHandler((res) => {
+          window.processandoFinalizacao = false;
+          if (btn) {
+            btn.disabled = false;
+          }
+          if (res && res.success) {
+            notificacaoVexo(`✅ Modalidade ${modalidadeAtual} finalizada!`, 'success');
+            
+            // 🔥 VERIFICAR PRÓXIMA MODALIDADE
+            const nextIndex = modalidadeIndex + 1;
+            if (nextIndex < totalModalidades) {
+              // Atualizar índice no pedido e salvar novamente
+              pedido.modalidadeIndex = nextIndex;
+              
+              // 🔥 GARANTIR QUE AS LINHAS ORIGINAIS ESTEJAM PRESERVADAS
+              if (!pedido.linhasPorModalidade || Object.keys(pedido.linhasPorModalidade).length === 0) {
+                const linhasOriginais = pedido._linhasOriginais || pedido.linhas || pedido.linhas_agrupadas || [];
+                const map = new Map();
+                linhasOriginais.forEach(linha => {
+                  const mod = linha.modalidade || pedido.modalidade || 'PRIMEIRA ATIVAÇÃO';
+                  if (!map.has(mod)) map.set(mod, []);
+                  map.get(mod).push(linha);
+                });
+                pedido.linhasPorModalidade = {};
+                pedido.modalidadesList = Array.from(map.keys());
+                pedido.modalidadesList.forEach(mod => {
+                  pedido.linhasPorModalidade[mod] = map.get(mod);
+                });
+                console.log("🔄 Estrutura de modalidades reconstruída antes de carregar próxima.");
+              }
+              
+              sessionStorage.setItem('pedidoParaInput', JSON.stringify(pedido));
+              console.log(`🔄 Carregando próxima modalidade: ${modalidadesList[nextIndex]}`);
+              
+              // 🔥 CHAMAR CARREGAMENTO DA PRÓXIMA MODALIDADE (SEM RECARREGAR A PÁGINA)
+              setTimeout(() => {
+                carregarPedidoParaInput().then(() => {
+                  console.log("✅ Próxima modalidade carregada com sucesso.");
+                }).catch(err => {
+                  console.error("❌ Erro ao carregar próxima modalidade:", err);
+                  notificacaoVexo('❌ Erro ao carregar próxima modalidade. Tente novamente.', 'error');
+                });
+              }, 500);
+            } else {
+              // Todas as modalidades concluídas
+              sessionStorage.removeItem('pedidoParaInput');
+              notificacaoVexo('✅ Todas as modalidades foram processadas!', 'success');
+              setTimeout(() => {
+                if (typeof window.abrirModulo === 'function') {
+                  window.abrirModulo('pedidos_gestao');
+                } else if (typeof abrirModulo === 'function') {
+                  abrirModulo('pedidos_gestao');
+                } else {
+                  window.location.href = "?page=pedidos_gestao";
+                }
+              }, 1500);
+            }
+          } else {
+            const msg = res?.message || 'Erro desconhecido';
+            notificacaoVexo('❌ Erro: ' + msg, 'error');
+            console.error("Resposta de erro do backend:", res);
+            if (btn) {
+              btn.disabled = false;
+              btn.innerText = '🚀 Tentar Novamente';
+            }
+          }
+        })
+        .withFailureHandler((err) => {
+          window.processandoFinalizacao = false;
+          if (btn) {
+            btn.disabled = false;
+            btn.innerText = '🚀 Tentar Novamente';
+          }
+          notificacaoVexo('❌ Erro de comunicação: ' + err, 'error');
+          console.error("Erro no backend:", err);
+        })
+        .atualizarStatusInputBackofficePorId(
+          idUnicoComModalidade,
+          pedido.origem,
+          nomeUsuario,
+          dadosEditados,
+          Date.now() + '_' + Math.random().toString(36).substr(2, 9),
+          pedido.linha
+        );
+    } else {
+      // Fallback: linha
+      console.log(`🚀 Chamando backend com linha: ${linha}`);
+      const linhasAfetadas = [linha];
+      google.script.run
+        .withSuccessHandler((res) => {
+          window.processandoFinalizacao = false;
+          if (btn) {
+            btn.disabled = false;
+          }
+          if (res && res.success) {
+            notificacaoVexo(`✅ Modalidade ${modalidadeAtual} finalizada!`, 'success');
+            
+            const nextIndex = modalidadeIndex + 1;
+            if (nextIndex < totalModalidades) {
+              pedido.modalidadeIndex = nextIndex;
+              sessionStorage.setItem('pedidoParaInput', JSON.stringify(pedido));
+              setTimeout(() => {
+                carregarPedidoParaInput().then(() => {
+                  console.log("✅ Próxima modalidade carregada com sucesso (fallback).");
+                }).catch(err => {
+                  console.error("❌ Erro ao carregar próxima modalidade (fallback):", err);
+                });
+              }, 500);
+            } else {
+              sessionStorage.removeItem('pedidoParaInput');
+              notificacaoVexo('✅ Todas as modalidades foram processadas!', 'success');
+              setTimeout(() => {
+                if (typeof window.abrirModulo === 'function') {
+                  window.abrirModulo('pedidos_gestao');
+                } else {
+                  window.location.href = "?page=pedidos_gestao";
+                }
+              }, 1500);
+            }
+          } else {
+            const msg = res?.message || 'Erro desconhecido';
+            notificacaoVexo('❌ Erro: ' + msg, 'error');
+            console.error("Resposta de erro do backend:", res);
+            if (btn) {
+              btn.disabled = false;
+              btn.innerText = '🚀 Tentar Novamente';
+            }
+          }
+        })
+        .withFailureHandler((err) => {
+          window.processandoFinalizacao = false;
+          if (btn) {
+            btn.disabled = false;
+            btn.innerText = '🚀 Tentar Novamente';
+          }
+          notificacaoVexo('❌ Erro de comunicação: ' + err, 'error');
+          console.error("Erro no backend:", err);
+        })
+        .atualizarStatusInputBackoffice(linhasAfetadas, nomeUsuario, dadosEditados, Date.now());
+    }
+
+    return true;
+
+  } catch (e) {
+    window.processandoFinalizacao = false;
+    if (btn) {
+      btn.disabled = false;
+      btn.innerText = '🚀 Tentar Novamente';
+    }
+    notificacaoVexo('❌ Erro: ' + e.message, 'error');
+    console.error("Exceção:", e);
+    return false;
+  }
+}
+function resetarBotao(btn) { btn.disabled = false; btn.innerText = "🚀 Finalizar e Gravar Venda"; btn.style.opacity = "1"; btn.style.cursor = "pointer"; }
+
+function resetarFormulario() {
+  document.getElementById('v-modal-sucesso').style.display = 'none';
+  document.getElementById('area_campos_venda').innerHTML = "";
+  document.getElementById('area_campos_venda').style.display = "none";
+  document.getElementById('secao_opcoes').style.display = "none";
+  const radios = document.getElementsByName('tipo_pessoa');
+  for(let i=0; i<radios.length; i++) radios[i].checked = false;
+  document.getElementById('label_pj').style.borderColor = "#eee";
+  document.getElementById('label_pf').style.borderColor = "#eee";
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// ==========================================
+// --- APIS EXTERNAS E BUSCA ---
+// ==========================================
+function buscarEnderecoPorCEP(cep) {
+  const valor = cep.replace(/\D/g, '');
+  if (valor.length !== 8) return;
+  document.getElementById('v_endereco').value = "Buscando...";
+  mostrarToast("🔍 Localizando CEP...");
+  fetch(`https://viacep.com.br/ws/${valor}/json/`).then(response => response.json()).then(dados => {
+    if (!dados.erro) {
+      document.getElementById('v_endereco').value = dados.logradouro;
+      document.getElementById('v_bairro').value = dados.bairro;
+      document.getElementById('v_cidade').value = dados.localidade;
+      document.getElementById('v_uf').value = dados.uf;
+      document.getElementById('v_numero').focus();
+    } else { mostrarToast("❌ CEP não encontrado!"); document.getElementById('v_endereco').value = ""; }
+  }).catch(error => { console.error('Erro na consulta do CEP:', error); document.getElementById('v_endereco').value = ""; });
+}
+
+function buscarDadosCNPJ(valor) {
+  const cnpj = valor.replace(/\D/g, '');
+  if (cnpj.length !== 14) return;
+  mostrarToast("🔍 Consultando CNPJ na Receita...");
+  fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`).then(response => { if (!response.ok) throw new Error(); return response.json(); }).then(dados => {
+    if (dados.razao_social) { document.getElementById('v_razao').value = dados.razao_social; }
+    if (dados.cep) {
+      document.getElementById('v_cep').value = dados.cep;
+      document.getElementById('v_endereco').value = dados.logradouro;
+      document.getElementById('v_bairro').value = dados.bairro;
+      document.getElementById('v_cidade').value = dados.municipio;
+      document.getElementById('v_uf').value = dados.uf;
+      document.getElementById('v_numero').value = dados.numero || "";
+      mostrarToast("✅ Dados da empresa carregados!");
+    }
+  }).catch(() => { mostrarToast("⚠️ Não foi possível auto-preencher via CNPJ."); });
+}
+
+// Listener para detectar a tecla ESC e fechar o modal
+document.addEventListener('keydown', function(event) {
+  if (event.key === "Escape") { 
+    const modal = document.getElementById('modal-ativacao-vexo');
+    if (modal && modal.style.display !== 'none') {
+      fecharModalAtivacao();
+    }
+  }
+});
+
+function buscarCliente() {
+  const termo = document.getElementById('input-busca-cliente').value.trim();
+  const container = document.getElementById('resultado-busca-cliente');
+  
+  if(!termo) { 
+    mostrarToast("⚠️ Digite um CNPJ ou Razão!"); 
+    return; 
+  }
+
+  container.innerHTML = `
+    <div style="text-align: center; padding: 50px; color: #1e3c72;">
+      <span style="font-size: 40px; display: block; margin-bottom: 15px;">⏳</span>
+      <b style="font-size: 16px;">Buscando...</b>
+    </div>`;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if(!res) {
+        container.innerHTML = `<div style="padding:20px; color:red; text-align:center;">❌ Erro: O servidor retornou uma resposta vazia.</div>`;
+        return;
+      }
+
+      if(res.success === false) {
+        container.innerHTML = `<div style="padding:20px; color:red; text-align:center;">❌ Erro: ${res.message}</div>`;
+        return;
+      }
+      
+      if(!res.dados || res.dados.length === 0) {
+        container.innerHTML = `
+          <div style="text-align: center; padding: 40px; background: #fef2f2; border: 1px solid #fecaca; border-radius: 12px; color: #991b1b;">
+            <b style="font-size: 16px;">❌ Nenhum registro encontrado para: "${termo}"</b>
+          </div>`;
+        return;
+      }
+      
+      renderizarHistoricoCliente(res.dados);
+    })
+    .withFailureHandler(function(err) {
+      container.innerHTML = `<div style="padding:20px; color:red; text-align:center;">🚨 Falha na comunicação: ${err}</div>`;
+    })
+    .buscarHistoricoCliente(termo);
+}
+
+function renderizarHistoricoCliente(linhasEncontradas) {
+  const container = document.getElementById('resultado-busca-cliente');
+  if (!linhasEncontradas || linhasEncontradas.length === 0) return;
+
+  const isRenovacao = linhasEncontradas[0].length <= 10;
+
+  if (isRenovacao) {
+    const cliente = {
+      razao: linhasEncontradas[0][0] || "-",   
+      cnpj: linhasEncontradas[0][1] || "-",    
+      vendedor: linhasEncontradas[0][5] || "Não Informado" 
+    };
+
+    let html = `
+      <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; animation: fadeInModal 0.4s;">
+        <div style="border-bottom: 2px solid #f0f2f5; padding-bottom: 15px; margin-bottom: 15px;">
+          <h3 style="margin: 0; color: #1e3c72; font-size: 22px; font-weight: 800;">🏢 ${cliente.razao}</h3>
+          <div style="margin: 8px 0 0 0;">
+            <span style="font-size: 13px; color: #64748b;">👤 Consultor: <b style="color: #2563eb;">${cliente.vendedor}</b> | CNPJ: ${cliente.cnpj}</span>
+          </div>
+        </div>
+      </div>
+      <h4 style="color: #1e3c72; margin-bottom: 15px; font-size: 16px;">📅 Histórico de Agendamentos e Observações</h4>
+    `;
+
+    linhasEncontradas.forEach(l => {
+      const dataAgendamento = l[2] || "-"; 
+      const observacao = l[3] || "Nenhuma observação registrada."; 
+      const dataLancamento = l[4] ? new Date(l[4]).toLocaleDateString('pt-BR') : "-"; 
+      const consultorResponsavel = l[5] || "Não Informado"; 
+
+      html += `
+        <div style="background: #f8f9fa; border: 1px solid #cbd5e0; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 6px solid #f59e0b; animation: fadeInModal 0.5s;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div>
+              <b style="color: #b45309; font-size: 16px;">⏱️ RENOVAÇÃO: ${dataAgendamento}</b>
+              <span style="display: block; font-size: 12px; color: #64748b; margin-top: 5px;">👤 Lançado por: <b>${consultorResponsavel}</b> | Em: ${dataLancamento}</span>
+            </div>
+            <span style="background: #fef3c7; color: #b45309; padding: 5px 10px; border-radius: 6px; font-size: 11px; font-weight: bold;">AGENDADO</span>
+          </div>
+          <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 15px; font-size: 14px; color: #334155;">
+            <b style="color: #64748b; font-size: 11px; display: block; margin-bottom: 5px; text-transform: uppercase;">📝 Observações do Consultor:</b>
+            ${observacao}
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+
+  } else {
+    const cliente = {
+      cnpj: linhasEncontradas[0][2] || "-",
+      razao: linhasEncontradas[0][3] || "-",
+      vendedor: linhasEncontradas[0][9] || linhasEncontradas[0][5] || "Não Informado", 
+      admin: linhasEncontradas[0][19] || "-",
+      email: linhasEncontradas[0][20] || "-",
+      cep: linhasEncontradas[0][11] || "-",
+      codCliente: linhasEncontradas[0][31] || "N/A", 
+      codAdmin: linhasEncontradas[0][32] || "N/A"    
+    };
+
+    let html = `
+      <div style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 25px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; animation: fadeInModal 0.4s;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 2px solid #f0f2f5; padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+          <div>
+            <h3 style="margin: 0; color: #1e3c72; font-size: 22px; font-weight: 800;">🏢 ${cliente.razao}</h3>
+            <div style="margin: 8px 0 12px 0;">
+              <span style="font-size: 13px; color: #64748b;">👤 Consultor: <b style="color: #2563eb;">${cliente.vendedor}</b> | CNPJ: ${cliente.cnpj}</span>
+            </div>
+          </div>
+          <div style="text-align: right; background: #f8f9fa; padding: 10px 15px; border-radius: 8px; border: 1px solid #e2e8f0;">
+             <span style="font-size: 11px; color: #64748b; display: block;">CÓDIGO CLIENTE: <b style="color:#1e3c72; font-size: 13px;">${cliente.codCliente}</b></span>
+             <span style="font-size: 11px; color: #64748b; display: block; margin-top: 5px;">CÓDIGO ADMINISTRADOR: <b style="color:#991b1b; font-size: 13px;">${cliente.codAdmin}</b></span>
+          </div>
+        </div>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; font-size: 13px; color: #475569;">
+          <div><span style="display:block; font-size:10px; font-weight:bold; color:#94a3b8;">ADMINISTRADOR</span><b>${cliente.admin}</b></div>
+          <div><span style="display:block; font-size:10px; font-weight:bold; color:#94a3b8;">E-MAIL</span><b>${cliente.email}</b></div>
+          <div><span style="display:block; font-size:10px; font-weight:bold; color:#94a3b8;">LOCALIZAÇÃO</span><b>CEP: ${cliente.cep}</b></div>
+        </div>
+      </div>
+      <h4 style="color: #1e3c72; margin-bottom: 15px; font-size: 16px;">🛒 Histórico de Contratos e Linhas</h4>
+    `;
+
+    const contratos = {};
+    linhasEncontradas.forEach(l => {
+      const chave = `${l[1]} | ${l[4]} | ${l[24]}`;
+      if(!contratos[chave]) {
+        let nomeDoConsultor = l[9] || l[5] || "Não Informado";
+        contratos[chave] = { 
+          data: l[1] || "-", 
+          modalidade: l[4] || "-", 
+          status: l[24] || "PENDENTE", 
+          vendedor: String(nomeDoConsultor).trim(),
+          linhas: [], 
+          valorTotal: 0 
+        };
+      }
+      
+      const valorLinha = parseFloat(l[7]) || 0;
+      let nomeDoPlano = l[5] || "Plano Adicional";
+
+      contratos[chave].linhas.push({ 
+        plano: String(nomeDoPlano).trim(), 
+        numero: l[6] || "-", 
+        valor: valorLinha, 
+        operadora: l[8] || "-" 
+      });
+      
+      contratos[chave].valorTotal += valorLinha;
+    });
+
+    Object.values(contratos).forEach(contrato => {
+      let corStatus = "#64748b"; let bgStatus = "#f1f5f9";
+      if(contrato.status.includes("ATIVADO")) { corStatus = "#166534"; bgStatus = "#dcfce7"; }
+      else if(contrato.status.includes("NOTA")) { corStatus = "#9a3412"; bgStatus = "#ffedd5"; }
+      else if(contrato.status.includes("APROVADO")) { corStatus = "#3730a3"; bgStatus = "#e0e7ff"; }
+
+      let linhasHtml = contrato.linhas.map(lin => `
+        <div style="display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #f0f2f5; font-size: 13px;">
+          <span style="color: #334155;">📱 <b>${lin.numero}</b> <span style="color:#64748b; font-size:11px;">(${lin.plano})</span></span>
+          <span style="font-weight: bold; color: #1e3c72;">R$ ${lin.valor.toFixed(2)} ${lin.operadora !== "-" ? `<span style="font-size:10px; color:#94a3b8; font-weight:normal; margin-left:8px;">[Doadora: ${lin.operadora}]</span>` : ''}</span>
+        </div>
+      `).join('');
+
+      html += `
+        <div style="background: #f8f9fa; border: 1px solid #cbd5e0; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 6px solid #1e3c72; animation: fadeInModal 0.5s;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <div>
+              <b style="color: #1e3c72; font-size: 16px; text-transform: uppercase;">📄 ${contrato.modalidade}</b>
+              <span style="display: block; font-size: 12px; color: #64748b; margin-top: 5px;">📅 Vendido em: <b>${contrato.data}</b> | 👤 Consultor: <b>${contrato.vendedor}</b></span>
+            </div>
+            <div style="background: ${bgStatus}; color: ${corStatus}; padding: 6px 12px; border-radius: 8px; font-size: 11px; font-weight: bold;">
+              ${contrato.status}
+            </div>
+          </div>
+          <div style="background: white; border: 1px solid #e2e8f0; border-radius: 8px; padding: 5px;">
+            ${linhasHtml}
+          </div>
+          <div style="text-align: right; margin-top: 15px; font-size: 15px; color: #1e3c72;">
+            Total Contratado (Mensal): <b style="font-size: 18px;">R$ ${contrato.valorTotal.toFixed(2)}</b>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+  }
+}
+
+function prepararRenovacao(cnpj, linha) {
+  if (typeof mostrarToast === 'function') {
+    mostrarToast("⏳ Carregando dados do cliente...");
+  } else {
+    console.log("Carregando dados...");
+  }
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (!res || !res.success) {
+        alert("❌ Erro: " + (res ? res.message : "Resposta vazia do servidor"));
+        return;
+      }
+
+      const d = res.dado; 
+
+      mudarAba('vendas');
+
+      const docLimpo = String(d[2]).replace(/\D/g, '');
+      const tipo = docLimpo.length > 11 ? 'PJ' : 'PF';
+      
+      selecionarTipo(tipo);
+
+      setTimeout(() => {
+        const optReneg = document.querySelector('input[value="RENEG."]');
+        if (optReneg) optReneg.checked = true;
+        
+        gerarFormularioVenda();
+
+        setTimeout(() => {
+          const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.value = val; };
+          
+          setVal('v_cnpj', d[2]);
+          setVal('v_razao', d[3]);
+          setVal('v_cep', d[11]);
+          setVal('v_endereco', d[12]);
+          setVal('v_numero', d[13]);
+          setVal('v_compl', d[14]);
+          setVal('v_bairro', d[15]);
+          setVal('v_cidade', d[16]);
+          setVal('v_uf', d[17]);
+          setVal('v_cpf_admin', d[18]);
+          setVal('v_nome_admin', d[19]);
+          setVal('v_email', d[20]);
+          setVal('v_contato_fin', d[21]);
+          setVal('v_p2b', d[23]);
+          setVal('v_radar', d[22]);
+          setVal('v_codigo_cliente', d[31]);
+          setVal('v_codigo_admin', d[32]);
+
+          const pInput = document.querySelector('.input-plano');
+          const nInput = document.querySelector('.input-numero');
+          if(pInput) pInput.value = d[5]; 
+          if(nInput) nInput.value = d[6]; 
+
+          if (typeof mostrarToast === 'function') mostrarToast("✅ Dados carregados com sucesso!");
+        }, 300);
+      }, 300);
+    })
+    .withFailureHandler(err => {
+      alert("🚨 Erro crítico de comunicação: " + err);
+    })
+    .buscarDadosParaReneg(cnpj, linha);
+}
+
+// ==========================================
+// --- MÓDULO DE CLIENTES FUTUROS E COFRE ---
+// ==========================================
+function formatarTelefone(input) {
+  let v = input.value.replace(/\D/g, "");
+  if (v.length > 10) { v = v.replace(/^(\d\d)(\d{5})(\d{4}).*/, "($1) $2-$3"); } 
+  else if (v.length > 5) { v = v.replace(/^(\d\d)(\d{4})(\d{0,4}).*/, "($1) $2-$3"); } 
+  else if (v.length > 2) { v = v.replace(/^(\d\d)(\d{0,5})/, "($1) $2"); } 
+  else { v = v.replace(/^(\d*)/, "($1"); }
+  input.value = v;
+}
+
+function salvarFuturo() {
+  const dados = {
+    cnpj: document.getElementById('fut_cnpj').value,
+    nome: document.getElementById('fut_nome').value,
+    telefone: document.getElementById('fut_telefone').value,
+    dataAgendada: document.getElementById('fut_data').value,
+    motivo: document.getElementById('fut_motivo').value,
+    consultor: JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}').nome
+  };
+
+  if (!dados.cnpj || !dados.nome || !dados.dataAgendada) {
+    mostrarNotificacaoVexo("⚠️ Campos Incompletos", "Preencha CNPJ, Nome e Data para prosseguir.");
+    return;
+  }
+
+  console.log("📤 Enviando para o cofre:", dados);
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      console.log("📥 Resposta recebida:", res);
+      
+      if (res && res.success) {
+        mostrarNotificacaoVexo("🎯 Sucesso Estratégico!", "O cliente foi salvo com sucesso no cofre e o VEXO agendou o lembrete.");
+        
+        document.getElementById('fut_cnpj').value = '';
+        document.getElementById('fut_nome').value = '';
+        document.getElementById('fut_telefone').value = '';
+        document.getElementById('fut_data').value = '';
+        document.getElementById('fut_motivo').value = '';
+        
+        if (typeof carregarFuturos === 'function') carregarFuturos();
+      } else {
+        const msgErro = res ? res.message : "Erro desconhecido";
+        mostrarNotificacaoVexo("❌ Erro no Servidor", msgErro);
+      }
+    })
+    .withFailureHandler(function(err) {
+      console.error("Erro crítico:", err);
+      mostrarNotificacaoVexo("❌ Falha de Conexão", "Não foi possível salvar os dados agora.");
+    })
+    .salvarClienteFuturo(dados);
+}
+
+function carregarFuturos() {
+  const container = document.getElementById('lista-clientes-futuros');
+  container.innerHTML = "<p style='color:#64748b; font-size:12px;'>⏳ Buscando oportunidades...</p>";
+
+  google.script.run.withSuccessHandler(res => {
+    if(!res.success) return container.innerHTML = "Erro ao buscar.";
+    
+    if(res.dados.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 40px; background: #f8fafc; border-radius: 12px; color: #94a3b8;">
+          <span style="font-size: 30px;">📭</span><br>Seu cofre está vazio. Nenhum cliente aguardando prazo.
+        </div>`;
+      return;
+    }
+
+    let html = "";
+    res.dados.forEach(c => {
+      let corBorda = "#e2e8f0";
+      let corBgTag = "#f1f5f9";
+      let corTextoTag = "#64748b";
+      let textoTag = `Daqui a ${c.diasRestantes} dias`;
+      let icone = "📅";
+
+      if (c.situacao === "ATRASADO_OU_HOJE") {
+        corBorda = "#ef4444"; 
+        corBgTag = "#fef2f2";
+        corTextoTag = "#dc2626";
+        textoTag = c.diasRestantes < 0 ? `Atrasado há ${Math.abs(c.diasRestantes)} dias!` : "É HOJE! LIGAR AGORA";
+        icone = "🚨";
+      } else if (c.situacao === "PROXIMO") {
+        corBorda = "#f59e0b"; 
+        corBgTag = "#fffbeb";
+        corTextoTag = "#d97706";
+        icone = "⏳";
+      }
+
+      html += `
+        <div style="background: white; border: 1px solid ${corBorda}; border-left: 5px solid ${corBorda}; border-radius: 10px; padding: 15px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); position: relative;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px;">
+            <div>
+              <span style="font-size: 10px; font-weight: bold; background: ${corBgTag}; color: ${corTextoTag}; padding: 3px 8px; border-radius: 10px;">${icone} ${textoTag}</span>
+            </div>
+            <small style="color: #94a3b8; font-weight: bold;">${c.dataAgendada}</small>
+          </div>
+
+          <h4 style="margin: 0 0 5px 0; color: #1e3c72; font-size: 14px;">${c.nome}</h4>
+          <p style="margin: 0 0 5px 0; font-size: 11px; color: #64748b;"><strong>CNPJ:</strong> ${c.cnpj}</p>
+          <p style="margin: 0 0 10px 0; font-size: 11px; color: #64748b;"><strong>Motivo:</strong> ${c.motivo}</p>
+          
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 15px; border-top: 1px dashed #e2e8f0; padding-top: 10px;">
+            <a href="https://wa.me/55${c.telefone.replace(/\D/g,'')}" target="_blank" style="font-size: 12px; color: #10b981; font-weight: bold; text-decoration: none;">💬 WhatsApp</a>
+            <button onclick="marcarFuturoResolvido('${c.id}')" style="background: #f1f5f9; color: #64748b; border: none; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; transition: 0.2s;">✅ Marcar Resolvido</button>
+          </div>
+        </div>
+      `;
+    });
+    container.innerHTML = html;
+  }).buscarClientesFuturos();
+}
+
+function marcarFuturoResolvido(id) {
+  google.script.run
+    .withSuccessHandler(res => {
+      if(res.success) {
+        mostrarNotificacaoVexo("✅ Cliente Capturado!", "O atendimento foi registrado como resolvido e o cofre atualizado.");
+        if (typeof carregarFuturos === 'function') carregarFuturos();
+        if (typeof verificarAlertasCofre === 'function') verificarAlertasCofre();
+      } else {
+        mostrarNotificacaoVexo("⚠️ Ops!", res.message || "Não foi possível atualizar o status.");
+      }
+    })
+    .withFailureHandler(err => {
+      console.error("Erro ao concluir:", err);
+      mostrarNotificacaoVexo("❌ Erro Crítico", "Falha na comunicação com o banco de dados.");
+    })
+    .concluirClienteFuturo(id);
+}
+
+// ==========================================
+// --- MÓDULO DE DOCUMENTOS E UPLOADS ---
+// ==========================================
+function addNovoSocioDoc() {
+  const container = document.getElementById('container-rg-socios');
+  const div = document.createElement('div');
+  div.className = 'linha-socio';
+  div.style = "display: flex; gap: 10px; animation: fadeIn 0.3s ease-in-out; align-items: center;"; 
+  
+  div.innerHTML = `
+    <input type="file" 
+           class="input-doc-vexo" 
+           data-tipo="RG_SOCIO" 
+           style="flex: 1; font-size: 11px;" 
+           accept="image/*,application/pdf" 
+           multiple>
+           
+    <button type="button" 
+            onclick="this.parentElement.remove()" 
+            style="background: #ef4444; color: white; border: none; padding: 5px 12px; border-radius: 8px; cursor: pointer; height: 32px; font-weight: bold;">
+      &times;
+    </button>
+  `;
+  container.appendChild(div);
+}
+
+async function processarUploadsVexo(cnpj, empresa) {
+  const inputs = document.querySelectorAll('.input-doc-vexo');
+  const cnpjLimpo = cnpj.replace(/\D/g, '');
+  const pastaNome = `${cnpjLimpo} - ${empresa.toUpperCase()}`;
+  let docsEnviados = 0;
+  
+  let countSocio = 1;
+
+  for (const input of inputs) {
+    if (input.files.length > 0) {
+      const tipo = input.getAttribute('data-tipo');
+      const arquivosNoCampo = input.files;
+
+      for (let i = 0; i < arquivosNoCampo.length; i++) {
+        const arquivo = arquivosNoCampo[i];
+        let nomePadrao = tipo;
+
+        if (tipo === 'RG_SOCIO') {
+          const sufixoParte = arquivosNoCampo.length > 1 ? `_PARTE_${i + 1}` : '';
+          nomePadrao = `RG_SOCIO_${countSocio}${sufixoParte}`;
+        } 
+        else if (tipo === 'OUTROS') {
+          nomePadrao = `OUTROS_${i + 1}`;
+        }
+        else if (arquivosNoCampo.length > 1) {
+          nomePadrao = `${tipo}_PARTE_${i + 1}`;
+        }
+
+        try {
+          const base64 = await convertFileToBase64(arquivo);
+          
+          await new Promise((resolve, reject) => {
+            google.script.run
+              .withSuccessHandler(res => {
+                if (res && res.success) {
+                  console.log("✅ Concluído: " + nomePadrao);
+                  resolve(res);
+                } else {
+                  reject(res.message);
+                }
+              })
+              .withFailureHandler(err => reject(err))
+              .uploadDocumentosVenda(base64, arquivo.name, pastaNome, nomePadrao);
+          });
+          
+          docsEnviados++;
+        } catch (err) {
+          console.error("❌ Falha no upload de " + nomePadrao + ":", err);
+        }
+      }
+
+      if (tipo === 'RG_SOCIO') countSocio++;
+    }
+  }
+  return docsEnviados;
+}
+
+function convertFileToBase64(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = () => resolve(reader.result);
+    reader.onerror = error => reject(error);
+  });
+}
+
+// ==========================================
+// --- MÓDULO DE PERMISSÕES E SEGURANÇA ---
+// ==========================================
+function verificarPermissoesVendas() {
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargo = (sessao.role || "").toUpperCase().trim();
+  
+  const btnInput = document.getElementById('btn-tab-input');
+  const secaoDocs = document.getElementById('secao-documentos-vexo');
+
+  console.log("Cargo identificado:", cargo);
+
+  if (cargo === "ADMINISTRADOR" || cargo === "BACKOFFICE" || cargo === "ADMIN") {
+    if (btnInput) btnInput.style.display = 'block';
+    if (secaoDocs) secaoDocs.style.display = 'block'; 
+  } else {
+    if (btnInput) btnInput.style.display = 'none';
+    if (secaoDocs) secaoDocs.style.display = 'none';
+  }
+}
+
+verificarPermissoesVendas();
+setTimeout(verificarPermissoesVendas, 500);
+
+window.addEventListener('load', verificarPermissoesAbas);
+
+function ajustarInterfacePorCargo() {
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargo = (sessao.role || "").toUpperCase().trim();
+  
+  const secaoDocumentos = document.querySelector('.secao-documentos-vexo'); 
+  
+  if (cargo === "CONSULTOR DE VENDAS" || cargo === "CONSULTOR") {
+    if (secaoDocumentos) secaoDocumentos.style.display = 'none';
+    
+    const btnFinalizar = document.getElementById('btn_finalizar');
+    if (btnFinalizar) btnFinalizar.innerText = "🚀 Enviar Pedido para o Backoffice";
+  }
+}
+
+setTimeout(ajustarInterfacePorCargo, 100);
+
+function verificarPermissoesAbas() {
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargo = (sessao.role || "").toUpperCase().trim();
+  
+  const btnInput = document.getElementById('btn-tab-input');
+
+  if (cargo === 'ADMINISTRADOR' || cargo === 'ADMIN' || cargo === 'BACKOFFICE') {
+    if (btnInput) btnInput.style.display = 'block';
+    console.log("✅ Acesso de Gestão Liberado para: " + cargo);
+  } else {
+    if (btnInput) btnInput.style.display = 'none';
+    console.log("ℹ️ Acesso Restrito (Consultor)");
+  }
+}
+
+verificarPermissoesAbas();
+setTimeout(verificarPermissoesAbas, 500);
+
+// ==========================================
+// --- MÓDULO DE INPUT / BACKOFFICE ---
+// ==========================================
+function carregarPedidosParaInput() {
+  const container = document.getElementById('lista-pedidos-input');
+  
+  google.script.run.withSuccessHandler(function(pedidos) {
+    container.innerHTML = "";
+    
+    if (!pedidos || pedidos.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px; background: #f8fafc; border-radius: 20px; border: 2px dashed #cbd5e1;">
+          <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
+          <p style="color: #64748b; font-weight: 700; font-size: 16px; margin: 0;">Tudo em dia!</p>
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 5px;">Nenhum pedido aguardando processamento no momento.</p>
+        </div>`;
+      return;
+    }
+
+    pedidos.forEach(p => {
+      container.innerHTML += `
+        <div class="card-input-pendente" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; position: relative; transition: 0.3s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+          <div style="position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: #f59e0b; border-radius: 14px 0 0 14px;"></div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <span style="font-size: 10px; font-weight: 800; color: #b45309; background: #fef3c7; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;">PENDENTE</span>
+            <span style="font-size: 11px; color: #94a3b8; font-weight: bold;">📅 ${p.dataVenda}</span>
+          </div>
+
+          <h4 style="margin: 0 0 8px 0; color: #1e3c72; font-size: 15px; font-weight: 800; line-height: 1.3;">${p.razao}</h4>
+          
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px;">
+            <div style="font-size: 12px; color: #475569;"><b>CNPJ:</b> ${p.cnpj}</div>
+            <div style="font-size: 12px; color: #475569;"><b>Modalidade:</b> ${p.modalidade}</div>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #f1f5f9; margin-bottom: 20px;">
+            <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">👤 <b>Lançado por:</b></div>
+            <div style="font-size: 13px; color: #1e3c72; font-weight: 700;">${p.vendedor}</div>
+          </div>
+
+          <button onclick="acionarInputBackoffice('${p.linha}')" 
+                  style="width: 100%; padding: 14px; background: #1e3c72; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13px;">
+            🛠️ Tratar Pedido e Anexar Docs
+          </button>
+        </div>`;
+    });
+  }).buscarVendasPendentes();
+}
+
+function acionarInputBackoffice(numLinha) {
+  mudarAba('vendas');
+  
+  if (typeof carregarDadosVendaParaFinalizar === 'function') {
+    carregarDadosVendaParaFinalizar(numLinha);
+  } else {
+    alert("Erro: A função de carregamento não foi encontrada no sistema.");
+  }
+}
+
+// ==========================================
+// --- MÓDULO DE CARREGAMENTO DE PLANOS ---
+// ==========================================
+window.carregarPlanosVexo = function() {
+  google.script.run
+    .withSuccessHandler(function(planos) {
+      console.log("Planos carregados da aba PLANOS:", planos); 
+      planosVexoMemoria = planos; 
+      const datalist = document.getElementById('lista-planos');
+      if (datalist) {
+        datalist.innerHTML = planos.map(p => `<option value="${p.nome}">`).join('');
+      }
+    })
+    .withFailureHandler(function(erro) {
+      console.error("Erro ao carregar planos:", erro);
+    })
+    .p_buscarPlanos();
+};
+
+window.verificarValorPlano = function(inputElemento) {
+  const nomeDigitado = inputElemento.value.trim().toUpperCase();
+  
+  if (!nomeDigitado) return; 
+
+  const linha = inputElemento.closest('.linha-plano-item');
+  if (!linha) return;
+
+  const campoValor = linha.querySelector('.input-valor');
+  if (!campoValor) return;
+
+  console.log("Buscando valor para o plano:", nomeDigitado);
+
+  const planoEncontrado = planosVexoMemoria.find(p => String(p.nome).trim().toUpperCase() === nomeDigitado);
+
+  if (planoEncontrado) {
+    console.log("Plano encontrado!", planoEncontrado);
+    
+    let valorOriginal = String(planoEncontrado.valor);
+    let valorFinal = 0;
+    
+    if (valorOriginal.includes(',') || valorOriginal.toUpperCase().includes('R$')) {
+      let limpo = valorOriginal.replace(/[^\d,-]/g, ''); 
+      limpo = limpo.replace(',', '.'); 
+      valorFinal = parseFloat(limpo);
+    } else {
+      valorFinal = parseFloat(valorOriginal);
+    }
+    
+    if (isNaN(valorFinal)) valorFinal = 0;
+
+    campoValor.value = valorFinal.toFixed(2);
+    
+    campoValor.style.transition = "all 0.3s";
+    campoValor.style.backgroundColor = "#dcfce7"; 
+    campoValor.style.borderColor = "#10b981";
+    campoValor.style.color = "#166534";
+    
+    setTimeout(() => {
+      campoValor.style.backgroundColor = "#fff";
+      campoValor.style.borderColor = "#e2e8f0";
+      campoValor.style.color = "#000";
+    }, 1500);
+  } else {
+    console.log("Plano não encontrado na memória do sistema.");
+    campoValor.value = '';
+  }
+};
+
+window.carregarPlanosVexo();
+
+// ==========================================
+// --- MÓDULO RENEGOCIAÇÃO (A SUA SOLICITAÇÃO) ---
+// ==========================================
+function iniciarRenegociacao(cnpj, razao) {
+  // 1. Muda para a aba de Vendas imediatamente
+  if (typeof mudarAba === 'function') mudarAba('vendas');
+
+  // 2. Aciona o tipo PJ nativo do seu sistema
+  if (typeof selecionarTipo === 'function') {
+    try { selecionarTipo('PJ'); } catch(e) { console.error("Erro UI:", e); }
+  }
+
+  // 3. Pausa estratégica de 200ms para o navegador conseguir desenhar os botões de opção
+  setTimeout(() => {
+    const radios = document.getElementsByName('v_escolha');
+    let radioMarcado = false;
+
+    // Encontra e clica automaticamente na bolinha do RENEG.
+    for (let i = 0; i < radios.length; i++) {
+      if (radios[i].value === 'RENEG.' || radios[i].value.includes('RENEG')) {
+        radios[i].checked = true;
+        radioMarcado = true;
+        break;
+      }
+    }
+
+    if (radioMarcado) {
+      // 4. Agora que a bolinha está marcada, manda gerar o formulário oficial
+      if (typeof gerarFormularioVenda === 'function') {
+        gerarFormularioVenda();
+      }
+
+      // 5. Nova pausa de 400ms para o formulário gigante nascer na tela e, só então, preenche os dados!
+      setTimeout(() => {
+        const campoCnpj = document.getElementById('v_cnpj');
+        const campoRazao = document.getElementById('v_razao') || document.getElementById('v_nome');
+        
+        if (campoCnpj) {
+          // Injeta os dados limpos
+          campoCnpj.value = cnpj;
+          if (campoRazao && razao) campoRazao.value = razao;
+          
+          // UX de Elite: Rola a tela suavemente até os campos e dá foco no CNPJ
+          const areaForm = document.getElementById('area_campos_venda');
+          if (areaForm) areaForm.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          
+          campoCnpj.focus();
+
+          // Dispara sua busca na Receita Federal
+          if (typeof buscarDadosCNPJ === 'function') buscarDadosCNPJ(cnpj);
+        } else {
+          console.error("UX Error: O campo CNPJ não carregou a tempo.");
+        }
+      }, 400); // Fim da pausa do formulário
+
+    } else {
+      console.error("Sistema não encontrou a opção RENEG no módulo PJ.");
+    }
+  }, 200); // Fim da pausa da seleção PJ
+}
+function popularSelectConsultores() {
+  const select = document.getElementById('v_consultor_input');
+  if (!select) return;
+
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const userLogado = (sessao.username || "").toUpperCase();
+  
+  let options = '<option value="">Selecione o consultor usado no Input...</option>';
+  consultoresAtivos.forEach(c => {
+    const selected = (c.matricula === userLogado) ? 'selected' : '';
+    options += `<option value="${c.matricula}" ${selected}>${c.nome} (${c.matricula})</option>`;
+  });
+  
+  select.innerHTML = options;
+}
+// Efeito visual ao clicar nos cards
+function atualizarCards(checkbox) {
+  const card = checkbox.closest('.modalidade-card');
+  if (checkbox.checked) {
+    card.style.borderColor = '#3b82f6';
+    card.style.background = '#eff6ff';
+    card.style.transform = 'translateY(-2px)';
+  } else {
+    card.style.borderColor = '#e2e8f0';
+    card.style.background = 'white';
+    card.style.transform = 'translateY(0)';
+  }
+}
+
+// Construtor dinâmico de formulários
+window.recriarLinhasVenda = function() {
+  const container = document.getElementById('containerLinhasVenda');
+  const blocoCliente = document.getElementById('bloco-cliente-global');
+  const selecionados = document.querySelectorAll('input[name="v_modalidades_selecionadas"]:checked');
+  
+  container.innerHTML = ''; // Limpa a tela
+  
+  if (selecionados.length > 0) {
+    blocoCliente.style.display = 'block'; // Exibe o CNPJ para preencher
+    
+    selecionados.forEach((cb) => {
+      const modalidade = cb.value;
+      
+      // Gera o bloquinho de produto correspondente à modalidade
+      // Você pode adicionar mais campos aqui conforme a necessidade do ERP
+      const htmlLinha = `
+        <div class="linha-venda-item" data-modalidade="${modalidade}" style="background: white; border-left: 4px solid #10b981; padding: 25px; border-radius: 8px; margin-bottom: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); animation: fadeInUp 0.4s ease;">
+           <h4 style="margin-top: 0; color: #1e3c72; display: flex; align-items: center; gap: 8px;">
+              <i class="fas fa-box-open"></i> Produto: ${modalidade}
+           </h4>
+           <div style="display: grid; grid-template-columns: 1fr 2fr 1fr; gap: 15px; margin-top: 20px;">
+              <div>
+                 <label style="font-weight: 600; font-size: 12px; color: #64748b;">Qtd de Linhas</label>
+                 <input type="number" class="form-control item-qtd" placeholder="Ex: 5">
+              </div>
+              <div>
+                 <label style="font-weight: 600; font-size: 12px; color: #64748b;">Plano Vendido</label>
+                 <select class="form-control item-plano">
+                    <option value="">Selecione o plano...</option>
+                    <option value="TIM BLACK EMPRESAS">TIM Black Empresas</option>
+                    <option value="SMART EMPRESAS">Smart Empresas</option>
+                 </select>
+              </div>
+              <div>
+                 <label style="font-weight: 600; font-size: 12px; color: #64748b;">Valor (R$)</label>
+                 <input type="text" class="form-control item-valor" placeholder="0,00">
+              </div>
+           </div>
+        </div>
+      `;
+      container.insertAdjacentHTML('beforeend', htmlLinha);
+    });
+  } else {
+    blocoCliente.style.display = 'none'; // Oculta se nenhum card estiver selecionado
+  }
+};
+async function salvarVendasVexo() {
+  const cnpjGlobal = document.getElementById('v_cnpj_global').value;
+  const razaoGlobal = document.getElementById('v_razao_global').value;
+  const linhas = document.querySelectorAll('.linha-venda-item');
+
+  if(!cnpjGlobal) {
+    alert("Por favor, preencha o CNPJ do cliente.");
+    return;
+  }
+  if(linhas.length === 0) {
+    alert("Selecione pelo menos uma modalidade nos cards superiores.");
+    return;
+  }
+
+  // Feedback de carregamento (UX)
+  const btn = document.getElementById('btn-salvar'); // Substitua pela ID do seu botão
+  const textoOriginal = btn.innerHTML;
+  btn.innerHTML = 'Registrando Lotes... <i class="fas fa-circle-notch fa-spin"></i>';
+  btn.disabled = true;
+
+  try {
+    // Para cada modalidade renderizada na tela, geramos um pacote individual
+    for (let i = 0; i < linhas.length; i++) {
+      const linha = linhas[i];
+      const modalidade = linha.getAttribute('data-modalidade');
+      
+      // Monta o objeto de dados usando a estrutura que a sua base de dados JÁ ESPERA
+      const payloadVenda = {
+        cliente: razaoGlobal,
+        cnpj: cnpjGlobal,
+        modalidade: modalidade,
+        quantidade: linha.querySelector('.item-qtd').value,
+        produto: linha.querySelector('.item-plano').value,
+        valor: linha.querySelector('.item-valor').value
+        // adicione aqui 'vendedor', 'email', etc, caso a sua função atual exija
+      };
+
+      // Dispara individualmente para o backend existente
+      await new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(resolve)
+          .withFailureHandler(reject)
+          .registrarVenda(payloadVenda); // <-- NOME DA SUA FUNÇÃO EXISTENTE NO CODE.GS
+      });
+    }
+
+    // Sucesso Geral
+    alert("🚀 Sucesso! Todas as modalidades para o cliente " + razaoGlobal + " foram lançadas perfeitamente!");
+    
+    // Limpar painel para o próximo cliente
+    document.querySelectorAll('input[name="v_modalidades_selecionadas"]').forEach(cb => { cb.checked = false; atualizarCards(cb); });
+    recriarLinhasVenda();
+    document.getElementById('v_cnpj_global').value = '';
+    document.getElementById('v_razao_global').value = '';
+
+  } catch (erro) {
+    console.error(erro);
+    alert("❌ Houve um problema em uma das transações: " + erro.message);
+  } finally {
+    btn.innerHTML = textoOriginal;
+    btn.disabled = false;
+  }
+}
+</script>

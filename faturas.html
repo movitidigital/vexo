@@ -1,0 +1,1316 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VEXO HUB - Faturas</title>
+
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* =========================================================
+       VARIÁVEIS – TEMA CLARO VEXO
+       ========================================================= */
+    :root {
+      --bg-body: #f1f5f9;
+      --bg-card: #ffffff;
+      --text-primary: #0f172a;
+      --text-secondary: #475569;
+      --text-muted: #94a3b8;
+      --border-color: #e2e8f0;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.04);
+      --shadow-md: 0 8px 30px rgba(0, 0, 0, 0.06);
+      --shadow-lg: 0 20px 50px rgba(0, 0, 0, 0.08);
+      --radius: 16px;
+      --radius-sm: 10px;
+      --success: #10b981;
+      --success-bg: #ecfdf5;
+      --warning: #f59e0b;
+      --warning-bg: #fffbeb;
+      --danger: #ef4444;
+      --danger-bg: #fef2f2;
+      --info: #3b82f6;
+      --info-bg: #eff6ff;
+      --primary-gradient: linear-gradient(135deg, #1e3c72, #2a5298);
+      --whatsapp: #25d366;
+      --whatsapp-bg: #ecfdf5;
+      --call: #3b82f6;
+      --call-bg: #eff6ff;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', sans-serif;
+    }
+
+    body {
+      background: var(--bg-body);
+      color: var(--text-primary);
+      min-height: 100vh;
+    }
+
+    .faturas-wrapper {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 1.5rem 2rem 3rem;
+    }
+
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .header h1 {
+      font-weight: 700;
+      font-size: 1.75rem;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .header h1 span {
+      background: var(--primary-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .header h1 small {
+      font-size: 0.75rem;
+      font-weight: 400;
+      color: var(--text-muted);
+      -webkit-text-fill-color: var(--text-muted);
+      background: none;
+    }
+
+    .btn-refresh {
+      background: white;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 0.6rem 1.2rem;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-refresh:hover {
+      background: var(--info-bg);
+      border-color: var(--info);
+      color: var(--info);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.25rem;
+      margin-bottom: 2rem;
+    }
+
+    .kpi-card {
+      background: white;
+      border-radius: var(--radius);
+      padding: 1.25rem 1.5rem;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .kpi-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .kpi-card .kpi-title {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+    .kpi-card .kpi-value {
+      font-size: 2rem;
+      font-weight: 800;
+      margin-top: 0.4rem;
+      line-height: 1.2;
+    }
+
+    .kpi-danger .kpi-value { color: var(--danger); }
+    .kpi-danger .kpi-title i { color: var(--danger); }
+
+    .kpi-warning .kpi-value { color: var(--warning); }
+    .kpi-warning .kpi-title i { color: var(--warning); }
+
+    .kpi-success .kpi-value { color: var(--success); }
+    .kpi-success .kpi-title i { color: var(--success); }
+
+    .table-container {
+      background: white;
+      border-radius: var(--radius);
+      border: 1px solid var(--border-color);
+      overflow: hidden;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .table-container table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+
+    .table-container th {
+      background: #f8fafc;
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid var(--border-color);
+      text-align: left;
+    }
+
+    .table-container td {
+      padding: 1rem 1.25rem;
+      border-bottom: 1px solid #f1f5f9;
+      vertical-align: middle;
+      color: var(--text-primary);
+    }
+
+    .table-container tbody tr {
+      transition: background 0.15s;
+      cursor: default;
+    }
+    .table-container tbody tr:hover {
+      background: #f8fafc;
+    }
+    .table-container tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .client-name {
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 0.15rem;
+    }
+    .client-line {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+    }
+
+    .badge {
+      padding: 0.25rem 0.7rem;
+      border-radius: 20px;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+      display: inline-block;
+      border: 1px solid transparent;
+    }
+    .badge-pendente {
+      background: var(--warning-bg);
+      color: #b45309;
+      border-color: #fcd34d;
+    }
+    .badge-pago {
+      background: var(--success-bg);
+      color: #065f46;
+      border-color: #6ee7b7;
+    }
+    .badge-atrasado {
+      background: var(--danger-bg);
+      color: #991b1b;
+      border-color: #fca5a5;
+    }
+
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.35rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: all 0.2s;
+      background: white;
+      box-shadow: var(--shadow-sm);
+      text-decoration: none;
+      color: inherit;
+    }
+    .btn-action:hover {
+      transform: scale(1.03);
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn-success-action {
+      background: var(--success-bg);
+      color: #065f46;
+      border-color: #6ee7b7;
+    }
+    .btn-info {
+      background: var(--info-bg);
+      color: var(--info);
+      border-color: #bfdbfe;
+    }
+    .btn-disabled {
+      background: #f1f5f9;
+      color: var(--text-muted);
+      border-color: var(--border-color);
+      cursor: default;
+    }
+    .btn-warning-action {
+      background: var(--warning-bg);
+      color: #b45309;
+      border-color: #fcd34d;
+    }
+    .btn-danger-action {
+      background: var(--danger-bg);
+      color: #991b1b;
+      border-color: #fca5a5;
+    }
+    .btn-critical {
+      background: #fef2f2;
+      color: #7f1d1d;
+      border-color: #fecaca;
+    }
+    .btn-whatsapp {
+      background: var(--whatsapp-bg);
+      color: #075e54;
+      border-color: #25d366;
+    }
+    .btn-whatsapp:hover {
+      background: #25d366;
+      color: white;
+    }
+    .btn-call {
+      background: var(--call-bg);
+      color: #1e40af;
+      border-color: #3b82f6;
+    }
+    .btn-call:hover {
+      background: #3b82f6;
+      color: white;
+    }
+
+    .inadimplencia-tag {
+      font-size: 0.6rem;
+      color: #991b1b;
+      background: var(--danger-bg);
+      padding: 0.15rem 0.5rem;
+      border-radius: 12px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.25rem;
+      margin-bottom: 0.3rem;
+      border: 1px solid #fca5a5;
+      animation: pulse 1.8s infinite;
+    }
+
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
+      70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+    }
+
+    #loading {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 3rem 1rem;
+      color: var(--text-muted);
+    }
+    .empty-state i {
+      font-size: 2.5rem;
+      display: block;
+      margin-bottom: 0.5rem;
+    }
+
+    .detail-row td {
+      padding: 0 !important;
+      background: #fafcff;
+    }
+    .detail-content {
+      padding: 1.5rem 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .grupo-card {
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      padding: 1rem 1.2rem;
+      margin-bottom: 0.8rem;
+      background: white;
+      transition: box-shadow 0.2s;
+    }
+    .grupo-card:hover {
+      box-shadow: var(--shadow-sm);
+    }
+    .grupo-card .grupo-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    .grupo-card .grupo-info {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+    .grupo-card .grupo-info strong {
+      font-size: 0.95rem;
+    }
+    .grupo-card .grupo-info .qtd {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+    .grupo-card .grupo-info .numeros {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+    }
+    .grupo-card .grupo-actions {
+      display: flex;
+      gap: 0.4rem;
+      flex-wrap: wrap;
+    }
+    .grupo-card .badge-grupo {
+      font-size: 0.65rem;
+      padding: 0.2rem 0.6rem;
+      border-radius: 12px;
+      background: var(--warning-bg);
+      color: #b45309;
+      border: 1px solid #fcd34d;
+    }
+    .grupo-card .badge-grupo.pago {
+      background: var(--success-bg);
+      color: #065f46;
+      border-color: #6ee7b7;
+    }
+
+    .detail-actions {
+      margin-top: 1rem;
+      display: flex;
+      justify-content: flex-end;
+      gap: 0.5rem;
+    }
+
+    .expand-btn {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      cursor: pointer;
+      font-size: 1.2rem;
+      transition: transform 0.2s;
+      padding: 0 4px;
+    }
+    .expand-btn:hover {
+      color: var(--text-primary);
+    }
+    .expand-btn.open {
+      transform: rotate(90deg);
+    }
+
+    @media (max-width: 768px) {
+      .faturas-wrapper {
+        padding: 1rem;
+      }
+      .header h1 {
+        font-size: 1.4rem;
+      }
+      .kpi-grid {
+        grid-template-columns: 1fr 1fr;
+        gap: 0.75rem;
+      }
+      .kpi-card {
+        padding: 1rem;
+      }
+      .kpi-card .kpi-value {
+        font-size: 1.5rem;
+      }
+      .table-container th,
+      .table-container td {
+        padding: 0.75rem 0.8rem;
+        font-size: 0.75rem;
+      }
+      .detail-content {
+        padding: 1rem;
+      }
+      .grupo-card .grupo-header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .grupo-card .grupo-actions {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 500px) {
+      .kpi-grid {
+        grid-template-columns: 1fr;
+      }
+      .header {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .btn-refresh {
+        justify-content: center;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<div class="faturas-wrapper">
+  <!-- HEADER -->
+  <div class="header">
+    <h1>
+      <span>📄 Gestão de Faturas</span>
+    </h1>
+    <button class="btn-refresh" onclick="carregarDados()">
+      <i data-lucide="refresh-cw" size="16"></i> Atualizar Dados
+    </button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="kpi-grid">
+    <div class="kpi-card kpi-danger">
+      <div class="kpi-title"><i data-lucide="alert-triangle" size="14"></i> Faturas Atrasadas</div>
+      <div class="kpi-value" id="kpi-atrasadas">--</div>
+    </div>
+    <div class="kpi-card kpi-warning">
+      <div class="kpi-title"><i data-lucide="clock" size="14"></i> Vencem em 7 Dias</div>
+      <div class="kpi-value" id="kpi-vence-breve">--</div>
+    </div>
+    <div class="kpi-card kpi-success">
+      <div class="kpi-title"><i data-lucide="check-circle" size="14"></i> Recebidas no Mês</div>
+      <div class="kpi-value" id="kpi-recebidas">--</div>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="table-container">
+    <table id="tabela-clientes">
+      <thead>
+        <tr>
+          <th style="width:30px;"></th>
+          <th>Código do Cliente</th>
+          <th>Cliente</th>
+          <th>Linha(s) &amp; Plano(s)</th>
+          <th>Próximo Vencimento</th>
+          <th>Status</th>
+          <th>Ação Sugerida</th>
+        </tr>
+      </thead>
+      <tbody id="tbody-clientes"></tbody>
+    </table>
+    <div id="loading">⏳ Sincronizando com o banco de dados...</div>
+  </div>
+</div>
+
+<script>
+  // =========================================================
+  // GLOBAIS
+  // =========================================================
+  var cacheClientes = [];
+
+  // =========================================================
+  // FUNÇÃO AUXILIAR PARA LIMPAR NÚMERO DE TELEFONE
+  // =========================================================
+  function limparNumero(contato) {
+    if (!contato) return '';
+    return String(contato).replace(/\D/g, '');
+  }
+
+  // =========================================================
+  // FUNÇÃO AUXILIAR PARA OBTER NOME DO USUÁRIO LOGADO
+  // =========================================================
+  function obterNomeUsuario() {
+    try {
+      var usuario = sessionStorage.getItem('usuarioLogado');
+      if (usuario) {
+        var obj = JSON.parse(usuario);
+        return obj.username || obj.nome || 'Sistema';
+      }
+    } catch (e) {
+      console.warn('Erro ao obter usuário do sessionStorage:', e);
+    }
+    return 'Sistema';
+  }
+
+  // =========================================================
+  // GERAR MENSAGEM PERSONALIZADA PARA WHATSAPP (sem codificação)
+  // =========================================================
+  function gerarMensagemWhatsApp(dataVencObj, status, nomeResponsavel, nomeEmpresa, linhasArray) {
+    // 🔥 FUNÇÃO AUXILIAR: extrai apenas o primeiro e segundo nome
+    function extrairPrimeiroSegundoNome(nomeCompleto) {
+      if (!nomeCompleto) return '';
+      var partes = nomeCompleto.trim().split(/\s+/);
+      if (partes.length === 0) return '';
+      if (partes.length === 1) return partes[0];
+      return partes[0] + ' ' + partes[1];
+    }
+
+    var hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    var venc = new Date(dataVencObj);
+    venc.setHours(0, 0, 0, 0);
+    var diffDias = Math.floor((venc.getTime() - hoje.getTime()) / (1000 * 3600 * 24));
+
+    // Usa apenas o primeiro e segundo nome do responsável
+    var responsavel = extrairPrimeiroSegundoNome(nomeResponsavel) || extrairPrimeiroSegundoNome(nomeEmpresa) || 'cliente';
+    var empresa = nomeEmpresa || 'sua empresa';
+    var dataVencimento = venc.toLocaleDateString('pt-BR');
+    var listaLinhas = (linhasArray && linhasArray.length) ? linhasArray.join(', ') : 'linha informada';
+
+    var mensagem = '';
+
+    // Se já estiver pago
+    if (status === 'PAGO') {
+      mensagem = `👋 Olá, ${responsavel}!\n\nSua fatura com vencimento ${dataVencimento} já está paga. Obrigado!`;
+      return mensagem;
+    }
+
+    // ----- PRÉ-VENCIMENTO (dias antes) -----
+    if (diffDias >= 1 && diffDias <= 5) {
+      mensagem = `👋 Olá, ${responsavel}!\n\nEsperamos que esteja tudo bem com você.\n\nPassamos para lembrar que a **${empresa}** possui uma fatura com vencimento em **${diffDias} dias** (${dataVencimento}). 📅\n\n📄 Referente: Linha(s) ${listaLinhas}\n\nA fatura segue anexada a esta mensagem para facilitar o pagamento e garantir que todos os serviços permaneçam ativos, sem qualquer interrupção.\n\n✅ Caso o pagamento já esteja programado, basta desconsiderar este lembrete.\n\n💬 Se precisar da nossa ajuda ou tiver qualquer dúvida, estamos à disposição e será um prazer atendê-lo(a).\n\nAgradecemos pela confiança e por contar conosco para a gestão dos seus serviços.\n\n🚀 Equipe TIM EMPRESAS`;
+    }
+    // ----- VENCIMENTO HOJE -----
+    else if (diffDias === 0) {
+      mensagem = `👋 Olá, ${responsavel}!\n\nInformamos que a fatura da **${empresa}** **VENCE HOJE** (${dataVencimento}). 📅\n\n📄 Referente: Linha(s) ${listaLinhas}\n\nRealize o pagamento para evitar bloqueios e encargos.\n\n✅ Caso já tenha pago, desconsidere esta mensagem.\n\n💬 Estamos aqui para ajudar.\n\n🚀 Equipe TIM EMPRESAS`;
+    }
+    // ----- ATRASO (dias negativos) -----
+    else if (diffDias < 0) {
+      var diasAtraso = Math.abs(diffDias);
+
+      // Atraso de 1 a 5 dias
+      if (diasAtraso <= 5) {
+        mensagem = `👋 Olá, ${responsavel}!\n\nSua fatura da **${empresa}** está com **${diasAtraso} dias de atraso**. 📅\n\n📄 Referente: Linha(s) ${listaLinhas}\n\nPor favor, regularize o pagamento o mais breve possível para evitar a suspensão dos serviços.\n\n✅ Caso já tenha realizado o pagamento, ignore esta mensagem.\n\n💬 Se precisar de ajuda, estamos à disposição.\n\n🚀 Equipe TIM EMPRESAS`;
+      }
+      // Atraso de 6 a 10 dias
+      else if (diasAtraso <= 10) {
+        mensagem = `👋 Olá, ${responsavel}!\n\nSua fatura da **${empresa}** está com **${diasAtraso} dias de atraso**. ⚠️\n\n📄 Referente: Linha(s) ${listaLinhas}\n\nEnviaremos um áudio em seguida para agilizar a comunicação e resolver essa pendência.\n\nPor favor, aguarde nosso contato ou retorne esta mensagem com um horário disponível para falarmos.\n\n🚀 Equipe TIM EMPRESAS`;
+      }
+      // Atraso de 11 a 15 dias
+      else if (diasAtraso <= 15) {
+        mensagem = `👋 Olá, ${responsavel}!\n\nSua fatura da **${empresa}** está com **${diasAtraso} dias de atraso**. 📅\n\n📄 Referente: Linha(s) ${listaLinhas}\n\n**ATENÇÃO:** Se não houver regularização em até 48 horas, os serviços poderão ser **bloqueados**.\n\nEntre em contato urgentemente com nosso financeiro para negociar.\n\n📞 (87) 99918-9999\n\n🚀 Equipe TIM EMPRESAS`;
+      }
+      // Atraso de 16 a 20 dias
+      else if (diasAtraso <= 20) {
+        mensagem = `👋 Olá, ${responsavel}!\n\nSua fatura da **${empresa}** está com **${diasAtraso} dias de atraso** – situação crítica. ⚠️⚠️\n\n📄 Referente: Linha(s) ${listaLinhas}\n\n**Seus telefones foram programados automaticamente para bloqueio** – Regularize o quanto antes para não ficar sem o serviço.\n\nEntre em contato com nosso setor financeiro agora mesmo.\n\n📞 (87) 99918-9999\n\n🚀 Equipe TIM EMPRESAS`;
+      }
+      // Atraso superior a 20 dias
+      else {
+        mensagem = `👋 Olá, ${responsavel}!\n\nSua fatura da **${empresa}** está com **${diasAtraso} dias de atraso** – situação crítica. ⚠️⚠️\n\n📄 Referente: Linha(s) ${listaLinhas}\n\n**Telefones Bloqueados automaticamente** – Entre em contato com nosso setor financeiro agora mesmo para evitar maiores prejuízos para seu CNPJ.\n\n📞 (87) 99918-9999\n\n🚀 Equipe TIM EMPRESAS`;
+      }
+    }
+    // ----- Caso a fatura esteja em dia (diffDias > 5) -----
+    else {
+      mensagem = `👋 Olá, ${responsavel}!\n\nSua fatura com vencimento ${dataVencimento} está em dia.\n\n📄 Referente: Linha(s) ${listaLinhas}\n\nQualquer dúvida, estamos à disposição.\n\n🚀 Equipe TIM EMPRESAS`;
+    }
+
+    // Rodapé padrão
+    mensagem += `\n\n---\n📌 Esta mensagem é automática. Em caso de dúvidas, responda ou ligue para (87) 99918-9999.`;
+
+    return mensagem;
+  }
+
+  // =========================================================
+  // CARREGAR DADOS
+  // =========================================================
+  function carregarDados() {
+    var loading = document.getElementById('loading');
+    var tbody = document.getElementById('tbody-clientes');
+    loading.style.display = 'block';
+    loading.innerHTML = '⏳ Sincronizando Motor Inteligente...';
+    tbody.innerHTML = '';
+
+    google.script.run
+      .withSuccessHandler(processarDados)
+      .withFailureHandler(function(erro) {
+        console.error('❌ Erro:', erro);
+        loading.innerHTML = '<div style="color:#ef4444;">❌ Erro ao carregar: ' + (erro.message || 'Falha de comunicação') + '</div>';
+        loading.style.display = 'block';
+      })
+      .obterDadosFaturasFrontend();
+  }
+
+  // =========================================================
+  // PROCESSAR DADOS
+  // =========================================================
+  function processarDados(jsonString) {
+    document.getElementById('loading').style.display = 'none';
+    try {
+      var dados = JSON.parse(jsonString);
+      if (dados.erro) {
+        document.getElementById('loading').innerHTML =
+          '<div style="color:#ef4444; text-align:center; padding:1rem;">⚠️ ' + dados.erro + '</div>';
+        document.getElementById('loading').style.display = 'block';
+        return;
+      }
+      cacheClientes = dados.clientes || [];
+      renderizarTabela(cacheClientes);
+    } catch (e) {
+      console.error('Erro ao processar dados:', e);
+      document.getElementById('loading').innerHTML =
+        '<div style="color:#ef4444; text-align:center; padding:1rem;">❌ Erro: ' + e.message + '</div>';
+      document.getElementById('loading').style.display = 'block';
+    }
+  }
+
+  // =========================================================
+  // RENDERIZAR TABELA E KPIs
+  // =========================================================
+function renderizarTabela(clientes) {
+  var kpiAtrasadas = 0;
+  var kpiVenceBreve = 0;
+  var kpiRecebidas = 0;
+  var hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
+  var limite7Dias = new Date(hoje);
+  limite7Dias.setDate(hoje.getDate() + 7);
+
+  var tbody = document.getElementById('tbody-clientes');
+  var html = '';
+
+  if (!clientes || clientes.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i>📭</i> Nenhuma fatura pendente encontrada.</div></td></tr>';
+    document.getElementById('kpi-atrasadas').innerText = '0';
+    document.getElementById('kpi-vence-breve').innerText = '0';
+    document.getElementById('kpi-recebidas').innerText = '0';
+    document.getElementById('loading').style.display = 'none';
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    return;
+  }
+
+  var clienteIndex = 0;
+
+  for (var c = 0; c < clientes.length; c++) {
+    var cliente = clientes[c];
+    var faturaMaisCritica = null;
+    var htmlLinhas = '';
+    var todasFaturas = [];
+    var temFaturaProxima = false;
+
+    var contatoRaw = cliente.contatoFinanceiro || '';
+    var numeroContato = limparNumero(contatoRaw);
+
+    for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
+      var linhaTel = cliente.linhasTelefonicas[l];
+      htmlLinhas += '<div style="margin-bottom:4px;">' +
+                       '<span style="font-weight:600;">' + linhaTel.numero + '</span>' +
+                       '<span class="client-line" style="margin-left:6px;">' + linhaTel.plano + '</span>' +
+                     '</div>';
+
+      for (var f = 0; f < linhaTel.faturas.length; f++) {
+        var fatura = linhaTel.faturas[f];
+        var dataVenc = new Date(fatura.vencimento);
+        var status = fatura.status.toUpperCase();
+        if (status === 'PENDENTE' && dataVenc < hoje) status = 'ATRASADO';
+
+        // Data de pagamento (se existir)
+        var dataPagamento = fatura.dataPagamento ? new Date(fatura.dataPagamento) : null;
+        if (dataPagamento) dataPagamento.setHours(0, 0, 0, 0);
+
+        // KPIs
+        if (status === 'ATRASADO') kpiAtrasadas++;
+        if (status === 'PENDENTE' && dataVenc >= hoje && dataVenc <= limite7Dias) kpiVenceBreve++;
+        if (status === 'PAGO' &&
+            dataVenc.getMonth() === hoje.getMonth() &&
+            dataVenc.getFullYear() === hoje.getFullYear()) kpiRecebidas++;
+
+        todasFaturas.push({
+          mes: fatura.mes,
+          vencimento: fatura.vencimento,
+          status: fatura.status,
+          colunaStatusPlanilha: fatura.colunaStatusPlanilha,
+          numeroLinha: linhaTel.numero,
+          plano: linhaTel.plano,
+          linhaPlanilha: linhaTel.linhaPlanilha,
+          dataVencObj: dataVenc,
+          statusExibido: status,
+          dataPagamento: dataPagamento
+        });
+
+        // 🔥 REGRA DE FILTRO: cliente aparece se:
+        // 1) fatura não paga E vence em até 14 dias (ou já venceu)
+        // 2) fatura paga HOJE (para permitir estorno até o final do dia)
+        if (status !== 'PAGO') {
+          var diffDias = Math.ceil((dataVenc - hoje) / (1000 * 60 * 60 * 24));
+          if (diffDias <= 14) {
+            temFaturaProxima = true;
+          }
+        } else if (dataPagamento) {
+          // Verifica se foi paga hoje (comparação dia/mês/ano)
+          if (dataPagamento.getFullYear() === hoje.getFullYear() &&
+              dataPagamento.getMonth() === hoje.getMonth() &&
+              dataPagamento.getDate() === hoje.getDate()) {
+            temFaturaProxima = true;
+          }
+        }
+
+        // Atualiza a fatura mais crítica (para exibir no resumo)
+        // Só considera se NÃO estiver paga OU se estiver paga hoje
+        var considerarParaResumo = (status !== 'PAGO') ||
+          (status === 'PAGO' && dataPagamento &&
+           dataPagamento.getFullYear() === hoje.getFullYear() &&
+           dataPagamento.getMonth() === hoje.getMonth() &&
+           dataPagamento.getDate() === hoje.getDate());
+
+        if (considerarParaResumo) {
+          if (!faturaMaisCritica) {
+            faturaMaisCritica = {
+              mes: fatura.mes,
+              vencimento: fatura.vencimento,
+              statusCalc: status,
+              dataVencObj: dataVenc,
+              numLinha: linhaTel.numero
+            };
+          } else if (status === 'ATRASADO' && faturaMaisCritica.statusCalc !== 'ATRASADO') {
+            faturaMaisCritica = {
+              mes: fatura.mes,
+              vencimento: fatura.vencimento,
+              statusCalc: status,
+              dataVencObj: dataVenc,
+              numLinha: linhaTel.numero
+            };
+          } else if (status !== 'PAGO' && faturaMaisCritica.statusCalc === 'PAGO') {
+            faturaMaisCritica = {
+              mes: fatura.mes,
+              vencimento: fatura.vencimento,
+              statusCalc: status,
+              dataVencObj: dataVenc,
+              numLinha: linhaTel.numero
+            };
+          }
+        }
+      }
+    }
+
+    // 🔥 FILTRO PRINCIPAL: se não houver nenhuma fatura relevante, PULA este cliente
+    if (!temFaturaProxima) {
+      continue;
+    }
+
+    // Ordena todas as faturas por data
+    todasFaturas.sort(function(a, b) {
+      return a.dataVencObj - b.dataVencObj;
+    });
+
+    // Agrupa por data de vencimento
+    var grupos = {};
+    for (var i = 0; i < todasFaturas.length; i++) {
+      var f = todasFaturas[i];
+      var dataKey = f.dataVencObj.toLocaleDateString('pt-BR');
+      if (!grupos[dataKey]) {
+        grupos[dataKey] = {
+          data: dataKey,
+          dataObj: f.dataVencObj,
+          faturas: [],
+          numeros: new Set(),
+          celulas: [],
+          totalPendentes: 0,
+          primeiraFatura: f
+        };
+      }
+      grupos[dataKey].faturas.push(f);
+      grupos[dataKey].numeros.add(f.numeroLinha);
+
+      // 🔥 SÓ considera como pendente se NÃO estiver paga
+      // (faturas pagas hoje NÃO são consideradas pendentes para o botão)
+      if (f.statusExibido !== 'PAGO') {
+        grupos[dataKey].celulas.push({ linha: f.linhaPlanilha, coluna: f.colunaStatusPlanilha });
+        grupos[dataKey].totalPendentes++;
+      }
+    }
+
+    var gruposOrdenados = Object.keys(grupos).sort(function(a, b) {
+      return new Date(a.split('/').reverse().join('/')) - new Date(b.split('/').reverse().join('/'));
+    });
+
+    var codigoCliente = cliente.codigoCliente;
+    var nomeCliente = cliente.nomeCliente || '';
+    var resp = cliente.nomeResponsavel || 'N/A';
+    var cpfCnpj = cliente.cpfCnpj || '';
+    var origem = cliente.origem || 'N/A';
+    var email = cliente.email || 'N/A';
+
+    var detailId = 'detail-' + (++clienteIndex);
+
+    var badgeClass = 'badge-pendente';
+    var statusTexto = 'Pendente';
+    var acao = { texto: 'Ver Detalhes', classe: 'btn-info', icone: 'eye', exibirWarning: false };
+
+    if (faturaMaisCritica) {
+      var st = faturaMaisCritica.statusCalc;
+      if (st === 'PAGO') {
+        badgeClass = 'badge-pago';
+        statusTexto = 'Pago';
+        acao = { texto: 'Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
+      } else if (st === 'ATRASADO') {
+        badgeClass = 'badge-atrasado';
+        statusTexto = 'Atrasado';
+        acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
+      } else {
+        badgeClass = 'badge-pendente';
+        statusTexto = 'Pendente';
+        acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
+      }
+    }
+
+    var dataFormatada = faturaMaisCritica ? faturaMaisCritica.dataVencObj.toLocaleDateString('pt-BR') : '--';
+    var alerta = acao.exibirWarning ?
+      '<div class="inadimplencia-tag"><i data-lucide="alert-circle" size="12"></i> IMPACTO NA QUALIDADE</div>' :
+      '';
+
+    // ---- LINHA PRINCIPAL ----
+    html += '<tr class="main-row" data-detail="' + detailId + '">' +
+      '<td>' +
+        '<button class="expand-btn" onclick="toggleDetail(\'' + detailId + '\')" id="btn-' + detailId + '">' +
+          '<i data-lucide="chevron-right" size="18"></i>' +
+        '</button>' +
+      '</td>' +
+      '<td style="font-family:monospace;font-size:0.8rem;color:var(--text-muted);">' + codigoCliente + '</td>' +
+      '<td>' +
+        '<div class="client-name">' + nomeCliente + '</div>' +
+        '<div class="client-line">Resp: ' + resp + '</div>' +
+        '<div class="client-line" style="margin-top:2px;color:var(--text-secondary);">' +
+          '<i data-lucide="phone" size="12" style="vertical-align:text-bottom;"></i> ' + (contatoRaw || 'Sem número') +
+        '</div>' +
+        '<div class="client-line">' + cpfCnpj + '</div>' +
+        '<div class="client-line" style="font-size:0.65rem;color:var(--text-muted);">' + origem + ' • ' + email + '</div>' +
+      '</td>' +
+      '<td>' + htmlLinhas + '</td>' +
+      '<td>' +
+        alerta +
+        '<div style="font-weight:600;">' + dataFormatada + '</div>' +
+        '<div class="client-line">Ref: ' + (faturaMaisCritica ? faturaMaisCritica.numLinha : '--') + ' (Mês ' + (faturaMaisCritica ? faturaMaisCritica.mes : '--') + ')</div>' +
+      '</td>' +
+      '<td><span class="badge ' + badgeClass + '">' + statusTexto + '</span></td>' +
+      '<td>' +
+        '<button class="btn-action ' + acao.classe + '" onclick="toggleDetail(\'' + detailId + '\')">' +
+          '<i data-lucide="' + acao.icone + '" size="14"></i> ' + acao.texto +
+        '</button>' +
+      '</td>' +
+    '</tr>';
+
+    // ---- LINHA DE DETALHE ----
+    var detalheHtml = '<tr class="detail-row" id="' + detailId + '" style="display:none;">' +
+        '<td colspan="7">' +
+          '<div class="detail-content">' +
+            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">' +
+              '<strong style="font-size:1rem;">📋 Registro de Faturas do cliente</strong>' +
+              '<span style="font-size:0.8rem; color:var(--text-muted);">' + todasFaturas.length + ' registros</span>' +
+            '</div>';
+
+    for (var g = 0; g < gruposOrdenados.length; g++) {
+      var dataKey = gruposOrdenados[g];
+      var grupo = grupos[dataKey];
+      var totalPendentes = grupo.totalPendentes;
+      var numerosList = Array.from(grupo.numeros).join(', ');
+      var estaPago = totalPendentes === 0;
+      var badgeCls = estaPago ? 'pago' : '';
+      var statusLabel = estaPago ? '✅ Pago' : '⏳ ' + totalPendentes + ' pendente(s)';
+
+      var refFatura = grupo.faturas[0] || {};
+      var linhaRef = refFatura.numeroLinha || '';
+      var mesRef = refFatura.mes || '';
+      var statusRef = refFatura.statusExibido || 'PENDENTE';
+
+      var linkCall = '#';
+      var botaoWhatsDisabled = true;
+      var botaoCallDisabled = true;
+
+      var msg = '';
+      var msgEncoded = '';
+
+      if (numeroContato && numeroContato.length >= 10) {
+        botaoWhatsDisabled = false;
+        botaoCallDisabled = false;
+
+        msg = gerarMensagemWhatsApp(
+          grupo.dataObj,
+          statusRef,
+          cliente.nomeResponsavel || cliente.nomeCliente,
+          cliente.nomeCliente,
+          Array.from(grupo.numeros)
+        );
+
+        msgEncoded = encodeURIComponent(msg);
+        linkCall = 'tel:' + numeroContato;
+      }
+
+      var linkWhats = '#';
+      if (!botaoWhatsDisabled) {
+        linkWhats = 'https://api.whatsapp.com/send?phone=55' + numeroContato + '&text=' + msgEncoded;
+      }
+
+      detalheHtml += '<div class="grupo-card">' +
+        '<div class="grupo-header">' +
+          '<div class="grupo-info">' +
+            '<strong>📅 ' + dataKey + '</strong>' +
+            '<span class="qtd">' + grupo.faturas.length + ' linha(s)</span>' +
+            '<span class="numeros">📞 ' + numerosList + '</span>' +
+            '<span class="badge-grupo ' + badgeCls + '">' + statusLabel + '</span>' +
+          '</div>' +
+          '<div class="grupo-actions">';
+
+      // ----- BOTÃO MARCAR COMO PAGO / DESFAZER PAGO -----
+      if (!estaPago) {
+        detalheHtml += '<button class="btn-action btn-success-action" onclick="darBaixaGrupo(\'' + codigoCliente + '\', \'' + dataKey + '\')">' +
+          '<i data-lucide="check-circle" size="14"></i> Marcar como Pago' +
+        '</button>';
+      } else {
+        detalheHtml += '<button class="btn-action btn-warning-action" onclick="estornarGrupo(\'' + codigoCliente + '\', \'' + dataKey + '\')">' +
+          '<i data-lucide="undo" size="14"></i> Desfazer Pago' +
+        '</button>';
+      }
+
+      // ----- BOTÃO WHATSAPP -----
+      if (!botaoWhatsDisabled) {
+        detalheHtml += '<a href="' + linkWhats + '" target="_blank" class="btn-action btn-whatsapp" ' +
+          'onclick="registrarLogWhatsAppFrontend(\'' + codigoCliente + '\', \'' + dataKey + '\'); return true;" ' +
+          'title="Enviar mensagem via WhatsApp">' +
+          '<i data-lucide="message-circle" size="14"></i> WhatsApp' +
+        '</a>';
+      } else {
+        detalheHtml += '<span class="btn-action btn-disabled" title="Número inválido">' +
+          '<i data-lucide="message-circle" size="14"></i> WhatsApp' +
+        '</span>';
+      }
+
+      // ----- BOTÃO LIGAÇÃO -----
+      if (!botaoCallDisabled) {
+        detalheHtml += '<a href="' + linkCall + '" class="btn-action btn-call" title="Ligar para o cliente">' +
+          '<i data-lucide="phone" size="14"></i> Ligar' +
+        '</a>';
+      } else {
+        detalheHtml += '<span class="btn-action btn-disabled" title="Número inválido">' +
+          '<i data-lucide="phone" size="14"></i> Ligar' +
+        '</span>';
+      }
+
+      detalheHtml += '</div>' +
+          '</div>' +
+        '</div>';
+    }
+
+    // ----- BOTÃO BAIXAR TODAS PENDENTES -----
+    var totalPendentesCliente = 0;
+    for (var p = 0; p < todasFaturas.length; p++) {
+      if (todasFaturas[p].statusExibido !== 'PAGO') {
+        totalPendentesCliente++;
+      }
+    }
+    if (totalPendentesCliente > 0) {
+      detalheHtml += '<div class="detail-actions">' +
+        '<button class="btn-action btn-success-action" onclick="baixarTodasPendentes(\'' + codigoCliente + '\')">' +
+          '<i data-lucide="check-square" size="16"></i> Baixar todas as ' + totalPendentesCliente + ' pendentes' +
+        '</button>' +
+      '</div>';
+    }
+
+    detalheHtml += '</div>' +
+        '</td>' +
+      '</tr>';
+
+    html += detalheHtml;
+  }
+
+  // Se nenhum cliente passou no filtro
+  if (html === '') {
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i>✅</i> Todas as faturas estão em dia! Nenhum vencimento nos próximos 14 dias.</div></td></tr>';
+  } else {
+    tbody.innerHTML = html;
+  }
+
+  document.getElementById('kpi-atrasadas').innerText = kpiAtrasadas;
+  document.getElementById('kpi-vence-breve').innerText = kpiVenceBreve;
+  document.getElementById('kpi-recebidas').innerText = kpiRecebidas;
+  document.getElementById('loading').style.display = 'none';
+
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+  // =========================================================
+  // TOGGLE EXPANSÃO
+  // =========================================================
+  function toggleDetail(detailId) {
+    var row = document.getElementById(detailId);
+    var btn = document.getElementById('btn-' + detailId);
+    if (!row) return;
+    if (row.style.display === 'none') {
+      row.style.display = 'table-row';
+      if (btn) btn.classList.add('open');
+    } else {
+      row.style.display = 'none';
+      if (btn) btn.classList.remove('open');
+    }
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+
+  // =========================================================
+  // ALGORITMO DE COBRANÇA (auxiliar)
+  // =========================================================
+  function obterAcaoCobranca(dataVencObj, status) {
+    if (status === 'PAGO') return { texto: 'Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
+
+    var hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    var venc = new Date(dataVencObj);
+    venc.setHours(0, 0, 0, 0);
+    var diffDias = Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 3600 * 24));
+
+    if (diffDias < -5) return { texto: 'Processando baixa pagamento', classe: 'btn-disabled', icone: 'clock', exibirWarning: false };
+    if (diffDias >= -5 && diffDias <= -1) return { texto: 'Lembrete 5 Dias', classe: 'btn-info', icone: 'message-circle', exibirWarning: false };
+    if (diffDias === 0) return { texto: 'Msg Vencimento', classe: 'btn-warning-action', icone: 'bell', exibirWarning: false };
+    if (diffDias >= 1 && diffDias < 3) return { texto: 'Acompanhar Pagamento', classe: 'btn-warning-action', icone: 'eye', exibirWarning: false };
+    if (diffDias >= 3 && diffDias < 5) return { texto: 'Cobrança (3 Dias)', classe: 'btn-danger-action', icone: 'send', exibirWarning: false };
+    if (diffDias >= 5 && diffDias < 10) return { texto: 'Enviar Áudio Wpp', classe: 'btn-danger-action', icone: 'mic', exibirWarning: false };
+    if (diffDias >= 10 && diffDias < 20) return { texto: 'Ligar p/ Cliente', classe: 'btn-danger-action', icone: 'phone-call', exibirWarning: false };
+    if (diffDias >= 20 && diffDias < 30) return { texto: 'Risco Quebra Contrato', classe: 'btn-critical', icone: 'alert-triangle', exibirWarning: false };
+    if (diffDias >= 30) return { texto: 'Inadimplência Crítica', classe: 'btn-critical', icone: 'x-octagon', exibirWarning: true };
+    return { texto: 'Verificar', classe: 'btn-disabled', icone: 'help-circle', exibirWarning: false };
+  }
+
+  // =========================================================
+  // DAR BAIXA EM UM GRUPO (por data de vencimento) - COM LOG
+  // =========================================================
+function darBaixaGrupo(codigoCliente, dataVencimento) {
+  var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
+  if (!cliente) {
+    alert('Cliente não encontrado.');
+    return;
+  }
+
+  var celulas = [];
+  var agora = new Date();
+  agora.setHours(0, 0, 0, 0);
+  var dataPagamento = agora.toISOString();
+
+  for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
+    var linha = cliente.linhasTelefonicas[l];
+    for (var f = 0; f < linha.faturas.length; f++) {
+      var fatura = linha.faturas[f];
+      var dataFatura = new Date(fatura.vencimento);
+      if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento && fatura.status.toUpperCase() !== 'PAGO') {
+        celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
+      }
+    }
+  }
+
+  if (celulas.length === 0) {
+    alert('Nenhuma fatura pendente para este vencimento.');
+    return;
+  }
+
+  if (!confirm('Deseja baixar ' + celulas.length + ' fatura(s) com vencimento ' + dataVencimento + '?')) return;
+
+  var nomeUsuario = obterNomeUsuario();
+
+  google.script.run
+    .withSuccessHandler(function() {
+      // Atualiza cache local com status PAGO e data de pagamento
+      for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
+        var linha2 = cliente.linhasTelefonicas[l2];
+        for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
+          var fatura2 = linha2.faturas[f2];
+          var dataFatura2 = new Date(fatura2.vencimento);
+          if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento && fatura2.status.toUpperCase() !== 'PAGO') {
+            fatura2.status = 'PAGO';
+            fatura2.dataPagamento = dataPagamento; // 🔥 Adiciona data de pagamento
+          }
+        }
+      }
+      renderizarTabela(cacheClientes);
+      alert('✅ ' + celulas.length + ' faturas baixadas com sucesso! Logs registrados.');
+    })
+    .withFailureHandler(function(erro) { alert('❌ Erro: ' + erro); })
+    .atualizarStatusFaturasComLog(celulas, nomeUsuario);
+}
+
+  // =========================================================
+  // BAIXAR TODAS AS PENDENTES DO CLIENTE - COM LOG
+  // =========================================================
+  function baixarTodasPendentes(codigoCliente) {
+    var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
+    if (!cliente) {
+      alert('Cliente não encontrado.');
+      return;
+    }
+
+    var celulas = [];
+    for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
+      var linha = cliente.linhasTelefonicas[l];
+      for (var f = 0; f < linha.faturas.length; f++) {
+        var fatura = linha.faturas[f];
+        if (fatura.status.toUpperCase() !== 'PAGO') {
+          celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
+        }
+      }
+    }
+
+    if (celulas.length === 0) {
+      alert('Nenhuma fatura pendente para este cliente.');
+      return;
+    }
+
+    if (!confirm('Deseja baixar todas as ' + celulas.length + ' faturas pendentes deste cliente?')) return;
+
+    var nomeUsuario = obterNomeUsuario();
+
+    google.script.run
+      .withSuccessHandler(function() {
+        for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
+          var linha2 = cliente.linhasTelefonicas[l2];
+          for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
+            if (linha2.faturas[f2].status.toUpperCase() !== 'PAGO') {
+              linha2.faturas[f2].status = 'PAGO';
+            }
+          }
+        }
+        renderizarTabela(cacheClientes);
+        alert('✅ ' + celulas.length + ' faturas baixadas com sucesso! Logs registrados.');
+      })
+      .withFailureHandler(function(erro) { alert('❌ Erro: ' + erro); })
+      .atualizarStatusFaturasComLog(celulas, nomeUsuario);
+  }
+
+  // =========================================================
+  // INICIALIZAÇÃO - CARREGA OS DADOS AUTOMATICAMENTE
+  // =========================================================
+  (function() {
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    carregarDados();
+  })();
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      carregarDados();
+    });
+  }
+  // =========================================================
+// ESTORNAR GRUPO (desfaz o pagamento)
+// =========================================================
+function estornarGrupo(codigoCliente, dataVencimento) {
+  var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
+  if (!cliente) {
+    alert('Cliente não encontrado.');
+    return;
+  }
+
+  // Coleta as células que estão marcadas como PAGO para este vencimento
+  var celulas = [];
+  var dataObj = null;
+  for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
+    var linha = cliente.linhasTelefonicas[l];
+    for (var f = 0; f < linha.faturas.length; f++) {
+      var fatura = linha.faturas[f];
+      var dataFatura = new Date(fatura.vencimento);
+      if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento && fatura.status.toUpperCase() === 'PAGO') {
+        celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
+        if (!dataObj) dataObj = dataFatura;
+      }
+    }
+  }
+
+  if (celulas.length === 0) {
+    alert('Nenhuma fatura paga encontrada para este vencimento.');
+    return;
+  }
+
+  if (!confirm('Deseja estornar ' + celulas.length + ' fatura(s) com vencimento ' + dataVencimento + '? Isso irá reverter para PENDENTE.')) return;
+
+  var nomeUsuario = obterNomeUsuario();
+
+  google.script.run
+    .withSuccessHandler(function() {
+      // Atualizar cache local
+      for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
+        var linha2 = cliente.linhasTelefonicas[l2];
+        for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
+          var fatura2 = linha2.faturas[f2];
+          var dataFatura2 = new Date(fatura2.vencimento);
+          if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento && fatura2.status.toUpperCase() === 'PAGO') {
+            fatura2.status = 'PENDENTE';
+          }
+        }
+      }
+      renderizarTabela(cacheClientes);
+      alert('✅ ' + celulas.length + ' fatura(s) estornada(s) com sucesso!');
+    })
+    .withFailureHandler(function(erro) { alert('❌ Erro: ' + erro); })
+    .estornarStatusFaturas(celulas, nomeUsuario);
+}
+function enviarWhatsAppComLog(numeroContato, msg, codigoCliente, dataVencimento) {
+  var url = 'https://api.whatsapp.com/send?phone=55' + numeroContato + '&text=' + encodeURIComponent(msg);
+  
+  // Abrir o WhatsApp em nova aba
+  window.open(url, '_blank');
+  
+  // Registrar log no backend
+  var nomeUsuario = obterNomeUsuario();
+  google.script.run
+    .withFailureHandler(function(erro) {
+      console.error('Erro ao registrar log do WhatsApp:', erro);
+    })
+    .registrarLogWhatsApp(codigoCliente, dataVencimento, nomeUsuario);
+}
+function registrarLogWhatsAppFrontend(codigoCliente, dataVencimento) {
+  var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
+  if (!cliente) {
+    return; // não faz nada se não encontrar
+  }
+
+  // Coletar células para log (todas as faturas do grupo)
+  var celulas = [];
+  for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
+    var linha = cliente.linhasTelefonicas[l];
+    for (var f = 0; f < linha.faturas.length; f++) {
+      var fatura = linha.faturas[f];
+      var dataFatura = new Date(fatura.vencimento);
+      if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento) {
+        celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
+      }
+    }
+  }
+
+  if (celulas.length === 0) {
+    return;
+  }
+
+  var nomeUsuario = obterNomeUsuario();
+
+  // Envia o log em background (não espera resposta para não travar)
+  google.script.run
+    .withFailureHandler(function(erro) {
+      console.warn('Erro ao registrar log do WhatsApp:', erro);
+    })
+    .registrarLogWhatsApp(celulas, nomeUsuario);
+}
+</script>
+</body>
+</html>

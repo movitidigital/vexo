@@ -1,0 +1,89 @@
+<div id="aba-pedidos_input" class="item-aba" style="display: none; opacity: 0; transition: opacity 0.3s ease;">
+  <div class="modulo-card" style="background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: 'Poppins', sans-serif;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 2px solid #f0f2f5; padding-bottom: 15px;">
+      <div>
+        <h2 style="color: #1e3c72; margin: 0;">📥 Pedidos para Input</h2>
+        <p style="font-size: 11px; color: #64748b; margin-top: 4px; font-weight: 600;">FILA DE PROCESSAMENTO (VENDAS LANÇADAS PELOS VENDEDORES)</p>
+      </div>
+      <button onclick="carregarPedidosParaInput()" style="background: #f1f5f9; border: none; padding: 10px 18px; border-radius: 8px; cursor: pointer; color: #1e3c72; font-weight: bold; font-size: 12px; transition: 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">
+        🔄 Atualizar Fila
+      </button>
+    </div>
+
+    <div id="lista-pedidos-input" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+      <div style="grid-column: 1/-1; text-align: center; padding: 50px;">
+        <p style="color: #94a3b8; font-size: 14px;">⏳ Buscando pedidos na planilha...</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+/**
+ * Busca na aba VENDAS tudo que está como "PENDENTE DE INPUT"
+ */
+function carregarPedidosParaInput() {
+  const container = document.getElementById('lista-pedidos-input');
+  
+  google.script.run.withSuccessHandler(function(pedidos) {
+    container.innerHTML = "";
+    
+    if (!pedidos || pedidos.length === 0) {
+      container.innerHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 60px; background: #f8fafc; border-radius: 20px; border: 2px dashed #cbd5e1;">
+          <div style="font-size: 40px; margin-bottom: 15px;">✅</div>
+          <p style="color: #64748b; font-weight: 700; font-size: 16px; margin: 0;">Tudo em dia!</p>
+          <p style="color: #94a3b8; font-size: 12px; margin-top: 5px;">Nenhum pedido aguardando processamento no momento.</p>
+        </div>`;
+      return;
+    }
+
+    pedidos.forEach(p => {
+      container.innerHTML += `
+        <div class="card-input-pendente" style="background: white; border: 1px solid #e2e8f0; border-radius: 14px; padding: 20px; position: relative; transition: 0.3s; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+          <div style="position: absolute; top: 0; left: 0; width: 6px; height: 100%; background: #f59e0b; border-radius: 14px 0 0 14px;"></div>
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
+            <span style="font-size: 10px; font-weight: 800; color: #b45309; background: #fef3c7; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;">PENDENTE</span>
+            <span style="font-size: 11px; color: #94a3b8; font-weight: bold;">📅 ${p.dataVenda}</span>
+          </div>
+
+          <h4 style="margin: 0 0 8px 0; color: #1e3c72; font-size: 15px; font-weight: 800; line-height: 1.3;">${p.razao}</h4>
+          
+          <div style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 18px;">
+            <div style="font-size: 12px; color: #475569;"><b>CNPJ:</b> ${p.cnpj}</div>
+            <div style="font-size: 12px; color: #475569;"><b>Modalidade:</b> ${p.modalidade}</div>
+          </div>
+          
+          <div style="background: #f8fafc; padding: 12px; border-radius: 10px; border: 1px solid #f1f5f9; margin-bottom: 20px;">
+            <div style="font-size: 11px; color: #64748b; margin-bottom: 4px;">👤 <b>Lançado por:</b></div>
+            <div style="font-size: 13px; color: #1e3c72; font-weight: 700;">${p.vendedor}</div>
+          </div>
+
+          <button onclick="acionarInputBackoffice('${p.linha}')" 
+                  style="width: 100%; padding: 14px; background: #1e3c72; color: white; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13px;">
+            🛠️ Tratar Pedido e Anexar Docs
+          </button>
+        </div>`;
+    });
+  }).buscarVendasPendentes();
+}
+
+/**
+ * Função ponte: Muda a aba e dispara o carregamento do formulário
+ */
+function acionarInputBackoffice(numLinha) {
+  // 1. Muda visualmente para a aba de Vendas
+  mudarAba('vendas');
+  
+  // 2. Chama a função principal que constrói o form com os dados da planilha
+  // Esta função deve estar no script principal do seu vendas.html
+  if (typeof carregarDadosVendaParaFinalizar === 'function') {
+    carregarDadosVendaParaFinalizar(numLinha);
+  } else {
+    alert("Erro: A função de carregamento não foi encontrada no sistema.");
+  }
+}
+</script>

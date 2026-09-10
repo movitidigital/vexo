@@ -1,0 +1,536 @@
+<div class="modulo-card" style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); font-family: 'Poppins', sans-serif;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+    <div>
+      <h2 style="color: #1e3c72; margin: 0; font-weight: 800;">📊 Minhas Comissões</h2>
+      <p style="margin: 0; font-size: 11px; color: #1e3c72; font-weight: 600;">
+        🗓️ Competência: <span id="label-mes-ano" style="color: #64748b;">Selecione um mês</span>
+        <span id="status-liberacao" style="margin-left: 15px; font-weight: 700;"></span>
+      </p>
+      <div id="painel-taxas-aplicadas" style="margin-top: 10px;"></div>
+    </div>
+
+    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+      <input type="month" id="filtro-mes-fin-parceiro" onchange="carregarResumoParceiro()" style="padding: 9px 15px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: 'Poppins'; color: #1e293b; outline: none; font-weight: 600; cursor: pointer;">
+      
+      <button onclick="carregarResumoParceiro()" style="padding: 10px 18px; background: #1e3c72; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; color: white; font-size: 12px; transition: 0.3s; box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);">
+        🔄 Atualizar
+      </button>
+
+      <button onclick="gerarExtratoParceiro()" style="background: white; color: #1e3c72; border: 1px solid #1e3c72; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+        📄 Extrato
+      </button>
+
+      <button onclick="abrirModalUploadNF()" style="background: #10b981; color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+        📎 Enviar NF
+      </button>
+    </div>
+  </div>
+
+  <!-- CARDS -->
+  <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px;">
+    <div style="background: #0f172a; padding: 15px; border-radius: 15px; color: white;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Receita Total</span>
+      <h3 id="card-receita-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+    </div>
+    <div style="background: #38ef7d; padding: 15px; border-radius: 15px; color: #064e3b;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Gross (Linhas)</span>
+      <h3 id="card-gross-parceiro" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
+    </div>
+    <div style="background: #10b981; padding: 15px; border-radius: 15px; color: white;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Portabilidade</span>
+      <h3 id="card-port-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+    </div>
+    <div style="background: #f59e0b; padding: 15px; border-radius: 15px; color: white;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Renegociações (Qtd)</span>
+      <h3 id="card-mid-parceiro" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
+    </div>
+    <div style="background: #d32f2f; padding: 15px; border-radius: 15px; color: white;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Comissão Total</span>
+      <h3 id="card-com-total-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+    </div>
+  </div>
+
+  <!-- ESPELHO DE COMISSÃO -->
+  <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
+    <div>
+      <span style="font-weight: 700; font-size: 14px; color: #1e3c72;">📋 ESPELHO DE COMISSÃO</span>
+      <span style="font-size: 11px; color: #64748b; margin-left: 15px;">
+        Total a Receber: <strong id="total-espelho" style="color: #1e3c72;">R$ 0,00</strong>
+      </span>
+    </div>
+    <div>
+      <button onclick="copiarMensagemNF()" style="background: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 11px;">
+        📋 Copiar descrição NF
+      </button>
+      <span id="mensagem-nf-copiada" style="font-size: 10px; color: #10b981; margin-left: 8px; display: none;">Copiado!</span>
+    </div>
+  </div>
+
+  <!-- TABELA DE VENDAS DETALHADA (ESPELHO) -->
+  <div style="background: white; border: 1px solid #f1f5f9; border-radius: 12px; overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 11px; min-width: 900px;">
+      <thead>
+        <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #64748b;">
+          <th style="padding: 12px 15px;">DATA</th>
+          <th style="padding: 12px 15px;">CLIENTE</th>
+          <th style="padding: 12px 15px;">MODALIDADE</th>
+          <th style="padding: 12px 15px;">LINHA</th>
+          <th style="padding: 12px 15px;">VALOR</th>
+          <th style="padding: 12px 15px;">COMISSÃO BASE</th>
+          <th style="padding: 12px 15px;">COMISSÃO PORT</th>
+          <th style="padding: 12px 15px;">COMISSÃO RENEG</th>
+          <th style="padding: 12px 15px; color: #1e3c72; font-weight: 800;">TOTAL</th>
+          <th style="padding: 12px 15px; text-align: center;">AÇÕES</th>
+        </tr>
+      </thead>
+      <tbody id="tabela-vendas-parceiro">
+        <tr><td colspan="10" style="text-align: center; padding: 40px; color: #94a3b8;">Carregando suas vendas...</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- RODAPÉ COM TOTAIS POR MODALIDADE -->
+  <div id="totais-modalidade-parceiro" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 12px; text-align: center; font-size: 12px; border: 1px solid #e2e8f0;"></div>
+
+  <!-- PAINEL DE NOTAS FISCAIS ENVIADAS -->
+  <div style="margin-top: 30px; padding: 20px; background: #f1f5f9; border-radius: 12px;">
+    <h4 style="margin: 0 0 15px 0; color: #1e3c72;">📎 Notas Fiscais Enviadas</h4>
+    <div id="lista-notas-parceiro" style="font-size: 12px;">
+      <p style="color: #94a3b8;">Nenhuma nota fiscal enviada ainda.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE UPLOAD DE NF -->
+<div id="modal-upload-nf" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+  <div style="background:white; width:95%; max-width:500px; padding:30px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); position: relative;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="margin:0; color:#1e293b; font-weight: 800; font-size: 18px;">📎 Enviar Nota Fiscal</h3>
+      <button onclick="fecharModalUploadNF()" style="background:none; border:none; font-size: 24px; cursor:pointer; color:#94a3b8;">&times;</button>
+    </div>
+    <div style="display:grid; gap:15px;">
+      <div>
+        <label style="font-weight:600; font-size:12px; color:#1e293b;">Mês de Competência</label>
+        <input type="month" id="nf-mes" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+      </div>
+      <div>
+        <label style="font-weight:600; font-size:12px; color:#1e293b;">Valor Total da NF</label>
+        <input type="number" id="nf-valor" step="0.01" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;" placeholder="0,00">
+      </div>
+      <div>
+        <label style="font-weight:600; font-size:12px; color:#1e293b;">Arquivo (PDF)</label>
+        <input type="file" id="nf-arquivo" accept=".pdf" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+        <span id="nf-upload-status" style="font-size:11px; color:#64748b;"></span>
+      </div>
+      <div>
+        <label style="font-weight:600; font-size:12px; color:#1e293b;">Observação (opcional)</label>
+        <textarea id="nf-obs" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px; resize:vertical;" rows="3"></textarea>
+      </div>
+    </div>
+    <div style="margin-top:25px; display:flex; gap:10px;">
+      <button onclick="fecharModalUploadNF()" style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; color:#64748b; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Cancelar</button>
+      <button onclick="enviarNotaFiscal()" style="flex:2; background:#10b981; color:white; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Enviar NF</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE CONTESTAÇÃO -->
+<div id="modal-contestar" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+  <div style="background:white; width:95%; max-width:450px; padding:30px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); position: relative;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+      <h3 style="margin:0; color:#1e293b; font-weight: 800; font-size: 18px;">⚠️ Contestar Comissão</h3>
+      <button onclick="fecharModalContestar()" style="background:none; border:none; font-size: 24px; cursor:pointer; color:#94a3b8;">&times;</button>
+    </div>
+    <div style="display:grid; gap:15px;">
+      <p style="font-size:13px; color:#64748b;">Informe o motivo da contestação para esta linha telefônica:</p>
+      <div>
+        <label style="font-weight:600; font-size:12px; color:#1e293b;">Linha</label>
+        <input type="text" id="contestar-linha" readonly style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px; background:#f1f5f9;">
+      </div>
+      <div>
+        <label style="font-weight:600; font-size:12px; color:#1e293b;">Motivo</label>
+        <textarea id="contestar-motivo" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px; resize:vertical;" rows="4" placeholder="Descreva detalhadamente o motivo da contestação..."></textarea>
+      </div>
+    </div>
+    <div style="margin-top:25px; display:flex; gap:10px;">
+      <button onclick="fecharModalContestar()" style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; color:#64748b; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Cancelar</button>
+      <button onclick="confirmarContestacao()" style="flex:2; background:#ef4444; color:white; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Enviar Contestação</button>
+    </div>
+  </div>
+</div>
+
+<script>
+/**
+ * MÓDULO FINANCEIRO PARA PARCEIROS - VERSÃO COMPLETA
+ * Inclui: espelho, upload NF, contestação, liberação automática
+ */
+
+let dadosParceiroAtual = null;
+let idUnicoParaContestar = null;
+let linhaParaContestar = null;
+
+// ================================================================
+// CARREGAMENTO PRINCIPAL
+// ================================================================
+
+function carregarResumoParceiro() {
+  const inputMes = document.getElementById('filtro-mes-fin-parceiro');
+  const [ano, mes] = inputMes.value.split('-');
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const matricula = sessao.matricula;
+
+  google.script.run
+    .withSuccessHandler(function(liberacao) {
+      if (!liberacao.liberado) {
+        document.getElementById('tabela-vendas-parceiro').innerHTML = `
+          <tr><td colspan="8" style="text-align:center;padding:40px;color:#f59e0b;">
+            ⏳ Aguardando liberação pela E&E. O espelho será disponibilizado após o dia 24 do mês seguinte ou quando a empresa autorizar.
+          </td></tr>`;
+        return;
+      }
+      // Liberado: carrega dados
+      google.script.run
+        .withSuccessHandler(function(res) {
+          if (!res.success) { alert('Erro: ' + res.message); return; }
+          atualizarInterfaceParceiro(res);
+        })
+        .p_calcularComissaoParceiroCompleta(sessao.bancoDeDadosId, sessao.username, mes, ano);
+    })
+    .verificarLiberacaoEspelho(matricula, parseInt(mes), parseInt(ano));
+}
+
+// ================================================================
+// ATUALIZAR INTERFACE
+// ================================================================
+
+function atualizarInterfaceParceiro(dados) {
+  const formatMoeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  // CARDS
+  document.getElementById('card-receita-parceiro').innerText = formatMoeda(dados.totais.faturamento);
+  document.getElementById('card-gross-parceiro').innerHTML = `${dados.totais.gross || 0} un`;
+  document.getElementById('card-port-parceiro').innerText = formatMoeda(dados.totais.portabilidade);
+  document.getElementById('card-mid-parceiro').innerHTML = `${dados.totais.midQtd || 0} un / ${formatMoeda(dados.totais.midVal)}`;
+  document.getElementById('card-com-total-parceiro').innerText = formatMoeda(dados.totais.comissaoTotal);
+
+  // TOTAL ESPELHO
+  document.getElementById('total-espelho').innerText = formatMoeda(dados.totais.comissaoTotal);
+
+  // PAINEL DE TAXAS
+  const painel = document.getElementById('painel-taxas-aplicadas');
+  painel.innerHTML = `
+    <div style="background: #fef3c7; border-radius: 12px; padding: 12px 20px; margin: 20px 0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      <span><strong>📈 FATURAMENTO:</strong> ${dados.percentuais.fat}%</span>
+      <span><strong>🔄 PORTABILIDADE:</strong> ${dados.percentuais.port}%</span>
+      <span><strong>📱 RENEGOCIAÇÃO:</strong> ${dados.percentuais.reneg}%</span>
+      <span><strong>🔓 STATUS:</strong> ${dados.lojaDesbloqueada ? '✅ DESBLOQUEADO' : '🔒 BLOQUEADO'}</span>
+    </div>
+  `;
+
+  // TABELA DE VENDAS
+  const tbody = document.getElementById('tabela-vendas-parceiro');
+  if (!dados.vendas || dados.vendas.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 60px; color: #94a3b8; background: #f8fafc;">Nenhuma venda validada no período.</td></tr>`;
+  } else {
+    let html = '';
+    dados.vendas.forEach(v => {
+      const totalLinha = v.comissaoBase + v.comissaoPort + v.comissaoReneg;
+      const linhaTelefone = v.numeroLinha || v.linha || '---';
+      const idUnico = v.idUnico || '';
+      html += `
+        <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+          <td style="padding: 12px 15px; font-size: 11px;">${v.data || '---'}</td>
+          <td style="padding: 12px 15px; font-weight: 600; color: #1e293b;">${v.cliente || 'N/I'}</td>
+          <td style="padding: 12px 15px;">${v.modalidade || '---'}</td>
+          <td style="padding: 12px 15px; font-weight: 600; color: #1e3c72;">${linhaTelefone}</td>
+          <td style="padding: 12px 15px; font-weight: 600;">${formatMoeda(v.valor)}</td>
+          <td style="padding: 12px 15px; color: #1e3c72;">${formatMoeda(v.comissaoBase)}</td>
+          <td style="padding: 12px 15px; color: #10b981;">${formatMoeda(v.comissaoPort)}</td>
+          <td style="padding: 12px 15px; color: #f59e0b;">${formatMoeda(v.comissaoReneg)}</td>
+          <td style="padding: 12px 15px; text-align: center;">
+            <div style="background: rgba(30, 60, 114, 0.05); border: 1px solid rgba(30, 60, 114, 0.15); padding: 6px 12px; border-radius: 12px; font-size: 14px; font-weight: 800; color: #1e3c72; backdrop-filter: blur(8px);">
+              ${formatMoeda(totalLinha)}
+            </div>
+          </td>
+          <td style="padding: 12px 15px; text-align: center;">
+            <button onclick="abrirContestacao('${idUnico}', '${linhaTelefone}')" 
+              style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.3s;"
+              onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+              ⚠️ Contestar
+            </button>
+          </td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  }
+
+  // RODAPÉ
+  const footer = document.getElementById('totais-modalidade-parceiro');
+  if (dados.modalidades) {
+    const m = dados.modalidades;
+    footer.innerHTML = `
+      <strong style="color: #1e293b;">📊 RESUMO POR MODALIDADE:</strong><br>
+      <span style="color: #64748b;">
+        Base: <strong>${formatMoeda(m.totalBase)}</strong> &nbsp;|&nbsp;
+        Portabilidade: <strong>${formatMoeda(m.totalPort)}</strong> &nbsp;|&nbsp;
+        Renegociação: <strong>${formatMoeda(m.totalReneg)}</strong>
+        ${m.detalhes ? `&nbsp;|&nbsp; ${m.detalhes}` : ''}
+      </span>
+    `;
+  } else {
+    footer.innerHTML = '';
+  }
+}
+
+// ================================================================
+// NOTAS FISCAIS
+// ================================================================
+
+function carregarNotasFiscais(nomeParceiro) {
+  google.script.run
+    .withSuccessHandler(function(notas) {
+      const container = document.getElementById('lista-notas-parceiro');
+      if (!notas || notas.length === 0) {
+        container.innerHTML = '<p style="color: #94a3b8;">Nenhuma nota fiscal enviada ainda.</p>';
+        return;
+      }
+      let html = '<ul style="list-style:none; padding:0; margin:0;">';
+      notas.forEach(n => {
+        html += `
+          <li style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:white; border-radius:8px; margin-bottom:6px; border:1px solid #e2e8f0;">
+            <span>
+              <strong>${n.mesReferencia}</strong> - R$ ${Number(n.valor).toFixed(2)}
+              <span style="font-size:10px; color:#64748b; margin-left:10px;">Enviado: ${n.dataEnvio}</span>
+              ${n.contestada ? '<span style="background:#ef4444; color:white; padding:2px 8px; border-radius:12px; font-size:9px; margin-left:8px;">CONTESTADA</span>' : ''}
+            </span>
+            <a href="${n.url}" target="_blank" style="color:#1e3c72; text-decoration:none; font-weight:600; font-size:12px;">Visualizar</a>
+          </li>
+        `;
+      });
+      html += '</ul>';
+      container.innerHTML = html;
+    })
+    .p_listarNotasFiscais(nomeParceiro);
+}
+
+// ================================================================
+// UPLOAD DE NF
+// ================================================================
+
+function abrirModalUploadNF() {
+  document.getElementById('modal-upload-nf').style.display = 'flex';
+  const hoje = new Date();
+  const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+  document.getElementById('nf-mes').value = `${hoje.getFullYear()}-${mesAtual}`;
+  document.getElementById('nf-valor').value = '';
+  document.getElementById('nf-arquivo').value = '';
+  document.getElementById('nf-obs').value = '';
+  document.getElementById('nf-upload-status').innerText = '';
+}
+
+function fecharModalUploadNF() {
+  document.getElementById('modal-upload-nf').style.display = 'none';
+}
+
+function enviarNotaFiscal() {
+  const mes = document.getElementById('nf-mes').value;
+  const valor = document.getElementById('nf-valor').value;
+  const arquivoInput = document.getElementById('nf-arquivo');
+  const obs = document.getElementById('nf-obs').value;
+  const statusEl = document.getElementById('nf-upload-status');
+
+  if (!mes) {
+    statusEl.innerText = '⚠️ Selecione o mês de competência.';
+    statusEl.style.color = '#ef4444';
+    return;
+  }
+  if (!valor || parseFloat(valor) <= 0) {
+    statusEl.innerText = '⚠️ Informe o valor total da NF.';
+    statusEl.style.color = '#ef4444';
+    return;
+  }
+  if (arquivoInput.files.length === 0) {
+    statusEl.innerText = '⚠️ Selecione um arquivo PDF.';
+    statusEl.style.color = '#ef4444';
+    return;
+  }
+
+  const file = arquivoInput.files[0];
+  if (file.type !== 'application/pdf') {
+    statusEl.innerText = '⚠️ Apenas arquivos PDF são aceitos.';
+    statusEl.style.color = '#ef4444';
+    return;
+  }
+
+  statusEl.innerText = '⏳ Enviando...';
+  statusEl.style.color = '#f59e0b';
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    const base64 = e.target.result;
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const nomeParceiro = sessao.username || sessao.nome || '';
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res.success) {
+          statusEl.innerText = '✅ NF enviada com sucesso!';
+          statusEl.style.color = '#10b981';
+          setTimeout(() => {
+            fecharModalUploadNF();
+            carregarResumoParceiro();
+          }, 1000);
+        } else {
+          statusEl.innerText = '❌ Erro: ' + res.message;
+          statusEl.style.color = '#ef4444';
+        }
+      })
+      .withFailureHandler(function(err) {
+        statusEl.innerText = '❌ Erro: ' + err;
+        statusEl.style.color = '#ef4444';
+      })
+      .p_uploadNotaFiscal(base64, file.name, nomeParceiro, mes, valor, obs);
+  };
+  reader.readAsDataURL(file);
+}
+
+// ================================================================
+// CONTESTAÇÃO
+// ================================================================
+
+function abrirContestacao(idUnico, linha) {
+  // Verifica se já passaram 5 dias do envio da NF para este mês
+  // Para simplificar, vamos verificar se existe NF enviada para este mês
+  // e se a data de envio é >= 5 dias atrás. Se não houver NF, não pode contestar.
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const nomeParceiro = sessao.username || sessao.nome || '';
+  const mesReferencia = document.getElementById('label-mes-ano').innerText;
+
+  google.script.run
+    .withSuccessHandler(function(notas) {
+      // Filtra notas do mesmo mês
+      const notasMes = notas.filter(n => n.mesReferencia === mesReferencia);
+      if (notasMes.length === 0) {
+        alert('⚠️ Você precisa enviar a nota fiscal deste mês antes de contestar.');
+        return;
+      }
+      // Verifica se alguma nota já tem mais de 5 dias
+      const podeContestar = notasMes.some(n => n.podeContestar === true);
+      if (!podeContestar) {
+        alert('⚠️ Aguarde 5 dias após o envio da nota fiscal para contestar.');
+        return;
+      }
+
+      // Se passou, abre o modal
+      idUnicoParaContestar = idUnico;
+      linhaParaContestar = linha;
+      document.getElementById('contestar-linha').value = linha;
+      document.getElementById('contestar-motivo').value = '';
+      document.getElementById('modal-contestar').style.display = 'flex';
+    })
+    .withFailureHandler(function(err) {
+      alert('Erro ao verificar notas: ' + err);
+    })
+    .p_listarNotasFiscais(nomeParceiro);
+}
+
+function fecharModalContestar() {
+  document.getElementById('modal-contestar').style.display = 'none';
+}
+
+function confirmarContestacao() {
+  const motivo = document.getElementById('contestar-motivo').value.trim();
+  if (!motivo) {
+    alert('Por favor, descreva o motivo da contestação.');
+    return;
+  }
+
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const nomeParceiro = sessao.username || sessao.nome || '';
+  const mesReferencia = document.getElementById('label-mes-ano').innerText;
+
+  const btn = event.target;
+  const originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Enviando...';
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      if (res.success) {
+        alert('✅ Contestação registrada com sucesso!');
+        fecharModalContestar();
+        carregarResumoParceiro(); // recarrega para atualizar status
+      } else {
+        alert('❌ Erro: ' + res.message);
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+      alert('❌ Erro: ' + err);
+    })
+    .p_registrarContestacao(idUnicoParaContestar, nomeParceiro, motivo, mesReferencia);
+}
+
+// ================================================================
+// COPIAR MENSAGEM PARA NOTA FISCAL
+// ================================================================
+
+function copiarMensagemNF() {
+  const total = document.getElementById('total-espelho').innerText;
+  const mes = document.getElementById('label-mes-ano').innerText;
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const nome = sessao.username || sessao.nome || '';
+
+  const mensagem = `Serviços de intermediação de vendas - Comissão referente ao mês de ${mes} - Parceiro: ${nome} - Total: ${total}`;
+
+  // Copia para a área de transferência
+  const textarea = document.createElement('textarea');
+  textarea.value = mensagem;
+  document.body.appendChild(textarea);
+  textarea.select();
+  document.execCommand('copy');
+  document.body.removeChild(textarea);
+
+  // Feedback
+  const el = document.getElementById('mensagem-nf-copiada');
+  el.style.display = 'inline';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+// ================================================================
+// GERAR EXTRATO
+// ================================================================
+
+function gerarExtratoParceiro() {
+  if (!dadosParceiroAtual) {
+    alert('Carregue os dados primeiro.');
+    return;
+  }
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const nomeParceiro = sessao.username || sessao.nome || 'Parceiro';
+  const inputMes = document.getElementById('filtro-mes-fin-parceiro');
+  const [ano, mes] = inputMes.value.split('-');
+
+  google.script.run
+    .withSuccessHandler(function(html) {
+      const win = window.open('', '_blank', 'width=950,height=850');
+      win.document.write(html);
+      win.document.close();
+    })
+    .withFailureHandler(function(err) {
+      alert('Erro ao gerar extrato: ' + err);
+    })
+    .p_gerarExtratoParceiro(dadosParceiroAtual, nomeParceiro, mes, ano);
+}
+
+// ================================================================
+// INICIALIZA
+// ================================================================
+
+carregarResumoParceiro();
+</script>

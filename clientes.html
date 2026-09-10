@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #f8fafc; font-family: 'Inter', sans-serif; }
+    .clientes-container { max-width: 1400px; margin: 0 auto; padding: 24px; }
+    .clientes-header { background: white; border-radius: 20px; padding: 24px 28px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; box-shadow: 0 2px 8px rgba(0,0,0,0.04); border: 1px solid #eef2f6; }
+    .header-title { display: flex; align-items: center; gap: 16px; }
+    .title-icon { width: 52px; height: 52px; background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-size: 24px; }
+    .header-title h1 { font-size: 22px; font-weight: 700; color: #1e293b; }
+    .header-title p { font-size: 13px; color: #64748b; }
+    .btn-refresh { background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 12px; font-weight: 600; font-size: 13px; color: #1e3c72; cursor: pointer; transition: all 0.3s; display: inline-flex; align-items: center; gap: 8px; }
+    .btn-refresh:hover { background: #e2e8f0; transform: translateY(-1px); }
+    .btn-refresh.primary { background: #10b981; color: white; }
+    .btn-refresh.primary:hover { background: #059669; }
+
+    .tabs-container { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
+    .tab-btn { background: white; border: 1px solid #e2e8f0; padding: 10px 24px; border-radius: 40px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; color: #64748b; }
+    .tab-btn.active { background: #1e3c72; border-color: #1e3c72; color: white; box-shadow: 0 4px 12px rgba(30,60,114,0.25); }
+    .tab-badge { background: rgba(0,0,0,0.1); border-radius: 20px; padding: 2px 8px; font-size: 11px; font-weight: 700; }
+
+    .search-section { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
+    .search-box { flex: 1; position: relative; min-width: 200px; }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .search-input { width: 100%; padding: 14px 16px 14px 44px; border: 1px solid #e2e8f0; border-radius: 14px; font-size: 14px; font-family: 'Inter', sans-serif; background: white; transition: all 0.3s; }
+    .search-input:focus { outline: none; border-color: #1e3c72; box-shadow: 0 0 0 3px rgba(30,60,114,0.1); }
+    .filter-box { position: relative; min-width: 200px; }
+    .filter-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .filter-select { width: 100%; padding: 14px 16px 14px 40px; border: 1px solid #e2e8f0; border-radius: 14px; font-size: 14px; font-family: 'Inter', sans-serif; background: white; cursor: pointer; appearance: none; }
+
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+    .stat-card { background: white; border-radius: 16px; padding: 20px; display: flex; align-items: center; gap: 16px; border: 1px solid #eef2f6; }
+    .stat-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px; }
+    .stat-icon.blue { background: #e0f2fe; color: #0284c7; }
+    .stat-icon.green { background: #dcfce7; color: #16a34a; }
+    .stat-icon.orange { background: #fef3c7; color: #d97706; }
+    .stat-info { display: flex; flex-direction: column; }
+    .stat-label { font-size: 12px; color: #64748b; font-weight: 500; }
+    .stat-value { font-size: 28px; font-weight: 800; color: #1e293b; }
+
+    .table-wrapper { background: white; border-radius: 20px; overflow: hidden; border: 1px solid #eef2f6; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .clientes-table { width: 100%; border-collapse: collapse; }
+    .clientes-table th { padding: 16px 20px; text-align: left; font-size: 12px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; background: #f8fafc; border-bottom: 1px solid #eef2f6; }
+    .clientes-table td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; font-size: 13px; vertical-align: middle; }
+    .clientes-table tr:hover { background: #f8fafc; }
+    .loading-cell { text-align: center !important; padding: 60px !important; color: #94a3b8; }
+    .loading-spinner { width: 40px; height: 40px; border: 3px solid #e2e8f0; border-top-color: #1e3c72; border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 16px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .status-badge { display: inline-flex; align-items: center; gap: 6px; padding: 5px 12px; border-radius: 30px; font-size: 11px; font-weight: 700; }
+    .status-pendente { background: #fef3c7; color: #d97706; }
+    .status-completo { background: #dcfce7; color: #16a34a; }
+
+    .action-btn { background: #f1f5f9; border: none; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+    .action-btn.edit { background: #e0f2fe; color: #0284c7; }
+    .action-btn.edit:hover { background: #0284c7; color: white; transform: translateY(-1px); }
+    .action-btn.view { background: #f1f5f9; color: #64748b; }
+
+    .whatsapp-link { background: #25d366; color: white; padding: 6px 12px; border-radius: 8px; text-decoration: none; font-size: 11px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px; }
+    .whatsapp-link:hover { background: #1da851; transform: translateY(-1px); }
+
+    .empresa-nome { font-weight: 700; color: #1e293b; margin-bottom: 4px; }
+    .empresa-cnpj { font-size: 11px; color: #64748b; font-family: monospace; }
+    .empresa-data { font-size: 10px; color: #94a3b8; margin-top: 4px; }
+    .local-info { display: flex; align-items: center; gap: 6px; color: #64748b; font-size: 12px; }
+
+    .pagination-container { display: flex; justify-content: center; align-items: center; gap: 20px; padding: 20px; border-top: 1px solid #eef2f6; background: white; }
+    .page-btn { background: #f1f5f9; border: none; padding: 8px 16px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 8px; color: #1e3c72; }
+    .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    .page-info { font-size: 13px; color: #64748b; font-weight: 500; }
+
+    @media (max-width: 768px) {
+      .clientes-container { padding: 16px; }
+      .clientes-table th, .clientes-table td { padding: 12px; }
+      .stats-grid { grid-template-columns: 1fr; }
+      .search-section { flex-direction: column; }
+      .filter-box { width: 100%; }
+    }
+
+    /* Modal (mantido igual ao original) */
+    .modal-premium { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+    .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
+    .modal-container { position: relative; background: white; width: 95%; max-width: 900px; max-height: 90vh; border-radius: 24px; overflow: hidden; animation: modalFadeIn 0.3s ease; display: flex; flex-direction: column; }
+    @keyframes modalFadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+    .modal-header { background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%); padding: 20px 24px; display: flex; align-items: center; gap: 16px; color: white; }
+    .modal-header-icon { width: 44px; height: 44px; background: rgba(255,255,255,0.15); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; }
+    .modal-header h3 { font-size: 18px; font-weight: 700; margin: 0; }
+    .modal-header p { font-size: 12px; opacity: 0.8; margin: 4px 0 0 0; }
+    .modal-close { margin-left: auto; background: rgba(255,255,255,0.1); border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 24px; cursor: pointer; color: white; transition: all 0.3s; }
+    .modal-close:hover { background: rgba(255,255,255,0.2); transform: rotate(90deg); }
+    .modal-body { padding: 24px; overflow-y: auto; max-height: calc(90vh - 140px); }
+    .modal-alert { padding: 14px 16px; border-radius: 12px; margin-bottom: 20px; border-left: 4px solid; font-size: 13px; }
+    .form-section { margin-bottom: 28px; border-bottom: 1px solid #eef2f6; padding-bottom: 20px; }
+    .section-title { font-size: 14px; font-weight: 700; color: #1e3c72; margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 16px; }
+    .form-group { display: flex; flex-direction: column; gap: 6px; }
+    .form-group.full-width { grid-column: 1 / -1; }
+    .form-group label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+    .form-control { padding: 12px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px; font-family: 'Inter', sans-serif; transition: all 0.2s; background: white; }
+    .form-control:focus { outline: none; border-color: #1e3c72; box-shadow: 0 0 0 3px rgba(30,60,114,0.1); }
+    .form-control:disabled { background: #f8fafc; cursor: not-allowed; }
+    .password-wrapper { position: relative; }
+    .password-toggle { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); background: none; border: none; cursor: pointer; font-size: 16px; color: #94a3b8; }
+    .modal-footer { padding: 16px 24px; border-top: 1px solid #eef2f6; background: white; display: flex; gap: 12px; justify-content: flex-end; }
+    .btn-cancel, .btn-save { padding: 12px 24px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; }
+    .btn-cancel { background: #f1f5f9; border: none; color: #64748b; }
+    .btn-save { background: #1e3c72; border: none; color: white; }
+    .btn-save:hover { background: #162d54; transform: translateY(-1px); }
+  </style>
+</head>
+<body>
+
+<div class="clientes-container">
+  
+  <div class="clientes-header">
+    <div class="header-title">
+      <div class="title-icon"><i class="fas fa-users"></i></div>
+      <div><h1>Gestão de Clientes</h1><p>Gerencie sua base de clientes, complete cadastros e mantenha tudo organizado</p></div>
+    </div>
+    <div class="header-actions">
+      <button id="btnSincronizar" class="btn-refresh primary"><i class="fas fa-cloud-upload-alt"></i> Sincronizar Base</button>
+      <button id="btnAtualizar" class="btn-refresh"><i class="fas fa-sync-alt"></i> Atualizar</button>
+    </div>
+  </div>
+
+  <div class="tabs-container">
+    <button id="btnPendentes" class="tab-btn" style="display: none;"><i class="fas fa-exclamation-triangle"></i> Pendências <span id="badgePendentes" class="tab-badge">0</span></button>
+    <button id="btnTodos" class="tab-btn active"><i class="fas fa-database"></i> Base Completa <span id="badgeTodos" class="tab-badge">0</span></button>
+  </div>
+
+  <div class="search-section">
+    <div class="search-box"><i class="fas fa-search search-icon"></i><input type="text" id="inputBusca" placeholder="Buscar por CNPJ, Razão Social ou Código..." class="search-input"></div>
+    <div class="filter-box"><i class="fas fa-map-marker-alt filter-icon"></i><select id="selectUF" class="filter-select"><option value="">Todos os Estados</option><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option></select></div>
+  </div>
+
+  <div class="stats-grid">
+    <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-building"></i></div><div class="stat-info"><span class="stat-label">Total de Clientes</span><strong id="totalClientes" class="stat-value">0</strong></div></div>
+    <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-circle"></i></div><div class="stat-info"><span class="stat-label">Cadastros Completos</span><strong id="totalCompletos" class="stat-value">0</strong></div></div>
+    <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-exclamation-triangle"></i></div><div class="stat-info"><span class="stat-label">Pendências</span><strong id="totalPendentes" class="stat-value">0</strong></div></div>
+  </div>
+
+  <div class="table-wrapper">
+    <table class="clientes-table">
+      <thead><tr><th><i class="fas fa-building"></i> Empresa / CNPJ</th><th><i class="fas fa-tag"></i> Status</th><th><i class="fas fa-map-marker-alt"></i> Localização</th><th><i class="fas fa-phone"></i> Contato</th><th style="text-align:center;"><i class="fas fa-cog"></i> Ações</th></tr></thead>
+      <tbody id="tbodyClientes"><tr><td colspan="5" class="loading-cell"><div class="loading-spinner"></div><span>Carregando clientes...</span></td></tr></tbody>
+    </table>
+    <div class="pagination-container" id="paginationContainer" style="display: none;">
+      <button id="btnPrevPage" class="page-btn" disabled><i class="fas fa-chevron-left"></i> Anterior</button>
+      <span id="pageInfo" class="page-info">Página 1 de 1</span>
+      <button id="btnNextPage" class="page-btn" disabled>Próxima <i class="fas fa-chevron-right"></i></button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL (mesmo do original) -->
+<div id="modalEdicao" class="modal-premium" style="display: none;">
+  <div class="modal-overlay"></div>
+  <div class="modal-container">
+    <div class="modal-header"><div class="modal-header-icon"><i class="fas fa-user-edit"></i></div><div><h3 id="modalTitulo">Editar Cliente</h3><p id="modalSubtitle">Complete todas as informações do cadastro</p></div><button class="modal-close" id="closeModalBtn">&times;</button></div>
+    <div class="modal-body">
+      <input type="hidden" id="editLinha">
+      <div id="alertStatus" class="modal-alert" style="display: none;"></div>
+      <div class="form-section"><div class="section-title"><i class="fas fa-building"></i> Identificação da Empresa</div><div class="form-row"><div class="form-group"><label>CNPJ / CPF</label><input type="text" id="editCnpj" class="form-control" readonly></div><div class="form-group"><label>Inscrição Estadual</label><input type="text" id="editIe" class="form-control edit-field" placeholder="Isento ou Nº"></div></div><div class="form-group full-width"><label>Razão Social / Nome Empresa</label><input type="text" id="editRazao" class="form-control edit-field"></div></div>
+      <div class="form-section"><div class="section-title"><i class="fas fa-key"></i> Códigos de Acesso</div><div class="form-row"><div class="form-group"><label>Código do Cliente (AF)</label><input type="text" id="editCodCliente" class="form-control edit-field"></div><div class="form-group"><label>Código do Administrador (AG)</label><input type="text" id="editCodAdmin" class="form-control edit-field"></div></div><div class="form-row"><div class="form-group"><label>Login Admin (MEU TIM)</label><input type="text" id="editLogin" class="form-control edit-field"></div><div class="form-group"><label>Senha (MEU TIM)</label><div class="password-wrapper"><input type="password" id="editSenha" class="form-control edit-field"><button type="button" class="password-toggle" onclick="toggleSenha('editSenha', this)">👁️</button></div></div></div></div>
+      <div class="form-section"><div class="section-title"><i class="fas fa-map-marker-alt"></i> Endereço de Faturamento</div><div class="form-row"><div class="form-group"><label>CEP</label><input type="text" id="editCep" class="form-control edit-field" maxlength="9" placeholder="00000-000"></div><div class="form-group"><label>Endereço</label><input type="text" id="editEndereco" class="form-control edit-field"></div></div><div class="form-row"><div class="form-group"><label>Número</label><input type="text" id="editNumero" class="form-control edit-field"></div><div class="form-group"><label>Bairro</label><input type="text" id="editBairro" class="form-control edit-field"></div><div class="form-group"><label>Complemento</label><input type="text" id="editComplemento" class="form-control edit-field"></div></div><div class="form-row"><div class="form-group"><label>Cidade</label><input type="text" id="editCidade" class="form-control edit-field"></div><div class="form-group"><label>UF</label><select id="editUf" class="form-control edit-field"><option value="">Selecione</option><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option></select></div></div></div>
+      <div class="form-section"><div class="section-title"><i class="fas fa-user-tie"></i> Dados do Administrador</div><div class="form-row"><div class="form-group"><label>Nome Completo</label><input type="text" id="editNomeAdmin" class="form-control edit-field"></div><div class="form-group"><label>CPF</label><input type="text" id="editCpf" class="form-control edit-field" maxlength="14" placeholder="000.000.000-00"></div></div><div class="form-row"><div class="form-group"><label>E-mail Corporativo</label><input type="email" id="editEmail" class="form-control edit-field"></div><div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="editTelefone" class="form-control edit-field" maxlength="15" placeholder="(00) 00000-0000"></div></div></div>
+    </div>
+    <div class="modal-footer"><button class="btn-cancel" id="btnCancelarModal">Cancelar</button><button class="btn-save" id="btnSalvarModal" style="display: none;">💾 Salvar Alterações</button></div>
+  </div>
+</div>
+
+<script>
+  (function() {
+    let clientesData = [];
+    let abaAtual = 'todos';
+    let paginaAtual = 1;
+    const ITENS_POR_PAGINA = 15;
+    let dadosFiltrados = [];
+
+    // Sessão do usuário
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const cargoUsuario = (sessao.role || "").toUpperCase().trim();
+    const podeEditar = (cargoUsuario === "ADMINISTRADOR" || cargoUsuario === "BACKOFFICE");
+    const podeVerPendencias = (cargoUsuario === "ADMINISTRADOR" || cargoUsuario === "BACKOFFICE");
+
+    const tbody = document.getElementById('tbodyClientes');
+    const totalSpan = document.getElementById('totalClientes');
+    const totalCompletosSpan = document.getElementById('totalCompletos');
+    const totalPendentesSpan = document.getElementById('totalPendentes');
+    const badgePendentes = document.getElementById('badgePendentes');
+    const badgeTodos = document.getElementById('badgeTodos');
+    const inputBusca = document.getElementById('inputBusca');
+    const selectUF = document.getElementById('selectUF');
+    const btnPendentes = document.getElementById('btnPendentes');
+    const btnTodos = document.getElementById('btnTodos');
+    const btnAtualizar = document.getElementById('btnAtualizar');
+    const paginationContainer = document.getElementById('paginationContainer');
+    const btnPrevPage = document.getElementById('btnPrevPage');
+    const btnNextPage = document.getElementById('btnNextPage');
+    const pageInfo = document.getElementById('pageInfo');
+
+    // Exibe ou esconde aba Pendentes conforme permissão
+    if (podeVerPendencias) {
+      btnPendentes.style.display = 'flex';
+      abaAtual = 'pendentes';
+      btnPendentes.classList.add('active');
+      btnTodos.classList.remove('active');
+    } else {
+      btnPendentes.style.display = 'none';
+      abaAtual = 'todos';
+      btnTodos.classList.add('active');
+    }
+
+    // ====================== CARREGAR CLIENTES ======================
+    function carregarClientes() {
+      tbody.innerHTML = '<tr><td colspan="5" class="loading-cell"><div class="loading-spinner"></div><span>Carregando clientes...</span></td></tr>';
+      
+      google.script.run
+        .withSuccessHandler(function(dados) {
+          // Garantir que dados é um array
+          clientesData = Array.isArray(dados) ? dados : [];
+          atualizarStats();
+          filtrarClientes();
+        })
+        .withFailureHandler(function(err) {
+          console.error("❌ Erro ao buscar clientes:", err);
+          tbody.innerHTML = '<tr><td colspan="5" class="loading-cell" style="color:#ef4444;">' +
+            '<i class="fas fa-exclamation-circle" style="font-size:40px; margin-bottom:16px; display:block;"></i>' +
+            'Erro ao carregar dados: ' + err +
+            '<br><small>Verifique o console (F12) para mais detalhes.</small></td></tr>';
+        })
+        .buscarBaseClientes();
+    }
+
+    // ====================== ATUALIZAR ESTATÍSTICAS ======================
+    function atualizarStats() {
+      const total = clientesData.length;
+      const completos = clientesData.filter(c => !c.estaIncompleto).length;
+      const pendentes = clientesData.filter(c => c.estaIncompleto).length;
+      totalSpan.innerText = total;
+      totalCompletosSpan.innerText = completos;
+      totalPendentesSpan.innerText = pendentes;
+      badgePendentes.innerText = pendentes;
+      badgeTodos.innerText = total;
+    }
+
+    // ====================== FILTRAR CLIENTES ======================
+    function filtrarClientes() {
+      let filtrados = [...clientesData];
+      const termo = inputBusca.value.toLowerCase().trim();
+      const uf = selectUF.value;
+
+      if (abaAtual === 'pendentes') {
+        filtrados = filtrados.filter(c => c.estaIncompleto === true);
+      }
+
+      if (termo) {
+        filtrados = filtrados.filter(c => {
+          const cnpj = (c.cnpj || '').toLowerCase();
+          const razao = (c.razao || '').toLowerCase();
+          const codigo = (c.codigoCliente || '').toLowerCase();
+          return cnpj.includes(termo) || razao.includes(termo) || codigo.includes(termo);
+        });
+      }
+
+      if (uf) {
+        filtrados = filtrados.filter(c => (c.uf || '').toUpperCase() === uf);
+      }
+
+      dadosFiltrados = filtrados;
+      paginaAtual = 1;
+      renderizarTabela();
+    }
+
+    // ====================== RENDERIZAR TABELA ======================
+    function renderizarTabela() {
+      if (!dadosFiltrados || dadosFiltrados.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="loading-cell" style="color:#94a3b8;">' +
+          '<i class="fas fa-inbox" style="font-size:40px; margin-bottom:16px; display:block; opacity:0.5;"></i>' +
+          (abaAtual === 'pendentes' ? '🎉 Não há pendências de cadastro!' : '📭 Nenhum cliente encontrado.') +
+          '</td></tr>';
+        paginationContainer.style.display = 'none';
+        return;
+      }
+
+      const totalPaginas = Math.ceil(dadosFiltrados.length / ITENS_POR_PAGINA);
+      const inicio = (paginaAtual - 1) * ITENS_POR_PAGINA;
+      const clientesPagina = dadosFiltrados.slice(inicio, inicio + ITENS_POR_PAGINA);
+
+      if (totalPaginas > 1) {
+        paginationContainer.style.display = 'flex';
+        pageInfo.innerText = `Página ${paginaAtual} de ${totalPaginas}`;
+        btnPrevPage.disabled = (paginaAtual === 1);
+        btnNextPage.disabled = (paginaAtual === totalPaginas);
+      } else {
+        paginationContainer.style.display = 'none';
+      }
+
+      let html = '';
+      clientesPagina.forEach(c => {
+        // Garantir que todos os campos sejam strings
+        const razao = String(c.razao || '---');
+        const cnpj = String(c.cnpj || '---');
+        const dataCadastro = String(c.dataCadastro || '---');
+        const cidade = String(c.cidade || '');
+        const uf = String(c.uf || '');
+        const local = (cidade || uf) ? `${cidade}${uf ? '/'+uf : ''}` : 'Não informado';
+
+        const statusHtml = c.estaIncompleto 
+          ? `<span class="status-badge status-pendente"><i class="fas fa-exclamation-triangle"></i> ${c.camposFaltantes || 0} pendente(s)</span>`
+          : `<span class="status-badge status-completo"><i class="fas fa-check-circle"></i> Cadastro completo</span>`;
+
+        // Contato - TRATAMENTO ROBUSTO
+        let contatoHtml = '';
+        const contatoFin = String(c.contatoFin || '').trim();
+        if (contatoFin) {
+          const tel = contatoFin.replace(/\D/g, '');
+          if (tel.length >= 10) {
+            contatoHtml = `<a href="https://wa.me/55${tel}" target="_blank" class="whatsapp-link"><i class="fab fa-whatsapp"></i> WhatsApp</a>`;
+          }
+        }
+        if (!contatoHtml) {
+          contatoHtml = '<span style="color:#94a3b8; font-size:11px;"><i class="fas fa-phone-slash"></i> Não informado</span>';
+        }
+
+        const botaoAcao = podeEditar 
+          ? `<button class="action-btn edit" data-linha="${c.linha}"><i class="fas fa-edit"></i> Editar</button>`
+          : `<button class="action-btn view" data-linha="${c.linha}"><i class="fas fa-eye"></i> Visualizar</button>`;
+
+        html += `<tr>
+          <td>
+            <div class="empresa-nome">${razao}</div>
+            <div class="empresa-cnpj"><i class="fas fa-fingerprint"></i> ${cnpj}</div>
+            <div class="empresa-data"><i class="fas fa-calendar-alt"></i> Cadastro: ${dataCadastro}</div>
+          </td>
+          <td>${statusHtml}</td>
+          <td><div class="local-info"><i class="fas fa-map-pin"></i> ${local}</div></td>
+          <td>${contatoHtml}</td>
+          <td style="text-align:center;">${botaoAcao}</td>
+        </tr>`;
+      });
+
+      tbody.innerHTML = html;
+
+      // Event listeners para botões de ação
+      document.querySelectorAll('.action-btn.edit, .action-btn.view').forEach(btn => {
+        btn.addEventListener('click', function() {
+          const linha = this.getAttribute('data-linha');
+          const cliente = clientesData.find(c => c.linha == linha);
+          if (cliente) abrirModal(cliente);
+        });
+      });
+    }
+
+    // ====================== PAGINAÇÃO ======================
+    function proximaPagina() {
+      const totalPaginas = Math.ceil(dadosFiltrados.length / ITENS_POR_PAGINA);
+      if (paginaAtual < totalPaginas) {
+        paginaAtual++;
+        renderizarTabela();
+      }
+    }
+
+    function paginaAnterior() {
+      if (paginaAtual > 1) {
+        paginaAtual--;
+        renderizarTabela();
+      }
+    }
+
+    // ====================== MODAL ======================
+    function abrirModal(cliente) {
+      // Preencher campos...
+      document.getElementById('editLinha').value = cliente.linha || '';
+      document.getElementById('editCnpj').value = String(cliente.cnpj || '');
+      document.getElementById('editIe').value = String(cliente.ie || '');
+      document.getElementById('editRazao').value = String(cliente.razao || '');
+      document.getElementById('editCodCliente').value = String(cliente.codigoCliente || '');
+      document.getElementById('editCodAdmin').value = String(cliente.codigoAdmin || '');
+      document.getElementById('editLogin').value = String(cliente.loginAdmin || '');
+      document.getElementById('editSenha').value = String(cliente.senha || '');
+      document.getElementById('editCep').value = String(cliente.cep || '');
+      document.getElementById('editEndereco').value = String(cliente.endereco || '');
+      document.getElementById('editNumero').value = String(cliente.numeroEndereco || '');
+      document.getElementById('editComplemento').value = String(cliente.complemento || '');
+      document.getElementById('editBairro').value = String(cliente.bairro || '');
+      document.getElementById('editCidade').value = String(cliente.cidade || '');
+      document.getElementById('editUf').value = String(cliente.uf || '');
+      document.getElementById('editNomeAdmin').value = String(cliente.nomeAdmin || '');
+      document.getElementById('editCpf').value = String(cliente.cpfAdmin || '');
+      document.getElementById('editEmail').value = String(cliente.email || '');
+      document.getElementById('editTelefone').value = String(cliente.contatoFin || '');
+
+      // Aplicar máscaras se houver valor
+      if (document.getElementById('editTelefone').value) mascaraTelefone(document.getElementById('editTelefone'));
+      if (document.getElementById('editCpf').value) mascaraCPF(document.getElementById('editCpf'));
+
+      const editFields = document.querySelectorAll('.edit-field');
+      editFields.forEach(f => {
+        f.disabled = !podeEditar;
+        f.style.background = podeEditar ? 'white' : '#f8fafc';
+      });
+
+      const modalTitulo = document.getElementById('modalTitulo');
+      const modalSubtitle = document.getElementById('modalSubtitle');
+      const btnSalvarModal = document.getElementById('btnSalvarModal');
+      const btnCancelarModal = document.getElementById('btnCancelarModal');
+
+      if (podeEditar) {
+        modalTitulo.innerHTML = '✏️ Editar Cliente';
+        modalSubtitle.innerHTML = 'Complete todas as informações do cadastro';
+        btnSalvarModal.style.display = 'block';
+        btnCancelarModal.innerHTML = 'Cancelar';
+      } else {
+        modalTitulo.innerHTML = '👁️ Visualizar Cliente';
+        modalSubtitle.innerHTML = 'Visualize todas as informações do cadastro';
+        btnSalvarModal.style.display = 'none';
+        btnCancelarModal.innerHTML = 'Fechar';
+      }
+
+      const alertDiv = document.getElementById('alertStatus');
+      if (cliente.estaIncompleto) {
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = '#fef3c7';
+        alertDiv.style.borderLeftColor = '#f59e0b';
+        alertDiv.innerHTML = `<strong><i class="fas fa-exclamation-triangle"></i> Atenção!</strong> Este cadastro possui <strong>${cliente.camposFaltantes || 0}</strong> campo(s) pendente(s). Complete as informações abaixo.`;
+      } else {
+        alertDiv.style.display = 'block';
+        alertDiv.style.background = '#dcfce7';
+        alertDiv.style.borderLeftColor = '#10b981';
+        alertDiv.innerHTML = '<strong><i class="fas fa-check-circle"></i> Cadastro completo!</strong> Você pode atualizar as informações se necessário.';
+      }
+
+      document.getElementById('modalEdicao').style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function fecharModal() {
+      document.getElementById('modalEdicao').style.display = 'none';
+      document.body.style.overflow = 'auto';
+    }
+
+    // ====================== SALVAR CLIENTE ======================
+    function salvarCliente() {
+      if (!podeEditar) {
+        alert("Você não tem permissão para editar clientes.");
+        return;
+      }
+      const btn = document.getElementById('btnSalvarModal');
+      btn.innerText = '⏳ Salvando...';
+      btn.disabled = true;
+
+      const dados = {
+        linha: document.getElementById('editLinha').value,
+        cnpj: document.getElementById('editCnpj').value,
+        ie: document.getElementById('editIe').value,
+        razao: document.getElementById('editRazao').value,
+        codigoCliente: document.getElementById('editCodCliente').value,
+        codigoAdmin: document.getElementById('editCodAdmin').value,
+        loginAdmin: document.getElementById('editLogin').value,
+        senha: document.getElementById('editSenha').value,
+        cep: document.getElementById('editCep').value,
+        endereco: document.getElementById('editEndereco').value,
+        numeroEndereco: document.getElementById('editNumero').value,
+        complemento: document.getElementById('editComplemento').value,
+        bairro: document.getElementById('editBairro').value,
+        cidade: document.getElementById('editCidade').value,
+        uf: document.getElementById('editUf').value,
+        nomeAdmin: document.getElementById('editNomeAdmin').value,
+        cpfAdmin: document.getElementById('editCpf').value,
+        email: document.getElementById('editEmail').value,
+        contatoFin: document.getElementById('editTelefone').value
+      };
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.innerText = '💾 Salvar';
+          btn.disabled = false;
+          if (res.success) {
+            alert('✅ Cliente atualizado com sucesso!');
+            fecharModal();
+            carregarClientes();
+          } else {
+            alert('❌ Erro: ' + res.message);
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.innerText = '💾 Salvar';
+          btn.disabled = false;
+          alert('❌ Erro de comunicação: ' + err);
+        })
+        .atualizarCadastroCliente(dados);
+    }
+
+    // ====================== MÁSCARAS ======================
+    function mascaraTelefone(input) {
+      let v = input.value.replace(/\D/g, '');
+      if (v.length > 10) v = v.replace(/^(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+      else if (v.length > 5) v = v.replace(/^(\d{2})(\d{4})(\d{0,4})/, '($1) $2-$3');
+      else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
+      input.value = v;
+    }
+
+    function mascaraCPF(input) {
+      let v = input.value.replace(/\D/g, '');
+      if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+      else if (v.length > 6) v = v.replace(/^(\d{3})(\d{3})(\d{0,3})/, '$1.$2.$3');
+      else if (v.length > 3) v = v.replace(/^(\d{3})(\d{0,3})/, '$1.$2');
+      input.value = v;
+    }
+
+    window.toggleSenha = function(id, btn) {
+      const input = document.getElementById(id);
+      if (input.type === "password") {
+        input.type = "text";
+        btn.innerHTML = "🙈";
+      } else {
+        input.type = "password";
+        btn.innerHTML = "👁️";
+      }
+    };
+
+    // ====================== EVENT LISTENERS ======================
+    btnPrevPage.onclick = paginaAnterior;
+    btnNextPage.onclick = proximaPagina;
+
+    btnPendentes.onclick = function() {
+      abaAtual = 'pendentes';
+      btnPendentes.classList.add('active');
+      btnTodos.classList.remove('active');
+      filtrarClientes();
+    };
+
+    btnTodos.onclick = function() {
+      abaAtual = 'todos';
+      btnTodos.classList.add('active');
+      btnPendentes.classList.remove('active');
+      filtrarClientes();
+    };
+
+    btnAtualizar.onclick = function() {
+      if (confirm("Esta ação irá buscar informações faltantes na base de vendas e preencher os clientes. Deseja continuar?")) {
+        sincronizarEAtualizar();
+      }
+    };
+
+    inputBusca.onkeyup = filtrarClientes;
+    selectUF.onchange = filtrarClientes;
+
+    document.getElementById('closeModalBtn').onclick = fecharModal;
+    document.getElementById('btnCancelarModal').onclick = fecharModal;
+    document.getElementById('btnSalvarModal').onclick = salvarCliente;
+    document.getElementById('modalEdicao').addEventListener('click', function(e) {
+      if (e.target === this) fecharModal();
+    });
+
+    // ====================== SINCRONIZAR ======================
+    function sincronizarEAtualizar() {
+      const btn = document.getElementById('btnAtualizar');
+      const textoOriginal = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
+      btn.disabled = true;
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          btn.innerHTML = textoOriginal;
+          btn.disabled = false;
+          if (res.success) {
+            alert(res.message);
+            carregarClientes();
+          } else {
+            alert('Erro na sincronização: ' + res.message);
+          }
+        })
+        .withFailureHandler(function(err) {
+          btn.innerHTML = textoOriginal;
+          btn.disabled = false;
+          alert('Erro de comunicação: ' + err);
+        })
+        .sincronizarClientesDaVendas();
+    }
+
+    // ====================== INICIAR ======================
+    carregarClientes();
+  })();
+</script>
+</body>
+</html>

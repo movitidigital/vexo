@@ -1,0 +1,1133 @@
+<div class="agenda-wrapper" style="padding: 25px; animation: fadeIn 0.4s ease-out;">
+  
+  <!-- CABEÇALHO DO MÓDULO -->
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+    <div>
+      <h2 style="margin: 0; color: #0f172a; font-size: 24px; font-weight: 800; display: flex; align-items: center; gap: 10px;">
+        📅 Agenda Estratégica
+      </h2>
+      <p style="margin: 5px 0 0 0; color: #64748b; font-size: 13px;">Prospecções, reuniões e follow-ups em um só lugar.</p>
+    </div>
+    
+    <div style="display: flex; gap: 12px;">
+      <!-- FILTRO POR VENDEDOR (Apenas ADM) -->
+      <select id="filtro-vendedor-agenda" style="display: none; background: white; border: 1px solid #e2e8f0; padding: 10px 16px; border-radius: 12px; font-weight: 500; font-size: 13px; cursor: pointer;">
+        <option value="TODOS">👥 Todos os Vendedores</option>
+      </select>
+      
+      <!-- BOTÃO EXPORTAR -->
+      <button onclick="abrirModalExportacao()" style="background: white; border: 1px solid #e2e8f0; color: #475569; padding: 12px 20px; border-radius: 12px; font-weight: 600; font-size: 13px; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+        📎 EXPORTAR
+      </button>
+      
+      <button onclick="abrirModalAgenda()" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 13px; cursor: pointer; box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3); transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+        <span style="font-size: 16px;">+</span> NOVO COMPROMISSO
+      </button>
+    </div>
+  </div>
+
+  <!-- CONTAINER DO CALENDÁRIO -->
+  <div style="background: white; border-radius: 20px; padding: 25px; box-shadow: 0 10px 30px rgba(0,0,0,0.03); border: 1px solid #f1f5f9;">
+    <div id="calendario-vexo" style="min-height: 650px;"></div>
+  </div>
+
+</div>
+
+<!-- MODAL DE CADASTRO/EDIÇÃO -->
+<div id="modal-agenda" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); -webkit-backdrop-filter: blur(5px); z-index: 9999; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease;">
+  <div style="background: white; width: 90%; max-width: 500px; border-radius: 24px; padding: 30px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.3s ease;" id="modal-agenda-box">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+      <h3 id="titulo-modal-agenda" style="margin: 0; color: #0f172a; font-size: 18px; font-weight: 800;">Novo Compromisso</h3>
+      <button onclick="fecharModalAgenda()" style="background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; color: #64748b; font-weight: bold; transition: 0.2s;">✕</button>
+    </div>
+
+    <input type="hidden" id="ag_id">
+
+    <div class="form-group" style="margin-bottom: 15px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Título da Reunião *</label>
+      <input type="text" id="ag_titulo" placeholder="Ex: Apresentação TIM Black" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 13px; box-sizing: border-box; outline: none;">
+    </div>
+
+    <div class="form-group" style="margin-bottom: 15px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Cliente / Empresa</label>
+      <input type="text" id="ag_cliente" placeholder="Nome do Cliente ou CNPJ" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 13px; box-sizing: border-box; outline: none;">
+    </div>
+
+    <div class="form-group" style="margin-bottom: 15px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Tipo de Tarefa *</label>
+      <select id="ag_tipo" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 13px; box-sizing: border-box; outline: none; background-color: #f8fafc; color: #475569; cursor: pointer; transition: 0.2s;">
+        <option value="Telefonar">📞 Telefonar</option>
+        <option value="Enviar Mensagem">💬 Enviar Mensagem</option>
+        <option value="Protocolo em andamento">⚙️ Protocolo em andamento</option>
+        <option value="Visita PaP">🚶‍♂️ Visita PaP</option>
+        <option value="Pós Venda">🤝 Pós Venda</option>
+        <option value="Outros">📌 Outros</option>
+      </select>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+      <div class="form-group">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Início *</label>
+        <input type="datetime-local" id="ag_inicio" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 13px; box-sizing: border-box; outline: none;">
+      </div>
+      <div class="form-group">
+        <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Término</label>
+        <input type="datetime-local" id="ag_fim" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 13px; box-sizing: border-box; outline: none;">
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Status da Tarefa</label>
+      <select id="ag_status" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 13px; box-sizing: border-box; outline: none; background-color: #f8fafc; color: #475569; cursor: pointer; transition: 0.2s;">
+        <option value="Pendente">⏳ Pendente</option>
+        <option value="Concluido">✅ Concluído</option>
+        <option value="Cancelado">❌ Cancelado</option>
+      </select>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 25px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Observações</label>
+      <textarea id="ag_obs" rows="3" placeholder="Detalhes do encontro..." style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-family: 'Poppins', sans-serif; font-size: 13px; box-sizing: border-box; outline: none; resize: none;"></textarea>
+    </div>
+
+    <div style="display: flex; justify-content: space-between; gap: 15px;">
+      <button id="btn-excluir-ag" onclick="excluirAgendamento()" style="display: none; background: #fee2e2; color: #ef4444; border: none; padding: 14px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; flex: 1;">EXCLUIR</button>
+      <button id="btn-salvar-ag" onclick="salvarAgendaBase()" style="background: #0f172a; color: white; border: none; padding: 14px 20px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; flex: 2; box-shadow: 0 10px 20px rgba(15, 23, 42, 0.2);">SALVAR COMPROMISSO</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL DE EXPORTAÇÃO -->
+<div id="modal-exportacao" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(5px); z-index: 10000; justify-content: center; align-items: center; opacity: 0; transition: opacity 0.3s ease;">
+  <div style="background: white; width: 90%; max-width: 450px; border-radius: 24px; padding: 30px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); transform: scale(0.95); transition: transform 0.3s ease;">
+    
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+      <h3 style="margin: 0; color: #0f172a; font-size: 18px; font-weight: 800;">📎 Exportar Agenda</h3>
+      <button onclick="fecharModalExportacao()" style="background: #f1f5f9; border: none; width: 35px; height: 35px; border-radius: 50%; cursor: pointer; font-weight: bold;">✕</button>
+    </div>
+
+    <!-- Período de Exportação -->
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Período</label>
+      <select id="export-periodo" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px;">
+        <option value="mes_atual">📅 Mês Atual</option>
+        <option value="mes_proximo">📆 Próximo Mês</option>
+        <option value="trimestre">📊 Trimestre (últimos 3 meses)</option>
+        <option value="semestre">📈 Semestre (últimos 6 meses)</option>
+        <option value="ano">🗓️ Ano Atual</option>
+        <option value="personalizado">⚙️ Personalizado</option>
+      </select>
+    </div>
+
+    <!-- Datas Personalizadas -->
+    <div id="export-datas-personalizadas" style="display: none; margin-bottom: 20px;">
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">Data Início</label>
+          <input type="date" id="export-data-inicio" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px;">
+        </div>
+        <div>
+          <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">Data Fim</label>
+          <input type="date" id="export-data-fim" style="width: 100%; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 13px;">
+        </div>
+      </div>
+    </div>
+
+    <!-- Status para Filtrar -->
+    <div class="form-group" style="margin-bottom: 20px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Filtrar por Status</label>
+      <select id="export-status" style="width: 100%; padding: 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 13px;">
+        <option value="TODOS">📋 Todos os Status</option>
+        <option value="Pendente">⏳ Pendente</option>
+        <option value="Concluido">✅ Concluído</option>
+        <option value="Cancelado">❌ Cancelado</option>
+      </select>
+    </div>
+
+    <!-- Formato de Exportação -->
+    <div class="form-group" style="margin-bottom: 25px;">
+      <label style="display: block; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase;">Formato</label>
+      <div style="display: flex; gap: 12px;">
+        <button id="btn-export-excel" onclick="exportarAgenda('excel')" style="flex: 1; background: #10b981; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          📊 Excel (XLSX)
+        </button>
+        <button id="btn-export-pdf" onclick="exportarAgenda('pdf')" style="flex: 1; background: #ef4444; color: white; border: none; padding: 12px; border-radius: 12px; font-weight: 600; cursor: pointer; transition: 0.3s; display: flex; align-items: center; justify-content: center; gap: 8px;">
+          📄 PDF
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- IMPORTAÇÃO DO FULLCALENDAR (CDN) -->
+<script src='https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js'></script>
+<script src='https://cdn.jsdelivr.net/npm/@fullcalendar/core@6.1.11/locales/pt-br.global.min.js'></script>
+
+<style>
+  /* Customizações do FullCalendar */
+  .fc-theme-standard td, .fc-theme-standard th { border-color: #e2e8f0; }
+  .fc-col-header-cell-cushion { color: #475569; font-weight: 700; text-transform: uppercase; font-size: 12px; padding: 10px !important; }
+  .fc-daygrid-day-number { color: #1e293b; font-weight: 600; font-size: 13px; padding: 8px !important; }
+  .fc .fc-button-primary { background-color: #f8fafc; color: #475569; border: 1px solid #e2e8f0; border-radius: 8px; font-weight: 600; text-transform: capitalize; transition: 0.2s; }
+  .fc .fc-button-primary:not(:disabled):active, .fc .fc-button-primary:not(:disabled).fc-button-active { background-color: #0f172a; color: white; border-color: #0f172a; }
+  .fc .fc-button-primary:hover { background-color: #e2e8f0; }
+  .fc-event { border-radius: 6px; padding: 3px 5px; font-size: 11px; font-weight: 600; border: none; box-shadow: 0 2px 5px rgba(0,0,0,0.1); cursor: pointer; transition: 0.2s; }
+  .fc-event:hover { transform: scale(1.02); filter: brightness(1.1); }
+  .fc-toolbar-title { font-size: 18px !important; font-weight: 800 !important; color: #0f172a; text-transform: capitalize; }
+  .fc .fc-button .fc-icon { font-size: 1.2em; }
+  .fc-today-button { text-transform: capitalize !important; }
+  
+  /* ============================================ SISTEMA DE NOTIFICAÇÕES PERSONALIZADAS VEXO ============================================ */ .vexo-toast-container { position: fixed; bottom: 30px; right: 30px; z-index: 10002; display: flex; flex-direction: column; gap: 12px; pointer-events: none; } .vexo-toast { min-width: 320px; max-width: 450px; background: white; border-radius: 16px; padding: 16px 20px; box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1); display: flex; align-items: center; gap: 14px; pointer-events: auto; animation: slideInRight 0.3s ease-out; border-left: 4px solid; transition: all 0.3s ease; } .vexo-toast:hover { transform: translateX(-4px); } .vexo-toast-success { border-left-color: #10b981; background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%); } .vexo-toast-success .vexo-toast-icon { color: #10b981; background: #d1fae5; } .vexo-toast-warning { border-left-color: #f59e0b; background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%); } .vexo-toast-warning .vexo-toast-icon { color: #f59e0b; background: #fef3c7; } .vexo-toast-error { border-left-color: #ef4444; background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%); } .vexo-toast-error .vexo-toast-icon { color: #ef4444; background: #fee2e2; } .vexo-toast-info { border-left-color: #3b82f6; background: linear-gradient(135deg, #ffffff 0%, #eff6ff 100%); } .vexo-toast-info .vexo-toast-icon { color: #3b82f6; background: #dbeafe; } .vexo-toast-icon { width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; } .vexo-toast-content { flex: 1; } .vexo-toast-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; color: #0f172a; } .vexo-toast-message { font-size: 12px; color: #475569; line-height: 1.4; } .vexo-toast-close { width: 24px; height: 24px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; color: #64748b; transition: all 0.2s; flex-shrink: 0; } .vexo-toast-close:hover { background: #e2e8f0; color: #0f172a; } @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } } @keyframes fadeOut { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(100%); } } .vexo-toast-fadeout { animation: fadeOut 0.3s ease-out forwards; }
+</style>
+
+<script>
+// ============================================
+// VARIÁVEIS GLOBAIS
+// ============================================
+let calendarioVexo;
+let usuarioLogadoAgenda = null;
+let cargoUsuarioAgenda = null;
+let pdfBlobAtual = null;
+let pdfNomeAtual = '';
+
+// ============================================
+// FUNÇÕES DE EXPORTAÇÃO
+// ============================================
+
+function abrirModalExportacao() {
+  const modal = document.getElementById('modal-exportacao');
+  const box = document.querySelector('#modal-exportacao div');
+  
+  document.getElementById('export-periodo').value = 'mes_atual';
+  document.getElementById('export-status').value = 'TODOS';
+  document.getElementById('export-data-inicio').value = '';
+  document.getElementById('export-data-fim').value = '';
+  document.getElementById('export-datas-personalizadas').style.display = 'none';
+  
+  modal.style.display = 'flex';
+  setTimeout(() => { 
+    modal.style.opacity = '1'; 
+    if (box) box.style.transform = 'scale(1)'; 
+  }, 10);
+}
+
+function fecharModalExportacao() {
+  const modal = document.getElementById('modal-exportacao');
+  const box = document.querySelector('#modal-exportacao div');
+  modal.style.opacity = '0';
+  if (box) box.style.transform = 'scale(0.95)';
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  const periodoSelect = document.getElementById('export-periodo');
+  if (periodoSelect) {
+    periodoSelect.addEventListener('change', function() {
+      const divDatas = document.getElementById('export-datas-personalizadas');
+      if (this.value === 'personalizado') {
+        divDatas.style.display = 'block';
+      } else {
+        divDatas.style.display = 'none';
+      }
+    });
+  }
+});
+
+function exportarAgenda(formato) {
+  const periodo = document.getElementById('export-periodo').value;
+  const statusFiltro = document.getElementById('export-status').value;
+  
+  let dataInicio, dataFim;
+  const hoje = new Date();
+  
+  switch(periodo) {
+    case 'mes_atual':
+      dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      dataFim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+      break;
+    case 'mes_proximo':
+      dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+      dataFim = new Date(hoje.getFullYear(), hoje.getMonth() + 2, 0);
+      break;
+    case 'trimestre':
+      dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 2, 1);
+      dataFim = hoje;
+      break;
+    case 'semestre':
+      dataInicio = new Date(hoje.getFullYear(), hoje.getMonth() - 5, 1);
+      dataFim = hoje;
+      break;
+    case 'ano':
+      dataInicio = new Date(hoje.getFullYear(), 0, 1);
+      dataFim = new Date(hoje.getFullYear(), 11, 31);
+      break;
+    case 'personalizado':
+      dataInicio = new Date(document.getElementById('export-data-inicio').value);
+      dataFim = new Date(document.getElementById('export-data-fim').value);
+      if (isNaN(dataInicio) || isNaN(dataFim)) {
+        alert('Selecione as datas de início e fim corretamente!');
+        return;
+      }
+      break;
+    default:
+      dataInicio = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+      dataFim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+  }
+  
+  const inicioStr = dataInicio.toISOString().split('T')[0];
+  const fimStr = dataFim.toISOString().split('T')[0];
+  
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const nome = sessao.username || "SISTEMA";
+  const cargo = sessao.role || "CONSULTOR";
+  
+  const btnExcel = document.getElementById('btn-export-excel');
+  const btnPdf = document.getElementById('btn-export-pdf');
+  if (btnExcel) btnExcel.disabled = true;
+  if (btnPdf) btnPdf.disabled = true;
+  
+  const botoes = document.querySelectorAll('#modal-exportacao button[onclick^="exportar"]');
+  botoes.forEach(btn => {
+    btn.innerHTML = '⏳ Processando...';
+  });
+  
+  google.script.run
+    .withSuccessHandler(function(resultado) {
+      if (btnExcel) btnExcel.disabled = false;
+      if (btnPdf) btnPdf.disabled = false;
+      botoes.forEach(btn => {
+        if (formato === 'excel') btn.innerHTML = '📊 Excel (XLSX)';
+        else btn.innerHTML = '📄 PDF';
+      });
+      
+      if (resultado.success) {
+        if (formato === 'excel') {
+          downloadExcel(resultado.conteudo, resultado.nomeArquivo);
+        } else {
+          // Para PDF/HTML, abrir modal de visualização
+          abrirModalVisualizacaoRelatorio(resultado.conteudo, resultado.nomeArquivo);
+        }
+        fecharModalExportacao();
+        
+        if (typeof notificacaoVexo === 'function') {
+          notificacaoVexo(`Relatório ${formato.toUpperCase()} gerado com sucesso!`, 'success');
+        }
+      } else {
+        alert('Erro ao gerar relatório: ' + resultado.mensagem);
+      }
+    })
+    .withFailureHandler(function(erro) {
+      if (btnExcel) btnExcel.disabled = false;
+      if (btnPdf) btnPdf.disabled = false;
+      botoes.forEach(btn => {
+        if (formato === 'excel') btn.innerHTML = '📊 Excel (XLSX)';
+        else btn.innerHTML = '📄 PDF';
+      });
+      alert('Erro de comunicação: ' + erro);
+    })
+    .exportarAgendaVexo(inicioStr, fimStr, statusFiltro, nome, cargo, formato);
+}
+
+// 🌟 NOVA FUNÇÃO: Abrir modal com o relatório HTML (evita bloqueio do Chrome)
+function abrirModalVisualizacaoRelatorio(htmlContent, nomeArquivo) {
+  // Criar modal se não existir
+  let modal = document.getElementById('modal-visualizacao-pdf');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-visualizacao-pdf';
+    modal.style.cssText = `
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 10001;
+      justify-content: center; align-items: center; flex-direction: column;
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  // Criar um blob HTML e gerar URL
+  const blob = new Blob([htmlContent], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 24px; width: 90%; max-width: 1100px; height: 85%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #e2e8f0; background: #0f172a;">
+        <div>
+          <h3 style="margin: 0; color: white; font-size: 16px; font-weight: 700;">📄 Visualização do Relatório</h3>
+          <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 11px;">${nomeArquivo}</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button onclick="baixarRelatorioAtual()" style="background: #10b981; border: none; padding: 8px 16px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            ⬇️ Baixar HTML
+          </button>
+          <button onclick="imprimirRelatorioAtual()" style="background: #3b82f6; border: none; padding: 8px 16px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            🖨️ Imprimir / PDF
+          </button>
+          <button onclick="fecharModalVisualizacaoPDF()" style="background: #ef4444; border: none; width: 32px; height: 32px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer;">✕</button>
+        </div>
+      </div>
+      <div style="flex: 1; background: #f1f5f9; padding: 16px;">
+        <iframe src="${url}" style="width: 100%; height: 100%; border: none; border-radius: 12px; background: white;" title="Relatório"></iframe>
+      </div>
+    </div>
+  `;
+  
+  modal.style.display = 'flex';
+  
+  // Armazenar para uso nas funções de download
+  window.relatorioHtmlAtual = htmlContent;
+  window.relatorioNomeAtual = nomeArquivo;
+  window.relatorioUrlAtual = url;
+}
+
+function base64ToBlob(base64, contentType) {
+  const byteCharacters = atob(base64);
+  const byteNumbers = new Array(byteCharacters.length);
+  for (let i = 0; i < byteCharacters.length; i++) {
+    byteNumbers[i] = byteCharacters.charCodeAt(i);
+  }
+  const byteArray = new Uint8Array(byteNumbers);
+  return new Blob([byteArray], { type: contentType });
+}
+
+function downloadExcel(conteudo, nomeArquivo) {
+  const blob = base64ToBlob(conteudo, 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.href = url;
+  link.setAttribute('download', nomeArquivo);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function downloadPDF(blob, nomeArquivo) {
+  const link = document.createElement('a');
+  const url = URL.createObjectURL(blob);
+  link.href = url;
+  link.setAttribute('download', nomeArquivo);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+function abrirModalVisualizacaoPDF(pdfBlob, nomeArquivo) {
+  let modal = document.getElementById('modal-visualizacao-pdf');
+  if (!modal) {
+    modal = document.createElement('div');
+    modal.id = 'modal-visualizacao-pdf';
+    modal.style.cssText = `
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); z-index: 10001;
+      justify-content: center; align-items: center; flex-direction: column;
+    `;
+    document.body.appendChild(modal);
+  }
+  
+  const url = URL.createObjectURL(pdfBlob);
+  
+  modal.innerHTML = `
+    <div style="background: white; border-radius: 24px; width: 90%; max-width: 1200px; height: 85%; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 25px 50px rgba(0,0,0,0.3);">
+      <div style="display: flex; justify-content: space-between; align-items: center; padding: 16px 24px; border-bottom: 1px solid #e2e8f0; background: #0f172a;">
+        <div>
+          <h3 style="margin: 0; color: white; font-size: 16px; font-weight: 700;">📄 Visualização do Relatório</h3>
+          <p style="margin: 4px 0 0 0; color: #94a3b8; font-size: 11px;">${nomeArquivo}</p>
+        </div>
+        <div style="display: flex; gap: 12px;">
+          <button onclick="baixarPDFAtual()" style="background: #10b981; border: none; padding: 8px 16px; border-radius: 8px; color: white; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 6px;">
+            ⬇️ Baixar PDF
+          </button>
+          <button onclick="fecharModalVisualizacaoPDF()" style="background: #ef4444; border: none; width: 32px; height: 32px; border-radius: 8px; color: white; font-weight: bold; cursor: pointer;">✕</button>
+        </div>
+      </div>
+      <div style="flex: 1; background: #f1f5f9; padding: 16px;">
+        <iframe src="${url}" style="width: 100%; height: 100%; border: none; border-radius: 12px; background: white;"></iframe>
+      </div>
+    </div>
+  `;
+  
+  modal.style.display = 'flex';
+}
+
+function fecharModalVisualizacaoPDF() {
+  const modal = document.getElementById('modal-visualizacao-pdf');
+  if (modal) {
+    // Limpar a URL do blob para liberar memória
+    if (window.relatorioUrlAtual) {
+      URL.revokeObjectURL(window.relatorioUrlAtual);
+    }
+    modal.style.display = 'none';
+    window.relatorioHtmlAtual = null;
+    window.relatorioNomeAtual = null;
+    window.relatorioUrlAtual = null;
+  }
+}
+
+function baixarRelatorioAtual() {
+  if (window.relatorioHtmlAtual) {
+    const blob = new Blob([window.relatorioHtmlAtual], { type: 'text/html' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.href = url;
+    link.setAttribute('download', window.relatorioNomeAtual || 'relatorio_agenda.html');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }
+}
+function imprimirRelatorioAtual() {
+  if (window.relatorioHtmlAtual) {
+    // Abrir uma nova janela com o conteúdo e chamar print
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(window.relatorioHtmlAtual);
+    printWindow.document.close();
+    printWindow.print();
+  }
+}
+
+
+function baixarPDFAtual() {
+  if (pdfBlobAtual) {
+    downloadPDF(pdfBlobAtual, pdfNomeAtual || 'relatorio_agenda.pdf');
+  }
+}
+
+// ============================================
+// SISTEMA DE NOTIFICAÇÕES PERSONALIZADAS VEXO
+// ============================================
+
+// Criar o container de notificações ao carregar a página
+function criarContainerNotificacoes() {
+  if (!document.getElementById('vexo-toast-container')) {
+    const container = document.createElement('div');
+    container.id = 'vexo-toast-container';
+    container.className = 'vexo-toast-container';
+    document.body.appendChild(container);
+  }
+}
+
+// Função principal de notificação
+function notificacaoVexo(mensagem, tipo, tituloPersonalizado = null) {
+  criarContainerNotificacoes();
+  
+  const container = document.getElementById('vexo-toast-container');
+  
+  // Configurações por tipo
+  const config = {
+    success: {
+      icone: '✅',
+      titulo: tituloPersonalizado || 'Sucesso!',
+      classe: 'vexo-toast-success'
+    },
+    warning: {
+      icone: '⚠️',
+      titulo: tituloPersonalizado || 'Atenção',
+      classe: 'vexo-toast-warning'
+    },
+    error: {
+      icone: '❌',
+      titulo: tituloPersonalizado || 'Erro',
+      classe: 'vexo-toast-error'
+    },
+    info: {
+      icone: 'ℹ️',
+      titulo: tituloPersonalizado || 'Informação',
+      classe: 'vexo-toast-info'
+    }
+  };
+  
+  const tipoCorrigido = tipo || 'info';
+  const cfg = config[tipoCorrigido] || config.info;
+  
+  // Criar elemento da notificação
+  const toast = document.createElement('div');
+  toast.className = `vexo-toast ${cfg.classe}`;
+  
+  toast.innerHTML = `
+    <div class="vexo-toast-icon">${cfg.icone}</div>
+    <div class="vexo-toast-content">
+      <div class="vexo-toast-title">${cfg.titulo}</div>
+      <div class="vexo-toast-message">${mensagem}</div>
+    </div>
+    <div class="vexo-toast-close" onclick="fecharNotificacaoVexo(this.parentElement)">✕</div>
+  `;
+  
+  container.appendChild(toast);
+  
+  // Auto-fechar após 5 segundos
+  setTimeout(() => {
+    if (toast && toast.parentElement) {
+      fecharNotificacaoVexo(toast);
+    }
+  }, 5000);
+  
+  return toast;
+}
+
+function fecharNotificacaoVexo(toast) {
+  toast.classList.add('vexo-toast-fadeout');
+  setTimeout(() => {
+    if (toast && toast.parentElement) {
+      toast.remove();
+    }
+  }, 300);
+}
+
+// Função de confirmação personalizada (substitui o confirm padrão)
+function confirmarVexo(mensagem, titulo, onConfirm, onCancel) {
+  // Criar modal de confirmação personalizado
+  let modalConfirm = document.getElementById('vexo-modal-confirm');
+  
+  if (!modalConfirm) {
+    modalConfirm = document.createElement('div');
+    modalConfirm.id = 'vexo-modal-confirm';
+    modalConfirm.style.cssText = `
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); z-index: 10003;
+      justify-content: center; align-items: center;
+    `;
+    document.body.appendChild(modalConfirm);
+  }
+  
+  modalConfirm.innerHTML = `
+    <div style="background: white; width: 90%; max-width: 400px; border-radius: 24px; padding: 24px; box-shadow: 0 25px 50px rgba(0,0,0,0.2); animation: modalConfirmIn 0.2s ease-out;">
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 16px;">
+        <div style="width: 44px; height: 44px; background: #fee2e2; border-radius: 50%; display: flex; align-items: center; justify-content: center;">
+          <span style="font-size: 24px;">⚠️</span>
+        </div>
+        <h3 style="margin: 0; color: #0f172a; font-size: 18px; font-weight: 700;">${titulo || 'Confirmar ação'}</h3>
+      </div>
+      <p style="color: #475569; font-size: 14px; line-height: 1.5; margin-bottom: 24px;">${mensagem}</p>
+      <div style="display: flex; gap: 12px; justify-content: flex-end;">
+        <button onclick="fecharModalConfirmVexo(false)" style="background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; color: #64748b;">Cancelar</button>
+        <button onclick="fecharModalConfirmVexo(true)" style="background: #ef4444; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; color: white;">Confirmar</button>
+      </div>
+    </div>
+  `;
+  
+  modalConfirm.style.display = 'flex';
+  
+  // Armazenar callbacks
+  window._vexoConfirmCallback = { onConfirm, onCancel };
+  
+  // Adicionar estilo de animação se não existir
+  if (!document.querySelector('#vexo-modal-style')) {
+    const style = document.createElement('style');
+    style.id = 'vexo-modal-style';
+    style.textContent = `
+      @keyframes modalConfirmIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+    `;
+    document.head.appendChild(style);
+  }
+}
+
+function fecharModalConfirmVexo(confirmado) {
+  const modal = document.getElementById('vexo-modal-confirm');
+  if (modal) {
+    modal.style.display = 'none';
+    
+    if (confirmado && window._vexoConfirmCallback?.onConfirm) {
+      window._vexoConfirmCallback.onConfirm();
+    } else if (!confirmado && window._vexoConfirmCallback?.onCancel) {
+      window._vexoConfirmCallback.onCancel();
+    }
+    
+    window._vexoConfirmCallback = null;
+  }
+}
+
+// Adicionar CSS de animação para o modal
+if (!document.querySelector('#vexo-toast-style')) {
+  const styleToast = document.createElement('style');
+  styleToast.id = 'vexo-toast-style';
+  styleToast.textContent = `
+    @keyframes modalConfirmIn {
+      from { opacity: 0; transform: scale(0.95); }
+      to { opacity: 1; transform: scale(1); }
+    }
+  `;
+  document.head.appendChild(styleToast);
+}
+
+// ============================================
+// FUNÇÕES DO CALENDÁRIO
+// ============================================
+
+function iniciarAgendaVexo() {
+  if (typeof FullCalendar === 'undefined') {
+    setTimeout(iniciarAgendaVexo, 100);
+    return;
+  }
+
+  carregarDadosUsuario();
+  
+  const calendarEl = document.getElementById('calendario-vexo');
+  if (!calendarEl) return;
+
+  calendarioVexo = new FullCalendar.Calendar(calendarEl, {
+    locale: 'pt-br',
+    firstDay: 0,
+    weekText: 'Semana',
+    buttonText: {
+      today: 'Hoje',
+      month: 'Mês',
+      week: 'Semana',
+      day: 'Dia',
+      list: 'Lista',
+      prev: 'Anterior',
+      next: 'Próximo'
+    },
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+    },
+    navLinks: true,
+    editable: true,
+    selectable: true,
+    nowIndicator: true,
+    dayMaxEvents: true,
+    displayEventTime: true,
+    eventTimeFormat: {
+      hour: '2-digit',
+      minute: '2-digit',
+      meridiem: false,
+      hour12: false
+    },
+    
+    select: function(info) {
+      abrirModalAgenda(null, info.startStr, info.endStr);
+    },
+    
+    eventClick: function(info) {
+      const ev = info.event;
+      abrirModalAgenda({
+        id: ev.id,
+        titulo: ev.title,
+        cliente: ev.extendedProps.cliente,
+        tipo: ev.extendedProps.tipo,
+        status: ev.extendedProps.status,
+        inicio: toLocalDatetime(ev.start),
+        fim: ev.end ? toLocalDatetime(ev.end) : toLocalDatetime(ev.start),
+        obs: ev.extendedProps.obs
+      });
+    },
+
+    eventDrop: function(info) {
+      atualizarDataEventoArraste(info.event);
+    },
+    
+    datesSet: function() {
+      traduzirBotoesCalendario();
+    }
+  });
+
+  calendarioVexo.render();
+  
+  setTimeout(() => { 
+    calendarioVexo.updateSize();
+    traduzirBotoesCalendario();
+  }, 200);
+  
+  carregarEventos();
+}
+
+function traduzirBotoesCalendario() {
+  if (!calendarioVexo) return;
+  
+  const botoes = document.querySelectorAll('.fc-toolbar .fc-button');
+  const traducoes = {
+    'today': 'Hoje',
+    'month': 'Mês',
+    'week': 'Semana',
+    'day': 'Dia',
+    'list': 'Lista',
+    'prev': 'Anterior',
+    'next': 'Próximo'
+  };
+  
+  botoes.forEach(botao => {
+    const textoOriginal = botao.innerText.toLowerCase().trim();
+    for (let [eng, pt] of Object.entries(traducoes)) {
+      if (textoOriginal === eng || textoOriginal.includes(eng)) {
+        if (botao.innerText !== pt) {
+          botao.innerText = pt;
+        }
+        break;
+      }
+    }
+  });
+  
+  const tituloMes = document.querySelector('.fc-toolbar-title');
+  if (tituloMes) {
+    const mesesEN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    const mesesPT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    let texto = tituloMes.innerText;
+    mesesEN.forEach((mes, idx) => {
+      texto = texto.replace(new RegExp(mes, 'gi'), mesesPT[idx]);
+    });
+    if (tituloMes.innerText !== texto) {
+      tituloMes.innerText = texto;
+    }
+  }
+}
+
+function carregarDadosUsuario() {
+  try {
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    usuarioLogadoAgenda = sessao.username || "";
+    cargoUsuarioAgenda = sessao.role || "CONSULTOR";
+    
+    const filtroSelect = document.getElementById('filtro-vendedor-agenda');
+    if (filtroSelect && (cargoUsuarioAgenda === "ADMINISTRADOR" || cargoUsuarioAgenda === "BACKOFFICE")) {
+      filtroSelect.style.display = 'inline-block';
+      carregarListaVendedores();
+      filtroSelect.addEventListener('change', function() {
+        carregarEventos();
+      });
+    }
+  } catch(e) {
+    console.warn("Erro ao carregar dados do usuário:", e);
+  }
+}
+
+function carregarListaVendedores() {
+  google.script.run
+    .withSuccessHandler(function(vendedores) {
+      const select = document.getElementById('filtro-vendedor-agenda');
+      if (!select) return;
+      
+      select.innerHTML = '<option value="TODOS">👥 Todos os Vendedores</option>';
+      if (Array.isArray(vendedores)) {
+        vendedores.forEach(v => {
+          select.innerHTML += `<option value="${v}">👤 ${v}</option>`;
+        });
+      }
+    })
+    .withFailureHandler(function(err) {
+      console.error("Erro ao carregar vendedores:", err);
+    })
+    .buscarNomesUsuarios();
+}
+
+function toLocalDatetime(dateObj) {
+  if (!dateObj) return "";
+  const tzoffset = (new Date()).getTimezoneOffset() * 60000;
+  const localISOTime = (new Date(dateObj - tzoffset)).toISOString().slice(0,16);
+  return localISOTime;
+}
+
+function abrirModalAgenda(dados = null, dataStart = null, dataEnd = null) {
+  const modal = document.getElementById('modal-agenda');
+  const box = document.getElementById('modal-agenda-box');
+  const btnExcluir = document.getElementById('btn-excluir-ag');
+  
+  document.getElementById('ag_id').value = "";
+  document.getElementById('ag_titulo').value = "";
+  document.getElementById('ag_cliente').value = "";
+  document.getElementById('ag_obs').value = "";
+  document.getElementById('titulo-modal-agenda').innerText = "Novo Compromisso";
+  btnExcluir.style.display = "none";
+
+  const selectTipo = document.getElementById('ag_tipo');
+  if (selectTipo) selectTipo.value = "Telefonar";
+  
+  const selectStatus = document.getElementById('ag_status');
+  if (selectStatus) selectStatus.value = "Pendente";
+
+  if (dataStart && !dataStart.includes("T")) {
+    document.getElementById('ag_inicio').value = dataStart + "T09:00"; 
+    document.getElementById('ag_fim').value = dataStart + "T10:00";
+  } else if (dataStart) {
+    document.getElementById('ag_inicio').value = dataStart.slice(0,16);
+    document.getElementById('ag_fim').value = dataEnd ? dataEnd.slice(0,16) : dataStart.slice(0,16);
+  } else {
+    const agora = toLocalDatetime(new Date());
+    document.getElementById('ag_inicio').value = agora;
+    document.getElementById('ag_fim').value = agora;
+  }
+
+  if (dados && dados.id) {
+    document.getElementById('ag_id').value = dados.id;
+    document.getElementById('ag_titulo').value = dados.titulo;
+    document.getElementById('ag_cliente').value = dados.cliente;
+    document.getElementById('ag_inicio').value = dados.inicio;
+    document.getElementById('ag_fim').value = dados.fim;
+    document.getElementById('ag_obs').value = dados.obs;
+    document.getElementById('titulo-modal-agenda').innerText = "Editar Compromisso";
+    btnExcluir.style.display = "block";
+
+    if (dados.tipo && selectTipo) {
+      let opcaoExiste = Array.from(selectTipo.options).some(opt => opt.value === dados.tipo);
+      selectTipo.value = opcaoExiste ? dados.tipo : "Outros";
+    }
+
+    if (dados.status && selectStatus) {
+      let txtStatus = String(dados.status).toUpperCase();
+      if (txtStatus.includes("CONCLU")) selectStatus.value = "Concluido";
+      else if (txtStatus.includes("CANCEL")) selectStatus.value = "Cancelado";
+      else selectStatus.value = "Pendente";
+    }
+  }
+
+  modal.style.display = 'flex';
+  setTimeout(() => { 
+    modal.style.opacity = '1'; 
+    box.style.transform = 'scale(1)'; 
+  }, 10);
+}
+
+function fecharModalAgenda() {
+  const modal = document.getElementById('modal-agenda');
+  const box = document.getElementById('modal-agenda-box');
+  modal.style.opacity = '0';
+  box.style.transform = 'scale(0.95)';
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
+}
+
+function carregarEventos() {
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const nome = sessao.username || "SISTEMA";
+  const cargo = sessao.role || "CONSULTOR";
+  
+  const filtroSelect = document.getElementById('filtro-vendedor-agenda');
+  let vendedorFiltro = null;
+  
+  if (filtroSelect && filtroSelect.style.display !== 'none' && filtroSelect.value !== 'TODOS') {
+    vendedorFiltro = filtroSelect.value;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(eventos) {
+      if(calendarioVexo) {
+        calendarioVexo.removeAllEvents();
+        
+        let eventosFiltrados = eventos;
+        if (vendedorFiltro) {
+          eventosFiltrados = eventos.filter(ev => ev.extendedProps?.vendedor === vendedorFiltro);
+        }
+        
+        calendarioVexo.addEventSource(eventosFiltrados);
+      }
+    })
+    .buscarAgendamentosVexo(nome, cargo);
+}
+
+function salvarAgendaBase() {
+  const btn = document.getElementById('btn-salvar-ag');
+  const titulo = document.getElementById('ag_titulo').value;
+  const inicio = document.getElementById('ag_inicio').value;
+
+  if (!titulo || !inicio) {
+    notificacaoVexo("O Título e a Data de Início são obrigatórios!", "warning");
+    return;
+  }
+
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+
+  let tipoSelecionado = document.getElementById('ag_tipo') ? document.getElementById('ag_tipo').value : "Outros";
+  let statusSelecionado = document.getElementById('ag_status') ? document.getElementById('ag_status').value : "Pendente";
+
+  let corAutomatica = "#3b82f6";
+  if (statusSelecionado === "Concluido") corAutomatica = "#10b981";
+  if (statusSelecionado === "Cancelado") corAutomatica = "#ef4444";
+
+  const payload = {
+    id: document.getElementById('ag_id').value,
+    titulo: titulo,
+    cliente: document.getElementById('ag_cliente').value,
+    tipo: tipoSelecionado, 
+    status: statusSelecionado,
+    inicio: inicio,
+    fim: document.getElementById('ag_fim').value,
+    cor: corAutomatica,
+    obs: document.getElementById('ag_obs').value,
+    vendedor: sessao.username || "SISTEMA"
+  };
+
+  btn.innerText = "⏳ SALVANDO...";
+  btn.disabled = true;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      fecharModalAgenda();
+      carregarEventos(); 
+      btn.innerText = "SALVAR COMPROMISSO";
+      btn.disabled = false;
+      
+      // 🌟 INDICADOR VISUAL DE SINCRONIZAÇÃO COM GOOGLE AGENDA
+      let mensagem = "✅ Compromisso salvo com sucesso!";
+      let tipoMensagem = "success";
+      
+      // Verifica o status de sincronização retornado pelo backend
+      if (res && res.syncStatus) {
+        switch(res.syncStatus) {
+          // Sincronização bem sucedida com o email do usuário
+          case "CRIADO":
+            mensagem = "✅ Compromisso salvo e agendado no seu Google Agenda! Você receberá uma notificação 15 minutos antes.";
+            break;
+          case "ATUALIZADO":
+            mensagem = "🔄 Compromisso atualizado no seu Google Agenda. As alterações foram sincronizadas automaticamente.";
+            break;
+          case "CANCELADO_NO_GCAL":
+            mensagem = "❌ Compromisso cancelado e removido do seu Google Agenda com sucesso!";
+            break;
+          case "CANCELADO_SEM_GCAL":
+            mensagem = "❌ Compromisso cancelado com sucesso!";
+            break;
+          case "CANCELADO_SEM_EMAIL":
+            mensagem = "❌ Compromisso cancelado com sucesso! (Sincronização não disponível)";
+            tipoMensagem = "warning";
+            break;
+          
+          // Sincronização com calendário padrão (fallback)
+          case "CRIADO_PADRAO":
+            mensagem = "✅ Compromisso salvo! 🔔 ATENÇÃO: Não foi possível sincronizar com seu Google Agenda. Verifique se seu email está cadastrado corretamente no sistema.";
+            tipoMensagem = "warning";
+            break;
+          case "ATUALIZADO_PADRAO":
+            mensagem = "🔄 Compromisso atualizado! 🔔 ATENÇÃO: As alterações não foram sincronizadas com seu Google Agenda. Verifique seu cadastro de email.";
+            tipoMensagem = "warning";
+            break;
+          case "CRIADO_COM_CONVITE":
+            mensagem = "✅ Compromisso salvo! 📧 Um convite foi enviado para seu email. Aceite-o para adicionar automaticamente ao seu Google Agenda.";
+            break;
+          case "ATUALIZADO_COM_CONVITE":
+            mensagem = "🔄 Compromisso atualizado! 📧 Um novo convite foi enviado para seu email com as alterações.";
+            break;
+          case "USANDO_CALENDARIO_PADRAO":
+            mensagem = "✅ Compromisso salvo! 🔔 Seu email não foi encontrado no sistema. Entre em contato com o administrador para configurar sua conta.";
+            tipoMensagem = "warning";
+            break;
+          
+          // Erros e alertas
+          case "EMAIL_NAO_ENCONTRADO":
+            mensagem = "⚠️ Compromisso salvo, mas não foi possível sincronizar com o Google Agenda. Seu email não está cadastrado na coluna E da aba USERS. Procure o administrador.";
+            tipoMensagem = "warning";
+            break;
+          case "CALENDARIO_NAO_ENCONTRADO":
+            mensagem = "⚠️ Compromisso salvo, mas não foi possível encontrar seu Google Agenda. Verifique se sua conta Google está ativa.";
+            tipoMensagem = "warning";
+            break;
+          case "CALENDARIO_NAO_DISPONIVEL":
+            mensagem = "⚠️ Compromisso salvo, mas nenhum calendário disponível para sincronização. Verifique suas configurações de conta.";
+            tipoMensagem = "warning";
+            break;
+          case "SEM_SINCRONIA":
+            mensagem = "✅ Compromisso salvo com sucesso!";
+            break;
+          case "ERRO_AO_CANCELAR":
+            mensagem = "⚠️ Compromisso cancelado na planilha, mas houve um erro ao remover do Google Agenda. Verifique manualmente se o evento foi removido.";
+            tipoMensagem = "warning";
+            break;
+          default:
+            if (res.syncStatus && res.syncStatus.startsWith("ERRO:")) {
+              mensagem = "⚠️ Compromisso salvo, mas ocorreu um erro na sincronização: " + res.syncStatus.replace("ERRO_", "");
+              tipoMensagem = "warning";
+            } else if (res.syncStatus && res.syncStatus.startsWith("ERRO_CRIACAO:")) {
+              mensagem = "⚠️ Compromisso salvo, mas erro ao criar evento no Google Agenda: " + res.syncStatus.replace("ERRO_CRIACAO: ", "");
+              tipoMensagem = "warning";
+            }
+        }
+      }
+      
+      // Exibe a notificação personalizada
+      if (typeof notificacaoVexo === 'function') {
+        notificacaoVexo(mensagem, tipoMensagem);
+      } else {
+        alert(mensagem);
+      }
+    })
+    .withFailureHandler(function(err) {
+      notificacaoVexo("Erro de comunicação com o servidor: " + err, "error");
+      btn.innerText = "SALVAR COMPROMISSO";
+      btn.disabled = false;
+    })
+    .salvarAgendamentoVexo(payload);
+}
+
+function excluirAgendamento() {
+  const id = document.getElementById('ag_id').value;
+  if (!id) return;
+  
+  // Usar confirmação personalizada VEXO
+  confirmarVexo(
+    "ATENÇÃO: Você está prestes a CANCELAR este compromisso.\n\nEle será removido da sua agenda e também do Google Agenda (se sincronizado).\n\nDeseja continuar?",
+    "Cancelar Compromisso",
+    function() {
+      // Usuário confirmou
+      const btn = document.getElementById('btn-excluir-ag');
+      const textoOriginal = btn.innerText;
+      btn.innerText = "⏳ CANCELANDO...";
+      btn.disabled = true;
+      
+      google.script.run
+        .withSuccessHandler(function(res) {
+          fecharModalAgenda();
+          carregarEventos();
+          btn.innerText = textoOriginal;
+          btn.disabled = false;
+          
+          let mensagem = "Compromisso cancelado com sucesso!";
+          let tipo = "success";
+          
+          if (res && res.syncStatus) {
+            switch(res.syncStatus) {
+              case "CANCELADO_NO_GCAL":
+                mensagem = "Compromisso cancelado e removido do Google Agenda!";
+                break;
+              case "CANCELADO_SEM_EMAIL":
+                mensagem = "Compromisso cancelado, mas email não encontrado para remover do Google Agenda.";
+                tipo = "warning";
+                break;
+              case "CANCELADO_ERRO_GCAL":
+                mensagem = "Compromisso cancelado, mas houve erro ao remover do Google Agenda: " + (res.erroMsg || "");
+                tipo = "warning";
+                break;
+              default:
+                mensagem = "Compromisso cancelado com sucesso!";
+            }
+          }
+          
+          notificacaoVexo(mensagem, tipo);
+        })
+        .withFailureHandler(function(err) {
+          notificacaoVexo("Erro ao cancelar compromisso: " + err, "error");
+          btn.innerText = textoOriginal;
+          btn.disabled = false;
+        })
+        .excluirAgendamentoVexo(id);
+    },
+    function() {
+      // Usuário cancelou - não fazer nada
+      notificacaoVexo("Operação cancelada.", "info");
+    }
+  );
+}
+
+function atualizarDataEventoArraste(ev) {
+  const payload = {
+    id: ev.id,
+    titulo: ev.title,
+    cliente: ev.extendedProps.cliente,
+    tipo: ev.extendedProps.tipo, 
+    status: ev.extendedProps.status,
+    inicio: ev.start.toISOString(),
+    fim: ev.end ? ev.end.toISOString() : ev.start.toISOString(),
+    cor: ev.backgroundColor,
+    obs: ev.extendedProps.obs
+  };
+  google.script.run.salvarAgendamentoVexo(payload);
+}
+
+// Inicializar o calendário
+iniciarAgendaVexo();
+</script>

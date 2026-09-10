@@ -1,0 +1,1019 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  .home-freelancer {
+    width: 100%;
+    max-width: 100%;
+    padding: 0;
+    animation: fadeInUp 0.6s ease;
+  }
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .freelancer-header {
+    background: linear-gradient(135deg, #6d28d9, #4f46e5);
+    border-radius: 16px;
+    padding: 24px 28px;
+    margin-bottom: 24px;
+    color: #fff;
+    position: relative;
+    overflow: hidden;
+    width: 100%;
+  }
+  .freelancer-header::after {
+    content: '🚀';
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 70px;
+    opacity: 0.08;
+  }
+  .freelancer-header h1 {
+    font-size: 24px;
+    font-weight: 800;
+    margin: 0 0 6px 0;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+  }
+  .freelancer-header h1 span {
+    background: rgba(255,255,255,0.15);
+    padding: 2px 14px;
+    border-radius: 40px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .freelancer-header p {
+    margin: 0;
+    opacity: 0.85;
+    font-size: 14px;
+  }
+  .freelancer-header .badge-dia {
+    display: inline-block;
+    background: rgba(255,255,255,0.1);
+    padding: 6px 14px;
+    border-radius: 40px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+
+  .mes-selector-freela {
+    background: white;
+    border-radius: 16px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    border: 1px solid #eef2f6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+  }
+  .mes-selector-freela label {
+    font-size: 13px;
+    font-weight: 700;
+    color: #475569;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .mes-selector-freela select {
+    padding: 8px 14px;
+    border-radius: 10px;
+    border: 1px solid #e2e8f0;
+    font-size: 14px;
+    background: white;
+    font-weight: 600;
+    color: #1e293b;
+    outline: none;
+    cursor: pointer;
+  }
+  .mes-selector-freela select:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+  }
+  .mes-selector-freela .btn-aplicar-mes {
+    background: #8b5cf6;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    transition: 0.2s;
+  }
+  .mes-selector-freela .btn-aplicar-mes:hover {
+    background: #7c3aed;
+    transform: translateY(-1px);
+  }
+  .mes-selector-freela .periodo-label {
+    margin-left: auto;
+    font-size: 12px;
+    color: #94a3b8;
+  }
+
+  .stats-grid-freela {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    margin-bottom: 24px;
+    width: 100%;
+  }
+  .kpi-card-freela {
+    background: #fff;
+    padding: 18px 16px;
+    border-radius: 16px;
+    border: 1px solid #eef2f6;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    transition: 0.2s;
+  }
+  .kpi-card-freela:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 28px rgba(0,0,0,0.06);
+  }
+  .kpi-icon-freela {
+    width: 48px;
+    height: 48px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+  }
+  .kpi-info-freela {
+    flex: 1;
+    min-width: 0;
+  }
+  .kpi-value-freela {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+  }
+  .kpi-label-freela {
+    font-size: 12px;
+    color: #64748b;
+    font-weight: 500;
+    margin-top: 2px;
+  }
+  .kpi-trend-freela {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 30px;
+    display: inline-block;
+    margin-top: 6px;
+  }
+  .trend-up { background: #d1fae5; color: #065f46; }
+  .trend-down { background: #fee2e2; color: #991b1b; }
+  .trend-neutral { background: #f1f5f9; color: #475569; }
+
+  .main-grid-freela {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: 24px;
+    margin-bottom: 24px;
+    width: 100%;
+  }
+
+  .comissao-box-freela {
+    background: linear-gradient(145deg, #0f172a, #1e293b);
+    padding: 24px;
+    border-radius: 16px;
+    color: #fff;
+    width: 100%;
+  }
+  .comissao-box-freela h3 {
+    font-size: 18px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .comissao-grid-freela {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  .comissao-item {
+    background: rgba(255,255,255,0.05);
+    padding: 16px;
+    border-radius: 12px;
+    text-align: center;
+  }
+  .comissao-item .valor {
+    font-size: 24px;
+    font-weight: 800;
+    color: #fcd34d;
+    display: block;
+  }
+  .comissao-item .label {
+    font-size: 11px;
+    opacity: 0.6;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 4px;
+    display: block;
+  }
+  .comissao-item.total {
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+  }
+  .comissao-item.total .valor { color: #34d399; }
+
+  .chart-container-freela {
+    background: #fff;
+    padding: 20px;
+    border-radius: 16px;
+    border: 1px solid #eef2f6;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+  .chart-container-freela h3 {
+    font-size: 16px;
+    font-weight: 700;
+    margin: 0 0 16px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .comunicados-feed-freela {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .comunicado-item-freela {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border-left: 4px solid #8b5cf6;
+  }
+  .comunicado-item-freela .cat-tag {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    display: inline-block;
+    margin-bottom: 4px;
+    background: #e0e7ff;
+    color: #4338ca;
+  }
+  .comunicado-item-freela .cat-urgente { background: #fee2e2; color: #991b1b; }
+  .comunicado-item-freela .cat-treinamento { background: #d1fae5; color: #065f46; }
+  .comunicado-item-freela p {
+    margin: 6px 0 0 0;
+    font-size: 13px;
+    font-weight: 600;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .comunicado-item-freela small { font-size: 10px; color: #94a3b8; }
+  .btn-ver-todos {
+    margin-top: 16px;
+    padding: 10px;
+    background: none;
+    border: 1px dashed #cbd5e1;
+    border-radius: 12px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.2s;
+    width: 100%;
+    text-align: center;
+  }
+  .btn-ver-todos:hover { background: #f1f5f9; border-color: #94a3b8; }
+
+  .quick-actions-freela {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 16px;
+    margin-top: 10px;
+    width: 100%;
+  }
+  .action-btn-freela {
+    padding: 16px 10px;
+    border-radius: 16px;
+    border: 1px solid #eef2f6;
+    background: #fff;
+    color: #1e293b;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    text-align: center;
+    transition: 0.2s;
+  }
+  .action-btn-freela i { font-size: 22px; transition: 0.2s; }
+  .action-btn-freela:hover { transform: translateY(-4px); box-shadow: 0 10px 28px rgba(0,0,0,0.06); border-color: #cbd5e1; }
+  .action-btn-freela:hover i { transform: scale(1.1); }
+  .action-btn-freela.primary { border-color: #8b5cf6; background: #f5f3ff; }
+  .action-btn-freela.primary i { color: #7c3aed; }
+  .action-btn-freela.primary:hover { background: #ede9fe; border-color: #7c3aed; }
+  .action-btn-freela.success { border-color: #10b981; background: #ecfdf5; }
+  .action-btn-freela.success i { color: #059669; }
+  .action-btn-freela.success:hover { background: #d1fae5; border-color: #059669; }
+  .action-btn-freela.warning { border-color: #f59e0b; background: #fffbeb; }
+  .action-btn-freela.warning i { color: #d97706; }
+  .action-btn-freela.warning:hover { background: #fef3c7; border-color: #d97706; }
+  .action-btn-freela.blue { border-color: #3b82f6; background: #eff6ff; }
+  .action-btn-freela.blue i { color: #2563eb; }
+  .action-btn-freela.blue:hover { background: #dbeafe; border-color: #2563eb; }
+
+  @media (max-width: 1200px) {
+    .stats-grid-freela { grid-template-columns: repeat(2, 1fr); }
+    .quick-actions-freela { grid-template-columns: repeat(2, 1fr); }
+    .comissao-grid-freela { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 992px) {
+    .main-grid-freela { grid-template-columns: 1fr; }
+  }
+  @media (max-width: 768px) {
+    .freelancer-header { padding: 18px; }
+    .freelancer-header h1 { font-size: 20px; }
+    .stats-grid-freela { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .kpi-card-freela { padding: 14px; }
+    .kpi-value-freela { font-size: 18px; }
+    .quick-actions-freela { grid-template-columns: 1fr 1fr; gap: 12px; }
+    .comissao-grid-freela { grid-template-columns: 1fr 1fr; }
+    .mes-selector-freela { flex-direction: column; align-items: stretch; }
+    .mes-selector-freela .periodo-label { margin-left: 0; }
+  }
+  @media (max-width: 480px) {
+    .stats-grid-freela { grid-template-columns: 1fr; }
+    .quick-actions-freela { grid-template-columns: 1fr; }
+    .comissao-grid-freela { grid-template-columns: 1fr; }
+  }
+</style>
+
+<div class="home-freelancer">
+  
+  <!-- HEADER -->
+  <div class="freelancer-header">
+    <h1>
+      Olá, <span id="freela-name">Freelancer</span>! 👋
+      <span>⚡ FREELANCER</span>
+    </h1>
+    <p>Gerencie suas vendas, acompanhe sua performance e conquiste suas metas.</p>
+    <div class="badge-dia">
+      📅 <span id="data-atual"></span> • 💪 <span id="semana-atual">Semana 12</span>
+    </div>
+  </div>
+
+  <!-- SELETOR DE MÊS/ANO -->
+  <div class="mes-selector-freela">
+    <label><i class="fa-regular fa-calendar"></i> Período:</label>
+    <select id="mes-selecionado">
+      <option value="1">Janeiro</option>
+      <option value="2">Fevereiro</option>
+      <option value="3">Março</option>
+      <option value="4">Abril</option>
+      <option value="5">Maio</option>
+      <option value="6">Junho</option>
+      <option value="7">Julho</option>
+      <option value="8">Agosto</option>
+      <option value="9">Setembro</option>
+      <option value="10">Outubro</option>
+      <option value="11">Novembro</option>
+      <option value="12">Dezembro</option>
+    </select>
+    <select id="ano-selecionado">
+      <!-- será preenchido via JS -->
+    </select>
+    <button class="btn-aplicar-mes" onclick="carregarDadosFreelancer()">
+      <i class="fa-regular fa-magnifying-glass"></i> Aplicar
+    </button>
+    <span class="periodo-label" id="periodo-label">Carregando...</span>
+  </div>
+
+  <!-- CARDS DE KPI -->
+  <div class="stats-grid-freela">
+    <div class="kpi-card-freela">
+      <div class="kpi-icon-freela" style="background:#dbeafe;color:#3b82f6;"><i class="fa-solid fa-chart-simple"></i></div>
+      <div class="kpi-info-freela">
+        <div class="kpi-value-freela" id="val-faturamento">Carregando...</div>
+        <div class="kpi-label-freela">Faturamento</div>
+        <span class="kpi-trend-freela trend-neutral" id="trend-faturamento">Selecione um período</span>
+      </div>
+    </div>
+    <div class="kpi-card-freela">
+      <div class="kpi-icon-freela" style="background:#fce7f3;color:#db2777;"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+      <div class="kpi-info-freela">
+        <div class="kpi-value-freela" id="val-comissao-vendas">Carregando...</div>
+        <div class="kpi-label-freela">Comissão Vendas</div>
+        <span class="kpi-trend-freela trend-neutral">Percentual: <span id="pct-vendas">0</span>%</span>
+      </div>
+    </div>
+    <div class="kpi-card-freela">
+      <div class="kpi-icon-freela" style="background:#d1fae5;color:#10b981;"><i class="fa-solid fa-rotate-left"></i></div>
+      <div class="kpi-info-freela">
+        <div class="kpi-value-freela" id="val-comissao-reneg">Carregando...</div>
+        <div class="kpi-label-freela">Comissão Reneg.</div>
+        <span class="kpi-trend-freela trend-neutral">Percentual: <span id="pct-reneg">0</span>%</span>
+      </div>
+    </div>
+    <div class="kpi-card-freela">
+      <div class="kpi-icon-freela" style="background:#fef3c7;color:#f59e0b;"><i class="fa-solid fa-calculator"></i></div>
+      <div class="kpi-info-freela">
+        <div class="kpi-value-freela" id="val-comissao-total">Carregando...</div>
+        <div class="kpi-label-freela">Comissão Total</div>
+        <span class="kpi-trend-freela trend-up">Soma das comissões</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRID PRINCIPAL -->
+  <div class="main-grid-freela">
+    <div class="comissao-box-freela">
+      <h3><i class="fa-regular fa-circle-dollar" style="color: #fcd34d;"></i> Resumo da Comissão</h3>
+      <div class="comissao-grid-freela">
+        <div class="comissao-item">
+          <span class="valor" id="resumo-comissao-vendas">R$ 0,00</span>
+          <span class="label">Vendas</span>
+        </div>
+        <div class="comissao-item">
+          <span class="valor" id="resumo-comissao-reneg">R$ 0,00</span>
+          <span class="label">Renegociações</span>
+        </div>
+        <div class="comissao-item total">
+          <span class="valor" id="resumo-comissao-total">R$ 0,00</span>
+          <span class="label">Total</span>
+        </div>
+      </div>
+      <p style="margin-top: 18px; font-size: 12px; color: #94a3b8; text-align: center; border-top: 1px solid rgba(255,255,255,0.05); padding-top: 14px;">
+        📊 Percentuais configurados de acordo com a política de comissionamento atual.
+      </p>
+    </div>
+
+    <div class="chart-container-freela">
+      <h3><i class="fa-regular fa-bullhorn" style="color:#8b5cf6;"></i> Novidades da E&E</h3>
+      <div class="comunicados-feed-freela" id="home-comunicados-feed">
+        <div style="text-align:center;color:#94a3b8;padding:20px 0;">
+          <i class="fa-solid fa-circle-notch fa-spin"></i> Carregando...
+        </div>
+      </div>
+      <button class="btn-ver-todos" onclick="navegar('comunicacao', document.querySelector('.menu-item[onclick*=\'comunicacao\']'))">
+        Ver todos os comunicados →
+      </button>
+    </div>
+  </div>
+
+  <!-- AÇÕES RÁPIDAS -->
+  <div class="quick-actions-freela">
+    <button class="action-btn-freela primary" onclick="navegar('vendas', document.getElementById('btn-menu-vendas'))">
+      <i class="fa-solid fa-plus-circle"></i> Nova Venda TIM
+    </button>
+    <button class="action-btn-freela success" onclick="navegar('meus_pedidos', document.getElementById('btn-menu-pedidos-input'))">
+  <i class="fa-solid fa-list-check"></i> Meus Pedidos
+</button>
+    <button class="action-btn-freela warning" onclick="navegar('suporte', document.getElementById('btn-menu-suporte'))">
+      <i class="fa-solid fa-headset"></i> Suporte
+    </button>
+    <button class="action-btn-freela blue" onclick="abrirModalArquivos()">
+      <i class="fa-solid fa-download"></i> Mapa de Ofertas e Tabela de Preços
+    </button>
+  </div>
+
+</div>
+
+<!-- ============================================ -->
+<!-- MODAL ARQUIVOS COMERCIAIS (FREELANCER)      -->
+<!-- ============================================ -->
+<div id="modal-arquivos-comerciais" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.85); backdrop-filter:blur(8px); z-index:10000; justify-content:center; align-items:center; padding:20px; opacity:0; transition:opacity 0.3s ease;">
+  <div style="background:white; width:100%; max-width:1000px; max-height:90vh; border-radius:24px; overflow:hidden; display:flex; flex-direction:column; transform:scale(0.95); transition:transform 0.3s ease; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5);">
+    
+    <!-- CABEÇALHO -->
+    <div style="padding:20px 24px; background:linear-gradient(135deg, #0f172a 0%, #1e3c72 100%); color:white; display:flex; justify-content:space-between; align-items:center; flex-shrink:0;">
+      <div>
+        <h3 style="margin:0; font-weight:800; display:flex; align-items:center; gap:10px;">
+          <i class="fa-regular fa-folder-open"></i> ARQUIVOS COMERCIAIS
+        </h3>
+        <p style="margin:4px 0 0 0; font-size:12px; opacity:0.8;">Tabelas, mapas e books TIM SMB</p>
+      </div>
+      <button onclick="fecharModalArquivos()" style="background:rgba(255,255,255,0.1); border:none; width:36px; height:36px; border-radius:50%; cursor:pointer; color:white; font-size:22px; transition:0.3s;" onmouseover="this.style.background='rgba(255,255,255,0.2)'" onmouseout="this.style.background='rgba(255,255,255,0.1)'">✕</button>
+    </div>
+
+    <!-- CORPO -->
+    <div style="padding:24px; overflow-y:auto; flex:1;">
+      
+      <!-- ABAS -->
+      <div style="display:flex; gap:10px; margin-bottom:20px; border-bottom:2px solid #e2e8f0; flex-wrap:wrap; align-items:center;">
+        <button class="aba-arquivo ativa" data-categoria="tabela_precos" onclick="mudarAbaArquivo('tabela_precos')" style="padding:10px 20px; border:none; background:none; font-weight:700; font-size:13px; color:#64748b; cursor:pointer; border-bottom:3px solid transparent; transition:0.3s;">
+          📊 Tabela de Preços
+        </button>
+        <button class="aba-arquivo" data-categoria="mapa_ofertas" onclick="mudarAbaArquivo('mapa_ofertas')" style="padding:10px 20px; border:none; background:none; font-weight:700; font-size:13px; color:#64748b; cursor:pointer; border-bottom:3px solid transparent; transition:0.3s;">
+          🗺️ Mapa de Ofertas
+        </button>
+        <button class="aba-arquivo" data-categoria="book_aparelhos" onclick="mudarAbaArquivo('book_aparelhos')" style="padding:10px 20px; border:none; background:none; font-weight:700; font-size:13px; color:#64748b; cursor:pointer; border-bottom:3px solid transparent; transition:0.3s;">
+          📱 Book de Aparelhos
+        </button>
+        
+        <!-- ÁREA DE UPLOAD (APENAS MASTER) -->
+        <div id="area-upload-master" style="display:none; margin-left:auto;">
+          <select id="tipo-arquivo-upload" style="padding:8px 12px; border-radius:10px; border:1px solid #e2e8f0; font-size:12px; background:white; margin-right:8px;">
+            <option value="tabela_precos">📊 Tabela</option>
+            <option value="mapa_ofertas">🗺️ Mapa</option>
+            <option value="book_aparelhos">📱 Book</option>
+          </select>
+          <input type="file" id="input-arquivo" style="display:none;" onchange="uploadArquivo()">
+          <button onclick="document.getElementById('input-arquivo').click()" style="background:#3b82f6; color:white; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:700; font-size:13px; transition:0.3s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+            ➕ Enviar Arquivo
+          </button>
+        </div>
+      </div>
+
+      <!-- STATUS DO UPLOAD -->
+      <div id="upload-status" style="display:none; padding:12px; border-radius:10px; margin-bottom:16px; font-weight:600; font-size:13px;"></div>
+
+      <!-- LISTA DE ARQUIVOS -->
+      <div id="lista-arquivos" style="display:flex; flex-direction:column; gap:12px;">
+        <div style="text-align:center; padding:40px; color:#94a3b8;">
+          <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i>
+          <p style="margin-top:10px;">Carregando arquivos...</p>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RODAPÉ -->
+    <div style="padding:16px 24px; border-top:1px solid #e2e8f0; background:#f8fafc; display:flex; justify-content:flex-end; flex-shrink:0;">
+      <button onclick="fecharModalArquivos()" style="padding:10px 24px; background:#f1f5f9; border:none; border-radius:10px; font-weight:600; cursor:pointer; color:#64748b; transition:0.3s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Fechar</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  // ============================================
+  // FUNÇÕES DO MODAL DE ARQUIVOS COMERCIAIS
+  // ============================================
+  let abaAtualArquivos = 'tabela_precos';
+
+  function abrirModalArquivos() {
+    const modal = document.getElementById('modal-arquivos-comerciais');
+    modal.style.display = 'flex';
+    setTimeout(() => {
+      modal.style.opacity = '1';
+      modal.querySelector('div').style.transform = 'scale(1)';
+    }, 10);
+    
+    // Verifica permissão MASTER
+    const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const cargo = (user.role || '').toUpperCase().trim();
+    const isMaster = (cargo === 'MASTER' || cargo === 'ADMINISTRADOR');
+    const areaUpload = document.getElementById('area-upload-master');
+    if (isMaster) {
+      areaUpload.style.display = 'block';
+    } else {
+      areaUpload.style.display = 'none';
+    }
+    
+    carregarListaArquivos(abaAtualArquivos);
+  }
+
+  function fecharModalArquivos() {
+    const modal = document.getElementById('modal-arquivos-comerciais');
+    modal.style.opacity = '0';
+    modal.querySelector('div').style.transform = 'scale(0.95)';
+    setTimeout(() => {
+      modal.style.display = 'none';
+    }, 300);
+  }
+
+  function mudarAbaArquivo(categoria) {
+    abaAtualArquivos = categoria;
+    document.querySelectorAll('.aba-arquivo').forEach(btn => {
+      btn.classList.remove('ativa');
+      btn.style.color = '#64748b';
+      btn.style.borderBottom = '3px solid transparent';
+    });
+    const btnAtivo = document.querySelector(`.aba-arquivo[data-categoria="${categoria}"]`);
+    btnAtivo.classList.add('ativa');
+    btnAtivo.style.color = '#3b82f6';
+    btnAtivo.style.borderBottom = '3px solid #3b82f6';
+    carregarListaArquivos(categoria);
+  }
+
+function carregarListaArquivos(categoria) {
+  const container = document.getElementById('lista-arquivos');
+  container.innerHTML = `<div style="text-align:center; padding:40px; color:#94a3b8;">
+    <i class="fa-solid fa-spinner fa-spin" style="font-size:24px;"></i>
+    <p style="margin-top:10px;">Carregando...</p>
+  </div>`;
+
+  const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargo = (user.role || '').toUpperCase().trim();
+  const isMaster = (cargo === 'MASTER' || cargo === 'ADMINISTRADOR');
+
+  console.log('📤 Carregando arquivos da categoria:', categoria, '| Master:', isMaster);
+
+  google.script.run
+    .withSuccessHandler(function(arquivos) {
+      console.log('✅ Arquivos recebidos:', arquivos);
+      
+      // Filtra pela categoria
+      let filtrados = arquivos.filter(a => a.tipo === categoria);
+      
+      // Ordena por data (mais recente primeiro)
+      filtrados.sort((a, b) => b.data - a.data);
+
+      // 🔥 SE NÃO FOR MASTER, MOSTRA APENAS O ÚLTIMO ARQUIVO (SEM HISTÓRICO)
+      if (!isMaster) {
+        if (filtrados.length === 0) {
+          container.innerHTML = `
+            <div style="text-align:center; padding:40px; color:#94a3b8;">
+              <i class="fa-regular fa-file" style="font-size:40px; display:block; margin-bottom:10px;"></i>
+              <p>Nenhum arquivo disponível no momento.</p>
+              <p style="font-size:12px; margin-top:8px;">Consulte o administrador para mais informações.</p>
+            </div>
+          `;
+          return;
+        }
+        // Pega apenas o mais recente
+        filtrados = [filtrados[0]];
+      }
+
+      if (filtrados.length === 0) {
+        container.innerHTML = `
+          <div style="text-align:center; padding:40px; color:#94a3b8;">
+            <i class="fa-regular fa-folder-open" style="font-size:40px; display:block; margin-bottom:10px;"></i>
+            <p>Nenhum arquivo encontrado nesta categoria.</p>
+            ${isMaster ? '' : '<p style="font-size:12px; margin-top:8px;">Consulte o administrador.</p>'}
+          </div>
+        `;
+        return;
+      }
+
+      // Renderiza a lista
+      container.innerHTML = filtrados.map(function(a) {
+        const dataFormatada = a.data ? new Date(a.data).toLocaleDateString('pt-BR') + ' ' + new Date(a.data).toLocaleTimeString('pt-BR') : '';
+        const tamanhoKB = (a.tamanho / 1024).toFixed(1);
+        let icone = '📄';
+        if (a.extensao === 'pdf') icone = '📄';
+        else if (['xlsx', 'xls'].includes(a.extensao)) icone = '📊';
+        else if (['jpg', 'jpeg', 'png'].includes(a.extensao)) icone = '🖼️';
+        
+        let botoes = `
+          <button onclick="baixarArquivo('${a.id}')" style="padding:6px 14px; background:#3b82f6; color:white; border:none; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px; transition:0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+            <i class="fa-solid fa-download"></i> Baixar
+          </button>
+          <button onclick="visualizarArquivo('${a.id}')" style="padding:6px 14px; background:#8b5cf6; color:white; border:none; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px; transition:0.2s;" onmouseover="this.style.background='#7c3aed'" onmouseout="this.style.background='#8b5cf6'">
+            <i class="fa-regular fa-eye"></i> Visualizar
+          </button>
+        `;
+        
+        // 🔥 BOTÃO EXCLUIR APENAS PARA MASTER
+        if (isMaster) {
+          botoes += `
+            <button onclick="excluirArquivo('${a.id}')" style="padding:6px 14px; background:#ef4444; color:white; border:none; border-radius:8px; cursor:pointer; font-size:11px; font-weight:600; display:inline-flex; align-items:center; gap:4px; transition:0.2s;" onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+              <i class="fa-solid fa-trash-alt"></i> Excluir
+            </button>
+          `;
+        }
+
+        // 🔥 PARA FREELANCER, MOSTRA UM INDICADOR DE "ÚLTIMA VERSÃO"
+        const badgeVersao = !isMaster ? '<span style="font-size:9px; background:#dbeafe; color:#1e40af; padding:2px 8px; border-radius:12px; margin-left:8px;">📌 Última versão</span>' : '';
+
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:16px; background:white; border:1px solid #e2e8f0; border-radius:12px; transition:0.2s; gap:12px; flex-wrap:wrap;" onmouseover="this.style.borderColor='#3b82f6'" onmouseout="this.style.borderColor='#e2e8f0'">
+            <div style="display:flex; align-items:center; gap:12px; min-width:200px;">
+              <span style="font-size:28px;">${icone}</span>
+              <div>
+                <div style="font-weight:700; color:#1e293b; font-size:14px;">
+                  ${a.nome}.${a.extensao}
+                  ${badgeVersao}
+                </div>
+                <div style="font-size:11px; color:#94a3b8; display:flex; gap:12px; flex-wrap:wrap;">
+                  <span><i class="fa-regular fa-clock"></i> ${dataFormatada}</span>
+                  <span>📦 ${tamanhoKB} KB</span>
+                  ${!isMaster && filtrados.length > 1 ? '<span style="color:#f59e0b;">🔒 Histórico restrito a administradores</span>' : ''}
+                </div>
+              </div>
+            </div>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              ${botoes}
+            </div>
+          </div>
+        `;
+      }).join('');
+    })
+    .withFailureHandler(function(err) {
+      console.error('❌ Erro ao carregar arquivos:', err);
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px; color:#ef4444;">
+          <i class="fa-solid fa-exclamation-triangle" style="font-size:40px; display:block; margin-bottom:10px;"></i>
+          <p>Erro ao carregar arquivos: ${err}</p>
+          <button onclick="carregarListaArquivos('${categoria}')" style="margin-top:10px; padding:8px 16px; background:#3b82f6; color:white; border:none; border-radius:8px; cursor:pointer;">Tentar Novamente</button>
+        </div>
+      `;
+    })
+    .listarArquivosEmpresariais();
+}
+
+  function uploadArquivo() {
+    const fileInput = document.getElementById('input-arquivo');
+    const tipoSelect = document.getElementById('tipo-arquivo-upload');
+    const statusDiv = document.getElementById('upload-status');
+    
+    if (!fileInput.files || fileInput.files.length === 0) {
+      statusDiv.style.display = 'block';
+      statusDiv.style.background = '#fee2e2';
+      statusDiv.style.color = '#991b1b';
+      statusDiv.innerHTML = '❌ Selecione um arquivo.';
+      return;
+    }
+    
+    const file = fileInput.files[0];
+    const tipo = tipoSelect.value;
+    const nomeSemExt = file.name.split('.').slice(0, -1).join('.');
+    const extensao = file.name.split('.').pop();
+    
+    const extensoesValidas = {
+      'tabela_precos': ['xlsx', 'xls'],
+      'mapa_ofertas': ['pdf'],
+      'book_aparelhos': ['jpg', 'jpeg', 'png']
+    };
+    
+    if (!extensoesValidas[tipo].includes(extensao.toLowerCase())) {
+      statusDiv.style.display = 'block';
+      statusDiv.style.background = '#fee2e2';
+      statusDiv.style.color = '#991b1b';
+      statusDiv.innerHTML = `❌ Formato inválido. Use: ${extensoesValidas[tipo].join(', ')}`;
+      fileInput.value = '';
+      return;
+    }
+    
+    statusDiv.style.display = 'block';
+    statusDiv.style.background = '#dbeafe';
+    statusDiv.style.color = '#1e40af';
+    statusDiv.innerHTML = '⏳ Enviando arquivo...';
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const base64 = e.target.result;
+      const dados = {
+        tipo: tipo,
+        nome: nomeSemExt,
+        arquivo: base64,
+        extensao: extensao
+      };
+      
+      console.log('📤 Enviando arquivo:', dados);
+      
+      google.script.run
+        .withSuccessHandler(function(res) {
+          console.log('✅ Resposta do upload:', res);
+          if (res.success) {
+            statusDiv.style.background = '#d1fae5';
+            statusDiv.style.color = '#065f46';
+            statusDiv.innerHTML = '✅ Arquivo enviado com sucesso!';
+            fileInput.value = '';
+            setTimeout(() => carregarListaArquivos(abaAtualArquivos), 500);
+          } else {
+            statusDiv.style.background = '#fee2e2';
+            statusDiv.style.color = '#991b1b';
+            statusDiv.innerHTML = '❌ Erro: ' + (res.message || 'Falha no upload');
+          }
+        })
+        .withFailureHandler(function(err) {
+          console.error('❌ Erro no upload:', err);
+          statusDiv.style.background = '#fee2e2';
+          statusDiv.style.color = '#991b1b';
+          statusDiv.innerHTML = '❌ Erro de comunicação: ' + err;
+        })
+        .uploadArquivoEmpresarial(dados);
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function baixarArquivo(id) {
+    console.log('📥 Baixando arquivo ID:', id);
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res.success) {
+          const link = document.createElement('a');
+          link.href = 'data:application/octet-stream;base64,' + res.base64;
+          link.download = res.nome;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          alert('Erro ao baixar: ' + res.message);
+        }
+      })
+      .withFailureHandler(function(err) {
+        alert('Erro de comunicação: ' + err);
+      })
+      .baixarArquivoEmpresarial(id);
+  }
+
+  function visualizarArquivo(id) {
+    console.log('👁️ Visualizando arquivo ID:', id);
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res.success && res.url) {
+          window.open(res.url, '_blank');
+        } else {
+          alert('Erro ao visualizar: ' + (res.message || 'Arquivo não encontrado'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        alert('Erro de comunicação: ' + err);
+      })
+      .visualizarArquivoEmpresarial(id);
+  }
+
+  function excluirArquivo(id) {
+    if (!confirm('Tem certeza que deseja excluir este arquivo permanentemente?')) return;
+    console.log('🗑️ Excluindo arquivo ID:', id);
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res.success) {
+          alert('Arquivo excluído com sucesso!');
+          carregarListaArquivos(abaAtualArquivos);
+        } else {
+          alert('Erro ao excluir: ' + res.message);
+        }
+      })
+      .withFailureHandler(function(err) {
+        alert('Erro de comunicação: ' + err);
+      })
+      .excluirArquivoEmpresarial(id);
+  }
+
+  // ============================================
+  // INICIALIZAÇÃO DO DASHBOARD FREELANCER
+  // ============================================
+  window.inicializarHomeFreelancer = function() {
+    console.log('🚀 Inicializando Dashboard Freelancer...');
+    
+    const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const nome = (user.username || user.nome || 'Freelancer').split(' ')[0];
+    const nomeEl = document.getElementById('freela-name');
+    if (nomeEl) nomeEl.innerText = nome;
+
+    const hoje = new Date();
+    const dataEl = document.getElementById('data-atual');
+    if (dataEl) {
+      dataEl.innerText = hoje.toLocaleDateString('pt-BR', {
+        day: '2-digit', month: 'long', year: 'numeric'
+      });
+    }
+
+    const inicioAno = new Date(hoje.getFullYear(), 0, 1);
+    const semana = Math.ceil((hoje - inicioAno) / (7 * 24 * 60 * 60 * 1000));
+    const semanaEl = document.getElementById('semana-atual');
+    if (semanaEl) semanaEl.innerText = 'Semana ' + semana;
+
+    const anoSelect = document.getElementById('ano-selecionado');
+    if (anoSelect) {
+      const anoAtual = hoje.getFullYear();
+      anoSelect.innerHTML = '';
+      for (let a = anoAtual - 2; a <= anoAtual + 1; a++) {
+        const opt = document.createElement('option');
+        opt.value = a;
+        opt.innerText = a;
+        if (a === anoAtual) opt.selected = true;
+        anoSelect.appendChild(opt);
+      }
+    }
+
+    const mesSelect = document.getElementById('mes-selecionado');
+    if (mesSelect) {
+      mesSelect.value = hoje.getMonth() + 1;
+    }
+
+    // Carregar dados do freelancer e comunicados
+    if (typeof window.carregarDadosFreelancer === 'function') {
+      window.carregarDadosFreelancer();
+    }
+    if (typeof window.carregarComunicadosFreelancer === 'function') {
+      window.carregarComunicadosFreelancer();
+    }
+    
+    // Restaurar estado do botão de expandir (se usado)
+    if (typeof restaurarEstadoComissao === 'function') {
+      restaurarEstadoComissao();
+    }
+    
+    console.log('✅ Dashboard Freelancer inicializado com sucesso!');
+  };
+
+  // ============================================
+  // CARREGAR DADOS DO FREELANCER (mock/backup)
+  // ============================================
+  window.carregarDadosFreelancer = function() {
+    const mes = parseInt(document.getElementById('mes-selecionado').value);
+    const ano = parseInt(document.getElementById('ano-selecionado').value);
+    console.log(`📊 Carregando dados para ${mes}/${ano}`);
+    
+    const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const nomeFreelancer = (user.nome || user.username || '').toUpperCase().trim();
+    const bancoDeDadosId = user.bancoDeDadosId || null;
+    
+    if (!nomeFreelancer) {
+      console.warn('⚠️ Nome do freelancer não encontrado');
+      return;
+    }
+    
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res.success) {
+          // Atualiza os cards
+          document.getElementById('val-faturamento').innerText = res.faturamentoMensal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+          document.getElementById('val-comissao-vendas').innerText = res.comissaoVendas.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+          document.getElementById('val-comissao-reneg').innerText = res.comissaoReneg.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+          document.getElementById('val-comissao-total').innerText = res.comissaoTotal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+          document.getElementById('pct-vendas').innerText = res.percentualVendas || 0;
+          document.getElementById('pct-reneg').innerText = res.percentualReneg || 0;
+          
+          document.getElementById('resumo-comissao-vendas').innerText = res.comissaoVendas.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+          document.getElementById('resumo-comissao-reneg').innerText = res.comissaoReneg.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+          document.getElementById('resumo-comissao-total').innerText = res.comissaoTotal.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+          
+          const trend = document.getElementById('trend-faturamento');
+          if (trend) {
+            if (res.faturamentoMensal > 0) {
+              trend.innerText = `📈 ${res.debug?.contaLinhas || 0} venda(s) em ${mes}/${ano}`;
+              trend.className = 'kpi-trend-freela trend-up';
+            } else {
+              trend.innerText = `📭 Nenhuma venda em ${mes}/${ano}`;
+              trend.className = 'kpi-trend-freela trend-neutral';
+            }
+          }
+        }
+      })
+      .withFailureHandler(function(err) {
+        console.error('❌ Erro ao carregar dados:', err);
+      })
+      .p_buscarDadosFreelancer(mes, ano);
+  };
+
+  // ============================================
+  // CARREGAR COMUNICADOS
+  // ============================================
+  window.carregarComunicadosFreelancer = function() {
+    const container = document.getElementById('home-comunicados-feed');
+    google.script.run
+      .withSuccessHandler(function(posts) {
+        if (!container) return;
+        if (!posts || posts.length === 0) {
+          container.innerHTML = '<p style="font-size:13px; color:#94a3b8; text-align:center; padding:10px;">Nenhum comunicado recente.</p>';
+          return;
+        }
+        const ultimos = posts.slice(0, 2);
+        container.innerHTML = ultimos.map(function(p) {
+          var catClass = '';
+          var corBase = '#8b5cf6';
+          var cat = String(p.categoria).toUpperCase();
+          if (cat === 'URGENTE') { catClass = 'cat-urgente'; corBase = '#ef4444'; }
+          else if (cat === 'TREINAMENTO') { catClass = 'cat-treinamento'; corBase = '#10b981'; }
+          return '<div class="comunicado-item-freela" style="border-left-color:' + corBase + ';">' +
+                 '<span class="cat-tag ' + catClass + '">' + (p.categoria || 'Novidade') + '</span>' +
+                 '<p title="' + (p.titulo || '') + '">' + (p.titulo || 'Sem título') + '</p>' +
+                 '<small>' + (p.data ? p.data.split(' ')[0] : '') + '</small>' +
+                 '</div>';
+        }).join('');
+      })
+      .withFailureHandler(function(err) {
+        console.error('❌ Erro ao carregar comunicados:', err);
+        if (container) {
+          container.innerHTML = '<p style="font-size:13px; color:#ef4444; text-align:center; padding:10px;">⚠️ Erro ao carregar comunicados</p>';
+        }
+      })
+      .p_listarComunicados();
+  };
+
+  // ============================================
+  // INICIALIZAÇÃO AUTOMÁTICA
+  // ============================================
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function() {
+      if (typeof window.inicializarHomeFreelancer === 'function') {
+        window.inicializarHomeFreelancer();
+      }
+    });
+  } else {
+    if (typeof window.inicializarHomeFreelancer === 'function') {
+      window.inicializarHomeFreelancer();
+    }
+  }
+</script>

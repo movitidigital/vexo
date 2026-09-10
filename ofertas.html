@@ -1,0 +1,1255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VEXO - Ofertas TIM</title>
+  <style>
+    /* ============================================
+       VARIÁVEIS E RESET (ALINHADO COM O VEXO)
+    ============================================ */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      --vexo-primary: #1e3c72;
+      --vexo-primary-light: #2a5298;
+      --vexo-secondary: #0f172a;
+      --vexo-accent: #3b82f6;
+      --vexo-success: #10b981;
+      --vexo-danger: #ef4444;
+      --vexo-warning: #f59e0b;
+      --vexo-gray-50: #f8fafc;
+      --vexo-gray-100: #f1f5f9;
+      --vexo-gray-200: #e2e8f0;
+      --vexo-gray-300: #cbd5e1;
+      --vexo-gray-400: #94a3b8;
+      --vexo-gray-500: #64748b;
+      --vexo-gray-600: #475569;
+      --vexo-gray-700: #334155;
+      --vexo-gray-800: #1e293b;
+      --vexo-gray-900: #0f172a;
+    }
+
+    body {
+      font-family: 'Poppins', 'Segoe UI', system-ui, sans-serif;
+      background: var(--vexo-gray-50);
+      color: var(--vexo-gray-800);
+    }
+
+    /* ============================================
+       LAYOUT PRINCIPAL
+    ============================================ */
+    .ofertas-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    /* Header */
+    .ofertas-header {
+      background: linear-gradient(135deg, var(--vexo-secondary) 0%, var(--vexo-primary) 100%);
+      border-radius: 24px;
+      padding: 24px 32px;
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-title h1 {
+      font-size: 24px;
+      font-weight: 800;
+      color: white;
+      margin-bottom: 4px;
+    }
+
+    .header-title p {
+      font-size: 13px;
+      color: var(--vexo-gray-400);
+    }
+
+    .header-badge {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 8px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 500;
+      color: white;
+    }
+
+    .header-badge span {
+      color: var(--vexo-warning);
+      font-weight: 700;
+    }
+
+    /* Barra de Ações */
+    .acoes-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 12px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      border: none;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: var(--vexo-primary);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      background: var(--vexo-primary-light);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--vexo-gray-300);
+      color: var(--vexo-gray-600);
+    }
+
+    .btn-outline:hover {
+      background: var(--vexo-gray-100);
+      border-color: var(--vexo-gray-400);
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 11px;
+    }
+
+    /* Filtros */
+    .filtros-bar {
+      background: white;
+      border-radius: 20px;
+      padding: 16px 20px;
+      margin-bottom: 24px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--vexo-gray-200);
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      align-items: flex-end;
+    }
+
+    .filtro-group {
+      flex: 1;
+      min-width: 150px;
+    }
+
+    .filtro-group label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--vexo-gray-500);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 4px;
+    }
+
+    .filtro-group select,
+    .filtro-group input {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--vexo-gray-200);
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: inherit;
+      background: white;
+      transition: all 0.2s;
+    }
+
+    .filtro-group select:focus,
+    .filtro-group input:focus {
+      outline: none;
+      border-color: var(--vexo-accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      height: 42px;
+    }
+
+    .checkbox-group input {
+      width: auto;
+      margin: 0;
+    }
+
+    /* Tabela */
+    .tabela-wrapper {
+      background: white;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--vexo-gray-200);
+    }
+
+    .tabela-ofertas {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .tabela-ofertas th {
+      text-align: left;
+      padding: 16px;
+      background: var(--vexo-gray-50);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--vexo-gray-600);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-bottom: 1px solid var(--vexo-gray-200);
+    }
+
+    .tabela-ofertas td {
+      padding: 14px 16px;
+      font-size: 13px;
+      border-bottom: 1px solid var(--vexo-gray-100);
+      vertical-align: middle;
+    }
+
+    .tabela-ofertas tr:hover {
+      background: var(--vexo-gray-50);
+    }
+
+    /* Badges */
+    .badge-status {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .badge-ativo {
+      background: #d1fae5;
+      color: #065f46;
+    }
+
+    .badge-inativo {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    .badge-destaque {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      color: white;
+      padding: 3px 10px;
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 700;
+      display: inline-block;
+    }
+
+    /* Botões de Ação */
+    .acao-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 6px;
+      border-radius: 8px;
+      transition: all 0.2s;
+      font-size: 16px;
+    }
+
+    .acao-editar {
+      color: var(--vexo-accent);
+    }
+
+    .acao-editar:hover {
+      background: #dbeafe;
+    }
+
+    .acao-excluir {
+      color: var(--vexo-danger);
+    }
+
+    .acao-excluir:hover {
+      background: #fee2e2;
+    }
+
+    /* Modal */
+    .modal-overlay-ofertas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.85);
+      backdrop-filter: blur(8px);
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 10000;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay-ofertas.active {
+      display: flex;
+    }
+
+    .modal-overlay-ofertas.show {
+      opacity: 1;
+    }
+
+    .modal-container-ofertas {
+      background: white;
+      width: 90%;
+      max-width: 900px;
+      max-height: 90vh;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .modal-overlay-ofertas.show .modal-container-ofertas {
+      transform: scale(1);
+    }
+
+    .modal-header-ofertas {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, var(--vexo-secondary) 0%, var(--vexo-primary) 100%);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header-ofertas h3 {
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0;
+    }
+
+    .modal-close-ofertas {
+      background: rgba(255, 255, 255, 0.1);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      color: white;
+      font-size: 18px;
+      transition: all 0.2s;
+    }
+
+    .modal-close-ofertas:hover {
+      background: rgba(255, 255, 255, 0.2);
+    }
+
+    .modal-body-ofertas {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+
+    .modal-footer-ofertas {
+      padding: 16px 24px;
+      background: var(--vexo-gray-50);
+      border-top: 1px solid var(--vexo-gray-200);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+
+    /* Formulário */
+    .form-grid-ofertas {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .form-full-ofertas {
+      grid-column: span 2;
+    }
+
+    .form-group-ofertas {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .form-group-ofertas label {
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--vexo-gray-600);
+    }
+
+    .form-group-ofertas label span {
+      color: var(--vexo-danger);
+    }
+
+    .form-group-ofertas input,
+    .form-group-ofertas select,
+    .form-group-ofertas textarea {
+      padding: 10px 12px;
+      border: 1px solid var(--vexo-gray-200);
+      border-radius: 10px;
+      font-size: 13px;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .form-group-ofertas input:focus,
+    .form-group-ofertas select:focus,
+    .form-group-ofertas textarea:focus {
+      outline: none;
+      border-color: var(--vexo-accent);
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+    }
+
+    .form-group-ofertas textarea {
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    /* Loading */
+    .loading-spinner {
+      text-align: center;
+      padding: 60px;
+      color: var(--vexo-gray-400);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px;
+      color: var(--vexo-gray-400);
+    }
+
+    /* Paginação */
+    .pagination-ofertas {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      padding: 20px;
+      border-top: 1px solid var(--vexo-gray-200);
+    }
+
+    .page-btn-ofertas {
+      padding: 8px 14px;
+      border: 1px solid var(--vexo-gray-200);
+      background: white;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+
+    .page-btn-ofertas.active {
+      background: var(--vexo-primary);
+      color: white;
+      border-color: var(--vexo-primary);
+    }
+
+    .page-btn-ofertas:hover:not(.active) {
+      background: var(--vexo-gray-100);
+    }
+
+    /* Toast */
+    .toast-ofertas-container {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 10001;
+    }
+
+    .toast-oferta {
+      padding: 14px 20px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-top: 10px;
+      animation: slideInRight 0.3s ease-out;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .toast-success {
+      background: var(--vexo-success);
+      color: white;
+    }
+
+    .toast-error {
+      background: var(--vexo-danger);
+      color: white;
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    /* Responsivo */
+    @media (max-width: 768px) {
+      .ofertas-container {
+        padding: 16px;
+      }
+
+      .form-grid-ofertas {
+        grid-template-columns: 1fr;
+      }
+
+      .form-full-ofertas {
+        grid-column: span 1;
+      }
+
+      .tabela-wrapper {
+        overflow-x: auto;
+      }
+
+      .filtros-bar {
+        flex-direction: column;
+      }
+
+      .filtro-group {
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="ofertas-container">
+    
+    <!-- HEADER -->
+    <div class="ofertas-header">
+      <div class="header-title">
+        <h1>🏷️ Ofertas TIM</h1>
+        <p>Gerencie todos os planos e ofertas disponíveis para prospecção</p>
+      </div>
+      <div class="header-badge" id="permissao-badge">
+        <span>🔒</span> Carregando permissões...
+      </div>
+    </div>
+
+    <!-- BARRA DE AÇÕES -->
+    <div class="acoes-bar">
+      <div class="btn-group" id="btn-group-acoes">
+        <button class="btn btn-primary" id="btn-nova-oferta" style="display: none;">
+          ➕ NOVA OFERTA
+        </button>
+        <button class="btn btn-outline" id="btn-exportar-csv">
+          📤 EXPORTAR CSV
+        </button>
+      </div>
+      <div class="btn-group">
+        <button class="btn btn-outline btn-sm" id="btn-atualizar">
+          🔄 ATUALIZAR
+        </button>
+      </div>
+    </div>
+
+    <!-- FILTROS -->
+    <div class="filtros-bar">
+      <div class="filtro-group">
+        <label>🔍 BUSCAR</label>
+        <input type="text" id="filtro-busca" placeholder="Nome, ID ou valor...">
+      </div>
+      <div class="filtro-group">
+        <label>📂 CATEGORIA</label>
+        <select id="filtro-categoria">
+          <option value="">Todas</option>
+          <option value="Essencial">Essencial</option>
+          <option value="Intermediário">Intermediário</option>
+          <option value="Premium">Premium</option>
+          <option value="Ultra">Ultra</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <label>⚡ TECNOLOGIA</label>
+        <select id="filtro-tecnologia">
+          <option value="">Todas</option>
+          <option value="4G">4G</option>
+          <option value="5G">5G</option>
+        </select>
+      </div>
+      <div class="filtro-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="filtro-ativos" checked>
+          <label>✅ Apenas Ativos</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- TABELA DE OFERTAS -->
+    <div class="tabela-wrapper">
+      <table class="tabela-ofertas">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Nome Comercial</th>
+            <th>Franquia</th>
+            <th>Valor</th>
+            <th>Destaque</th>
+            <th>Status</th>
+            <th style="width: 80px;">Ações</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-ofertas-body">
+          <tr>
+            <td colspan="7" class="loading-spinner">
+              <div>⏳ Carregando ofertas...</div>
+            </td>
+          </tr>
+        </tbody>
+       </table>
+      <div id="pagination-ofertas" class="pagination-ofertas"></div>
+    </div>
+
+  </div>
+
+  <!-- MODAL DE CADASTRO/EDIÇÃO -->
+  <div id="modal-oferta" class="modal-overlay-ofertas">
+    <div class="modal-container-ofertas">
+      <div class="modal-header-ofertas">
+        <h3 id="modal-title">➕ Nova Oferta</h3>
+        <button class="modal-close-ofertas" id="close-modal-btn">✕</button>
+      </div>
+      <div class="modal-body-ofertas">
+        <form id="form-oferta">
+          <input type="hidden" id="oferta-id">
+          
+          <div class="form-grid-ofertas">
+            <div class="form-group-ofertas">
+              <label>📛 NOME INTERNO <span>*</span></label>
+              <input type="text" id="nome-interno" placeholder="Ex: NV/AD B 30GB + 20GB V0325">
+            </div>
+            <div class="form-group-ofertas">
+              <label>🏷️ NOME COMERCIAL <span>*</span></label>
+              <input type="text" id="nome-comercial" placeholder="Ex: TIM Empresas 50GB + Apps">
+            </div>
+            <div class="form-group-ofertas">
+              <label>📦 FRANQUIA PLANO <span>*</span></label>
+              <input type="text" id="franquia-plano" placeholder="Ex: 30GB">
+            </div>
+            <div class="form-group-ofertas">
+              <label>🎁 FRANQUIA BÔNUS</label>
+              <input type="text" id="franquia-bonus" placeholder="Ex: 20GB">
+            </div>
+            <div class="form-group-ofertas">
+              <label>💰 VALOR (R$) <span>*</span></label>
+              <input type="number" step="0.01" id="valor" placeholder="Ex: 69.99">
+            </div>
+            <div class="form-group-ofertas">
+              <label>⭐ DESTAQUE</label>
+              <select id="destaque">
+                <option value="">Nenhum</option>
+                <option value="OFERTA">🔴 OFERTA</option>
+                <option value="MAIS VENDIDO">🏆 MAIS VENDIDO</option>
+                <option value="LANÇAMENTO">🆕 LANÇAMENTO</option>
+              </select>
+            </div>
+            <div class="form-group-ofertas">
+              <label>⚡ TECNOLOGIA <span>*</span></label>
+              <select id="tecnologia">
+                <option value="4G">4G</option>
+                <option value="5G">5G</option>
+              </select>
+            </div>
+            <div class="form-group-ofertas">
+              <label>📅 FIDELIDADE (meses) <span>*</span></label>
+              <input type="number" id="fidelidade" value="12">
+            </div>
+            <div class="form-group-ofertas">
+              <label>📂 CATEGORIA <span>*</span></label>
+              <select id="categoria">
+                <option value="Essencial">Essencial</option>
+                <option value="Intermediário">Intermediário</option>
+                <option value="Premium">Premium</option>
+                <option value="Ultra">Ultra</option>
+              </select>
+            </div>
+            <div class="form-group-ofertas">
+              <label>🔢 ORDEM</label>
+              <input type="number" id="ordem" placeholder="Ordem de exibição">
+            </div>
+            <div class="form-full-ofertas">
+              <label>🎯 APPS INCLUSOS</label>
+              <textarea id="apps-inclusos" rows="2" placeholder="EXA Cloud, Bancah Premium, AYA Books Premium, Aya Idiomas Corp., Clube + Vantagens"></textarea>
+            </div>
+            <div class="form-full-ofertas">
+              <label>🛡️ VAS SEGURANÇA</label>
+              <textarea id="vas-seguranca" rows="2" placeholder="TIM Segurança, TIM Monitor Intermediário"></textarea>
+            </div>
+            <div class="form-full-ofertas">
+              <label>🎁 VAS BENEFÍCIOS</label>
+              <textarea id="vas-beneficios" rows="2" placeholder="Clube + Vantagens"></textarea>
+            </div>
+            <div class="form-full-ofertas">
+              <label>📝 DESCRIÇÃO COMPLETA</label>
+              <textarea id="descricao" rows="3" placeholder="Descrição detalhada do plano..."></textarea>
+            </div>
+            <div class="form-full-ofertas">
+              <div class="checkbox-group">
+                <input type="checkbox" id="ativo" checked>
+                <label>✅ OFERTA ATIVA</label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer-ofertas">
+        <button class="btn btn-outline" id="cancelar-modal-btn">Cancelar</button>
+        <button class="btn btn-primary" id="salvar-oferta-btn">💾 Salvar Oferta</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div id="toast-ofertas-container" class="toast-ofertas-container"></div>
+
+  <script>
+    (function() {
+      // ============================================
+      // VARIÁVEIS GLOBAIS
+      // ============================================
+      let todasOfertas = [];
+      let ofertasFiltradas = [];
+      let paginaAtual = 1;
+      const itensPorPagina = 15;
+      let permissoes = { podeEditar: false, podeVisualizar: false, cargo: '' };
+      
+      // Elementos DOM
+      const tbody = document.getElementById('tabela-ofertas-body');
+      const buscaInput = document.getElementById('filtro-busca');
+      const categoriaSelect = document.getElementById('filtro-categoria');
+      const tecnologiaSelect = document.getElementById('filtro-tecnologia');
+      const ativosCheckbox = document.getElementById('filtro-ativos');
+      const btnAtualizar = document.getElementById('btn-atualizar');
+      const btnExportar = document.getElementById('btn-exportar-csv');
+      const btnNovaOferta = document.getElementById('btn-nova-oferta');
+      const modal = document.getElementById('modal-oferta');
+      const closeModalBtn = document.getElementById('close-modal-btn');
+      const cancelarModalBtn = document.getElementById('cancelar-modal-btn');
+      const salvarOfertaBtn = document.getElementById('salvar-oferta-btn');
+      
+      // ============================================
+      // INICIALIZAÇÃO
+      // ============================================
+      
+      function init() {
+        console.log('🚀 Inicializando Módulo Ofertas TIM...');
+        carregarPermissoes();
+        
+        // Eventos
+        buscaInput.addEventListener('keyup', aplicarFiltros);
+        categoriaSelect.addEventListener('change', aplicarFiltros);
+        tecnologiaSelect.addEventListener('change', aplicarFiltros);
+        ativosCheckbox.addEventListener('change', aplicarFiltros);
+        btnAtualizar.addEventListener('click', carregarOfertas);
+        btnExportar.addEventListener('click', exportarOfertasCSV);
+        btnNovaOferta.addEventListener('click', abrirModalNovaOferta);
+        closeModalBtn.addEventListener('click', fecharModal);
+        cancelarModalBtn.addEventListener('click', fecharModal);
+        salvarOfertaBtn.addEventListener('click', salvarOferta);
+        
+        // Fecha modal ao clicar fora
+        modal.addEventListener('click', function(e) {
+          if (e.target === modal) fecharModal();
+        });
+      }
+      
+      // ============================================
+      // PERMISSÕES (USANDO getPerfilUsuario existente)
+      // ============================================
+      
+      function carregarPermissoes() {
+        const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+        const cargo = (sessao.role || "").toUpperCase().trim();
+        
+        console.log('📌 Cargo do usuário:', cargo);
+        
+        // Mesma lógica do seu sistema
+        permissoes.podeEditar = (cargo === "ADMINISTRADOR" || cargo === "BACKOFFICE" || cargo === "PROPRIETÁRIO");
+        permissoes.podeVisualizar = (permissoes.podeEditar || cargo === "CONSULTOR DE VENDAS");
+        permissoes.cargo = cargo;
+        
+        const badge = document.getElementById('permissao-badge');
+        const btnGroup = document.getElementById('btn-group-acoes');
+        
+        if (permissoes.podeEditar) {
+          badge.innerHTML = '<span>👑</span> Modo Administrador - Edição liberada';
+          btnNovaOferta.style.display = 'inline-flex';
+        } else if (permissoes.podeVisualizar) {
+          badge.innerHTML = '<span>🔒</span> Modo Leitura - Visualização apenas';
+          btnNovaOferta.style.display = 'none';
+        } else {
+          badge.innerHTML = '<span>⚠️</span> Acesso negado';
+          document.querySelector('.ofertas-container').innerHTML = '<div class="empty-state">❌ Você não tem permissão para acessar este módulo.</div>';
+          return;
+        }
+        
+        carregarOfertas();
+      }
+      
+      // ============================================
+      // CRUD - CARREGAR OFERTAS
+      // ============================================
+      
+      function carregarOfertas() {
+        mostrarLoading();
+        
+        google.script.run
+          .withSuccessHandler(function(ofertas) {
+            todasOfertas = ofertas || [];
+            console.log(`📦 ${todasOfertas.length} ofertas carregadas`);
+            aplicarFiltros();
+          })
+          .withFailureHandler(function(err) {
+            console.error('❌ Erro ao carregar ofertas:', err);
+            mostrarToast('Erro ao carregar ofertas: ' + err, 'error');
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">❌ Erro ao carregar ofertas</td></tr>';
+          })
+          .getOfertasTim();
+      }
+      
+      // ============================================
+      // FILTROS
+      // ============================================
+      
+      function aplicarFiltros() {
+        const busca = buscaInput.value.toLowerCase();
+        const categoria = categoriaSelect.value;
+        const tecnologia = tecnologiaSelect.value;
+        const apenasAtivos = ativosCheckbox.checked;
+        
+        ofertasFiltradas = todasOfertas.filter(oferta => {
+          if (busca) {
+            const matchBusca = 
+              (oferta.nome_comercial && oferta.nome_comercial.toLowerCase().includes(busca)) ||
+              (oferta.id && oferta.id.toLowerCase().includes(busca)) ||
+              (oferta.valor && oferta.valor.toString().includes(busca));
+            if (!matchBusca) return false;
+          }
+          if (categoria && oferta.categoria !== categoria) return false;
+          if (tecnologia && oferta.tecnologia !== tecnologia) return false;
+          if (apenasAtivos && !oferta.ativo) return false;
+          return true;
+        });
+        
+        ofertasFiltradas.sort((a, b) => (a.ordem || 999) - (b.ordem || 999));
+        paginaAtual = 1;
+        renderizarTabela();
+      }
+      
+      // ============================================
+      // RENDERIZAÇÃO
+      // ============================================
+      
+      function renderizarTabela() {
+        const start = (paginaAtual - 1) * itensPorPagina;
+        const end = start + itensPorPagina;
+        const paginatedOfertas = ofertasFiltradas.slice(start, end);
+        
+        if (paginatedOfertas.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" class="empty-state">📭 Nenhuma oferta encontrada</td></tr>';
+          document.getElementById('pagination-ofertas').innerHTML = '';
+          return;
+        }
+        
+        const formatarValor = (valor) => {
+          return `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+        };
+        
+        tbody.innerHTML = paginatedOfertas.map(oferta => `
+          <tr>
+            <td style="font-weight: 600; font-size: 11px; color: var(--vexo-gray-500);">${oferta.id || '-'}</td>
+            <td>
+              <strong style="color: var(--vexo-gray-800);">${escapeHtml(oferta.nome_comercial || '-')}</strong>
+              <div style="font-size: 10px; color: var(--vexo-gray-400);">${escapeHtml(oferta.nome_interno || '')}</div>
+            </td>
+            <td><strong>${escapeHtml(oferta.franquia_total || oferta.franquia_plano || '-')}</strong></td>
+            <td style="font-weight: 700; color: var(--vexo-primary);">${formatarValor(oferta.valor)}</td>
+            <td>${oferta.destaque ? `<span class="badge-destaque">${escapeHtml(oferta.destaque)}</span>` : '-'}</td>
+            <td>${renderizarStatusBadge(oferta.ativo)}</td>
+            <td>${renderizarAcoes(oferta)}</td>
+          </tr>
+        `).join('');
+        
+        renderizarPaginacao();
+      }
+      
+      function renderizarStatusBadge(ativo) {
+        if (ativo) {
+          return '<span class="badge-status badge-ativo">🟢 ATIVO</span>';
+        }
+        return '<span class="badge-status badge-inativo">🔴 INATIVO</span>';
+      }
+      
+      function renderizarAcoes(oferta) {
+        if (!permissoes.podeEditar) {
+          return '<span style="color: var(--vexo-gray-400); font-size: 11px;">🔒 Visualização</span>';
+        }
+        
+        return `
+          <button class="acao-btn acao-editar" onclick="window.abrirModalEditarOferta('${oferta.id}')" title="Editar">
+            ✏️
+          </button>
+          <button class="acao-btn acao-excluir" onclick="window.excluirOferta('${oferta.id}')" title="Excluir">
+            🗑️
+          </button>
+        `;
+      }
+      
+      function renderizarPaginacao() {
+        const totalPaginas = Math.ceil(ofertasFiltradas.length / itensPorPagina);
+        const paginationDiv = document.getElementById('pagination-ofertas');
+        
+        if (totalPaginas <= 1) {
+          paginationDiv.innerHTML = '';
+          return;
+        }
+        
+        let html = '';
+        
+        if (paginaAtual > 1) {
+          html += `<button class="page-btn-ofertas" onclick="window.irParaPagina(${paginaAtual - 1})">◀</button>`;
+        }
+        
+        const startPage = Math.max(1, paginaAtual - 2);
+        const endPage = Math.min(totalPaginas, paginaAtual + 2);
+        
+        for (let i = startPage; i <= endPage; i++) {
+          html += `<button class="page-btn-ofertas ${i === paginaAtual ? 'active' : ''}" onclick="window.irParaPagina(${i})">${i}</button>`;
+        }
+        
+        if (paginaAtual < totalPaginas) {
+          html += `<button class="page-btn-ofertas" onclick="window.irParaPagina(${paginaAtual + 1})">▶</button>`;
+        }
+        
+        paginationDiv.innerHTML = html;
+      }
+      
+      window.irParaPagina = function(pagina) {
+        paginaAtual = pagina;
+        renderizarTabela();
+      };
+      
+      // ============================================
+      // MODAL - ABRIR/FECHAR
+      // ============================================
+      
+      function abrirModalNovaOferta() {
+        if (!permissoes.podeEditar) {
+          mostrarToast('Você não tem permissão para criar ofertas', 'error');
+          return;
+        }
+        
+        document.getElementById('modal-title').innerText = '➕ Nova Oferta';
+        document.getElementById('form-oferta').reset();
+        document.getElementById('oferta-id').value = '';
+        document.getElementById('ativo').checked = true;
+        document.getElementById('fidelidade').value = 12;
+        
+        abrirModal();
+      }
+      
+      window.abrirModalEditarOferta = function(id) {
+        if (!permissoes.podeEditar) {
+          mostrarToast('Você não tem permissão para editar ofertas', 'error');
+          return;
+        }
+        
+        const oferta = todasOfertas.find(o => o.id === id);
+        if (!oferta) {
+          mostrarToast('Oferta não encontrada', 'error');
+          return;
+        }
+        
+        document.getElementById('modal-title').innerText = '✏️ Editar Oferta';
+        document.getElementById('oferta-id').value = oferta.id || '';
+        document.getElementById('nome-interno').value = oferta.nome_interno || '';
+        document.getElementById('nome-comercial').value = oferta.nome_comercial || '';
+        document.getElementById('franquia-plano').value = oferta.franquia_plano || '';
+        document.getElementById('franquia-bonus').value = oferta.franquia_bonus || '';
+        document.getElementById('valor').value = oferta.valor || '';
+        document.getElementById('destaque').value = oferta.destaque || '';
+        document.getElementById('tecnologia').value = oferta.tecnologia || '5G';
+        document.getElementById('fidelidade').value = oferta.fidelidade || 12;
+        document.getElementById('categoria').value = oferta.categoria || 'Premium';
+        document.getElementById('ordem').value = oferta.ordem || '';
+        document.getElementById('apps-inclusos').value = oferta.apps_inclusos || '';
+        document.getElementById('vas-seguranca').value = oferta.vas_seguranca || '';
+        document.getElementById('vas-beneficios').value = oferta.vas_beneficios || '';
+        document.getElementById('descricao').value = oferta.descricao || '';
+        document.getElementById('ativo').checked = oferta.ativo !== false;
+        
+        abrirModal();
+      };
+      
+      function abrirModal() {
+        modal.classList.add('active');
+        setTimeout(() => {
+          modal.classList.add('show');
+        }, 10);
+      }
+      
+      function fecharModal() {
+        modal.classList.remove('show');
+        setTimeout(() => {
+          modal.classList.remove('active');
+        }, 300);
+      }
+      
+     
+      
+    // ============================================
+// CRUD - SALVAR (VERSÃO CORRIGIDA)
+// ============================================
+
+function salvarOferta() {
+  const nomeComercial = document.getElementById('nome-comercial').value.trim();
+  const valor = document.getElementById('valor').value;
+  
+  if (!nomeComercial) {
+    mostrarToast('O Nome Comercial é obrigatório', 'error');
+    return;
+  }
+  
+  if (!valor || valor <= 0) {
+    mostrarToast('Informe um valor válido', 'error');
+    return;
+  }
+  
+  // 🔥 CAPTURA O CARGO DO USUÁRIO LOGADO
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargoUsuario = (sessao.role || "").toUpperCase().trim();
+  
+  console.log('👤 Cargo do usuário:', cargoUsuario);
+  
+  // Calcula franquia total
+  const franquiaPlano = document.getElementById('franquia-plano').value.trim();
+  const franquiaBonus = document.getElementById('franquia-bonus').value.trim();
+  let franquiaTotal = franquiaPlano;
+  if (franquiaPlano && franquiaBonus) {
+    const numPlano = parseInt(franquiaPlano) || 0;
+    const numBonus = parseInt(franquiaBonus) || 0;
+    franquiaTotal = `${numPlano + numBonus}GB`;
+  }
+  
+  const ofertaData = {
+    id: document.getElementById('oferta-id').value || null,
+    nome_interno: document.getElementById('nome-interno').value.trim(),
+    nome_comercial: nomeComercial,
+    franquia_plano: franquiaPlano,
+    franquia_bonus: franquiaBonus,
+    franquia_total: franquiaTotal,
+    valor: parseFloat(valor),
+    destaque: document.getElementById('destaque').value,
+    tecnologia: document.getElementById('tecnologia').value,
+    fidelidade: parseInt(document.getElementById('fidelidade').value) || 12,
+    categoria: document.getElementById('categoria').value,
+    ordem: parseInt(document.getElementById('ordem').value) || 999,
+    apps_inclusos: document.getElementById('apps-inclusos').value,
+    vas_seguranca: document.getElementById('vas-seguranca').value,
+    vas_beneficios: document.getElementById('vas-beneficios').value,
+    descricao: document.getElementById('descricao').value,
+    ativo: document.getElementById('ativo').checked,
+    cargoUsuario: cargoUsuario  // 🔥 ENVIA O CARGO PARA O BACKEND
+  };
+  
+  // Validação adicional
+  if (!ofertaData.nome_comercial) {
+    mostrarToast('Nome Comercial é obrigatório', 'error');
+    return;
+  }
+  
+  if (isNaN(ofertaData.valor) || ofertaData.valor <= 0) {
+    mostrarToast('Valor inválido', 'error');
+    return;
+  }
+  
+  mostrarLoadingBotao(true);
+  
+  console.log('📤 Enviando oferta:', ofertaData);
+  
+  google.script.run
+    .withSuccessHandler(function(result) {
+      console.log('✅ Resposta do servidor:', result);
+      if (result && result.success) {
+        mostrarToast(result.message, 'success');
+        fecharModal();
+        carregarOfertas();
+      } else {
+        mostrarToast(result?.message || 'Erro ao salvar oferta', 'error');
+      }
+      mostrarLoadingBotao(false);
+    })
+    .withFailureHandler(function(err) {
+      console.error('❌ Erro na comunicação:', err);
+      mostrarToast('Erro de comunicação: ' + err, 'error');
+      mostrarLoadingBotao(false);
+    })
+    .salvarOfertaTim(ofertaData);
+}
+      
+      // ============================================
+      // CRUD - EXCLUIR
+      // ============================================
+      
+      window.excluirOferta = function(id) {
+  if (!permissoes.podeEditar) {
+    mostrarToast('Você não tem permissão para excluir ofertas', 'error');
+    return;
+  }
+  
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargoUsuario = (sessao.role || "").toUpperCase().trim();
+  
+  if (confirm('⚠️ Tem certeza que deseja excluir esta oferta?\n\nEsta ação não pode ser desfeita.')) {
+    google.script.run
+      .withSuccessHandler(function(result) {
+        if (result && result.success) {
+          mostrarToast(result.message, 'success');
+          carregarOfertas();
+        } else {
+          mostrarToast(result?.message || 'Erro ao excluir', 'error');
+        }
+      })
+      .withFailureHandler(function(err) {
+        mostrarToast('Erro ao excluir: ' + err, 'error');
+      })
+      .excluirOfertaTim(id, cargoUsuario);  // 👈 ENVIA O ID E O CARGO
+  }
+};
+      
+      // ============================================
+      // EXPORTAR CSV
+      // ============================================
+      
+      function exportarOfertasCSV() {
+        const csvRows = [];
+        
+        // Cabeçalho
+        csvRows.push([
+          'ID', 'Nome Interno', 'Nome Comercial', 'Franquia Plano', 'Franquia Bônus',
+          'Franquia Total', 'Valor', 'Destaque', 'Tecnologia', 'Fidelidade',
+          'Categoria', 'Apps Inclusos', 'VAS Segurança', 'VAS Benefícios', 'Descrição', 'Ativo'
+        ].join(','));
+        
+        ofertasFiltradas.forEach(o => {
+          csvRows.push([
+            `"${o.id || ''}"`,
+            `"${(o.nome_interno || '').replace(/"/g, '""')}"`,
+            `"${(o.nome_comercial || '').replace(/"/g, '""')}"`,
+            `"${o.franquia_plano || ''}"`,
+            `"${o.franquia_bonus || ''}"`,
+            `"${o.franquia_total || ''}"`,
+            o.valor || '',
+            `"${o.destaque || ''}"`,
+            `"${o.tecnologia || ''}"`,
+            o.fidelidade || '',
+            `"${o.categoria || ''}"`,
+            `"${(o.apps_inclusos || '').replace(/"/g, '""')}"`,
+            `"${(o.vas_seguranca || '').replace(/"/g, '""')}"`,
+            `"${(o.vas_beneficios || '').replace(/"/g, '""')}"`,
+            `"${(o.descricao || '').replace(/"/g, '""')}"`,
+            o.ativo ? 'TRUE' : 'FALSE'
+          ].join(','));
+        });
+        
+        const csvContent = csvRows.join('\n');
+        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const link = document.createElement('a');
+        const url = URL.createObjectURL(blob);
+        link.href = url;
+        link.setAttribute('download', `ofertas_tim_${new Date().toISOString().split('T')[0]}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        
+        mostrarToast('📤 Exportação concluída!', 'success');
+      }
+      
+      // ============================================
+      // UTILITÁRIOS
+      // ============================================
+      
+      function mostrarLoading() {
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-spinner">⏳ Carregando ofertas...</td></tr>';
+      }
+      
+      function mostrarLoadingBotao(loading) {
+        const btn = salvarOfertaBtn;
+        if (loading) {
+          btn.disabled = true;
+          btn.innerHTML = '⏳ Salvando...';
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = '💾 Salvar Oferta';
+        }
+      }
+      
+      function mostrarToast(mensagem, tipo = 'success') {
+        const container = document.getElementById('toast-ofertas-container');
+        const toast = document.createElement('div');
+        toast.className = `toast-oferta toast-${tipo}`;
+        toast.innerHTML = tipo === 'success' ? `✅ ${mensagem}` : `❌ ${mensagem}`;
+        container.appendChild(toast);
+        
+        setTimeout(() => {
+          toast.style.opacity = '0';
+          setTimeout(() => toast.remove(), 300);
+        }, 3000);
+      }
+      
+      function escapeHtml(text) {
+        if (!text) return '';
+        return text
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+      
+      // Inicializar
+      init();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,1988 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* ============================================
+       ESTILOS EXISTENTES DO SEU FORMULÁRIO
+       (MANTIDOS INTEGRALMENTE)
+    ============================================ */
+    
+    /* Animações e Botões de Linha */
+    .linha-item { animation: slideIn 0.3s ease; }
+    .btn-remove { 
+      padding: 13px 20px; border-radius: 12px; border: none; 
+      background: #fee2e2; color: #ef4444; cursor: pointer; height: 48px; transition: 0.3s;
+    }
+    .btn-remove:hover { background: #ef4444; color: white; }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Modal de Sucesso Customizado */
+    .modal-overlay {
+      position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(4px);
+      display: none; align-items: center; justify-content: center; z-index: 9999;
+    }
+    .modal-content {
+      background: white; padding: 40px; border-radius: 24px; max-width: 450px; width: 90%;
+      text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.2); animation: slideUp 0.4s ease;
+    }
+    .modal-content i { font-size: 60px; color: #10b981; margin-bottom: 20px; }
+    .modal-content h3 { color: #0f172a; margin-bottom: 15px; font-weight: 800; }
+    .modal-content p { color: #64748b; line-height: 1.6; margin-bottom: 25px; }
+    .status-badge-modal {
+      display: inline-block; padding: 8px 16px; background: #ecfdf5; color: #10b981;
+      border-radius: 100px; font-weight: 700; font-size: 12px; margin-bottom: 20px;
+    }
+    .btn-modal {
+      width: 100%; padding: 15px; background: #0f172a; color: white; border: none;
+      border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s;
+    }
+    .btn-modal:hover { background: #3b82f6; }
+
+    @keyframes slideUp {
+      from { transform: translateY(30px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+
+    .vendas-container { animation: fadeIn 0.4s ease; max-width: 1000px; margin: 0 auto; padding-bottom: 50px; }
+    .form-card { background: white; padding: 35px; border-radius: 24px; box-shadow: 0 15px 35px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }
+    
+    /* Seletor de Segmento Inicial */
+    .segmento-selector { 
+      display: grid; 
+      grid-template-columns: repeat(3, 1fr); 
+      gap: 20px; 
+      margin-bottom: 30px; 
+    }
+    .seg-card { 
+      background: white; padding: 25px; border-radius: 20px; border: 2px solid #e2e8f0; 
+      text-align: center; cursor: pointer; transition: 0.3s; display: flex; flex-direction: column; align-items: center; gap: 12px;
+    }
+    .seg-card i { font-size: 32px; color: #64748b; transition: 0.3s; }
+    .seg-card span { font-weight: 800; font-size: 14px; color: #1e293b; }
+    
+    .seg-card:hover { border-color: #3b82f6; transform: translateY(-5px); }
+    .seg-card.active { border-color: #3b82f6; background: #eff6ff; box-shadow: 0 10px 20px rgba(59, 130, 246, 0.1); }
+    .seg-card.active i, .seg-card.active span { color: #3b82f6; }
+
+    .seg-card.disabled { opacity: 0.5; cursor: not-allowed; filter: grayscale(1); }
+    .seg-card.disabled:hover { transform: none; border-color: #e2e8f0; }
+
+    /* Banner de Fluxo de Pedido Exato do VEXO */
+    .workflow-banner { 
+      grid-column: span 12; 
+      background: #f8fafc; 
+      border: 1px dashed #cbd5e1; 
+      padding: 15px; 
+      border-radius: 12px; 
+      margin-bottom: 25px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 11.5px;
+      color: #475569;
+    }
+    .workflow-banner b { color: #3b82f6; }
+
+    /* Modalidades VEXO B2B no Topo */
+    .modalidade-selector { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; margin-bottom: 35px; }
+    .mod-btn { padding: 15px 10px; border-radius: 16px; border: 2px solid #f1f5f9; background: #f8fafc; cursor: pointer; text-align: center; transition: all 0.3s ease; font-weight: 600; color: #64748b; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 11px; height: 95px; }
+    .mod-btn:hover { background: #f1f5f9; transform: translateY(-2px); }
+    .mod-btn.active { border-color: #3b82f6; background: #eff6ff; color: #3b82f6; box-shadow: 0 8px 20px rgba(59, 130, 246, 0.15); transform: translateY(-2px); }
+    .mod-btn i { display: block; font-size: 24px; margin-bottom: 8px; }
+
+    /* Grid e Campos */
+    .form-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 20px; }
+    .col-12 { grid-column: span 12; }
+    .col-8 { grid-column: span 8; }
+    .col-7 { grid-column: span 7; }
+    .col-6 { grid-column: span 6; }
+    .col-5 { grid-column: span 5; }
+    .col-4 { grid-column: span 4; }
+    .col-3 { grid-column: span 3; }
+    .col-2 { grid-column: span 2; }
+
+    .field { display: flex; flex-direction: column; gap: 8px; }
+    .field label { font-size: 11px; font-weight: 700; color: #475569; text-transform: uppercase; letter-spacing: 0.5px; }
+    .field input, .field select, .field textarea { padding: 13px; border-radius: 12px; border: 2px solid #e2e8f0; outline: none; transition: 0.3s; font-size: 14px; color: #1e293b; background: #fcfdfe; }
+    .field input:focus, .field select:focus, .field textarea:focus { border-color: #3b82f6; background: #fff; box-shadow: 0 0 0 4px rgba(59,130,246,0.08); }
+
+    .section-header { grid-column: span 12; padding: 15px 0 10px 0; margin-top: 15px; border-bottom: 1px solid #f1f5f9; color: #1e293b; font-weight: 800; display: flex; align-items: center; gap: 12px; font-size: 15px; }
+    .section-header i { color: #3b82f6; font-size: 18px; }
+
+    .btn-save { grid-column: span 12; padding: 20px; background: #0f172a; color: white; border: none; border-radius: 16px; font-weight: 700; cursor: pointer; margin-top: 30px; transition: 0.3s; font-size: 16px; letter-spacing: 1px; }
+    .btn-save:hover { background: #3b82f6; transform: translateY(-2px); box-shadow: 0 10px 25px rgba(59, 130, 246, 0.25); }
+    .btn-save:disabled { background: #94a3b8; cursor: wait; transform: none; }
+
+    /* ============================================
+       NOVOS ESTILOS - SISTEMA DE PEDIDOS
+    ============================================ */
+    
+    /* Abas */
+    .vendas-tabs {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    
+    .tab-btn {
+      background: white;
+      border: 1px solid #e2e8f0;
+      padding: 12px 28px;
+      border-radius: 40px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #64748b;
+    }
+    
+    .tab-btn i { font-size: 14px; }
+    
+    .tab-btn.active {
+      background: #1e3c72;
+      border-color: #1e3c72;
+      color: white;
+      box-shadow: 0 4px 12px rgba(30,60,114,0.25);
+    }
+    
+    .tab-btn:hover:not(.active) {
+      background: #f1f5f9;
+      transform: translateY(-1px);
+    }
+    
+    /* Cards de Pedidos */
+    .pedidos-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+      gap: 20px;
+      margin-top: 20px;
+    }
+    
+    .pedido-card {
+      background: white;
+      border-radius: 20px;
+      border: 1px solid #eef2f6;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      animation: fadeInUp 0.4s ease-out;
+    }
+    
+    .pedido-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 24px -8px rgba(0,0,0,0.1);
+      border-color: #e2e8f0;
+    }
+    
+    .pedido-card.new-update {
+      animation: highlightPulse 0.6s ease-out;
+    }
+    
+    @keyframes highlightPulse {
+      0% { background: #eff6ff; transform: scale(1); }
+      50% { background: #dbeafe; transform: scale(1.01); }
+      100% { background: white; transform: scale(1); }
+    }
+    
+    .card-header {
+      padding: 18px 20px;
+      background: #fafcff;
+      border-bottom: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+    
+    .pedido-id {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 11px;
+      font-weight: 700;
+      color: #64748b;
+      background: #f1f5f9;
+      padding: 4px 10px;
+      border-radius: 8px;
+    }
+    
+    .pedido-status {
+      font-size: 10px;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+    
+    .card-body {
+      padding: 18px 20px;
+    }
+    
+    .empresa-nome {
+      font-size: 16px;
+      font-weight: 800;
+      color: #1e293b;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    
+    .empresa-cnpj {
+      font-size: 11px;
+      color: #64748b;
+      font-family: monospace;
+      margin-bottom: 12px;
+    }
+    
+    .pedido-detalhes {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 16px;
+      font-size: 12px;
+      color: #475569;
+    }
+    
+    .pedido-detalhes span {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    /* Timeline */
+    .timeline-wrapper {
+      margin: 16px 0;
+      padding: 12px 0;
+    }
+    
+    .timeline-steps {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+    }
+    
+    .timeline-steps::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #e2e8f0;
+      transform: translateY(-50%);
+      z-index: 0;
+    }
+    
+    .timeline-step {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      flex: 1;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    
+    .step-icon {
+      width: 32px;
+      height: 32px;
+      background: white;
+      border: 2px solid #e2e8f0;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 6px;
+      font-size: 12px;
+      transition: all 0.2s;
+    }
+    
+    .timeline-step.completed .step-icon {
+      background: #10b981;
+      border-color: #10b981;
+      color: white;
+    }
+    
+    .timeline-step.active .step-icon {
+      border-color: #3b82f6;
+      background: white;
+      color: #3b82f6;
+      box-shadow: 0 0 0 3px rgba(59,130,246,0.2);
+    }
+    
+    .timeline-step.pending .step-icon {
+      background: #f1f5f9;
+      border-color: #e2e8f0;
+      color: #94a3b8;
+    }
+    
+    .step-label {
+      font-size: 9px;
+      font-weight: 600;
+      color: #64748b;
+      text-transform: uppercase;
+    }
+    
+    .timeline-step.completed .step-label {
+      color: #10b981;
+    }
+    
+    .timeline-step.active .step-label {
+      color: #3b82f6;
+      font-weight: 700;
+    }
+    
+    .card-footer {
+      padding: 14px 20px;
+      background: #f8fafc;
+      border-top: 1px solid #f1f5f9;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 11px;
+      color: #64748b;
+    }
+    
+    .btn-detalhes {
+      background: white;
+      border: 1px solid #e2e8f0;
+      padding: 8px 16px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      color: #1e3c72;
+    }
+    
+    .btn-detalhes:hover {
+      background: #1e3c72;
+      color: white;
+      border-color: #1e3c72;
+    }
+    
+    /* Empty State */
+    .empty-state {
+      text-align: center;
+      padding: 60px;
+      background: white;
+      border-radius: 20px;
+      border: 2px dashed #e2e8f0;
+    }
+    
+    .empty-state i {
+      font-size: 48px;
+      color: #cbd5e1;
+      margin-bottom: 16px;
+    }
+    
+    /* Modal de Detalhes */
+    .modal-pedido {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(15, 23, 42, 0.8);
+      backdrop-filter: blur(8px);
+      z-index: 10000;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    
+    .modal-pedido.active {
+      display: flex;
+    }
+    
+    .modal-pedido.show {
+      opacity: 1;
+    }
+    
+    .modal-container-pedido {
+      background: white;
+      width: 90%;
+      max-width: 800px;
+      max-height: 85vh;
+      border-radius: 24px;
+      overflow: hidden;
+      transform: scale(0.95);
+      transition: transform 0.3s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    
+    .modal-pedido.show .modal-container-pedido {
+      transform: scale(1);
+    }
+    
+    .modal-header-pedido {
+      padding: 20px 24px;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    
+    .modal-header-pedido h3 {
+      font-size: 18px;
+      font-weight: 700;
+    }
+    
+    .modal-close-pedido {
+      background: rgba(255,255,255,0.1);
+      border: none;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      color: white;
+      font-size: 18px;
+    }
+    
+    .modal-body-pedido {
+      padding: 24px;
+      overflow-y: auto;
+      flex: 1;
+    }
+    
+    .modal-footer-pedido {
+      padding: 16px 24px;
+      border-top: 1px solid #eef2f6;
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+    }
+    
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 12px 0;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .detail-label {
+      font-size: 12px;
+      color: #64748b;
+      font-weight: 600;
+    }
+    
+    .detail-value {
+      font-size: 13px;
+      color: #1e293b;
+      font-weight: 500;
+    }
+    
+    /* Notificações Toast */
+    .vexo-toast-container {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      z-index: 10002;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      pointer-events: none;
+    }
+    
+    .vexo-toast {
+      min-width: 320px;
+      max-width: 450px;
+      background: white;
+      border-radius: 16px;
+      padding: 16px 20px;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      pointer-events: auto;
+      animation: slideInRight 0.3s ease-out;
+      border-left: 4px solid;
+    }
+    
+    .vexo-toast-success { border-left-color: #10b981; background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%); }
+    .vexo-toast-info { border-left-color: #3b82f6; background: linear-gradient(135deg, #fff 0%, #eff6ff 100%); }
+    .vexo-toast-warning { border-left-color: #f59e0b; background: linear-gradient(135deg, #fff 0%, #fffbeb 100%); }
+    .vexo-toast-error { border-left-color: #ef4444; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%); }
+    
+    .vexo-toast-icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    
+    .vexo-toast-content {
+      flex: 1;
+    }
+    
+    .vexo-toast-title {
+      font-weight: 700;
+      font-size: 14px;
+      margin-bottom: 4px;
+      color: #0f172a;
+    }
+    
+    .vexo-toast-message {
+      font-size: 12px;
+      color: #475569;
+    }
+    
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+    
+    /* Skeleton Loader */
+    .skeleton-loader {
+      background: linear-gradient(90deg, #f1f5f9 25%, #e2e8f0 50%, #f1f5f9 75%);
+      background-size: 200% 100%;
+      animation: loading 1.5s infinite;
+      border-radius: 12px;
+    }
+    
+    @keyframes loading {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+    
+    @media (max-width: 768px) {
+      .pedidos-grid { grid-template-columns: 1fr; }
+      .vendas-container { padding: 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="vendas-container">
+  
+  <!-- SEGMENTO SELETOR (MANTIDO ORIGINAL) -->
+  <div class="segmento-selector">
+    <div class="seg-card" id="btn-empresas" onclick="window.escolherSegmento('empresas', this)">
+      <i class="fa-solid fa-building-shield"></i>
+      <span>TIM EMPRESAS</span>
+    </div>
+    <div class="seg-card disabled">
+      <i class="fa-solid fa-mobile-screen-button"></i>
+      <span>TIM CONTROLE <small style="display:block; font-size:10px; margin-top:4px; font-weight:600;">(Em breve)</small></span>
+    </div>
+    <div class="seg-card disabled">
+      <i class="fa-solid fa-bolt"></i>
+      <span>TIM ULTRAFIBRA <small style="display:block; font-size:10px; margin-top:4px; font-weight:600;">(Em breve)</small></span>
+    </div>
+  </div>
+
+  <div id="areaFormularios" style="display: none;">
+    
+    <!-- ABAS DE NAVEGAÇÃO (NOVA FUNCIONALIDADE) -->
+    <div class="vendas-tabs">
+  <button class="tab-btn active" onclick="mudarAbaVendasParceiro('vendas')">
+    <i class="fa-solid fa-cart-plus"></i> Nova Venda
+  </button>
+</div>
+
+    <!-- ============================================ -->
+    <!-- ABA 1: FORMULÁRIO DE VENDA (ORIGINAL) -->
+    <!-- ============================================ -->
+    <div id="aba-vendas" class="tab-content" style="display: block;">
+      <div class="form-card">
+        <h2 style="margin-bottom: 5px; color: #0f172a; font-weight: 800; text-align: center;">Fomulário de Pedido de Venda B2B</h2>
+        <p style="text-align: center; color: #64748b; font-size: 13px; margin-bottom: 30px;">Registo de Vendas e Negociações</p>
+        
+        <div class="workflow-banner">
+          <i class="fa-solid fa-code-commit" style="font-size: 20px; color: #3b82f6;"></i>
+          <span>Sua proposta seguirá: <b>Pendente Input</b> > Input > Antifraude > BOC > NF > Logística > <b>Ativado</b></span>
+        </div>
+
+        <div class="modalidade-selector">
+  <div class="mod-btn active" data-modalidade="PRIMEIRA ATIVAÇÃO" onclick="window.toggleModalidade('PRIMEIRA ATIVAÇÃO', this)">
+    <i class="fa-solid fa-plus-circle"></i> PRIMEIRA ATIVAÇÃO
+  </div>
+  <div class="mod-btn" data-modalidade="PORTABILIDADE" onclick="window.toggleModalidade('PORTABILIDADE', this)">
+    <i class="fa-solid fa-right-left"></i> PORTABILIDADE
+  </div>
+  <div class="mod-btn" data-modalidade="MIGRAÇÃO" onclick="window.toggleModalidade('MIGRAÇÃO', this)">
+    <i class="fa-solid fa-shuffle"></i> MIGRAÇÃO
+  </div>
+  <div class="mod-btn" data-modalidade="ADITIVO" onclick="window.toggleModalidade('ADITIVO', this)">
+    <i class="fa-solid fa-file-circle-plus"></i> ADITIVO
+  </div>
+  <div class="mod-btn" data-modalidade="RENEGOCIAÇÃO" onclick="window.toggleModalidade('RENEGOCIAÇÃO', this)">
+    <i class="fa-solid fa-handshake"></i> RENEGOCIAÇÃO
+  </div>
+</div>
+
+        <form id="vendaForm">
+          <input type="hidden" id="modalidades-selecionadas" value="PRIMEIRA ATIVAÇÃO">
+          <div class="form-grid">
+            <div class="section-header"><i class="fa-solid fa-id-card"></i> Identificação da Empresa</div>
+            
+            <div class="field col-4"><label>CNPJ</label><input type="text" id="cnpj" placeholder="00.000.000/0000-00" maxlength="18"></div>
+            <div class="field col-5"><label>Razão Social</label><input type="text" id="razaoSocial" placeholder="Preenchimento automático ativado"></div>
+            <div class="field col-3"><label>Inscrição Estadual</label><input type="text" id="inscricaoEstadual" placeholder="Isento ou Nº"></div>
+
+            <div class="section-header"><i class="fa-solid fa-map-marked-alt"></i> Endereço de Instalação e Faturação (MESMO DO CARTÃO CNPJ)</div>
+            <div class="field col-3"><label>CEP</label><input type="text" id="cep" placeholder="00000-000" maxlength="9"></div>
+            <div class="field col-7"><label>Endereço</label><input type="text" id="endereco" placeholder="Rua, Avenida..."></div>
+            <div class="field col-2"><label>Nº</label><input type="text" id="numero"></div>
+            <div class="field col-3"><label>Complemento</label><input type="text" id="compl" placeholder="Sala, Andar..."></div>
+            <div class="field col-4"><label>Bairro</label><input type="text" id="bairro"></div>
+            <div class="field col-3"><label>Cidade</label><input type="text" id="cidade"></div>
+            <div class="field col-2"><label>UF</label><input type="text" id="uf" maxlength="2"></div>
+
+            <div class="section-header"><i class="fa-solid fa-user-tie"></i> Responsável Legal</div>
+            <div class="field col-3"><label>CPF Administrador</label><input type="text" id="cpfAdmin" placeholder="000.000.000-00" maxlength="14"></div>
+            <div class="field col-5"><label>Nome do Responsável</label><input type="text" id="nomeAdmin" placeholder="Nome completo"></div>
+            <div class="field col-4"><label>E-mail Corporativo</label><input type="email" id="email" placeholder="email@empresa.com.br"></div>
+            <div class="field col-4"><label>Contacto Financeiro (Tel)</label><input type="text" id="contatoFinanceiro" placeholder="(00) 00000-0000" maxlength="15"></div>
+
+            <div class="section-header"><i class="fa-solid fa-layer-group"></i> Configuração das Linhas e Planos</div>
+            <div id="containerLinhas" class="col-12">
+  <!-- As seções de modalidades serão inseridas aqui dinamicamente -->
+</div>
+
+            <div class="section-header"><i class="fa-solid fa-file-invoice-dollar"></i> Finalização do Contrato</div>
+           <div class="field col-4">
+  <label>Vencimento da Fatura</label>
+  <select id="dataVenc">
+    <option value="01">Dia 01</option>
+    <option value="05">Dia 05</option>
+    <option value="07">Dia 07</option>
+    <option value="10">Dia 10</option>
+    <option value="15">Dia 15</option>
+    <option value="20">Dia 20</option>
+    <option value="25">Dia 25</option>
+  </select>
+</div>
+            <div class="field col-8"><label>Consultor Externo</label><input type="text" id="consultorVendeu" placeholder="Nome de quem vendeu"></div>
+            
+            <div class="field col-12">
+              <label>Observações Importantes</label>
+              <textarea id="obs" rows="3" placeholder="Detalhes adicionais da negociação para o Backoffice..."></textarea>
+            </div>
+
+            <button type="button" class="btn-save" id="btnSalvarVexo" onclick="window.salvarAgora()">
+              <i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DE SUCESSO (MANTIDO ORIGINAL) -->
+<div id="modalSucesso" class="modal-overlay">
+  <div class="modal-content">
+    <i class="fa-solid fa-circle-check"></i>
+    <h3>Pedido Enviado com sucesso!</h3>
+    <div class="status-badge-modal">STATUS: PEDIDO PENDENTE DE INPUT</div>
+    <p>O Backoffice já recebeu a sua venda e ela já está na fila de entrada para conferência e INPUT.</p>
+    <button class="btn-modal" onclick="window.fecharModalSucesso()">OK, ENTENDIDO</button>
+  </div>
+</div>
+
+<!-- MODAL DE DETALHES DO PEDIDO (NOVO) -->
+<div id="modal-detalhes-pedido" class="modal-pedido">
+  <div class="modal-container-pedido">
+    <div class="modal-header-pedido">
+      <h3><i class="fas fa-receipt"></i> Detalhes do Pedido</h3>
+      <button class="modal-close-pedido" onclick="fecharModalDetalhesPedido()">✕</button>
+    </div>
+    <div class="modal-body-pedido" id="modal-detalhes-conteudo">
+      <div style="text-align: center; padding: 40px;">
+        <i class="fas fa-spinner fa-spin" style="font-size: 30px; color: #3b82f6;"></i>
+        <p style="margin-top: 15px;">Carregando...</p>
+      </div>
+    </div>
+    <div class="modal-footer-pedido">
+      <button class="btn-detalhes" onclick="fecharModalDetalhesPedido()">Fechar</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONTAINER DE NOTIFICAÇÕES -->
+<div id="vexo-toast-container" class="vexo-toast-container"></div>
+
+<script>
+  // ============================================
+  // VARIÁVEIS GLOBAIS
+  // ============================================
+  window.dadosPlanosVexo = [];
+  let isEditing = false;
+  let pedidoEmEdicaoData = null;
+
+  // ============================================
+  // MÁSCARAS
+  // ============================================
+  const fmk = {
+    cnpj: v => v.replace(/\D/g, "").replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2").slice(0, 18),
+    cpf: v => v.replace(/\D/g, "").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2").slice(0, 14),
+    cep: v => v.replace(/\D/g, "").replace(/(\d{5})(\d)/, "$1-$2").slice(0, 9),
+    tel: v => v.replace(/\D/g, "").replace(/^(\d{2})(\d)/, "($1) $2").replace(/(\d)(\d{4})$/, "$1-$2").slice(0, 15),
+    moeda: v => {
+      v = v.replace(/\D/g, "");
+      if (!v) return "R$ 0,00";
+      v = (v / 100).toFixed(2).replace(".", ",");
+      v = v.replace(/(\d)(\d{3})(\d{3}),/g, "$1.$2.$3,");
+      v = v.replace(/(\d)(\d{3}),/g, "$1.$2,");
+      return "R$ " + v;
+    }
+  };
+
+  // ============================================
+  // CARREGAR PLANOS
+  // ============================================
+  window.carregarPlanosVexo = function() {
+    console.log("🔄 Buscando planos na planilha VEXO...");
+    google.script.run
+      .withSuccessHandler((planos) => {
+        window.dadosPlanosVexo = planos.map(p => ({
+          nome: String(p.nome).trim(),
+          valor: typeof p.valor === 'string' ? parseFloat(p.valor.replace(/[^\d,-]/g, '').replace(',', '.')) : p.valor
+        }));
+        const datalists = document.querySelectorAll('datalist[id^="planos-"], .lista-planos-vexo');
+        datalists.forEach(dl => window.popularDatalistPlanos(dl));
+        console.log("✅ Planos carregados");
+      })
+      .withFailureHandler(err => console.error("❌ Erro ao carregar planos:", err))
+      .p_buscarPlanos();
+  };
+
+  window.popularDatalistPlanos = function(datalistElement) {
+    if (!datalistElement) return;
+    datalistElement.innerHTML = '';
+    if (!window.dadosPlanosVexo || window.dadosPlanosVexo.length === 0) {
+      const opt = document.createElement('option');
+      opt.value = "Carregando planos...";
+      datalistElement.appendChild(opt);
+      return;
+    }
+    window.dadosPlanosVexo.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.nome;
+      opt.label = `R$ ${Number(p.valor).toLocaleString('pt-BR', {minimumFractionDigits: 2})}`;
+      datalistElement.appendChild(opt);
+    });
+  };
+
+  // ============================================
+  // CARDS DINÂMICOS
+  // ============================================
+window.addLinha = function() {
+  const container = document.getElementById('containerLinhas');
+  const modalidadesHidden = document.getElementById('modalidades-selecionadas');
+  const modalidadesSelecionadas = modalidadesHidden.value ? modalidadesHidden.value.split(',') : ['PRIMEIRA ATIVAÇÃO'];
+
+  // Para cada modalidade selecionada, criar um card
+  modalidadesSelecionadas.forEach(modalidade => {
+    const idListaUnico = 'planos-' + Date.now() + '-' + modalidade;
+    const novoCard = document.createElement('div');
+    novoCard.className = 'linha-card';
+    novoCard.dataset.modalidade = modalidade;
+    novoCard.style = 'background: #f8fafc; border: 1px solid #e2e8f0; padding: 20px; border-radius: 16px; margin-top: 15px; animation: fadeIn 0.3s ease; position: relative;';
+    
+    const isPrimeiraAtivacao = (modalidade === 'PRIMEIRA ATIVAÇÃO');
+    const gridTemplate = isPrimeiraAtivacao 
+        ? "grid-template-columns: 2fr 2fr 1fr 40px;" 
+        : "grid-template-columns: 2fr 2fr 1fr 1fr 40px;";
+    
+    const badgeModalidade = `<span style="display:inline-block; background:${isPrimeiraAtivacao ? '#3b82f6' : '#8b5cf6'}; color:white; padding:2px 10px; border-radius:12px; font-size:10px; font-weight:700; margin-bottom:8px;">${modalidade}</span>`;
+    
+    novoCard.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        ${badgeModalidade}
+        <button type="button" onclick="this.closest('.linha-card').remove()" style="background: #fee2e2; border: none; border-radius:50%; width:24px; height:24px; cursor:pointer; color:#ef4444; font-weight:bold; transition:0.2s;" onmouseover="this.style.background='#ef4444'; this.style.color='white'" onmouseout="this.style.background='#fee2e2'; this.style.color='#ef4444'">✕</button>
+      </div>
+      <div class="form-grid">
+        <div class="field col-3">
+          <label>Número da Linha</label>
+          <input type="text" class="input-telefone-dinamico" placeholder="${isPrimeiraAtivacao ? 'Número gerado automaticamente' : '(00) 00000-0000'}" ${isPrimeiraAtivacao ? 'disabled' : ''}>
+        </div>
+        <div class="field col-4">
+          <label>Plano Escolhido (Busca)</label>
+          <input type="text" 
+                 list="${idListaUnico}" 
+                 class="input-plano-dinamico" 
+                 placeholder="Digite para buscar o plano..." 
+                 oninput="window.verificarEPreencherPreco(this)"
+                 onchange="window.verificarEPreencherPreco(this)">
+          <datalist id="${idListaUnico}" class="lista-planos-vexo"></datalist>
+        </div>
+        <div class="field col-2">
+          <label>Valor (R$)</label>
+          <input type="text" class="input-valor-dinamico" placeholder="R$ 0,00">
+        </div>
+        ${!isPrimeiraAtivacao ? `<div class="field col-3">
+          <label>Operadora Doadora</label>
+          <select class="input-doadora-dinamico">
+            <option value="NENHUMA">Nenhuma</option>
+            <option value="CLARO">Claro</option>
+            <option value="VIVO">Vivo</option>
+            <option value="OI">Oi</option>
+          </select>
+        </div>` : ''}
+      </div>
+    `;
+    
+    container.appendChild(novoCard);
+    window.popularDatalistPlanos(novoCard.querySelector('datalist'));
+    
+    // Aplicar máscara no telefone se estiver habilitado
+    if (!isPrimeiraAtivacao) {
+      const inputTel = novoCard.querySelector('.input-telefone-dinamico');
+      inputTel.addEventListener('input', function() {
+        this.value = fmk.tel(this.value);
+      });
+    }
+  });
+};
+
+  // ============================================
+  // VERIFICAÇÃO DE PREÇO
+  // ============================================
+window.verificarEPreencherPreco = function(inputElement) {
+  try {
+    if (!inputElement) return;
+    var valorDigitado = inputElement.value.trim().toLowerCase();
+    if (!valorDigitado) return;
+    
+    // Encontra o card mais próximo
+    var card = inputElement.closest('.linha-card');
+    if (!card) {
+      console.warn('Card não encontrado para:', inputElement);
+      return;
+    }
+    
+    var campoValor = card.querySelector('.input-valor-dinamico');
+    if (!campoValor) {
+      console.warn('Campo valor não encontrado');
+      return;
+    }
+    
+    // Busca o plano nos dados carregados
+    if (!window.dadosPlanosVexo || window.dadosPlanosVexo.length === 0) {
+      console.warn('Planos não carregados ainda');
+      return;
+    }
+    
+    var planoEncontrado = window.dadosPlanosVexo.find(function(p) {
+      return p.nome.toLowerCase() === valorDigitado;
+    });
+    
+    if (planoEncontrado) {
+      // Formata o valor
+      var valor = planoEncontrado.valor;
+      var centavos = Math.round(valor * 100).toString();
+      campoValor.value = fmk.moeda(centavos);
+      campoValor.style.backgroundColor = '#ecfdf5';
+      setTimeout(function() {
+        campoValor.style.backgroundColor = '';
+      }, 1000);
+      console.log('✅ Plano encontrado:', planoEncontrado.nome, 'Valor:', valor);
+    } else {
+      // Se não encontrar, limpa o valor
+      campoValor.value = '';
+    }
+  } catch (error) {
+    console.error('Erro em verificarEPreencherPreco:', error);
+  }
+};
+
+  // ============================================
+  // NAVEGAÇÃO - ESCOLHER SEGMENTO
+  // ============================================
+  window.escolherSegmento = function(tipo, elemento) {
+    document.querySelectorAll('.seg-card').forEach(card => card.classList.remove('active'));
+    elemento.classList.add('active');
+    const area = document.getElementById('areaFormularios');
+    if (tipo === 'empresas') {
+      area.style.display = 'block';
+      area.style.animation = 'fadeInUp 0.5s ease forwards';
+      setTimeout(() => {
+        area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
+    }
+  };
+
+  // ============================================
+  // BUSCAR EMPRESA POR CNPJ
+  // ============================================
+  window.buscarEmpresa = async function(v) {
+    const limpo = v.replace(/\D/g, "");
+    if (limpo.length !== 14) return;
+    const rz = document.getElementById("razaoSocial");
+    rz.value = "Consultando base VEXO...";
+    rz.style.color = "#3b82f6";
+    try {
+      const response = await fetch("https://brasilapi.com.br/api/cnpj/v1/" + limpo);
+      const data = await response.json();
+      if (data.razao_social) {
+        document.getElementById("razaoSocial").value = data.razao_social;
+        document.getElementById("cep").value = data.cep ? fmk.cep(data.cep) : "";
+        document.getElementById("endereco").value = data.logradouro || "";
+        document.getElementById("numero").value = data.numero || "";
+        document.getElementById("bairro").value = data.bairro || "";
+        document.getElementById("cidade").value = data.municipio || "";
+        document.getElementById("uf").value = data.uf || "";
+        document.getElementById("email").value = data.email || "";
+        rz.style.color = "#1e293b";
+      }
+    } catch (e) { 
+      rz.value = ""; rz.placeholder = "Não localizado. Preencha manualmente."; 
+    }
+  };
+
+// ============================================
+// SELECIONAR MÚLTIPLAS MODALIDADES
+// ============================================
+window.toggleModalidade = function(modalidade, btn) {
+  const hidden = document.getElementById('modalidades-selecionadas');
+  let selecionadas = hidden.value ? hidden.value.split(',') : [];
+  
+  const index = selecionadas.indexOf(modalidade);
+  if (index > -1) {
+    selecionadas.splice(index, 1);
+    btn.classList.remove('active');
+  } else {
+    selecionadas.push(modalidade);
+    btn.classList.add('active');
+  }
+  
+  hidden.value = selecionadas.join(',');
+  
+  // Se não houver nenhuma selecionada, marca a primeira como padrão
+  if (selecionadas.length === 0) {
+    const primeira = document.querySelector('.mod-btn');
+    if (primeira) {
+      const mod = primeira.getAttribute('data-modalidade');
+      selecionadas.push(mod);
+      hidden.value = mod;
+      primeira.classList.add('active');
+    }
+  }
+  
+  // 🔥 RECRIA AS LINHAS COM AS NOVAS MODALIDADES
+  window.recriarLinhasPorModalidade();
+  
+  console.log('📌 Modalidades selecionadas:', selecionadas);
+};
+
+  // ============================================
+  // FECHAR MODAL DE SUCESSO
+  // ============================================
+window.fecharModalSucesso = function() {
+  const modal = document.getElementById("modalSucesso");
+  if (modal) modal.style.display = "none";
+
+  // Se não for edição, reseta o formulário
+  if (!isEditing) {
+    resetarFormulario();
+  } else {
+    // Se for edição, redireciona para Meus Pedidos
+    if (typeof window.navegar === 'function') {
+      const menuItem = document.querySelector('.menu-item[onclick*="meus_pedidos"]');
+      if (menuItem) {
+        window.navegar('meus_pedidos', menuItem);
+      } else {
+        window.navegar('meus_pedidos');
+      }
+    } else {
+      window.location.href = '?page=meus_pedidos';
+    }
+  }
+};
+
+// Controle do campo Número da Linha conforme a modalidade
+window.atualizarEstadoCamposTelefone = function() {
+  const modalidadesHidden = document.getElementById('modalidades-selecionadas');
+  const selecionadas = modalidadesHidden.value ? modalidadesHidden.value.split(',') : [];
+  
+  // 🔥 Verifica se PRIMEIRA ATIVAÇÃO está selecionada
+  const temPrimeiraAtivacao = selecionadas.includes('PRIMEIRA ATIVAÇÃO');
+  
+  console.log('📌 Atualizando campos - PRIMEIRA ATIVAÇÃO selecionada:', temPrimeiraAtivacao);
+  
+  const campos = document.querySelectorAll('.input-telefone-dinamico');
+  campos.forEach(campo => {
+    if (temPrimeiraAtivacao) {
+      // 🔥 Se tem PRIMEIRA ATIVAÇÃO, campo fica desabilitado
+      campo.disabled = true;
+      campo.value = '';
+      campo.placeholder = 'Número gerado automaticamente';
+      campo.style.backgroundColor = '#f1f5f9';
+      campo.style.cursor = 'not-allowed';
+      campo.style.color = '#94a3b8';
+    } else {
+      // 🔥 Se NÃO tem PRIMEIRA ATIVAÇÃO, campo fica habilitado
+      campo.disabled = false;
+      campo.placeholder = '(00) 00000-0000';
+      campo.style.backgroundColor = '';
+      campo.style.cursor = '';
+      campo.style.color = '';
+      // Aplica máscara se já tiver valor
+      if (campo.value) {
+        campo.value = fmk.tel(campo.value);
+      }
+    }
+  });
+};
+// ============================================
+// SALVAR / ATUALIZAR PEDIDO
+// ============================================
+window.salvarAgora = function() {
+  const btn = document.getElementById("btnSalvarVexo");
+  const user = JSON.parse(sessionStorage.getItem("usuarioLogado")) || {};
+  const cards = document.querySelectorAll('.linha-card');
+  let listaLinhas = [];
+
+  // 🔥 Itera sobre cada card existente (cada card já tem sua modalidade definida)
+  for (let card of cards) {
+    const modalidade = card.dataset.modalidade || 'PRIMEIRA ATIVAÇÃO';
+    const tel = card.querySelector('.input-telefone-dinamico').value;
+    const plano = card.querySelector('.input-plano-dinamico').value;
+    const doadora = card.querySelector('.input-doadora-dinamico') ? card.querySelector('.input-doadora-dinamico').value : 'NENHUMA';
+    let valorRaw = card.querySelector('.input-valor-dinamico').value;
+    let valorLimpo = valorRaw.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
+    let valorFinal = parseFloat(valorLimpo) || 0;
+
+    const isPrimeiraAtivacao = (modalidade === 'PRIMEIRA ATIVAÇÃO');
+    const temTelefone = tel.replace(/\D/g, '').length >= 10;
+
+    // 🔥 Validação: se NÃO for PRIMEIRA ATIVAÇÃO, telefone é obrigatório
+    if (!isPrimeiraAtivacao && !temTelefone) {
+      alert(`⚠️ A linha "${plano || 'sem plano'}" na modalidade ${modalidade} requer um número de telefone.`);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+      return;
+    }
+
+    // 🔥 Validação específica para PORTABILIDADE: operadora doadora é obrigatória
+    if (modalidade === 'PORTABILIDADE' && (doadora === 'NENHUMA' || doadora === '')) {
+      alert(`⚠️ A linha "${plano || 'sem plano'}" na modalidade PORTABILIDADE requer a seleção da Operadora Doadora.`);
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+      return;
+    }
+
+    listaLinhas.push({
+      modalidade: modalidade,
+      numeroLinha: tel,
+      plano: plano,
+      valor: valorFinal,
+      operadoraDoadora: doadora
+    });
+  }
+
+  // Se não houver linhas, alerta
+  if (listaLinhas.length === 0) {
+    alert("⚠️ Adicione pelo menos uma linha com plano válido!");
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+    return;
+  }
+
+  console.log('📦 Linhas a serem enviadas:', listaLinhas);
+
+  const pedidoEmEdicao = JSON.parse(sessionStorage.getItem('pedidoEmEdicao') || 'null');
+  const isEditing = pedidoEmEdicao && pedidoEmEdicao.linha && pedidoEmEdicao.origem;
+
+  // Monta os dados da empresa
+  const dadosEmpresa = {
+    matriculaUsuario: user.matricula || user.email || user.username,
+    bancoDeDadosId: isEditing ? pedidoEmEdicao.bancoDeDadosId : (user.bancoDeDadosId || null),
+    parceiroNome: user.username || user.nome || "Parceiro HUB",
+    cnpj: document.getElementById("cnpj").value,
+    razaoSocial: document.getElementById("razaoSocial").value,
+    inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
+    cep: document.getElementById("cep").value,
+    endereco: document.getElementById("endereco").value,
+    numero: document.getElementById("numero").value,
+    compl: document.getElementById("compl").value,
+    bairro: document.getElementById("bairro").value,
+    cidade: document.getElementById("cidade").value,
+    uf: document.getElementById("uf").value,
+    cpfAdmin: document.getElementById("cpfAdmin").value,
+    nomeAdmin: document.getElementById("nomeAdmin").value,
+    email: document.getElementById("email").value,
+    contatoFinanceiro: document.getElementById("contatoFinanceiro").value,
+    modalidade: document.getElementById('modalidades-selecionadas').value,
+    dataVenc: document.getElementById("dataVenc").value,
+    consultorVendeu: document.getElementById("consultorVendeu").value,
+    obs: document.getElementById("obs") ? document.getElementById("obs").value : "",
+    statusPedido: "PENDENTE DE INPUT",
+    listaLinhas: listaLinhas
+  };
+
+  // Se for edição, adiciona campos extras
+  if (isEditing) {
+    dadosEmpresa.idUnico = pedidoEmEdicao.id_unico || '';
+    dadosEmpresa.dataVenda = pedidoEmEdicao.data_venda_original || 
+                             pedidoEmEdicao.data_criacao || 
+                             new Date().toISOString().split('T')[0];
+    dadosEmpresa.linha = pedidoEmEdicao.linha;
+    dadosEmpresa.origem = pedidoEmEdicao.origem;
+  }
+
+  if (!dadosEmpresa.matriculaUsuario) {
+    alert("⚠️ Erro de sessão: Usuário não identificado. Por favor, recarregue a página.");
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + (isEditing ? 'ATUALIZANDO...' : 'ENVIANDO...');
+
+  // Função para nova venda
+  function salvarVenda() {
+    google.script.run
+      .withSuccessHandler(function(res) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+        
+        if (res && res.success) {
+          const modal = document.getElementById("modalSucesso");
+          if(modal) modal.style.display = "flex";
+          
+          if (typeof window.carregarMeusPedidos === 'function') {
+            setTimeout(() => window.carregarMeusPedidos(true), 2000);
+          }
+        } else {
+          alert("Erro ao enviar: " + (res?.message || 'Erro desconhecido'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+        alert("Erro no servidor: " + err.message);
+      })
+      .p_salvarVendaTIM(dadosEmpresa);
+  }
+
+  // Função para edição in-place (com a mesma lógica sem duplicação)
+  function editarVenda() {
+    const btn = document.getElementById('btnSalvarVexo');
+    if (!btn) {
+      console.error('❌ Botão btnSalvarVexo não encontrado');
+      return;
+    }
+
+    const pedidoEmEdicao = JSON.parse(sessionStorage.getItem('pedidoEmEdicao') || '{}');
+    const modalidadeIndex = pedidoEmEdicao.modalidadeIndex || 0;
+    const modalidadesList = pedidoEmEdicao.modalidadesList || [];
+    const modalidadeAtual = pedidoEmEdicao.modalidadeAtual || 'PRIMEIRA ATIVAÇÃO';
+
+    const user = JSON.parse(sessionStorage.getItem("usuarioLogado")) || {};
+    const cards = document.querySelectorAll('.linha-card');
+    let listaLinhasEdit = [];
+
+    // 🔥 Itera sobre os cards existentes (cada um com sua modalidade)
+    for (let card of cards) {
+      const modalidade = card.dataset.modalidade || 'PRIMEIRA ATIVAÇÃO';
+      const tel = card.querySelector('.input-telefone-dinamico').value;
+      const plano = card.querySelector('.input-plano-dinamico').value;
+      const doadora = card.querySelector('.input-doadora-dinamico') ? card.querySelector('.input-doadora-dinamico').value : 'NENHUMA';
+      let valorRaw = card.querySelector('.input-valor-dinamico').value;
+      let valorLimpo = valorRaw.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
+      let valorFinal = parseFloat(valorLimpo) || 0;
+
+      const isPrimeiraAtivacao = (modalidade === 'PRIMEIRA ATIVAÇÃO');
+      const temTelefone = tel.replace(/\D/g, '').length >= 10;
+
+      if (!isPrimeiraAtivacao && !temTelefone) {
+        alert(`⚠️ A linha "${plano || 'sem plano'}" na modalidade ${modalidade} requer um número de telefone.`);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+        return;
+      }
+
+      if (modalidade === 'PORTABILIDADE' && (doadora === 'NENHUMA' || doadora === '')) {
+        alert(`⚠️ A linha "${plano || 'sem plano'}" na modalidade PORTABILIDADE requer a seleção da Operadora Doadora.`);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+        return;
+      }
+
+      listaLinhasEdit.push({
+        modalidade: modalidade,
+        numeroLinha: tel,
+        plano: plano,
+        valor: valorFinal,
+        operadoraDoadora: doadora
+      });
+    }
+
+    if (listaLinhasEdit.length === 0) {
+      alert("⚠️ Adicione pelo menos uma linha com plano válido!");
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+      return;
+    }
+
+    console.log('📦 Linhas para edição:', listaLinhasEdit);
+
+    // Monta os dados da empresa para edição
+    const dadosEmpresaEdit = {
+      matriculaUsuario: user.matricula || user.email || user.username,
+      bancoDeDadosId: pedidoEmEdicao.bancoDeDadosId || null,
+      parceiroNome: user.username || user.nome || "Parceiro HUB",
+      cnpj: document.getElementById("cnpj").value,
+      razaoSocial: document.getElementById("razaoSocial").value,
+      inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
+      cep: document.getElementById("cep").value,
+      endereco: document.getElementById("endereco").value,
+      numero: document.getElementById("numero").value,
+      compl: document.getElementById("compl").value,
+      bairro: document.getElementById("bairro").value,
+      cidade: document.getElementById("cidade").value,
+      uf: document.getElementById("uf").value,
+      cpfAdmin: document.getElementById("cpfAdmin").value,
+      nomeAdmin: document.getElementById("nomeAdmin").value,
+      email: document.getElementById("email").value,
+      contatoFinanceiro: document.getElementById("contatoFinanceiro").value,
+      modalidade: 'PRIMEIRA ATIVAÇÃO', // legado
+      dataVenc: document.getElementById("dataVenc").value,
+      consultorVendeu: document.getElementById("consultorVendeu").value,
+      obs: document.getElementById("obs") ? document.getElementById("obs").value : "",
+      statusPedido: "PENDENTE DE INPUT",
+      listaLinhas: listaLinhasEdit,
+      idUnico: pedidoEmEdicao.id_unico || '',
+      linha: pedidoEmEdicao.linha,
+      origem: pedidoEmEdicao.origem,
+      modalidadeAtual: modalidadeAtual,
+      modalidadeIndex: modalidadeIndex,
+      modalidadesList: modalidadesList
+    };
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ATUALIZANDO...';
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) {
+          const nextIndex = modalidadeIndex + 1;
+          if (nextIndex < modalidadesList.length) {
+            pedidoEmEdicao.modalidadeIndex = nextIndex;
+            pedidoEmEdicao.modalidadeAtual = modalidadesList[nextIndex];
+            sessionStorage.setItem('pedidoEmEdicao', JSON.stringify(pedidoEmEdicao));
+            
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-pen"></i> ATUALIZAR PEDIDO';
+            
+            if (typeof preencherFormularioEdicao === 'function') {
+              preencherFormularioEdicao(pedidoEmEdicao);
+            }
+            
+            if (typeof mostrarToastPequno === 'function') {
+              mostrarToastPequno(`🔄 Próxima modalidade: ${modalidadesList[nextIndex]}`, 'info');
+            } else if (typeof notificacaoVexo === 'function') {
+              notificacaoVexo(`🔄 Próxima modalidade: ${modalidadesList[nextIndex]}`, 'info');
+            }
+            
+          } else {
+            sessionStorage.removeItem('pedidoEmEdicao');
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+            
+            if (typeof mostrarToastPequno === 'function') {
+              mostrarToastPequno('✅ Todas as modalidades foram atualizadas com sucesso!', 'success');
+            } else if (typeof notificacaoVexo === 'function') {
+              notificacaoVexo('✅ Todas as modalidades foram atualizadas com sucesso!', 'success');
+            }
+            
+            setTimeout(() => {
+              if (typeof window.navegar === 'function') {
+                const menuItem = document.querySelector('.menu-item[onclick*="meus_pedidos"]');
+                if (menuItem) {
+                  window.navegar('meus_pedidos', menuItem);
+                } else {
+                  window.navegar('meus_pedidos');
+                }
+              } else {
+                window.location.href = '?page=meus_pedidos';
+              }
+            }, 1000);
+          }
+        } else {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+          alert("Erro ao editar pedido: " + (res.message || 'Erro desconhecido'));
+        }
+      })
+      .withFailureHandler(function(err) {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+        alert("Erro de comunicação: " + err.message);
+      })
+      .p_editarVendaTIM(dadosEmpresaEdit);
+  }
+
+  if (isEditing) {
+    editarVenda();
+  } else {
+    salvarVenda();
+  }
+};
+
+function preencherFormularioEdicao(dados) {
+  console.log('📝 Preenchendo formulário para edição:', dados);
+  console.log('🔍 Vencimento recebido:', dados.vencimento);
+
+  // 🔥 ATIVA O CARD "TIM EMPRESAS" E EXIBE O FORMULÁRIO
+  const btnEmpresas = document.getElementById('btn-empresas');
+  const areaFormularios = document.getElementById('areaFormularios');
+  if (btnEmpresas) {
+    btnEmpresas.classList.add('active');
+    document.querySelectorAll('.seg-card').forEach(card => {
+      if (card.id !== 'btn-empresas') card.classList.remove('active');
+    });
+  }
+  if (areaFormularios) {
+    areaFormularios.style.display = 'block';
+    areaFormularios.style.animation = 'fadeInUp 0.5s ease forwards';
+    setTimeout(() => {
+      areaFormularios.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+  }
+
+  // ============================================
+  // 1. GERENCIAMENTO DE MODALIDADES (AGRUPAMENTO)
+  // ============================================
+  if (dados.modalidadeIndex === undefined) {
+    const grupos = {};
+    (dados.linhas || []).forEach(linha => {
+      const mod = linha.modalidade || 'PRIMEIRA ATIVAÇÃO';
+      if (!grupos[mod]) grupos[mod] = [];
+      grupos[mod].push(linha);
+    });
+    const modalidadesList = Object.keys(grupos);
+    dados.modalidadesList = modalidadesList;
+    dados.modalidadeIndex = 0;
+    dados.linhasAtuais = grupos[modalidadesList[0]] || [];
+    dados.modalidadeAtual = modalidadesList[0];
+    sessionStorage.setItem('pedidoEmEdicao', JSON.stringify(dados));
+  } else {
+    const modalidades = dados.modalidadesList || [];
+    const idx = dados.modalidadeIndex || 0;
+    dados.modalidadeAtual = modalidades[idx] || 'PRIMEIRA ATIVAÇÃO';
+    dados.linhasAtuais = (dados.linhas || []).filter(l => (l.modalidade || 'PRIMEIRA ATIVAÇÃO') === dados.modalidadeAtual);
+  }
+
+  // ============================================
+  // 2. PREENCHER CAMPOS BÁSICOS
+  // ============================================
+  document.getElementById('cnpj').value = dados.cnpj || '';
+  document.getElementById('razaoSocial').value = dados.razaoSocial || '';
+  document.getElementById('inscricaoEstadual').value = dados.inscricaoEstadual || dados.ie || '';
+  document.getElementById('cep').value = dados.cep || '';
+  document.getElementById('endereco').value = dados.endereco || '';
+  document.getElementById('numero').value = dados.numero || '';
+  document.getElementById('compl').value = dados.complemento || '';
+  document.getElementById('bairro').value = dados.bairro || '';
+  document.getElementById('cidade').value = dados.cidade || '';
+  document.getElementById('uf').value = dados.uf || '';
+  document.getElementById('cpfAdmin').value = dados.cpfAdmin || '';
+  document.getElementById('nomeAdmin').value = dados.nomeAdmin || '';
+  document.getElementById('email').value = dados.email || '';
+  document.getElementById('contatoFinanceiro').value = dados.contatoFinanceiro || '';
+  
+  const vencimento = dados.vencimento || dados.dataVenc || '05';
+  document.getElementById('dataVenc').value = vencimento;
+  console.log('📌 Vencimento aplicado no select:', vencimento);
+  
+  document.getElementById('consultorVendeu').value = dados.consultorVendeu || dados.vendedor || '';
+  document.getElementById('obs').value = dados.obs || '';
+
+  // ============================================
+  // 3. SELECIONAR A MODALIDADE ATUAL NO TOPO
+  // ============================================
+  const modalidadeAtual = dados.modalidadeAtual || 'PRIMEIRA ATIVAÇÃO';
+  const modBtns = document.querySelectorAll('.mod-btn');
+  modBtns.forEach(btn => {
+    btn.classList.remove('active');
+    const text = btn.textContent.trim();
+    if (text === modalidadeAtual) {
+      btn.classList.add('active');
+      document.getElementById('tipoOferta').value = modalidadeAtual;
+    }
+  });
+
+  // ============================================
+  // 4. PREENCHER AS LINHAS (APENAS DA MODALIDADE ATUAL)
+  // ============================================
+  const container = document.getElementById('containerLinhas');
+  container.querySelectorAll('.linha-card').forEach(card => card.remove());
+
+  const linhasParaPreencher = dados.linhasAtuais || [];
+  console.log(`📱 Preenchendo ${linhasParaPreencher.length} linha(s) da modalidade: ${modalidadeAtual}`);
+
+  if (linhasParaPreencher.length > 0) {
+    linhasParaPreencher.forEach((linha, index) => {
+      let card;
+      if (index === 0 && container.querySelector('.linha-card')) {
+        card = container.querySelector('.linha-card');
+        card.querySelector('.input-telefone-dinamico').value = '';
+        card.querySelector('.input-plano-dinamico').value = '';
+        card.querySelector('.input-valor-dinamico').value = '';
+        card.querySelector('.input-doadora-dinamico').value = 'NENHUMA';
+      } else {
+        window.addLinha();
+        const cards = container.querySelectorAll('.linha-card');
+        card = cards[cards.length - 1];
+      }
+      if (card) {
+        card.querySelector('.input-telefone-dinamico').value = linha.numero || '';
+        card.querySelector('.input-plano-dinamico').value = linha.plano || '';
+        card.querySelector('.input-valor-dinamico').value = linha.valor ? `R$ ${Number(linha.valor).toFixed(2).replace('.', ',')}` : '';
+        
+        // 🔥 CORREÇÃO: Opera Doadora - aceita operadoraDoadora, operadora, operadora_doadora
+        const operadora = linha.operadoraDoadora || linha.operadora || linha.operadora_doadora || 'NENHUMA';
+        const select = card.querySelector('.input-doadora-dinamico');
+        if (select) {
+          const opcoes = Array.from(select.options).map(o => o.value);
+          // Primeiro tenta encontrar exatamente
+          if (opcoes.includes(operadora)) {
+            select.value = operadora;
+          } else {
+            // Se não, normaliza para maiúsculas e tenta novamente
+            const operadoraNormalizada = operadora.toUpperCase();
+            const opcaoEncontrada = opcoes.find(o => o.toUpperCase() === operadoraNormalizada);
+            select.value = opcaoEncontrada || 'NENHUMA';
+          }
+        }
+      }
+    });
+  } else {
+    window.addLinha();
+  }
+
+  // ============================================
+  // 5. APLICAR REGRA DE TELEFONE (PRIMEIRA ATIVAÇÃO)
+  // ============================================
+  if (typeof window.atualizarEstadoCamposTelefone === 'function') {
+    window.atualizarEstadoCamposTelefone();
+  }
+
+  // ============================================
+  // 6. ATUALIZAR BOTÃO COM INDICADOR DE PROGRESSO
+  // ============================================
+  const total = dados.modalidadesList?.length || 1;
+  const atual = (dados.modalidadeIndex || 0) + 1;
+  const btn = document.getElementById('btnSalvarVexo');
+  if (btn) {
+    btn.innerHTML = `<i class="fa-solid fa-pen"></i> ATUALIZAR PEDIDO (${atual}/${total}) - ${modalidadeAtual}`;
+    btn.style.background = '#f59e0b';
+  }
+
+  // ============================================
+  // 7. GUARDAR ESTADO DE EDIÇÃO
+  // ============================================
+  isEditing = true;
+  pedidoEmEdicaoData = dados;
+
+  mostrarToastPequno(`📝 Editando modalidade ${atual}/${total}: ${modalidadeAtual}`, 'info');
+}
+// 🔥 FUNÇÃO AUXILIAR PARA TOAST (se ainda não estiver definida)
+function mostrarToastPequno(mensagem, tipo = 'info') {
+  const old = document.querySelector('.vexo-toast');
+  if (old) old.remove();
+
+  const toast = document.createElement('div');
+  toast.className = `vexo-toast vexo-toast-${tipo}`;
+  toast.style.cssText = `
+    position: fixed; bottom: 30px; right: 30px; max-width: 400px; min-width: 280px; width: auto;
+    background: white; border-radius: 16px; padding: 16px 20px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+    display: flex; align-items: center; gap: 14px; z-index: 10002;
+    animation: slideInRight 0.3s ease-out;
+    border-left: 4px solid ${tipo === 'info' ? '#3b82f6' : tipo === 'success' ? '#10b981' : tipo === 'warning' ? '#f59e0b' : '#ef4444'};
+    background: ${tipo === 'info' ? 'linear-gradient(135deg, #fff 0%, #eff6ff 100%)' : tipo === 'success' ? 'linear-gradient(135deg, #fff 0%, #f0fdf4 100%)' : tipo === 'warning' ? 'linear-gradient(135deg, #fff 0%, #fffbeb 100%)' : 'linear-gradient(135deg, #fff 0%, #fef2f2 100%)'};
+    box-sizing: border-box;
+  `;
+  const icons = { info: 'ℹ️', success: '✅', warning: '⚠️', error: '❌' };
+  toast.innerHTML = `
+    <div style="width: 40px; height: 40px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0;">${icons[tipo] || 'ℹ️'}</div>
+    <div style="flex: 1;">
+      <div style="font-weight: 700; font-size: 14px; margin-bottom: 4px; color: #0f172a;">${tipo === 'info' ? 'Informação' : tipo === 'success' ? 'Sucesso' : tipo === 'warning' ? 'Atenção' : 'Erro'}</div>
+      <div style="font-size: 12px; color: #475569; line-height: 1.4;">${mensagem}</div>
+    </div>
+    <div onclick="this.parentElement.remove()" style="width: 24px; height: 24px; border-radius: 8px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 12px; color: #64748b;">✕</div>
+  `;
+  document.body.appendChild(toast);
+  setTimeout(() => { if (toast.parentElement) toast.remove(); }, 4000);
+}
+
+
+  // ============================================
+  // INICIALIZAÇÃO: VERIFICA SE HÁ PEDIDO EM EDIÇÃO
+  // ============================================
+(function() {
+  console.log('🚀 Inicializando módulo de vendas...');
+  
+  // Verifica se há um pedido em edição
+  const pedidoEdicao = JSON.parse(sessionStorage.getItem('pedidoEmEdicao') || 'null');
+  
+  if (pedidoEdicao && pedidoEdicao.linha) {
+    console.log('📝 Pedido em edição encontrado:', pedidoEdicao);
+    
+    // Função para executar o preenchimento
+    function executarPreenchimento() {
+      if (typeof preencherFormularioEdicao === 'function') {
+        preencherFormularioEdicao(pedidoEdicao);
+      } else {
+        console.warn('⚠️ Função preencherFormularioEdicao não encontrada.');
+        // Tenta novamente após um pequeno delay
+        setTimeout(function() {
+          if (typeof preencherFormularioEdicao === 'function') {
+            preencherFormularioEdicao(pedidoEdicao);
+          } else {
+            console.error('❌ Função preencherFormularioEdicao não disponível.');
+          }
+        }, 500);
+      }
+    }
+
+    // Verifica se o DOM já está carregado
+    if (document.readyState === 'loading') {
+      // Aguarda o DOM carregar
+      document.addEventListener('DOMContentLoaded', function() {
+        // Pequeno delay para garantir que outros scripts foram executados
+        setTimeout(executarPreenchimento, 100);
+      });
+    } else {
+      // DOM já carregado, executa com pequeno delay
+      setTimeout(executarPreenchimento, 100);
+    }
+  } else {
+    console.log('ℹ️ Nenhum pedido em edição.');
+  }
+})();
+
+ // ============================================
+// INICIALIZAÇÃO DO FORMULÁRIO (MÁSCARAS E PLANOS)
+// ============================================
+setTimeout(function() {
+  try {
+    console.log('🚀 Inicializando módulo de vendas...');
+    
+    // 1. Carregar planos (com callback para criar as linhas)
+    if (typeof window.carregarPlanosVexo === 'function') {
+      // Carregar planos primeiro, depois criar as linhas
+      var carregarPlanosOriginal = window.carregarPlanosVexo;
+      window.carregarPlanosVexo = function() {
+        console.log('🔄 Buscando planos na planilha VEXO...');
+        google.script.run
+          .withSuccessHandler(function(planos) {
+            window.dadosPlanosVexo = planos.map(function(p) {
+              return {
+                nome: String(p.nome).trim(),
+                valor: typeof p.valor === 'string' ? parseFloat(p.valor.replace(/[^\d,-]/g, '').replace(',', '.')) : p.valor
+              };
+            });
+            console.log('✅ Planos carregados, quantidade:', window.dadosPlanosVexo.length);
+            
+            // Agora que os planos estão carregados, cria as seções e linhas
+            if (typeof window.adicionarLinhaGlobal === 'function') {
+              window.adicionarLinhaGlobal();
+            }
+          })
+          .withFailureHandler(function(err) {
+            console.error('❌ Erro ao carregar planos:', err);
+            // Mesmo com erro, tenta criar as linhas (sem planos)
+            if (typeof window.adicionarLinhaGlobal === 'function') {
+              window.adicionarLinhaGlobal();
+            }
+          })
+          .p_buscarPlanos();
+      };
+      window.carregarPlanosVexo();
+    } else {
+      console.warn('⚠️ carregarPlanosVexo não encontrado, criando linhas sem planos');
+      if (typeof window.adicionarLinhaGlobal === 'function') {
+        window.adicionarLinhaGlobal();
+      }
+    }
+    
+    // 2. Configurar máscaras
+    var form = document.getElementById("vendaForm");
+    if (form) {
+      form.addEventListener("input", function(e) {
+        var id = e.target.id;
+        var target = e.target;
+        
+        if (typeof fmk === 'undefined') {
+          return;
+        }
+        
+        if (id === "cnpj" && fmk.cnpj) {
+          target.value = fmk.cnpj(target.value);
+          if (target.value.length === 18 && typeof window.buscarEmpresa === 'function') {
+            window.buscarEmpresa(target.value);
+          }
+        }
+        if (target.classList.contains("input-telefone-dinamico") || id === "contatoFinanceiro") {
+          if (fmk.tel) target.value = fmk.tel(target.value);
+        }
+        if (target.classList.contains("input-valor-dinamico")) {
+          if (fmk.moeda) target.value = fmk.moeda(target.value);
+        }
+        if (id === "cpfAdmin" && fmk.cpf) {
+          target.value = fmk.cpf(target.value);
+        }
+        if (id === "cep" && fmk.cep) {
+          target.value = fmk.cep(target.value);
+        }
+      });
+    }
+    
+    // 3. Aplica regra de bloqueio
+    if (typeof window.atualizarEstadoCamposTelefone === 'function') {
+      window.atualizarEstadoCamposTelefone();
+    }
+    
+    console.log('✅ Módulo de vendas inicializado com sucesso!');
+    
+  } catch (error) {
+    console.error('❌ Erro na inicialização:', error);
+  }
+}, 200);
+console.log('✅ Vendas Parceiro inicializado com sucesso!');
+// ============================================
+// RESETAR FORMULÁRIO (APÓS ENVIO)
+// ============================================
+function resetarFormulario() {
+  // Limpa os campos de texto
+  const campos = [
+    'cnpj', 'razaoSocial', 'inscricaoEstadual', 'cep', 'endereco', 
+    'numero', 'compl', 'bairro', 'cidade', 'uf', 'cpfAdmin', 
+    'nomeAdmin', 'email', 'contatoFinanceiro', 'consultorVendeu', 'obs'
+  ];
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+
+  // Reseta o select de vencimento para o padrão (Dia 05)
+  const dataVenc = document.getElementById('dataVenc');
+  if (dataVenc) dataVenc.value = '05';
+
+  // Remove todas as linhas adicionais, mantendo apenas a primeira
+  const container = document.getElementById('containerLinhas');
+  const cards = container.querySelectorAll('.linha-card');
+  if (cards.length > 1) {
+    cards.forEach((card, index) => {
+      if (index > 0) card.remove();
+    });
+  }
+
+  // Limpa os campos da primeira linha (telefone, plano, valor)
+  const primeiroCard = container.querySelector('.linha-card');
+  if (primeiroCard) {
+    primeiroCard.querySelector('.input-telefone-dinamico').value = '';
+    primeiroCard.querySelector('.input-plano-dinamico').value = '';
+    primeiroCard.querySelector('.input-valor-dinamico').value = '';
+    primeiroCard.querySelector('.input-doadora-dinamico').value = 'NENHUMA';
+  }
+
+  // Restaura o botão para o estado original
+  const btn = document.getElementById('btnSalvarVexo');
+  if (btn) {
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+    btn.style.background = ''; // remove cor de edição se houver
+  }
+
+  // Remove o estado de edição
+  isEditing = false;
+  pedidoEmEdicaoData = null;
+  sessionStorage.removeItem('pedidoEmEdicao');
+
+  // Reaplica a regra de bloqueio de telefone (caso a modalidade continue PRIMEIRA ATIVAÇÃO)
+  if (typeof window.atualizarEstadoCamposTelefone === 'function') {
+    window.atualizarEstadoCamposTelefone();
+  }
+
+  console.log('✅ Formulário resetado com sucesso.');
+}
+// ============================================
+// ADICIONAR LINHA GLOBAL (uma para cada modalidade)
+// ============================================
+window.adicionarLinhaGlobal = function() {
+  try {
+    console.log('🚀 adicionarLinhaGlobal iniciada');
+    var container = document.getElementById('containerLinhas');
+    if (!container) {
+      console.error('❌ Container #containerLinhas não encontrado');
+      return;
+    }
+    
+    var modalidadesHidden = document.getElementById('modalidades-selecionadas');
+    if (!modalidadesHidden) {
+      console.error('❌ Elemento #modalidades-selecionadas não encontrado');
+      return;
+    }
+    
+    var modalidadesSelecionadas = modalidadesHidden.value ? modalidadesHidden.value.split(',') : ['PRIMEIRA ATIVAÇÃO'];
+    console.log('📌 Modalidades:', modalidadesSelecionadas);
+
+    // Limpa o container antes de recriar
+    container.innerHTML = '';
+
+    modalidadesSelecionadas.forEach(function(modalidade) {
+      // Cria a seção
+      var secao = document.createElement('div');
+      secao.className = 'modalidade-group';
+      secao.dataset.modalidade = modalidade;
+      secao.style.cssText = 'background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 20px;';
+      
+      var isPrimeiraAtivacao = (modalidade === 'PRIMEIRA ATIVAÇÃO');
+      var cor = isPrimeiraAtivacao ? '#3b82f6' : '#8b5cf6';
+      
+      // Monta o HTML da seção usando template string
+      secao.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+          <div>
+            <span style="display:inline-block; background:${cor}; color:white; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">
+              ${modalidade}
+            </span>
+            <span style="font-size:11px; color:#64748b; margin-left:10px; font-weight:500;">
+              <span id="qtd-linhas-${modalidade}">0</span> linha(s)
+            </span>
+          </div>
+          <button type="button" onclick="window.tentarAdicionarLinha('${modalidade}')" style="background:#3b82f6; color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:11px; font-weight:700; display:flex; align-items:center; gap:4px; transition:0.2s;" onmouseover="this.style.background='#2563eb'" onmouseout="this.style.background='#3b82f6'">
+            <i class="fa-solid fa-plus"></i> Adicionar Linha
+          </button>
+        </div>
+        <div id="linhas-${modalidade}" class="linhas-container" style="display:flex; flex-direction:column; gap:12px;">
+        </div>
+      `;
+      container.appendChild(secao);
+      console.log('✅ Seção criada para:', modalidade);
+    });
+    
+    // Adiciona uma linha em cada seção
+    modalidadesSelecionadas.forEach(function(modalidade) {
+      window.adicionarLinhaPorModalidade(modalidade);
+    });
+    
+  } catch (error) {
+    console.error('❌ Erro em adicionarLinhaGlobal:', error);
+    alert('Erro ao criar seções: ' + error.message);
+  }
+};
+window.tentarAdicionarLinha = function(modalidade) {
+  console.log('🔧 tentarAdicionarLinha chamada para:', modalidade);
+  try {
+    if (typeof window.adicionarLinhaPorModalidade === 'function') {
+      window.adicionarLinhaPorModalidade(modalidade);
+    } else {
+      alert('Função adicionarLinhaPorModalidade não encontrada. Recarregue a página.');
+    }
+  } catch (error) {
+    console.error('❌ Erro:', error);
+    alert('Erro ao adicionar linha: ' + error.message);
+  }
+};
+// ============================================
+// ADICIONAR LINHA PARA UMA MODALIDADE ESPECÍFICA
+// ============================================
+window.adicionarLinhaPorModalidade = function(modalidade) {
+  try {
+    console.log('📌 Adicionando linha para:', modalidade);
+    
+    var container = document.getElementById('linhas-' + modalidade);
+    if (!container) {
+      console.error('❌ Container não encontrado para:', modalidade);
+      // Tenta recriar as seções
+      window.adicionarLinhaGlobal();
+      container = document.getElementById('linhas-' + modalidade);
+      if (!container) {
+        alert('Erro: Não foi possível encontrar a seção para ' + modalidade + '. Recarregue a página.');
+        return;
+      }
+    }
+    
+    var isPrimeiraAtivacao = (modalidade === 'PRIMEIRA ATIVAÇÃO');
+    var idListaUnico = 'planos-' + Date.now() + '-' + modalidade;
+    
+    var card = document.createElement('div');
+    card.className = 'linha-card';
+    card.dataset.modalidade = modalidade;
+    card.style.cssText = 'background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; margin-bottom: 12px;';
+    
+    // Monta o HTML do card usando template string
+    var camposHTML = '';
+    
+    // Número da Linha
+    if (isPrimeiraAtivacao) {
+      camposHTML += `
+        <div class="field">
+          <label>Número da Linha</label>
+          <input type="text" class="input-telefone-dinamico" placeholder="Número gerado automaticamente" disabled style="background:#f1f5f9; color:#94a3b8; cursor:not-allowed;">
+        </div>
+      `;
+    } else {
+      camposHTML += `
+        <div class="field">
+          <label>Número da Linha *</label>
+          <input type="text" class="input-telefone-dinamico" placeholder="(00) 00000-0000" style="background:white;">
+        </div>
+      `;
+    }
+    
+    // Plano
+    camposHTML += `
+      <div class="field" style="flex:2;">
+        <label>Plano Escolhido *</label>
+        <input type="text" 
+               list="${idListaUnico}" 
+               class="input-plano-dinamico" 
+               placeholder="Digite para buscar o plano..." 
+               style="width:100%;">
+        <datalist id="${idListaUnico}" class="lista-planos-vexo"></datalist>
+      </div>
+    `;
+    
+    // Valor
+    camposHTML += `
+      <div class="field">
+        <label>Valor (R$)</label>
+        <input type="text" class="input-valor-dinamico" placeholder="R$ 0,00">
+      </div>
+    `;
+    
+    // Operadora Doadora (apenas para PORTABILIDADE)
+    if (modalidade === 'PORTABILIDADE') {
+      camposHTML += `
+        <div class="field">
+          <label>Operadora Doadora *</label>
+          <select class="input-doadora-dinamico" style="width:100%; padding:10px; border-radius:8px; border:1px solid #e2e8f0;">
+            <option value="NENHUMA">Selecione...</option>
+            <option value="CLARO">Claro</option>
+            <option value="VIVO">Vivo</option>
+            <option value="OI">Oi</option>
+          </select>
+        </div>
+      `;
+    }
+    
+    // Define grid
+    var gridTemplate = '1fr 1fr';
+    if (modalidade === 'PORTABILIDADE') gridTemplate = '1fr 1fr 1fr';
+    else if (!isPrimeiraAtivacao) gridTemplate = '1fr 1fr 1fr';
+    
+    card.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+        <span style="font-size:11px; font-weight:700; color:#64748b;">Linha ${container.children.length + 1}</span>
+        <button type="button" onclick="this.closest('.linha-card').remove();" style="background:none; border:none; cursor:pointer; color:#ef4444; font-size:16px;">✕</button>
+      </div>
+      <div style="display:grid; grid-template-columns: ${gridTemplate}; gap:12px; align-items:end;">
+        ${camposHTML}
+      </div>
+    `;
+    
+    container.appendChild(card);
+    
+    // Atualiza contagem
+    var span = document.getElementById('qtd-linhas-' + modalidade);
+    if (span) span.innerText = container.children.length;
+    
+    // 🔥 ADICIONA OS EVENTOS NECESSÁRIOS
+    var inputPlano = card.querySelector('.input-plano-dinamico');
+    if (inputPlano) {
+      // Evento para buscar o valor do plano
+      inputPlano.addEventListener('input', function() {
+        window.verificarEPreencherPreco(this);
+      });
+      inputPlano.addEventListener('change', function() {
+        window.verificarEPreencherPreco(this);
+      });
+    }
+    
+    // Popula datalist
+    var datalist = card.querySelector('datalist');
+    if (datalist) {
+      if (typeof window.popularDatalistPlanos === 'function') {
+        window.popularDatalistPlanos(datalist);
+      } else if (window.dadosPlanosVexo && window.dadosPlanosVexo.length > 0) {
+        datalist.innerHTML = window.dadosPlanosVexo.map(function(p) {
+          return '<option value="' + p.nome + '">';
+        }).join('');
+      }
+    }
+    
+    // Máscara no telefone
+    var inputTel = card.querySelector('.input-telefone-dinamico');
+    if (inputTel && !inputTel.disabled && typeof fmk !== 'undefined' && fmk.tel) {
+      inputTel.addEventListener('input', function() {
+        this.value = fmk.tel(this.value);
+      });
+    }
+    
+    console.log('✅ Linha adicionada para:', modalidade);
+    
+  } catch (error) {
+    console.error('❌ Erro ao adicionar linha:', error);
+    alert('Erro ao adicionar linha: ' + error.message);
+  }
+};
+// ============================================
+// ATUALIZAR CONTAGEM DE LINHAS POR MODALIDADE
+// ============================================
+window.atualizarContagemLinhas = function(modalidade) {
+  const container = document.getElementById(`linhas-${modalidade}`);
+  if (!container) return;
+  const qtd = container.children.length;
+  const span = document.getElementById(`qtd-linhas-${modalidade}`);
+  if (span) span.innerText = qtd;
+  
+  // Atualiza os índices das linhas
+  container.querySelectorAll('.linha-card').forEach((card, index) => {
+    const spanNum = card.querySelector('.numero-linha-indice');
+    if (spanNum) spanNum.innerText = index + 1;
+  });
+};
+
+// ============================================
+// REMOVER TODAS AS SEÇÕES E RECRIAR (quando mudar modalidades)
+// ============================================
+window.recriarLinhasPorModalidade = function() {
+  try {
+    const container = document.getElementById('containerLinhas');
+    if (!container) {
+      console.error('❌ Container não encontrado');
+      return;
+    }
+    container.innerHTML = '';
+    window.adicionarLinhaGlobal();
+    console.log('✅ Linhas recriadas com sucesso');
+  } catch (error) {
+    console.error('❌ Erro ao recriar linhas:', error);
+  }
+};
+</script>
+
+</body>
+</html>

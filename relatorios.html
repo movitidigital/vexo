@@ -1,0 +1,614 @@
+<div class="modulo-card" style="background: white; padding: 30px; border-radius: 15px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: 'Poppins', sans-serif;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f2f5; padding-bottom: 15px; margin-bottom: 25px;">
+    <div>
+       <h2 style="color: #1e3c72; margin: 0;">📈 Inteligência de Dados VEXO</h2>
+       <p style="margin:0; font-size: 11px; color: #64748b;">Gestão Baseada na Aba COMISSAO (O.S. 113)</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <div style="display: flex; flex-direction: column;">
+        <label style="font-size: 9px; font-weight: bold; color: #888;">META LOJA (R$)</label>
+        <input type="number" id="rel_meta_loja" value="2000" style="padding: 6px; border-radius: 6px; border: 1px solid #ddd; font-size: 12px; width: 100px;">
+      </div>
+      <div style="display: flex; flex-direction: column;">
+        <label style="font-size: 9px; font-weight: bold; color: #888;">INÍCIO</label>
+        <input type="date" id="rel_data_inicio" style="padding: 6px; border-radius: 6px; border: 1px solid #ddd; font-size: 12px;">
+      </div>
+      <div style="display: flex; flex-direction: column;">
+        <label style="font-size: 9px; font-weight: bold; color: #888;">FIM</label>
+        <input type="date" id="rel_data_fim" style="padding: 6px; border-radius: 6px; border: 1px solid #ddd; font-size: 12px;">
+      </div>
+      <button id="btn-gerar-rel" onclick="gerarRelatorios()" style="align-self: flex-end; padding: 10px 20px; background: #1e3c72; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer;">
+        Filtrar
+      </button>
+    </div>
+  </div>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 30px;">
+    <div style="background: #f0f7ff; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid #1e3c72;">
+      <span style="font-size: 10px; color: #1e3c72; font-weight: bold;">RECEITA ATIVADA LÍQUIDA</span>
+      <h3 id="kpi-receita" style="margin: 5px 0 0; font-size: 20px; color: #1e3c72;">R$ 0,00</h3>
+    </div>
+    <div style="background: #fdf2f2; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid #dc2626;">
+      <span style="font-size: 10px; color: #dc2626; font-weight: bold;">ATINGIMENTO META</span>
+      <h3 id="kpi-atingimento" style="margin: 5px 0 0; font-size: 20px; color: #dc2626;">0%</h3>
+    </div>
+    <div style="background: #fff9f0; padding: 15px; border-radius: 12px; text-align: center; border-bottom: 3px solid #e65100;">
+      <span style="font-size: 10px; color: #e65100; font-weight: bold;">ATIVAÇÕES (NOVAS)</span>
+      <h3 id="kpi-ativacoes" style="margin: 5px 0 0; font-size: 20px; color: #e65100;">0</h3>
+    </div>
+  </div>
+
+  <div id="painel-corporate" style="display: none; border: 1px solid #e2e8f0; padding: 25px; border-radius: 12px; background: #fff; margin-bottom: 25px;">
+    <h4 style="margin: 0 0 15px 0; color: #1e3c72; font-size: 14px;">🛡️ Subsídio Estrutura Corporate (5.4)</h4>
+    <div id="lista-corporate"></div>
+  </div>
+
+  <div id="painel-produto-movel" style="display: none; border: 1px solid #e2e8f0; padding: 25px; border-radius: 12px; background: #fff; margin-bottom: 25px;">
+    <h4 style="margin: 0 0 15px 0; color: #1e3c72; font-size: 14px;">📱 BÔNUS PRODUTOS MÓVEIS</h4>
+    <div id="lista-produto-movel"></div>
+  </div>
+
+  <div id="painel-portabilidade" style="display: none; border: 1px solid #e2e8f0; padding: 25px; border-radius: 12px; background: #fff;">
+    <h4 style="margin: 0 0 15px 0; color: #1e3c72; font-size: 14px;">🔄 Bônus Portabilidade (5.6)</h4>
+    <div id="lista-portabilidade"></div>
+  </div>
+
+</div>
+
+<script>
+let CONFIG_VEXO = {};
+
+// Carrega as configurações da aba COMISSAO
+window.onload = function() {
+  google.script.run.withSuccessHandler(function(config) {
+    if(config) {
+      CONFIG_VEXO = config;
+      // Define a meta padrão na tela, se existir na planilha
+      for (let k in config) {
+        if (k.toLowerCase().replace(/\s/g, '') === "metaloja_padrao" || k.toLowerCase().replace(/\s/g, '') === "meta_loja_padrao") {
+          document.getElementById('rel_meta_loja').value = config[k];
+        }
+      }
+    }
+  }).buscarConfiguracoesComissao();
+};
+
+function gerarRelatorios() {
+  const btn = document.getElementById('btn-gerar-rel');
+  const inicio = document.getElementById('rel_data_inicio').value;
+  const fim = document.getElementById('rel_data_fim').value;
+  
+  if(!inicio || !fim) {
+    return alert("Selecione o período (Data Início e Data Fim).");
+  }
+
+  // Feedback visual de carregamento
+  btn.innerText = "⏳ Analisando...";
+  btn.disabled = true;
+
+  // Chama o servidor enviando os parâmetros de data
+  google.script.run
+    .withSuccessHandler(function(dados) {
+      btn.innerText = "Filtrar";
+      btn.disabled = false;
+      
+      // Tratamento de erro caso o servidor retorne falha
+      if (dados && dados.success === false) {
+        alert("Erro ao analisar dados: " + dados.msg);
+        return;
+      }
+      
+      // Passa os dados validados para renderizar na tela
+      processarIndicadores(dados, inicio, fim);
+    })
+    .withFailureHandler(function(erro) {
+      btn.innerText = "Filtrar";
+      btn.disabled = false;
+      alert("Falha de comunicação com o servidor. Tente novamente.");
+      console.error(erro);
+    })
+    .buscarDadosRelatorioGeral(inicio, fim); // 🌟 AJUSTE AQUI: Variáveis enviadas para o servidor
+}
+
+function processarIndicadores(dados, inicio, fim) {
+  const dInicio = new Date(inicio + "T00:00:00");
+  const dFim = new Date(fim + "T23:59:59");
+  const metaLojaInput = parseFloat(document.getElementById('rel_meta_loja').value) || 1;
+  
+  // FUNÇÃO BLINDADA PARA BUSCAR OS FATORES DA ABA COMISSAO
+  const getConfig = (chave, padrao) => {
+    if (typeof CONFIG_VEXO === 'undefined' || !CONFIG_VEXO) return padrao;
+    const chaveBusca = chave.toLowerCase().replace(/\s+/g, ''); 
+    for (let k in CONFIG_VEXO) {
+      if (k.toLowerCase().replace(/\s+/g, '') === chaveBusca) {
+        let valString = String(CONFIG_VEXO[k]).replace(',', '.'); 
+        let valConvertido = parseFloat(valString);
+        return isNaN(valConvertido) ? padrao : valConvertido;
+      }
+    }
+    return padrao;
+  };
+
+  const T_ESTRUT         = getConfig("Target_Estrutura_CPF", 2000);
+  const LIMITE_ESTRUTURA = getConfig("Limite_Estrutura_Silver", 50000); 
+  
+  // 🌟 MUDANÇA 1: Absorve o fator B15 vindo do code.gs, com fallback para o getConfig
+  const F_PORTA = dados.fatorPortabilidade !== undefined ? dados.fatorPortabilidade : getConfig("BONUS PORTABILIDADE", 1.25);
+
+  let receitaAtivLiq = 0; 
+  let countAtivacoes = 0;
+  let remunBasicaTBP = 0;
+  
+  // ACUMULADORES DO BÔNUS PERMANÊNCIA (Gross Voz)
+  let countGrossVoz = 0; 
+  let receitaGrossVoz = 0;
+  
+  let rankingProduto = {}; 
+  let rankingPorta = {};
+  
+  let somaRealCorporate = 0; 
+  let somaRealPortabilidade = 0;
+  let countLinhasPortadas = 0;
+
+  // Filtro do Mês Atual (Ex: Abril)
+  const vendasPeriodo = dados.vendas.filter(v => {
+    const p = v[1].split("/");
+    const dV = new Date(p[2], p[1] - 1, p[0]);
+    return dV >= dInicio && dV <= dFim;
+  });
+
+// 🌟 SIMPLIFICAÇÃO: O servidor já nos entregou a lista pronta
+const vendasPortabilidadeM1 = dados.portabilidadesM1 || [];
+
+  // ============================================
+  // 1. Calcula Receita Total da Loja, TBP e GROSS (MÊS FILTRADO)
+  // ============================================
+  vendasPeriodo.forEach(v => {
+    const mod = String(v[4] || "").toUpperCase();
+    const status = String(v[24] || "").toUpperCase(); 
+    const valor = parseFloat(String(v[7]).replace("R$", "").replace(/\./g, "").replace(",", ".")) || 0;
+    const valorTBP = parseFloat(v[40]) || 0;
+    
+    // Ignoramos a Coluna Y. Verificamos a Coluna AJ
+    const valAJ = String(v[35] || "").trim();
+    const ativadaBOC = valAJ !== ""; 
+    
+    if (ativadaBOC && !mod.includes("RENEG")) {
+      receitaAtivLiq += valor;
+      countAtivacoes++;
+      
+      // Conta para Permanência: Apenas Gross (Nova, Portabilidade, Aditivo, Upgrade). Sem Migração.
+      if (/PRIMEIR[OA]|NOVA|PORT|ADITIVO|UPGRADE/i.test(mod) && !mod.includes("MIGRA")) {
+        countGrossVoz++;
+        receitaGrossVoz += valor;
+      }
+    }
+    
+    remunBasicaTBP += valorTBP;
+  });
+
+  // ============================================
+  // LÓGICAS DE ELEGIBILIDADE E CURVAS
+  // ============================================
+  const atingPercent = (receitaAtivLiq / metaLojaInput) * 100;
+  let fatorCurvaCorporate = 0;
+
+  // Bônus Corporate (Mínimo 60% e teto 1.10)
+  if (atingPercent >= 60) {
+    fatorCurvaCorporate = atingPercent / 100; 
+    if (fatorCurvaCorporate > 1.10) {
+      fatorCurvaCorporate = 1.10;
+    }
+  }
+
+
+
+  // ============================================
+  // 2. Processa as Comissões da Equipe (CORPORATE MÊS ATUAL)
+  // ============================================
+  vendasPeriodo.forEach(v => {
+    const mod = String(v[4] || "").toUpperCase();
+    const valorVenda = parseFloat(String(v[7]).replace("R$", "").replace(/\./g, "").replace(",", ".")) || 0;
+    const nomeVend = v[10] || "Sem Nome";
+    
+    const valAJ = String(v[35] || "").trim();
+    const ativadaBOC = valAJ !== "";
+
+    if (ativadaBOC && !mod.includes("RENEG")) {
+      // A) REGRA DE BÔNUS RECEITA CORPORATE
+      let ganhoCorporate = valorVenda * fatorCurvaCorporate;
+      somaRealCorporate += ganhoCorporate; 
+
+      if(!rankingProduto[nomeVend]) rankingProduto[nomeVend] = {ativado: 0, ganho: 0};
+      rankingProduto[nomeVend].ativado += valorVenda;
+      rankingProduto[nomeVend].ganho += ganhoCorporate;
+      
+      // 🌟 MUDANÇA 3: A Regra de Portabilidade foi movida daqui para o loop próprio do M-1 abaixo
+    }
+  });
+
+  // ============================================
+  // 3. Processa Bônus de Portabilidade (EXCLUSIVO M-1)
+  // ============================================
+  vendasPortabilidadeM1.forEach(v => {
+    const valorVenda = parseFloat(String(v[7]).replace("R$", "").replace(/\./g, "").replace(",", ".")) || 0;
+    const nomeVend = v[10] || "Sem Nome";
+    
+    let ganhoPortabilidade = valorVenda * F_PORTA;
+    
+    somaRealPortabilidade += ganhoPortabilidade;
+    countLinhasPortadas++;
+
+    if(!rankingPorta[nomeVend]) rankingPorta[nomeVend] = {qtd: 0, receita: 0, ganho: 0};
+    rankingPorta[nomeVend].qtd++;
+    rankingPorta[nomeVend].receita += valorVenda;
+    rankingPorta[nomeVend].ganho += ganhoPortabilidade;
+  });
+
+  // ============================================
+  // ATUALIZA KPIs GLOBAIS DA LOJA E PAINÉIS
+  // ============================================
+  document.getElementById('kpi-receita').innerText = receitaAtivLiq.toLocaleString('pt-BR', {style:'currency', currency:'BRL'});
+  document.getElementById('kpi-atingimento').innerText = atingPercent.toFixed(1) + "%";
+  document.getElementById('kpi-ativacoes').innerText = countAtivacoes;
+
+  // INJEÇÃO DO PAINEL ESPELHO TIM (TBP)
+  let painelTBP = document.getElementById('painel-tbp');
+  if (!painelTBP) {
+    painelTBP = document.createElement('div');
+    painelTBP.id = 'painel-tbp';
+    const painelCorporate = document.getElementById('painel-corporate');
+    if (painelCorporate) {
+      painelCorporate.parentNode.insertBefore(painelTBP, painelCorporate);
+    }
+  }
+
+  if (painelTBP) {
+    painelTBP.innerHTML = `
+      <div style="background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 12px; padding: 20px; margin-bottom: 25px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 15px;">
+          <h3 style="color: #1e3a8a; margin: 0; font-size: 14px; font-weight: 800;">🔍 CONFERÊNCIA ESPELHO TIM (TBP)</h3>
+          <span style="font-size: 10px; background: #dbeafe; color: #1e40af; padding: 4px 10px; border-radius: 20px; font-weight: 700;">Valores Calculados via Data de Ativação</span>
+        </div>
+        
+        <div style="display: flex; gap: 15px;">
+          <div style="flex: 1; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #3b82f6;">
+            <small style="color: #64748b; font-weight: 700; font-size: 9px; text-transform: uppercase;">1. Remuneração Básica</small>
+            <div style="font-size: 24px; font-weight: 800; color: #1d4ed8; margin-top: 5px;">${remunBasicaTBP.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</div>
+            <p style="margin: 5px 0 0; font-size: 10px; color: #94a3b8;">Baseado na Aba 'COMISSAO'</p>
+          </div>
+          
+          <div style="flex: 1; background: white; padding: 15px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); border-left: 4px solid #10b981; opacity: 0.5;">
+            <small style="color: #64748b; font-weight: 700; font-size: 9px; text-transform: uppercase;">2. Aceleração (Em Breve)</small>
+            <div style="font-size: 24px; font-weight: 800; color: #059669; margin-top: 5px;">R$ 0,00</div>
+          </div>
+        </div>
+      </div>
+    `;
+    painelTBP.style.display = 'block';
+  }
+
+  // RENDERIZAÇÃO PAINEL 1: ESTRUTURA CORPORATE
+  let cpfsValidos = Object.keys(rankingProduto).length; 
+  
+  let targetBruto = cpfsValidos * T_ESTRUT;
+  let targetAplicado = Math.min(targetBruto, LIMITE_ESTRUTURA); 
+  
+  let curvaEstrutura = 0;
+  if (atingPercent >= 60 && receitaAtivLiq >= 2000) {
+    curvaEstrutura = fatorCurvaCorporate; 
+  }
+
+  let valorEstrutura = targetAplicado * curvaEstrutura;
+
+  let msgEstrutura = "";
+  if (receitaAtivLiq < 2000) {
+    msgEstrutura = `<span style="font-size:11px; font-weight:bold; color:#9a3412; background:#ffedd5; padding:4px 8px; border-radius:10px;">⚠️ Inelegível: Piso de Receita Mínimo < R$ 2.000,00</span>`;
+  } else if (atingPercent < 60) {
+    msgEstrutura = `<span style="font-size:11px; font-weight:bold; color:#b45309; background:#fef3c7; padding:4px 8px; border-radius:10px;">⚠️ Inelegível: Meta da Loja abaixo de 60%</span>`;
+  } else if (targetBruto > LIMITE_ESTRUTURA) {
+    msgEstrutura = `<span style="font-size:11px; font-weight:bold; color:#1d4ed8; background:#dbeafe; padding:4px 8px; border-radius:10px;">✅ Teto Atingido! Limitado em R$ ${LIMITE_ESTRUTURA/1000}k</span>`;
+  } else {
+    msgEstrutura = `<span style="font-size:11px; font-weight:bold; color:#166534; background:#dcfce7; padding:4px 8px; border-radius:10px;">✅ Estrutura Elegível!</span>`;
+  }
+  
+  document.getElementById('lista-corporate').innerHTML = `
+    <div style="background:#0f172a; color:white; padding:20px; border-radius:12px; margin-bottom:15px; border-left: 5px solid #3b82f6;">
+      <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+          <small style="opacity:0.7; font-weight: bold; text-transform: uppercase;">🏢 Bônus Estrutura Corporate</small>
+          <div style="font-size:28px; font-weight:800; margin: 5px 0;">${valorEstrutura.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</div>
+          <div style="margin-top: 8px;">${msgEstrutura}</div>
+        </div>
+        <div style="text-align: right; font-size: 11px; opacity: 0.8; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
+          <div style="margin-bottom: 3px;"><strong>Base:</strong> ${cpfsValidos} Vendedor(es) Ativos</div>
+          <div style="margin-bottom: 3px;"><strong>Target Válido:</strong> ${targetAplicado.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</div>
+          <div><strong>Fator Aplicado:</strong> ${(curvaEstrutura * 100).toFixed(1)}%</div>
+        </div>
+      </div>
+    </div>`;
+
+  // RENDERIZAÇÃO PAINEL 2: BÔNUS RECEITA CORPORATE
+  let htmlTabCorporate = "";
+  Object.entries(rankingProduto).forEach(([nome, info]) => {
+    htmlTabCorporate += `<tr>
+      <td style="padding:10px; border-bottom:1px solid #f1f5f9;">${nome}</td>
+      <td style="padding:10px; border-bottom:1px solid #f1f5f9; font-weight:600;">${info.ativado.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
+      <td style="padding:10px; border-bottom:1px solid #f1f5f9; color:#059669; font-weight:800;">${info.ganho.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
+    </tr>`;
+  });
+
+  let statusCurvaHtml = "";
+  if (atingPercent >= 110) {
+    statusCurvaHtml = `<span style="font-size:11px; font-weight:bold; color:#166534; background:#dcfce7; padding:4px 8px; border-radius:10px;">🏆 Teto Máximo! Fator 1.10x Aplicado.</span>`;
+  } else if (atingPercent >= 60) {
+    statusCurvaHtml = `<span style="font-size:11px; font-weight:bold; color:#1d4ed8; background:#dbeafe; padding:4px 8px; border-radius:10px;">✅ Elegível. Fator da Curva: ${fatorCurvaCorporate.toFixed(2)}x</span>`;
+  } else {
+    statusCurvaHtml = `<span style="font-size:11px; font-weight:bold; color:#b45309; background:#fef3c7; padding:4px 8px; border-radius:10px;">⚠️ Inelegível. A loja precisa atingir 60% da meta.</span>`;
+  }
+
+  document.getElementById('lista-produto-movel').innerHTML = `
+    <div style="background:#f8fafc; border-left:5px solid #1e3c72; padding:20px; border-radius:0 12px 12px 0; margin-bottom:15px;">
+      <small style="font-size: 10px; color: #64748b; font-weight: bold; text-transform: uppercase;">📱 Bônus Receita Corporate</small>
+      <div style="font-size:28px; font-weight:800; color:#1e3c72; margin: 5px 0;">
+        ${somaRealCorporate.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
+      </div>
+      <div style="margin-top: 8px;">
+        ${statusCurvaHtml}
+      </div>
+    </div>
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead><tr style="text-align:left; color:#64748b; border-bottom:2px solid #e2e8f0;">
+        <th style="padding:10px;">VENDEDOR (MATRÍCULA)</th>
+        <th style="padding:10px;">RECEITA LÍQUIDA ATIVADA</th>
+        <th style="padding:10px;">BÔNUS (FATOR ${fatorCurvaCorporate.toFixed(2)})</th>
+      </tr></thead>
+      <tbody>${htmlTabCorporate || '<tr><td colspan="3" style="text-align:center; padding:20px; color:#94a3b8;">Nenhuma ativação válida no período.</td></tr>'}</tbody>
+    </table>`;
+
+  // ============================================
+  // CÁLCULO E PAINEL DE PERMANÊNCIA (M7 E M14) - DADOS REAIS DO SERVIDOR
+  // ============================================
+  const mesesArrPerm = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  const mAtualIndexPerm = dInicio.getMonth();
+  const mAtualAnoPerm = dInicio.getFullYear();
+  const strMesAtualPerm = mesesArrPerm[mAtualIndexPerm] + "/" + mAtualAnoPerm;
+
+  // Usa o M-1 para saber se a loja bateu os 30 Gross
+  const elegivelPermanencia = (dados.countGrossM1 || 0) >= 30;
+  const F_M7 = dados.fatorM7 || 0;
+  const F_M14 = dados.fatorM14 || 0;
+
+  let receitaSafraM7 = 0;
+  let receitaSafraM14 = 0;
+
+  // Soma todo o faturamento da Safra resgatada do M-8
+  (dados.vendasSafraM7 || []).forEach(v => {
+    receitaSafraM7 += parseFloat(String(v[7]).replace("R$", "").replace(/\./g, "").replace(",", ".")) || 0;
+  });
+
+  // Soma todo o faturamento da Safra resgatada do M-15
+  (dados.vendasSafraM14 || []).forEach(v => {
+    receitaSafraM14 += parseFloat(String(v[7]).replace("R$", "").replace(/\./g, "").replace(",", ".")) || 0;
+  });
+
+  // Multiplica a receita pela porcentagem exata que veio da Aba Comissão
+  const ganhoM7 = elegivelPermanencia ? (receitaSafraM7 * F_M7) : 0;
+  const ganhoM14 = elegivelPermanencia ? (receitaSafraM14 * F_M14) : 0;
+  const totalPermanencia = ganhoM7 + ganhoM14;
+
+  // Textos para exibir de qual mês estamos puxando cada safra
+  const dataM1_perm = new Date(mAtualAnoPerm, mAtualIndexPerm - 1, 1);
+  const strM1_nome_perm = mesesArrPerm[dataM1_perm.getMonth()] + "/" + dataM1_perm.getFullYear();
+
+  const dataM8 = new Date(mAtualAnoPerm, mAtualIndexPerm - 8, 1);
+  const strM8_nome = mesesArrPerm[dataM8.getMonth()] + "/" + dataM8.getFullYear();
+
+  const dataM15 = new Date(mAtualAnoPerm, mAtualIndexPerm - 15, 1);
+  const strM15_nome = mesesArrPerm[dataM15.getMonth()] + "/" + dataM15.getFullYear();
+
+  // INJEÇÃO DO PAINEL BÔNUS PERMANÊNCIA NA TELA
+  let painelPermanencia = document.getElementById('painel-permanencia');
+  if (!painelPermanencia) {
+    painelPermanencia = document.createElement('div');
+    painelPermanencia.id = 'painel-permanencia';
+    const painelProdutoMovel = document.getElementById('painel-produto-movel');
+    if (painelProdutoMovel) {
+      painelProdutoMovel.parentNode.insertBefore(painelPermanencia, painelProdutoMovel.nextSibling);
+    }
+  }
+
+  if (painelPermanencia) {
+    painelPermanencia.innerHTML = `
+      <div style="margin-top: 20px; margin-bottom: 30px;">
+        <h3 style="color: #0f766e; margin-bottom: 10px; font-size: 16px;">⏳ Bônus Permanência (M7 e M14) - Apuração do Espelho ${strMesAtualPerm}</h3>
+        <div style="background:#f0fdf4; border: 1px solid #ccfbf1; border-left:5px solid #0f766e; padding:20px; border-radius:8px;">
+          
+          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+            <div>
+              <small style="font-size: 10px; color: #115e59; font-weight: bold; text-transform: uppercase;">Valor Creditado Neste Espelho</small>
+              <div style="font-size:28px; font-weight:800; color:#0f766e; margin: 5px 0;">
+                ${totalPermanencia.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
+              </div>
+              <div style="margin-top: 5px;">
+                ${elegivelPermanencia
+                  ? `<span style="font-size:11px; font-weight:bold; color:#166534; background:#dcfce7; padding:4px 8px; border-radius:10px;">✅ Loja Qualificada: ${dados.countGrossM1} acessos Gross validados em ${strM1_nome_perm}.</span>`
+                  : `<span style="font-size:11px; font-weight:bold; color:#9a3412; background:#ffedd5; padding:4px 8px; border-radius:10px;">⚠️ Loja Inelegível: Apenas ${dados.countGrossM1 || 0}/30 acessos Gross validados em ${strM1_nome_perm}.</span>`
+                }
+              </div>
+            </div>
+            
+            <div style="text-align: right; display: flex; flex-direction: column; gap: 8px;">
+              <div style="background: white; padding: 10px 15px; border-radius: 8px; border: 1px solid #ccfbf1; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <small style="color: #0f766e; font-size: 10px; font-weight: bold;">M7 (Safra de ${strM8_nome}) - ${(F_M7 * 100).toFixed(2)}%</small><br>
+                <div style="font-size: 9px; color: #64748b; margin-bottom: 2px;">Receita Base: ${receitaSafraM7.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</div>
+                <strong style="color: #115e59; font-size: 14px;">${ganhoM7.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</strong>
+              </div>
+              <div style="background: white; padding: 10px 15px; border-radius: 8px; border: 1px solid #ccfbf1; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+                <small style="color: #0f766e; font-size: 10px; font-weight: bold;">M14 (Safra de ${strM15_nome}) - ${(F_M14 * 100).toFixed(2)}%</small><br>
+                <div style="font-size: 9px; color: #64748b; margin-bottom: 2px;">Receita Base: ${receitaSafraM14.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</div>
+                <strong style="color: #115e59; font-size: 14px;">${ganhoM14.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</strong>
+              </div>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    `;
+    painelPermanencia.style.display = 'block';
+  }
+  // ============================================
+  // 🌟 MUDANÇA 4: UX/UI DA PORTABILIDADE AJUSTADA PARA O CONTEXTO DE M-1
+  // ============================================
+  const mesesArr = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  
+  // Extrai o mês do filtro atual (M) e o M-1
+  const mAtualIndex = dInicio.getMonth();
+  const mAtualAno = dInicio.getFullYear();
+  const strMesAtual = mesesArr[mAtualIndex] + "/" + mAtualAno;
+
+  const dataM1 = new Date(mAtualAno, mAtualIndex - 1, 1);
+  const strM1_nome = mesesArr[dataM1.getMonth()] + "/" + dataM1.getFullYear();
+
+  let htmlTabPorta = "";
+  Object.entries(rankingPorta).forEach(([nome, info]) => {
+    htmlTabPorta += `<tr>
+      <td style="padding:10px; border-bottom:1px solid #f1f5f9;">${nome}</td>
+      <td style="padding:10px; border-bottom:1px solid #f1f5f9; text-align:center; font-weight:bold; color:#701a75;">${info.qtd}</td>
+      <td style="padding:10px; border-bottom:1px solid #f1f5f9; font-weight:600;">${info.receita.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
+      <td style="padding:10px; border-bottom:1px solid #f1f5f9; color:#c026d3; font-weight:800;">${info.ganho.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</td>
+    </tr>`;
+  });
+
+  document.getElementById('lista-portabilidade').innerHTML = `
+    <h3 style="color: #86198f; margin-bottom: 10px; font-size: 16px;">🔄 Bônus Portabilidade - Apuração de Safra ${strM1_nome}</h3>
+    <div style="background:#fdf4ff; border: 1px solid #f5d0fe; border-left:5px solid #c026d3; padding:20px; border-radius:8px; margin-bottom:15px;">
+      
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
+        <div>
+          <small style="font-size: 10px; color: #a21caf; font-weight: bold; text-transform: uppercase;">Valor Creditado Neste Espelho (${strMesAtual})</small>
+          <div style="font-size:28px; font-weight:800; color:#86198f; margin: 5px 0;">
+            ${somaRealPortabilidade.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
+          </div>
+          <small style="color:#a21caf; font-weight:bold;">${countLinhasPortadas} linhas ativadas na Coluna AJ de ${strM1_nome} (Fator ${(F_PORTA * 100).toFixed(2)}%)</small>
+        </div>
+        <span style="font-size:11px; font-weight:800; padding:6px 14px; border-radius:20px; background:#f5d0fe; color:#701a75; text-align: center;">
+          ✅ Sem Trava de Meta<br><small style="font-size: 9px; opacity: 0.8;">Paga sobre a Produção M-1</small>
+        </span>
+      </div>
+
+      <div style="padding-top: 15px; border-top: 1px dashed #e879f9;">
+        <p style="margin: 0 0 5px; font-size: 11px; font-weight: bold; color: #86198f;">⚠️ ENTENDA O PAGAMENTO DESTE BÔNUS:</p>
+        <ul style="margin: 0; padding-left: 15px; font-size: 10px; color: #701a75; opacity: 0.9; line-height: 1.4;">
+          <li><strong>Origem (M-1):</strong> Os valores listados acima referem-se estritamente às portabilidades cuja <strong>Data de Validação (AJ)</strong> ocorreu em <strong>${strM1_nome}</strong>.</li>
+          <li><strong>Ciclo de Pagamento:</strong> A TIM repassa o pagamento da portabilidade sempre no espelho do mês seguinte (espelho do filtro atual: <strong>${strMesAtual}</strong>).</li>
+        </ul>
+      </div>
+
+    </div>
+    
+    <table style="width:100%; border-collapse:collapse; font-size:12px;">
+      <thead><tr style="text-align:left; color:#64748b; border-bottom:2px solid #e2e8f0;">
+        <th style="padding:10px;">VENDEDOR (MATRÍCULA)</th>
+        <th style="padding:10px; text-align:center;">QTD CONCLUÍDA M-1</th>
+        <th style="padding:10px;">RECEITA PORTADA</th>
+        <th style="padding:10px;">BÔNUS APURADO</th>
+      </tr></thead>
+      <tbody>${htmlTabPorta || `<tr><td colspan="4" style="text-align:center; padding:20px; color:#94a3b8;">Nenhuma portabilidade encontrada com validação (AJ) em ${strM1_nome}.</td></tr>`}</tbody>
+    </table>`;
+
+// ============================================
+  // TOTALIZADOR GERAL TIM (UX/UI AVANÇADA)
+  // ============================================
+  
+  // 1. Soma de todas as variáveis já calculadas no código acima
+  const totalGeralTIM = remunBasicaTBP + somaRealCorporate + valorEstrutura + somaRealPortabilidade + (totalPermanencia || 0);
+
+  // 2. Criação do elemento na tela
+  let painelTotal = document.getElementById('painel-total-tim');
+  if (!painelTotal) {
+    painelTotal = document.createElement('div');
+    painelTotal.id = 'painel-total-tim';
+    
+    // Busca o Painel TBP para inserir o Totalizador exatamente ANTES dele
+    const painelTBP = document.getElementById('painel-tbp');
+    if (painelTBP) {
+      painelTBP.parentNode.insertBefore(painelTotal, painelTBP);
+    } else {
+      // Fallback: se não achar o TBP por algum motivo, tenta no corporate
+      const painelCorporate = document.getElementById('painel-corporate');
+      if (painelCorporate) painelCorporate.parentNode.insertBefore(painelTotal, painelCorporate);
+    }
+  }
+
+  // 3. Renderização com Design Premium e Glassmorphism
+  if (painelTotal) {
+    painelTotal.innerHTML = `
+      <div style="background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%); color: white; border-radius: 16px; padding: 25px; margin-top: 20px; margin-bottom: 25px; box-shadow: 0 10px 25px rgba(30, 58, 138, 0.25); position: relative; overflow: hidden; border: 1px solid rgba(255,255,255,0.1);">
+        
+        <!-- Efeitos de Luz no Background -->
+        <div style="position: absolute; top: -30px; right: -30px; width: 200px; height: 200px; background: rgba(59, 130, 246, 0.3); border-radius: 50%; filter: blur(50px);"></div>
+        <div style="position: absolute; bottom: -20px; left: -20px; width: 150px; height: 150px; background: rgba(16, 185, 129, 0.15); border-radius: 50%; filter: blur(40px);"></div>
+        
+        <div style="position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+          
+          <!-- Bloco do Valor Principal -->
+          <div>
+            <h2 style="margin: 0 0 5px 0; font-size: 13px; font-weight: 800; color: #93c5fd; text-transform: uppercase; letter-spacing: 1.5px; display: flex; align-items: center; gap: 6px;">
+              <span style="font-size: 16px;">💰</span> PREVISÃO DE PAGAMENTO TIM
+            </h2>
+            <div style="font-size: 46px; font-weight: 900; color: #10b981; margin: 0; line-height: 1.1; text-shadow: 0 0 20px rgba(16, 185, 129, 0.4);">
+              ${totalGeralTIM.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}
+            </div>
+            <small style="color: #94a3b8; font-size: 11px; font-weight: 500; display: block; margin-top: 6px;">
+              Apuração baseada no espelho atual + Safras retroativas consolidadas.
+            </small>
+          </div>
+          
+          <!-- Bloco de Resumo (Glassmorphism) -->
+          <div style="background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); border-radius: 12px; padding: 15px 20px; min-width: 280px; box-shadow: inset 0 0 20px rgba(255,255,255,0.02);">
+            <h3 style="margin: 0 0 10px 0; font-size: 10px; color: #cbd5e1; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Composição do Crédito</h3>
+            
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+              <span style="color: #94a3b8;">1. Remuneração Básica TBP:</span>
+              <strong style="color: white; font-family: 'Courier New', monospace;">${remunBasicaTBP.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+              <span style="color: #94a3b8;">2. Bônus Estrutura Corporate:</span>
+              <strong style="color: white; font-family: 'Courier New', monospace;">${valorEstrutura.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+              <span style="color: #94a3b8;">3. Bônus Receita Corporate:</span>
+              <strong style="color: white; font-family: 'Courier New', monospace;">${somaRealCorporate.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px;">
+              <span style="color: #94a3b8;">4. Portabilidade (Safra M-1):</span>
+              <strong style="color: white; font-family: 'Courier New', monospace;">${somaRealPortabilidade.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</strong>
+            </div>
+            <div style="display: flex; justify-content: space-between; font-size: 12px;">
+              <span style="color: #94a3b8;">5. Permanência (M7/M14):</span>
+              <strong style="color: white; font-family: 'Courier New', monospace;">${totalPermanencia.toLocaleString('pt-BR', {style:'currency', currency:'BRL'})}</strong>
+            </div>
+          </div>
+          
+        </div>
+      </div>
+    `;
+    painelTotal.style.display = 'block';
+  }
+
+  const sessaoRel = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  if(sessaoRel.role === "ADMINISTRADOR" || true) {
+    document.getElementById('painel-corporate').style.display = 'block';
+    document.getElementById('painel-produto-movel').style.display = 'block';
+    document.getElementById('painel-portabilidade').style.display = 'block';
+  }
+}
+
+// Inicializa a data no momento em que a tela abre
+const d = new Date();
+document.getElementById('rel_data_fim').valueAsDate = d;
+d.setDate(1);
+document.getElementById('rel_data_inicio').valueAsDate = d;
+</script>

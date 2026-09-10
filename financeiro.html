@@ -1,0 +1,1322 @@
+<div class="modulo-card" style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); font-family: 'Poppins', sans-serif;">
+ 
+ <!-- ======================================== -->
+ <!-- MODAL EDITAR COMISSÃO PARCEIRO           -->
+ <!-- ======================================== -->
+ <div id="modal-editar-comissao" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.7); z-index:10001; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+   <div style="background:white; width:95%; max-width:450px; padding:30px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); position:relative;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+       <h3 style="margin:0; color:#1e293b; font-weight:800; font-size:18px;">✏️ Editar Comissão</h3>
+       <button onclick="fecharModalEditarComissao()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#94a3b8;">&times;</button>
+     </div>
+     <div style="margin-bottom:15px;">
+       <label style="font-weight:600; font-size:12px; color:#475569;">Linha / Cliente</label>
+       <p id="modal-editar-info-linha" style="margin:5px 0 0 0; font-size:14px; color:#1e293b; background:#f1f5f9; padding:10px; border-radius:8px;"></p>
+     </div>
+     <div style="margin-bottom:20px;">
+       <label style="font-weight:600; font-size:12px; color:#475569;">Novo Valor da Comissão (R$)</label>
+       <input type="number" id="modal-editar-valor" step="0.01" min="0" style="width:100%; padding:12px; border:2px solid #e2e8f0; border-radius:10px; font-size:16px; outline:none; box-sizing:border-box;">
+     </div>
+     <div style="display:flex; gap:10px;">
+       <button onclick="fecharModalEditarComissao()" style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; color:#64748b; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Cancelar</button>
+       <button onclick="confirmarEditarComissao()" id="btn-confirmar-editar" style="flex:2; background:#1e3c72; color:white; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Salvar</button>
+     </div>
+   </div>
+ </div>
+
+ <!-- ======================================== -->
+ <!-- MODAL APROVAR PAGAMENTO PARCEIRO         -->
+ <!-- ======================================== -->
+ <div id="modal-aprovar-pagamento" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.7); z-index:10001; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+   <div style="background:white; width:95%; max-width:450px; padding:30px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); position:relative;">
+     <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+       <h3 style="margin:0; color:#1e293b; font-weight:800; font-size:18px;">💰 Aprovar Pagamento TIM</h3>
+       <button onclick="fecharModalAprovarPagamento()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#94a3b8;">&times;</button>
+     </div>
+     <div style="margin-bottom:15px;">
+       <label style="font-weight:600; font-size:12px; color:#475569;">Linha / Cliente</label>
+       <p id="modal-aprovar-info-linha" style="margin:5px 0 0 0; font-size:14px; color:#1e293b; background:#f1f5f9; padding:10px; border-radius:8px;"></p>
+     </div>
+     <div style="margin-bottom:20px;">
+       <label style="font-weight:600; font-size:12px; color:#475569;">Status atual</label>
+       <p id="modal-aprovar-status-atual" style="margin:5px 0 0 0; font-size:14px; font-weight:700;"></p>
+     </div>
+     <div style="display:flex; flex-direction:column; gap:10px; margin-bottom:20px;">
+       <button onclick="confirmarAprovarPagamento('PAGO')" style="padding:12px; background:#10b981; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;">
+         ✅ PAGO (TIM confirmou recebimento)
+       </button>
+       <button onclick="confirmarAprovarPagamento('NAO_PAGO')" style="padding:12px; background:#ef4444; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;">
+         ❌ NÃO PAGO (TIM não pagou)
+       </button>
+       <button onclick="confirmarAprovarPagamento('PENDENTE')" style="padding:12px; background:#f59e0b; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:600; display:flex; align-items:center; justify-content:center; gap:8px;">
+         ⏳ PENDENTE (desfazer)
+       </button>
+     </div>
+     <div style="display:flex; gap:10px;">
+       <button onclick="fecharModalAprovarPagamento()" style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; color:#64748b; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Cancelar</button>
+     </div>
+   </div>
+ </div>
+
+  <!-- BARRA DE ABAS -->
+  <div style="display: flex; gap: 10px; margin-bottom: 25px; border-bottom: 2px solid #f0f2f5; padding-bottom: 10px; flex-wrap: wrap;">
+    <button onclick="mudarAbaFinanceiro('geral')" id="btn-tab-geral" class="tab-btn-financeiro" style="flex: 1; padding: 12px 20px; border: none; background: #1e3c72; color: white; border-radius: 8px; font-weight: bold; cursor: pointer;">📊 Geral</button>
+    <button onclick="mudarAbaFinanceiro('parceiros')" id="btn-tab-parceiros" class="tab-btn-financeiro" style="flex: 1; padding: 12px 20px; border: none; background: #f1f5f9; color: #1e3c72; border-radius: 8px; font-weight: bold; cursor: pointer;">🤝 Parceiros</button>
+  </div>
+
+  <!-- ==================== ABA PARCEIROS ==================== -->
+  <div id="aba-parceiros" class="aba-financeiro" style="display: none; animation: fadeIn 0.4s; padding: 10px;">
+    <h2 style="color: #1e3c72; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 25px;">🤝 Gestão de Comissões – Parceiros</h2>
+
+    <!-- Filtros -->
+    <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 20px;">
+      <div style="flex: 1; min-width: 200px;">
+        <label style="font-weight: 600; font-size: 12px; color: #475569;">📌 Parceiro</label>
+        <select id="select-parceiro" class="v-input" style="width: 100%; padding: 10px;">
+          <option value="">Selecione um parceiro...</option>
+        </select>
+      </div>
+      <div style="min-width: 150px;">
+        <label style="font-weight: 600; font-size: 12px; color: #475569;">📅 Mês/Ano</label>
+        <input type="month" id="filtro-mes-parceiro" class="v-input" style="width: 100%; padding: 10px;">
+      </div>
+      <button onclick="carregarComissaoParceiro()" style="background: #1e3c72; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(30,60,114,0.2);">
+        🔄 Atualizar
+      </button>
+    </div>
+
+    <!-- Cards -->
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px;">
+      <div style="background: #0f172a; padding: 15px; border-radius: 15px; color: white;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Receita Total</span>
+        <h3 id="card-receita-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+      </div>
+      <div style="background: #38ef7d; padding: 15px; border-radius: 15px; color: #064e3b;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Gross (Linhas)</span>
+        <h3 id="card-gross-parceiro" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
+      </div>
+      <div style="background: #10b981; padding: 15px; border-radius: 15px; color: white;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Portabilidade</span>
+        <h3 id="card-port-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+      </div>
+      <div style="background: #f59e0b; padding: 15px; border-radius: 15px; color: white;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Renegociações (Qtd)</span>
+        <h3 id="card-mid-parceiro" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
+      </div>
+      <div style="background: #d32f2f; padding: 15px; border-radius: 15px; color: white;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Comissão Total</span>
+        <h3 id="card-com-total-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+      </div>
+    </div>
+
+    <!-- Painel de taxas (dinâmico) -->
+    <div id="painel-taxas-parceiro" style="margin-bottom: 20px;"></div>
+
+    <!-- Tabela de Vendas Detalhada -->
+    <div style="background: white; border: 1px solid #f1f5f9; border-radius: 12px; overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 11px; min-width: 900px;">
+        <thead>
+          <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #64748b;">
+            <th style="padding: 12px 15px;">DATA</th>
+            <th style="padding: 12px 15px;">CLIENTE</th>
+            <th style="padding: 12px 15px;">MODALIDADE</th>
+            <th style="padding: 12px 15px;">LINHA</th>
+            <th style="padding: 12px 15px;">VALOR</th>
+            <th style="padding: 12px 15px;">COMISSÃO BASE</th>
+            <th style="padding: 12px 15px;">COMISSÃO PORT</th>
+            <th style="padding: 12px 15px;">COMISSÃO RENEG</th>
+            <th style="padding: 12px 15px; color: #1e3c72; font-weight: 800;">TOTAL</th>
+            <th style="padding: 12px 15px;">STATUS TIM</th>
+            <th style="padding: 12px 15px;">AÇÕES</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-vendas-parceiro">
+          <tr><td colspan="11" style="text-align: center; padding: 40px; color: #94a3b8;">Selecione um parceiro e clique em Atualizar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== ABA GERAL (EXISTENTE) ==================== -->
+  <div id="aba-geral" class="aba-financeiro" style="display: block;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
+      <div>
+        <h2 style="color: #1e3c72; margin: 0; font-weight: 800;">💰 Painel de Comissões</h2>
+        <p style="margin: 0; font-size: 11px; color: #1e3c72; font-weight: 600;">
+          🗓️ Competência: Nota (Col. Z) ou Input | <span style="color: #64748b;">Status ignorado conforme regra de notas.</span>
+        </p>
+        <!-- PAINEL DE TAXAS APLICADAS (será preenchido dinamicamente) -->
+        <div id="painel-taxas-aplicadas"></div>
+        <!-- TOTAIS DA LOJA (rodapé) -->
+        <div id="totais-loja-footer"></div>
+      </div>
+
+      <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <input type="month" id="filtro-mes-fin" onchange="carregarResumoConsolidado()" style="padding: 9px 15px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: 'Poppins'; color: #1e293b; outline: none; font-weight: 600; cursor: pointer;">
+
+        <button onclick="abrirModalHistorico()" style="background: white; color: #64748b; border: 1px solid #e2e8f0; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+          📜 Histórico
+        </button>
+
+        <button onclick="abrirModalConfig()" style="background: white; color: #1e3c72; border: 1px solid #1e3c72; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
+          ⚙️ Configurar %
+        </button>
+
+        <button onclick="carregarResumoConsolidado()" style="padding: 10px 18px; background: #1e3c72; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; color: white; font-size: 12px; transition: 0.3s; box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);">
+          🔄 Atualizar
+        </button>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px;">
+      <div style="background: #0f172a; padding: 15px; border-radius: 15px; color: white;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Receita Loja</span>
+        <h3 id="card-receita" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+      </div>
+
+      <div style="background: #38ef7d; padding: 15px; border-radius: 15px; color: #064e3b;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Gross Total</span>
+        <h3 id="card-gross-loja" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
+      </div>
+      
+      <div style="background: #10b981; padding: 15px; border-radius: 15px; color: white;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Portabilidade</span>
+        <h3 id="card-port" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+      </div>
+
+      <div style="background: #f59e0b; padding: 15px; border-radius: 15px; color: white;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">MIDs (Qtd)</span>
+        <h3 id="card-mid" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
+      </div>
+
+      <div style="background: #d32f2f; padding: 15px; border-radius: 15px; color: white;">
+        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Comissão Equipe</span>
+        <h3 id="card-com-total" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+      </div>
+    </div>
+
+    <div style="background: white; border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+        <thead>
+          <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #64748b;">
+            <th style="padding: 15px 20px;">CONSULTOR</th>
+            <th style="padding: 15px;">RECEITA (META)</th>
+            <th style="padding: 15px;">GROSS (LINHAS)</th> 
+            <th style="padding: 15px;">PORT-IN (R$)</th>
+            <th style="padding: 15px;">MID (QTD)</th>
+            <th style="padding: 15px; color: #1e3c72; font-weight: 800;">TOTAL A PAGAR</th>
+            <th style="padding: 15px; text-align: right; padding-right: 20px;">AÇÃO</th>
+          </tr>
+        </thead>
+        <tbody id="tabela-consolidada">
+          <tr><td colspan="7" style="text-align: center; padding: 40px; color: #94a3b8;">Sincronizando faturamento da equipe...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== MODAIS (CONFIG, HISTÓRICO) ==================== -->
+  <div id="modal-config-comissao" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div style="background:white; width:95%; max-width:450px; padding:30px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); position: relative;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 style="margin:0; color:#1e293b; font-weight: 800; font-size: 18px;">Ajuste de Percentuais</h3>
+        <button onclick="fecharModalConfig()" style="background:none; border:none; font-size: 20px; cursor:pointer; color:#94a3b8;">&times;</button>
+      </div>
+      
+      <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:12px;">
+        <div style="grid-column: span 3; font-weight:800; color:#1e3c72; font-size:11px; margin-top:10px; text-transform: uppercase; letter-spacing: 1px;">📊 Faturamento (%)</div>
+        <input type="number" id="f_min" placeholder="Min" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+        <input type="number" id="f_target" placeholder="Target" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+        <input type="number" id="f_sup" placeholder="Super" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+
+        <div style="grid-column: span 3; font-weight:800; color:#10b981; font-size:11px; margin-top:10px; text-transform: uppercase; letter-spacing: 1px;">📲 Portabilidade (%)</div>
+        <input type="number" id="p_min" placeholder="Min" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+        <input type="number" id="p_target" placeholder="Target" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+        <input type="number" id="p_sup" placeholder="Super" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+
+        <div style="grid-column: span 3; font-weight:800; color:#f59e0b; font-size:11px; margin-top:10px; text-transform: uppercase; letter-spacing: 1px;">🔄 Renegociação (%)</div>
+        <input type="number" id="r_min" placeholder="Min" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+        <input type="number" id="r_target" placeholder="Target" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+        <input type="number" id="r_sup" placeholder="Super" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+      </div>
+
+      <div style="margin-top:30px; display:flex; gap:10px;">
+        <button onclick="fecharModalConfig()" style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; color:#64748b; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Cancelar</button>
+        <button onclick="salvarConfig()" style="flex:2; background:#1e3c72; color:white; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:600; box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);">Salvar Alterações</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-historico-pag" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
+    <div style="background:white; width:95%; max-width:900px; height: 80vh; padding:30px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); display: flex; flex-direction: column;">
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <div>
+          <h3 style="margin:0; color:#1e293b; font-weight: 800; font-size: 20px;">📜 Histórico de Pagamentos</h3>
+          <p style="margin:0; font-size: 11px; color: #64748b;">Registros oficiais de comissões pagas</p>
+        </div>
+        <button onclick="fecharModalHistorico()" style="background:none; border:none; font-size: 24px; cursor:pointer; color:#94a3b8;">&times;</button>
+      </div>
+
+      <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; gap: 15px;">
+        <input type="text" id="filtroNomeHistorico" onkeyup="filtrarTabelaHistorico()" placeholder="🔍 Buscar consultor..." style="flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; outline: none;">
+      </div>
+
+      <div style="flex: 1; overflow-y: auto; border: 1px solid #f1f5f9; border-radius: 12px;">
+        <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
+          <thead style="position: sticky; top: 0; background: #f8fafc; z-index: 10;">
+            <tr style="text-align: left; color: #64748b; border-bottom: 2px solid #e2e8f0;">
+              <th style="padding: 15px;">DATA</th>
+              <th style="padding: 15px;">CONSULTOR</th>
+              <th style="padding: 15px;">REF.</th>
+              <th style="padding: 15px;">BASE</th>
+              <th style="padding: 15px;">PORT</th>
+              <th style="padding: 15px;">RENEG</th>
+              <th style="padding: 15px; color: #1e3c72; font-weight: 800;">TOTAL PAGO</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-historico-pag"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ================================================================
+// 1. CARREGAMENTO DOS DADOS (Cards Loja + Tabela Vendedores)
+// ================================================================
+function carregarResumoConsolidado() {
+  const tbody = document.getElementById('tabela-consolidada');
+  const inputMes = document.getElementById('filtro-mes-fin');
+
+  let mes = "", ano = "";
+  if (inputMes) {
+    if (!inputMes.value) {
+      const hoje = new Date();
+      const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+      inputMes.value = `${hoje.getFullYear()}-${mesAtual}`;
+    }
+    [ano, mes] = inputMes.value.split('-');
+  }
+
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargoUsuario = (sessao.role || "").toUpperCase().trim();
+  const nomeUsuarioLogado = (sessao.nome || sessao.username || "").toUpperCase().trim();
+  const isAdmin = (cargoUsuario === "ADMINISTRADOR" || cargoUsuario === "BACKOFFICE");
+
+  const textoLoading = (mes && ano) 
+    ? `⏳ Auditando liquidações de ${mes}/${ano}...` 
+    : `⏳ Processando indicadores financeiros...`;
+    
+  tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 40px; color: #64748b;">${textoLoading}</td></tr>`;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res || (res.success === false)) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: #ef4444; padding: 20px; font-weight: 600;">❌ Erro: ${res ? res.msg : 'Falha na resposta do servidor'}</td></tr>`;
+        return;
+      }
+
+      const formatMoeda = (v) => Number(v || 0).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+
+      if (document.getElementById('card-receita')) document.getElementById('card-receita').innerText = formatMoeda(res.totais.receita);
+      if (document.getElementById('card-port')) document.getElementById('card-port').innerText = formatMoeda(res.totais.port);
+      if (document.getElementById('card-mid')) document.getElementById('card-mid').innerHTML = `${res.totais.midQtd || 0} un / ${formatMoeda(res.totais.midVal)}`;
+      if (document.getElementById('card-com-total')) document.getElementById('card-com-total').innerText = formatMoeda(res.totais.comissao);
+      if (document.getElementById('card-gross-loja')) document.getElementById('card-gross-loja').innerText = (res.totais.grossTotal || 0) + " un";
+
+      const taxaFat = res.taxasLoja?.fat || 10;
+      const taxaPort = res.taxasLoja?.port || 10;
+      const taxaMid = res.taxasLoja?.mid || 10;
+      
+      const statusFat = res.taxasLoja?.statusFat || "Taxa aplicada";
+      const statusPort = res.taxasLoja?.statusPort || "Taxa aplicada";
+      const statusMid = res.taxasLoja?.statusMid || "Taxa aplicada";
+      const lojaDesbloqueada = res.taxasLoja?.lojaDesbloqueada || false;
+
+      let painelTaxas = document.getElementById('painel-taxas-aplicadas');
+      if (!painelTaxas) {
+        const cardsGrid = document.querySelector('.kpi-grid');
+        if (cardsGrid) {
+          painelTaxas = document.createElement('div');
+          painelTaxas.id = 'painel-taxas-aplicadas';
+          cardsGrid.insertAdjacentElement('afterend', painelTaxas);
+        }
+      }
+      
+      if (painelTaxas) {
+        painelTaxas.innerHTML = `
+          <div style="background: #fef3c7; border-radius: 12px; padding: 12px 20px; margin: 20px 0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+            <span><strong>📈 FATURAMENTO:</strong> ${taxaFat}%</span>
+            <span><strong>🔄 PORTABILIDADE:</strong> ${taxaPort}%</span>
+            <span><strong>📱 RENEGOCIAÇÃO:</strong> ${taxaMid}%</span>
+            <span><strong>🔓 STATUS:</strong> ${lojaDesbloqueada ? '✅ DESBLOQUEADA' : '🔒 BLOQUEADA'}</span>
+          </div>
+          <div style="background: #e0f2fe; border-radius: 8px; padding: 8px 15px; margin-bottom: 20px; font-size: 11px; color: #0369a1;">
+            📊 ${statusFat}<br>
+            📊 ${statusPort}<br>
+            📊 ${statusMid}
+          </div>
+        `;
+      }
+
+      let html = "";
+      
+      if (!res.lista || res.lista.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 60px; color: #94a3b8; background: #f8fafc;">Nenhuma venda validada pelo BOC encontrada para ${mes}/${ano}.</td></tr>`;
+        return;
+      }
+
+      let dadosParaExibir = res.lista;
+      if (!isAdmin) {
+        dadosParaExibir = res.lista.filter(item => {
+          const nomeConsultor = (item.consultor || "").toUpperCase().trim();
+          return nomeConsultor === nomeUsuarioLogado;
+        });
+      }
+
+      if (dadosParaExibir.length === 0 && !isAdmin) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; padding: 60px; color: #94a3b8; background: #f8fafc;">Nenhuma comissão encontrada para você no período ${mes}/${ano}.</td></tr>`;
+        return;
+      }
+
+      dadosParaExibir.forEach(item => {
+        const faturamento = item.faturamentoTotal || 0;
+        const portValor = item.vPort || 0;
+        const midValor = item.vReneg || 0;
+        const qtdMid = item.midQtd || 0;
+        const gross = item.gross || 0;
+        
+        // ✨ AQUI: Usamos diretamente o Total calculado pelo backend para garantir 100% de precisão com o Extrato
+        const totalAprovado = item.total || 0; 
+        
+        const vMidExibido = midValor * taxaMid / 100;
+        const infoMid = `${qtdMid} un / ${formatMoeda(vMidExibido)}`;
+
+        const botaoBaixa = isAdmin 
+          ? `<button onclick="confirmarPagamentoIndividual('${item.consultor}', ${faturamento}, ${gross}, ${totalAprovado})" 
+                title="Confirmar pagamento"
+                style="background: #10b981; color: white; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.3s; box-shadow: 0 4px 6px rgba(16, 185, 129, 0.2);">
+                💰 BAIXA
+              </button>`
+          : `<span style="font-size: 10px; color: #94a3b8; background: #f1f5f9; padding: 8px 12px; border-radius: 8px;">🔒 Acesso Restrito</span>`;
+
+        html += `
+          <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+            <td style="padding: 15px 20px;">
+              <div style="font-weight: 700; color: #1e293b; font-size: 13px;">${item.consultor}</div>
+              <div style="font-size: 9px; color: #64748b; margin-top: 4px; display: flex; gap: 6px;">
+                <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">FAT: ${taxaFat}%</span>
+                <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">PORT: ${taxaPort}%</span>
+                <span style="background: #e2e8f0; padding: 2px 6px; border-radius: 4px;">MID: ${taxaMid}%</span>
+              </div>
+            </td>
+            <td style="padding: 15px; font-weight: 600; color: #334155;">${formatMoeda(faturamento)}</td>
+            <td style="padding: 15px; font-weight: 800;">
+              <span style="background: #dcfce7; color: #166534; padding: 4px 10px; border-radius: 20px;">${gross} un</span>
+            </td>
+            <td style="padding: 15px; font-weight: 600; color: #334155;">${formatMoeda(portValor)}</td>
+            <td style="padding: 15px; font-weight: 600; color: #334155;">${infoMid}</td>
+            
+            <!-- 💎 Glassmorphism na Coluna de Pagamento -->
+            <td style="padding: 15px; text-align: center;">
+              <div style="background: rgba(30, 60, 114, 0.05); border: 1px solid rgba(30, 60, 114, 0.15); padding: 10px 15px; border-radius: 12px; font-size: 16px; font-weight: 800; color: #1e3c72; backdrop-filter: blur(8px); box-shadow: inset 0 2px 6px rgba(255,255,255,0.8);">
+                ${formatMoeda(totalAprovado)}
+              </div>
+            </td>
+            
+            <td style="padding: 15px; text-align: center;">
+              <div style="display: flex; gap: 8px; justify-content: flex-end;">
+                <button onclick="abrirExtratoDetalhado('${item.consultor}', '${mes}', '${ano}')" 
+                  style="border: 1px solid #1e3c72; background: white; color: #1e3c72; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.3s;"
+                  onmouseover="this.style.background='#1e3c72'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#1e3c72';">
+                  📄 EXTRATO
+                </button>
+                ${botaoBaixa}
+              </div>
+            </td>
+          </tr>`;
+      });
+      
+      tbody.innerHTML = html;
+      
+      let totaisLojaHtml = document.getElementById('totais-loja-footer');
+      if (!totaisLojaHtml) {
+        const tableContainer = document.querySelector('.table-container');
+        if (tableContainer) {
+          totaisLojaHtml = document.createElement('div');
+          totaisLojaHtml.id = 'totais-loja-footer';
+          tableContainer.insertAdjacentElement('afterend', totaisLojaHtml);
+        }
+      }
+      
+      if (totaisLojaHtml && res.totaisLoja) {
+        totaisLojaHtml.innerHTML = `
+          <div style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 12px; text-align: center; font-size: 12px; border: 1px solid #e2e8f0;">
+            <strong style="color: #1e293b;">🏢 TOTAIS DA LOJA ${mes}/${ano}:</strong><br>
+            <span style="color: #64748b;">Faturamento: <strong>${formatMoeda(res.totaisLoja.fat)}</strong> | 
+            Portabilidade: <strong>${formatMoeda(res.totaisLoja.port)}</strong> | 
+            MIDs: <strong>${res.totaisLoja.midQtd || 0} un / ${formatMoeda(res.totaisLoja.midVal)}</strong></span>
+          </div>
+        `;
+      }
+      
+    })
+    .getResumoConsolidadoFinanceiro(mes, ano, nomeUsuarioLogado, cargoUsuario);
+}
+
+// ================================================================
+// 2. BAIXA DE PAGAMENTO INDIVIDUAL
+// ================================================================
+function confirmarPagamentoIndividual(nome, fat, gross, total) {
+  const confirmacao = confirm(`Confirmar registro de pagamento para ${nome}?\nValor: R$ ${total.toFixed(2)}`);
+  if (!confirmacao) return;
+
+  console.log("Processando baixa...");
+
+  google.script.run
+    .withFailureHandler(function(err) {
+       console.log("Falha ao buscar detalhes, tentando registro simplificado...");
+       executarRegistroFinal(nome, fat, gross, total, 0, 0, 0);
+    })
+    .withSuccessHandler(function(d) {
+      if (d && d.resumo) {
+        executarRegistroFinal(nome, fat, gross, total, d.resumo.vBase, d.resumo.vPort, d.resumo.vMid);
+      } else {
+        executarRegistroFinal(nome, fat, gross, total, 0, 0, 0);
+      }
+    }).getDadosComissaoIndividual(nome);
+}
+
+function executarRegistroFinal(nome, fat, gross, total, vB, vP, vR) {
+  const payload = {
+    consultor: nome,
+    fatTotal: fat,
+    gross: gross,
+    vBase: vB || 0,
+    vPort: vP || 0,
+    vReneg: vR || 0,
+    totalPago: total
+  };
+
+  google.script.run.withSuccessHandler(function(res) {
+    if(res.success) {
+      alert("✅ Sucesso! Pagamento registrado na aba PAGAMENTOS_HIST.");
+      if(typeof carregarResumoConsolidado === 'function') carregarResumoConsolidado();
+    } else {
+      alert("❌ Erro ao gravar na planilha: " + res.msg);
+    }
+  }).registrarPagamento(payload);
+}
+
+// ================================================================
+// 3. EXTRATO DETALHADO (PDF)
+// ================================================================
+function abrirExtratoDetalhado(nome, mesBtn, anoBtn) {
+  const nomeLimpo = nome.trim().toUpperCase();
+  const inputMes = document.getElementById('filtro-mes-fin');
+  
+  let mes = mesBtn;
+  let ano = anoBtn;
+
+  if (!mes || !ano) {
+    if (inputMes && inputMes.value) {
+      [ano, mes] = inputMes.value.split('-');
+    } else {
+      const hoje = new Date();
+      mes = String(hoje.getMonth() + 1).padStart(2, '0');
+      ano = String(hoje.getFullYear());
+    }
+  }
+
+  if (typeof notificacaoVexo === 'function') {
+    notificacaoVexo(`⏳ Gerando extrato de ${mes}/${ano} para ${nomeLimpo}...`, 'info');
+  }
+
+  google.script.run
+    .withSuccessHandler(function(dados) {
+      if (!dados || dados.success === false) {
+        const msg = dados?.msg || "Nenhuma venda validada encontrada neste mês.";
+        alert(`⚠️ ${msg}`);
+        return;
+      }
+      
+      dados.referencia = `${mes}/${ano}`;
+      
+      if (typeof gerarDocumentoImpressao === 'function') {
+        gerarDocumentoImpressao(dados);
+      } else {
+        console.error("Função gerarDocumentoImpressao não encontrada.");
+      }
+    })
+    .withFailureHandler(function(err) {
+      alert("Erro crítico ao processar extrato: " + err);
+    })
+    .getDadosComissaoIndividual(nomeLimpo, mes, ano);
+}
+
+// ================================================================
+// 4. MOTOR DE IMPRESSÃO (EXTRATO)
+// ================================================================
+function gerarDocumentoImpressao(d) {
+  const win = window.open('', '', 'width=950,height=850');
+  
+  const styles = `
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap');
+      body { font-family: 'Inter', sans-serif; padding: 30px; color: #1e293b; background: #fff; line-height: 1.4; }
+      .header { border-bottom: 3px solid #1e3c72; padding-bottom: 15px; margin-bottom: 25px; display: flex; justify-content: space-between; align-items: center; }
+      .logo-area h1 { margin: 0; color: #1e3c72; font-size: 24px; font-weight: 800; letter-spacing: -1px; }
+      .info-loja { background: #e0f2fe; border: 1px solid #bae6fd; border-radius: 8px; padding: 15px; margin-bottom: 20px; font-size: 12px; color: #0369a1; }
+      .info-loja strong { color: #0284c7; }
+      .kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 25px; }
+      .kpi-card { background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 10px; text-align: center; }
+      .kpi-card small { font-size: 8px; color: #64748b; font-weight: 700; text-transform: uppercase; display: block; margin-bottom: 4px; }
+      .kpi-card div { font-size: 14px; font-weight: 800; color: #1e3c72; }
+      .total-destaque { background: #1e3c72 !important; color: white !important; }
+      .total-destaque div, .total-destaque small { color: white !important; }
+      .section-header { background: #1e3c72; color: white; padding: 8px 15px; border-radius: 6px; font-weight: 700; font-size: 12px; margin-top: 20px; display: flex; justify-content: space-between; align-items: center; }
+      .tax-badge { background: rgba(255,255,255,0.2); padding: 2px 8px; border-radius: 4px; font-size: 10px; }
+      table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 10px; }
+      th { text-align: left; padding: 8px; color: #64748b; border-bottom: 2px solid #e2e8f0; text-transform: uppercase; }
+      td { padding: 8px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+      .text-right { text-align: right; font-family: 'Courier New', monospace; font-weight: 600; }
+      .subtotal-row { background: #f8fafc; font-weight: 700; font-size: 11px; }
+      .footer-sign { margin-top: 40px; padding-top: 20px; border-top: 1px solid #e2e8f0; text-align: center; font-size: 11px; color: #64748b; }
+      .alerta-trava { color: #991b1b; background: #fef2f2; padding: 10px; border-radius: 6px; font-weight: 600; margin-top: 10px; border: 1px solid #fecaca; font-size: 10px; }
+      .taxa-aplicada-loja { background: #fef3c7; border: 1px solid #fde68a; border-radius: 6px; padding: 8px 12px; margin: 10px 0; font-size: 11px; text-align: center; }
+      @media print { .no-print { display: none; } body { padding: 10px; } }
+    </style>
+  `;
+
+  const format = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const taxaFatEfetiva = d.taxasLoja?.fat || 10;
+  const taxaPortEfetiva = d.taxasLoja?.port || 10;
+  const taxaMidEfetiva = d.taxasLoja?.mid || 10;
+  const statusFatLoja = d.taxasLoja?.statusFat || "Taxa aplicada";
+  const statusPortLoja = d.taxasLoja?.statusPort || "Taxa aplicada";
+  const statusMidLoja = d.taxasLoja?.statusMid || "Taxa aplicada";
+  const lojaDesbloqueada = d.taxasLoja?.lojaDesbloqueada || false;
+  
+  const fatLoja = d.totaisLoja?.fat || 0;
+  const portLoja = d.totaisLoja?.port || 0;
+  const midQtdLoja = d.totaisLoja?.midQtd || 0;
+  const fatMinMeta = d.resumo?.fatMinMeta || 0;
+  
+  const vBaseRecalculado = (d.resumo.fat || 0) * (taxaFatEfetiva / 100);
+  const vPortRecalculado = (d.resumo.portVal || 0) * (taxaPortEfetiva / 100);
+  const vMidRecalculado = (d.resumo.vMidFaturamento || 0) * (taxaMidEfetiva / 100);
+  const totalFinalRecalculado = vBaseRecalculado + vPortRecalculado + vMidRecalculado;
+
+  const listaReneg = d.listas.mid || d.listas.reneg || [];
+  const tabelaMidRows = listaReneg.length > 0
+    ? listaReneg.map(v => `
+        <tr>
+          <td>${v.data}</td>
+          <td>${v.cliente}</td>
+          <td>${v.telefone || '---'}</td>
+          <td class="text-right">${format(v.valor)}</td>
+          <td class="text-right" style="color:${lojaDesbloqueada ? '#b45309' : '#94a3b8'}">
+            ${lojaDesbloqueada ? format(v.valor * (taxaMidEfetiva / 100)) : format(0)}
+          </td>
+        </tr>`).join('')
+    : `<tr><td colspan="5" style="color:#94a3b8; padding:10px;">Sem renegociações registradas.</td></tr>`;
+
+  let mensagemMID = "";
+  
+  if (!lojaDesbloqueada && midQtdLoja > 0) {
+    const gatilho60 = fatMinMeta * 0.60;
+    const faltam = gatilho60 - fatLoja;
+    mensagemMID = `
+      <div class="alerta-trava" style="margin-bottom:12px;">
+        ⚠️ <strong>Comissão de Renegociação BLOQUEADA</strong><br>
+        A liberação ocorre quando a <strong>loja atingir 60% do faturamento mínimo</strong> da meta.<br>
+        Meta mínima: <strong>${format(fatMinMeta)}</strong> | Gatilho (60%): <strong>${format(gatilho60)}</strong><br>
+        Faturamento total da loja: <strong>${format(fatLoja)}</strong> — faltam <strong>${format(faltam)}</strong> para desbloquear.
+      </div>
+      <table>
+        <thead><tr><th>Data</th><th>Cliente</th><th>📞 Telefone</th><th class="text-right">Valor</th><th class="text-right">Comissão (BLOQUEADA)</th></tr></thead>
+        <tbody>${tabelaMidRows}</tbody>
+      </table>`;
+  } else {
+    const iconeDegrau = lojaDesbloqueada ? "✅" : "⚠️";
+    const corDegrau = lojaDesbloqueada ? "#166534" : "#b45309";
+    
+    mensagemMID = `
+      <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:10px; margin-bottom:12px; font-size:10px; color:${corDegrau};">
+        ${iconeDegrau} <strong>Comissão de Renegociação ${lojaDesbloqueada ? 'DESBLOQUEADA' : 'BLOQUEADA'} | Taxa: ${taxaMidEfetiva}%</strong><br>
+        ${statusMidLoja}
+      </div>
+      <table>
+        <thead><tr><th>Data</th><th>Cliente</th><th>📞 Telefone</th><th class="text-right">Valor Reneg.</th><th class="text-right">Comissão (${taxaMidEfetiva}%)</th></tr></thead>
+        <tbody>${tabelaMidRows}</tbody>
+      </table>
+      <div style="margin-top:8px; font-size:10px; color:#b45309; text-align:right;">
+        ${midQtdLoja} renegociação(ões) na loja | Volume individual: ${format(d.resumo.vMidFaturamento || 0)}
+      </div>`;
+  }
+
+  const html = `
+    <html>
+    <head>${styles}</head>
+    <body>
+      <div class="header">
+        <div class="logo-area"><h1>E&E NORDESTE</h1><small>EXTRATO DE COMISSÃO VENDEDOR</small></div>
+        <div style="text-align:right; font-size: 11px;">
+          <strong>VENDEDOR:</strong> ${d.consultor}<br>
+          <strong>REFERÊNCIA:</strong> ${d.referencia}<br>
+          <strong>EMISSÃO:</strong> ${new Date().toLocaleDateString('pt-BR')}
+        </div>
+      </div>
+
+      <div class="info-loja">
+        <strong>🏢 DESEMPENHO DA LOJA - ${d.referencia}</strong><br>
+        📊 Faturamento Total da Loja: <strong>${format(fatLoja)}</strong><br>
+        🔄 Portabilidade Total: <strong>${format(portLoja)}</strong><br>
+        📱 Renegociações Realizadas: <strong>${midQtdLoja} unidades</strong><br>
+        <hr style="margin: 8px 0; border-color: #bae6fd;">
+        <span>✅ As taxas abaixo são DEFINIDAS PELO DESEMPENHO DA LOJA e aplicadas a TODOS os consultores igualmente.</span>
+      </div>
+
+      <div class="taxa-aplicada-loja">
+        <strong>💰 TAXA APLICADA NESTE EXTRATO: ${taxaFatEfetiva}%</strong> (sobre Faturamento)<br>
+        ${statusFatLoja}
+      </div>
+
+      <div class="kpi-grid">
+        <div class="kpi-card"><small>SUA PRODUÇÃO</small><div>${format(d.resumo.fat)}</div></div>
+        <div class="kpi-card" style="background:#ecfdf5; border-color:#a7f3d0;"><small style="color:#065f46;">GROSS (LINHAS)</small><div style="color:#059669;">${d.resumo.gross || 0} Un</div></div>
+        <div class="kpi-card"><small>PORTABILIDADE</small><div>${format(d.resumo.portVal)}</div></div>
+        <div class="kpi-card"><small>Renegociações Realizadas</small><div>${d.resumo.midQtd || 0} Un</div></div>
+        <div class="kpi-card total-destaque"><small>TOTAL A RECEBER</small><div>${format(totalFinalRecalculado)}</div></div>
+      </div>
+
+      <div class="section-header">
+        <span>1. COMISSÃO BASE (FATURAMENTO)</span>
+        <span class="tax-badge">TAXA DA LOJA: ${taxaFatEfetiva}%</span>
+      </div>
+      <table>
+        <thead><tr><th>Data</th><th>Cliente</th><th>📞 Telefone</th><th class="text-right">Valor</th><th class="text-right">Ganho (${taxaFatEfetiva}%)</th></tr></thead>
+        <tbody>
+          ${d.listas.base.map(v => `
+            <tr>
+              <td>${v.data}</td>
+              <td>${v.cliente}</td>
+              <td>${v.telefone || '---'}</td>
+              <td class="text-right">${format(v.valor)}</td>
+              <td class="text-right" style="color:#1e3c72">${format(v.valor * (taxaFatEfetiva / 100))}</td>
+            </tr>`).join('')}
+          <tr class="subtotal-row"><td colspan="4" class="text-right">SUBTOTAL BASE:</td><td class="text-right">${format(vBaseRecalculado)}</td></tr>
+        </tbody>
+      </table>
+
+      <div class="section-header" style="background:#10b981;">
+        <span>2. ADICIONAL PORTABILIDADE</span>
+        <span class="tax-badge">TAXA DA LOJA: ${taxaPortEfetiva}%</span>
+      </div>
+      ${d.listas.port.length > 0 ? `
+      <table>
+        <thead><tr><th>Data</th><th>Cliente</th><th>📞 Telefone</th><th class="text-right">Valor</th><th class="text-right">Bônus (${taxaPortEfetiva}%)</th></tr></thead>
+        <tbody>
+          ${d.listas.port.map(v => `
+            <tr>
+              <td>${v.data}</td>
+              <td>${v.cliente}</td>
+              <td>${v.telefone || '---'}</td>
+              <td class="text-right">${format(v.valor)}</td>
+              <td class="text-right" style="color:#059669">${format(v.valor * (taxaPortEfetiva / 100))}</td>
+            </tr>`).join('')}
+          <tr class="subtotal-row"><td colspan="4" class="text-right">SUBTOTAL PORT: </td><td class="text-right">${format(vPortRecalculado)}</td></tr>
+        </tbody>
+      </table>` : '<p style="font-size:10px; color:#94a3b8; padding:10px;">Sem registros de portabilidade.</p>'}
+
+      <div class="section-header" style="background:#f59e0b;">
+        <span>3. ADICIONAL RENEGOCIAÇÃO</span>
+        <span class="tax-badge">TAXA DA LOJA: ${taxaMidEfetiva}% | ${lojaDesbloqueada ? '✅ DESBLOQUEADA' : '🔒 BLOQUEADA'}</span>
+      </div>
+      <div style="padding:15px; background:#fffbeb; border:1px solid #fef3c7; border-radius:0 0 8px 8px;">
+        ${mensagemMID}
+        <div style="margin-top:12px; font-size:12px; border-top:1px dashed #fcd34d; padding-top:8px; color:#92400e; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:10px; color:#b45309;">
+            Sua quantidade: ${d.resumo.midQtd || 0} Renegs | Volume: ${format(d.resumo.vMidFaturamento || 0)}
+          </span>
+          <strong>SUA COMISSÃO RENEG.: ${format(vMidRecalculado)}</strong>
+        </div>
+      </div>
+
+      <div style="margin-top:25px; background:#0f172a; border-radius:12px; padding:20px; color:white;">
+        <div style="font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:1px; opacity:0.6; margin-bottom:14px;">Resumo de Comissões a Pagar</div>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; margin-bottom:16px;">
+          <div style="background:rgba(255,255,255,0.07); border-radius:8px; padding:12px;">
+            <div style="font-size:9px; opacity:0.6; text-transform:uppercase; margin-bottom:4px;">Base (${taxaFatEfetiva}%)</div>
+            <div style="font-size:15px; font-weight:700;">${format(vBaseRecalculado)}</div>
+          </div>
+          <div style="background:rgba(16,185,129,0.2); border-radius:8px; padding:12px;">
+            <div style="font-size:9px; opacity:0.7; text-transform:uppercase; margin-bottom:4px; color:#6ee7b7;">Portabilidade (${taxaPortEfetiva}%)</div>
+            <div style="font-size:15px; font-weight:700; color:#6ee7b7;">${format(vPortRecalculado)}</div>
+          </div>
+          <div style="background:rgba(245,158,11,${lojaDesbloqueada ? '0.25' : '0.08'}); border-radius:8px; padding:12px;">
+            <div style="font-size:9px; opacity:0.7; text-transform:uppercase; margin-bottom:4px; color:#fcd34d;">
+              Renegociação (${taxaMidEfetiva}%)${lojaDesbloqueada ? '' : ' 🔒'}
+            </div>
+            <div style="font-size:15px; font-weight:700; color:#fcd34d;">${format(vMidRecalculado)}</div>
+          </div>
+        </div>
+        <div style="border-top:1px solid rgba(255,255,255,0.1); padding-top:14px; display:flex; justify-content:space-between; align-items:center;">
+          <span style="font-size:12px; opacity:0.6;">TOTAL LÍQUIDO A RECEBER</span>
+          <span style="font-size:22px; font-weight:800; color:#38ef7d;">${format(totalFinalRecalculado)}</span>
+        </div>
+      </div>
+
+      <div class="footer-sign">
+        <p>Este extrato detalha as vendas validadas pelo Backoffice (BOC) dentro do mês de referência.</p>
+        <p style="font-size:9px; margin-top:5px;">✅ As taxas aplicadas são definidas pelo <strong>DESEMPENHO DA LOJA</strong>
+        <br><br>_______________________________________________________<br>Assinatura do Consultor
+      </div>
+
+      <button class="no-print" onclick="window.print()" style="position:fixed; bottom:30px; right:30px; background:#1e3c72; color:white; border:none; padding:12px 30px; border-radius:50px; font-weight:bold; cursor:pointer; box-shadow:0 4px 12px rgba(0,0,0,0.15);">🖨️ IMPRIMIR EXTRATO</button>
+    </body>
+    </html>
+  `;
+
+  win.document.write(html);
+  win.document.close();
+}
+
+// ================================================================
+// 5. CONFIGURAÇÃO DE PERCENTUAIS (MODAL)
+// ================================================================
+function abrirModalConfig() {
+  const modal = document.getElementById('modal-config-comissao');
+  modal.style.display = 'flex';
+  
+  const inputs = modal.querySelectorAll('input');
+  inputs.forEach(i => {
+    i.placeholder = "Carregando...";
+    i.value = "";
+  });
+
+  google.script.run.withSuccessHandler(function(res) {
+    if (res && res.success) {
+      document.getElementById('f_min').value = res.dados.fat_min;
+      document.getElementById('f_target').value = res.dados.fat_target;
+      document.getElementById('f_sup').value = res.dados.fat_sup;
+      
+      document.getElementById('p_min').value = res.dados.port_min;
+      document.getElementById('p_target').value = res.dados.port_target;
+      document.getElementById('p_sup').value = res.dados.port_sup;
+      
+      document.getElementById('r_min').value = res.dados.reneg_min;
+      document.getElementById('r_target').value = res.dados.reneg_target;
+      document.getElementById('r_sup').value = res.dados.reneg_sup;
+      
+      inputs.forEach(i => i.placeholder = "0");
+    } else {
+      console.error("Erro ao carregar configurações ou aba vazia.");
+      inputs.forEach(i => i.placeholder = "Erro ao carregar");
+    }
+  }).obterConfigPercentuaisParaModal();
+}
+
+function fecharModalConfig() {
+  document.getElementById('modal-config-comissao').style.display = 'none';
+}
+
+function salvarConfig() {
+  const dados = {
+    fat_min: parseFloat(document.getElementById('f_min').value) || 0,
+    fat_target: parseFloat(document.getElementById('f_target').value) || 0,
+    fat_sup: parseFloat(document.getElementById('f_sup').value) || 0,
+    port_min: parseFloat(document.getElementById('p_min').value) || 0,
+    port_target: parseFloat(document.getElementById('p_target').value) || 0,
+    port_sup: parseFloat(document.getElementById('p_sup').value) || 0,
+    reneg_min: parseFloat(document.getElementById('r_min').value) || 0,
+    reneg_target: parseFloat(document.getElementById('r_target').value) || 0,
+    reneg_sup: parseFloat(document.getElementById('r_sup').value) || 0
+  };
+
+  const btnSalvar = event.target;
+  const originalText = btnSalvar.innerText;
+  btnSalvar.innerText = "⏳ Gravando...";
+  btnSalvar.disabled = true;
+
+  google.script.run.withSuccessHandler(function(res) {
+    btnSalvar.innerText = originalText;
+    btnSalvar.disabled = false;
+
+    if(res.success) {
+      alert("✅ Percentuais atualizados com sucesso!");
+      fecharModalConfig();
+      
+      setTimeout(function() {
+        carregarResumoConsolidado(); 
+      }, 800);
+      
+    } else {
+      alert("❌ Erro ao salvar: " + res.msg);
+    }
+  }).salvarPercentuaisConfig(dados);
+}
+
+// ================================================================
+// 6. HISTÓRICO DE PAGAMENTOS
+// ================================================================
+function abrirModalHistorico() {
+  document.getElementById('modal-historico-pag').style.display = 'flex';
+  const tbody = document.getElementById('corpo-historico-pag');
+  tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">⌛ Carregando registros...</td></tr>';
+
+  google.script.run.withSuccessHandler(function(lista) {
+    if (lista.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 30px;">Nenhum pagamento registrado ainda.</td></tr>';
+      return;
+    }
+
+    let html = "";
+    const format = (v) => Number(v).toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
+
+    lista.forEach(item => {
+      html += `
+        <tr style="border-bottom: 1px solid #f1f5f9;">
+          <td style="padding: 12px;">${item.data}</td>
+          <td style="padding: 12px; font-weight: 700;">${item.consultor}</td>
+          <td style="padding: 12px;">${item.referencia}</td>
+          <td style="padding: 12px;">${format(item.vBase)}</td>
+          <td style="padding: 12px; color: #10b981;">${format(item.vPort)}</td>
+          <td style="padding: 12px; color: #f59e0b;">${format(item.vReneg)}</td>
+          <td style="padding: 12px; font-weight: 800; color: #1e3c72; background: #f0f7ff;">${format(item.total)}</td>
+        </tr>
+      `;
+    });
+    tbody.innerHTML = html;
+  }).getHistoricoPagamentos();
+}
+
+function fecharModalHistorico() {
+  document.getElementById('modal-historico-pag').style.display = 'none';
+}
+
+function filtrarTabelaHistorico() {
+  const input = document.getElementById("filtroNomeHistorico").value.toUpperCase();
+  const rows = document.getElementById("corpo-historico-pag").getElementsByTagName("tr");
+
+  for (let i = 0; i < rows.length; i++) {
+    const td = rows[i].getElementsByTagName("td")[1];
+    if (td) {
+      const txtValue = td.textContent || td.innerText;
+      rows[i].style.display = txtValue.toUpperCase().indexOf(input) > -1 ? "" : "none";
+    }
+  }
+}
+
+// ================================================================
+// 7. MÓDULO PARCEIROS – VERSÃO CORRIGIDA
+// ================================================================
+let dadosParceiroAtual = null;
+let dadosTabelaAtuais = []; // Armazena os dados da tabela atual para atualizações parciais
+
+function carregarListaParceiros() {
+  google.script.run
+    .withSuccessHandler(function(parceiros) {
+      const select = document.getElementById('select-parceiro');
+      select.innerHTML = '<option value="">Selecione um parceiro...</option>';
+      parceiros.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.matricula;
+        option.textContent = p.nome + ' (' + p.matricula + ')';
+        option.dataset.bancoId = p.bancoDeDadosId;
+        select.appendChild(option);
+      });
+      const hoje = new Date();
+      const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
+      document.getElementById('filtro-mes-parceiro').value = hoje.getFullYear() + '-' + mesAtual;
+    })
+    .withFailureHandler(function(err) {
+      console.error('Erro ao carregar parceiros:', err);
+      alert('Não foi possível carregar a lista de parceiros.');
+    })
+    .listarParceiros();
+}
+
+function carregarComissaoParceiro() {
+  const select = document.getElementById('select-parceiro');
+  const matricula = select.value;
+  if (!matricula) {
+    alert('Selecione um parceiro.');
+    return;
+  }
+
+  const bancoId = select.options[select.selectedIndex].dataset.bancoId;
+  const nomeParceiro = select.options[select.selectedIndex].textContent.split('(')[0].trim();
+
+  const mesAno = document.getElementById('filtro-mes-parceiro').value;
+  if (!mesAno) {
+    alert('Selecione o mês/ano.');
+    return;
+  }
+  const [ano, mes] = mesAno.split('-');
+
+  // Limpa a tabela e mostra loading
+  const tbody = document.getElementById('tabela-vendas-parceiro');
+  tbody.innerHTML = `
+    <tr><td colspan="11" style="text-align: center; padding: 40px; color: #64748b;">⏳ Carregando vendas do parceiro...</td></tr>
+  `;
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (!res.success) {
+        alert('Erro: ' + res.message);
+        return;
+      }
+      // Armazena os dados
+      dadosParceiroAtual = res;
+      // Garante que o CNPJ seja definido (vem do backend)
+      dadosParceiroAtual.cnpj = res.cnpjParceiro || '';
+      dadosParceiroAtual.planilhaUsada = res.planilhaUsada || bancoId;
+      // Atualiza interface
+      atualizarInterfaceParceiro(res);
+    })
+    .withFailureHandler(function(err) {
+      alert('Falha na comunicação: ' + err);
+    })
+    .p_getComissaoParceiroCompleta(bancoId, nomeParceiro, mes, ano);
+}
+
+function atualizarInterfaceParceiro(dados) {
+  const formatMoeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  // Atualiza cards
+  document.getElementById('card-receita-parceiro').innerText = formatMoeda(dados.totais.receita);
+  document.getElementById('card-gross-parceiro').innerHTML = (dados.totais.gross || 0) + ' un';
+  document.getElementById('card-port-parceiro').innerText = formatMoeda(dados.totais.portabilidade);
+  document.getElementById('card-mid-parceiro').innerHTML = (dados.totais.renegQtd || 0) + ' un / ' + formatMoeda(dados.totais.renegVal);
+  document.getElementById('card-com-total-parceiro').innerText = formatMoeda(dados.totais.comissaoTotal);
+
+  // Painel de taxas
+  const pcts = dados.percentuais || {};
+  const painel = document.getElementById('painel-taxas-parceiro') || criarPainelTaxasParceiro();
+  painel.innerHTML = `
+    <div style="background: #fef3c7; border-radius: 12px; padding: 12px 20px; margin: 20px 0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+      ${Object.entries(pcts).map(([k, v]) => `<span><strong>${k}:</strong> ${v}%</span>`).join('')}
+    </div>
+  `;
+
+  // Guarda os dados da tabela para atualizações parciais
+  dadosTabelaAtuais = dados.vendas || [];
+
+  // Buscar status da aba PAGAMENTOS_PARCEIROS
+  const chaves = dadosTabelaAtuais.map(v => {
+    const cnpj = dados.cnpj || '';
+    const data = v.data || '';
+    const linha = v.linha || '';
+    const modalidade = v.modalidade || '';
+    return `${cnpj}|${data}|${linha}|${modalidade}`;
+  });
+
+  const bancoId = document.getElementById('select-parceiro').options[document.getElementById('select-parceiro').selectedIndex]?.dataset?.bancoId || dados.planilhaUsada;
+
+  if (chaves.length === 0) {
+    renderizarTabelaComStatus(dados, {});
+    return;
+  }
+
+  google.script.run
+    .withSuccessHandler(function(statusMap) {
+      renderizarTabelaComStatus(dados, statusMap);
+    })
+    .withFailureHandler(function(err) {
+      console.error('Erro ao buscar status:', err);
+      renderizarTabelaComStatus(dados, {});
+    })
+    .p_buscarStatusPagamentoParceiro(chaves, bancoId);
+}
+
+function renderizarTabelaComStatus(dados, statusMap) {
+  const formatMoeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const tbody = document.getElementById('tabela-vendas-parceiro');
+  let html = '';
+  const cnpjBase = dados.cnpj || '';
+
+  dados.vendas.forEach((v, index) => {
+    const chave = `${cnpjBase}|${v.data || ''}|${v.linha || ''}|${v.modalidade || ''}`;
+    const statusInfo = statusMap[chave] || { status: 'PENDENTE', comissaoAprovada: null };
+    const statusDisplay = statusInfo.status || 'PENDENTE';
+    const comissaoExibida = (statusInfo.comissaoAprovada !== null && statusInfo.comissaoAprovada !== undefined) 
+      ? statusInfo.comissaoAprovada 
+      : v.comissaoTotal;
+
+    const statusColors = {
+      'PENDENTE': { bg: '#fef3c7', color: '#92400e' },
+      'PAGO': { bg: '#dcfce7', color: '#166534' },
+      'NAO_PAGO': { bg: '#fee2e2', color: '#991b1b' }
+    };
+    const cor = statusColors[statusDisplay] || statusColors['PENDENTE'];
+
+    html += `
+      <tr data-chave="${chave}" style="border-bottom: 1px solid #f1f5f9;">
+        <td style="padding: 12px 15px;">${v.data || '---'}</td>
+        <td style="padding: 12px 15px; font-weight: 600; color: #1e293b;">${v.cliente || 'N/I'}</td>
+        <td style="padding: 12px 15px;">${v.modalidade || '---'}</td>
+        <td style="padding: 12px 15px; font-weight: 600; color: #1e3c72;">${v.linha || '---'}</td>
+        <td style="padding: 12px 15px; font-weight: 600;">${formatMoeda(v.valor)}</td>
+        <td style="padding: 12px 15px; color: #1e3c72;">${formatMoeda(v.comissaoBase)}</td>
+        <td style="padding: 12px 15px; color: #10b981;">${formatMoeda(v.comissaoPort)}</td>
+        <td style="padding: 12px 15px; color: #f59e0b;">${formatMoeda(v.comissaoReneg)}</td>
+        <td style="padding: 12px 15px; text-align: center;">
+          <div style="background: rgba(30, 60, 114, 0.05); border: 1px solid rgba(30, 60, 114, 0.15); padding: 6px 12px; border-radius: 12px; font-size: 14px; font-weight: 800; color: #1e3c72;">
+            ${formatMoeda(comissaoExibida)}
+          </div>
+        </td>
+        <td style="padding: 12px 15px; text-align: center;">
+          <span style="background: ${cor.bg}; color: ${cor.color}; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;">
+            ${statusDisplay}
+          </span>
+        </td>
+        <td style="padding: 12px 15px; text-align: center;">
+          <div style="display: flex; gap: 6px; justify-content: center; flex-wrap: wrap;">
+            <button onclick="editarComissaoParceiro('${chave}', ${comissaoExibida}, '${dados.planilhaUsada || ''}')" 
+                    style="background: #f1f5f9; border: 1px solid #e2e8f0; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: 600;">
+              ✏️ Editar
+            </button>
+            <button onclick="aprovarPagamentoParceiro('${chave}', '${statusDisplay}', '${dados.planilhaUsada || ''}')" 
+                    style="background: #3b82f6; color: white; border: none; padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: 600;">
+              💰 TIM
+            </button>
+          </div>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+}
+
+// ============================================================
+// FUNÇÕES DE ATUALIZAÇÃO PARCIAL (SEM RECARREGAR A TABELA INTEIRA)
+// ============================================================
+function atualizarLinhaTabela(chaveUnica, novoStatus, novaComissao) {
+  const rows = document.querySelectorAll('#tabela-vendas-parceiro tr');
+  for (let row of rows) {
+    // Verifica se a linha tem a chave correspondente
+    if (row.dataset && row.dataset.chave === chaveUnica) {
+      // Atualizar status (coluna 10)
+      const statusCell = row.querySelector('td:nth-child(10)');
+      if (statusCell) {
+        const statusColors = {
+          'PENDENTE': { bg: '#fef3c7', color: '#92400e' },
+          'PAGO': { bg: '#dcfce7', color: '#166534' },
+          'NAO_PAGO': { bg: '#fee2e2', color: '#991b1b' }
+        };
+        const cor = statusColors[novoStatus] || statusColors['PENDENTE'];
+        statusCell.innerHTML = `<span style="background: ${cor.bg}; color: ${cor.color}; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700;">${novoStatus}</span>`;
+      }
+      // Atualizar comissão (coluna 9)
+      if (novaComissao !== undefined && novaComissao !== null) {
+        const totalCell = row.querySelector('td:nth-child(9) div');
+        if (totalCell) {
+          const formatMoeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+          totalCell.innerText = formatMoeda(novaComissao);
+        }
+      }
+      break;
+    }
+  }
+}
+
+// ============================================================
+// EDITAR COMISSÃO – MODAL
+// ============================================================
+let chaveUnicaEditando = null;
+let bancoIdEditando = null;
+let comissaoOriginalEditando = null;
+
+function editarComissaoParceiro(chaveUnica, comissaoAtual, bancoId) {
+  chaveUnicaEditando = chaveUnica;
+  bancoIdEditando = bancoId;
+  comissaoOriginalEditando = comissaoAtual;
+
+  const partes = chaveUnica.split('|');
+  const infoLinha = `Cliente: ${partes[1] || 'N/I'} | Linha: ${partes[2] || '---'} | Modalidade: ${partes[3] || '---'}`;
+  document.getElementById('modal-editar-info-linha').innerText = infoLinha;
+  document.getElementById('modal-editar-valor').value = comissaoAtual.toFixed(2);
+
+  document.getElementById('modal-editar-comissao').style.display = 'flex';
+}
+
+function fecharModalEditarComissao() {
+  document.getElementById('modal-editar-comissao').style.display = 'none';
+  chaveUnicaEditando = null;
+  bancoIdEditando = null;
+  comissaoOriginalEditando = null;
+}
+
+function confirmarEditarComissao() {
+  const novoValor = parseFloat(document.getElementById('modal-editar-valor').value.replace(',', '.'));
+  if (isNaN(novoValor) || novoValor < 0) {
+    alert('Digite um valor válido (maior ou igual a zero).');
+    return;
+  }
+
+  const usuario = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}').username || 'Sistema';
+  const btn = document.getElementById('btn-confirmar-editar');
+  btn.disabled = true;
+  btn.innerText = '⏳ Salvando...';
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      btn.disabled = false;
+      btn.innerText = 'Salvar';
+      if (res.success) {
+        fecharModalEditarComissao();
+        // Atualiza apenas a linha modificada
+        atualizarLinhaTabela(chaveUnicaEditando, null, novoValor);
+        // Atualiza o total do card de comissão (opcional, recalculando)
+        atualizarCardComissaoTotal();
+        alert('✅ Comissão atualizada com sucesso!');
+      } else {
+        alert('❌ Erro: ' + res.message);
+      }
+    })
+    .withFailureHandler(function(err) {
+      btn.disabled = false;
+      btn.innerText = 'Salvar';
+      alert('❌ Erro de comunicação: ' + err);
+    })
+    .p_salvarStatusPagamentoParceiro(chaveUnicaEditando, null, novoValor, bancoIdEditando, usuario);
+}
+
+// ============================================================
+// APROVAR PAGAMENTO – MODAL
+// ============================================================
+let chaveUnicaAprovando = null;
+let bancoIdAprovando = null;
+let statusAtualAprovando = null;
+
+function aprovarPagamentoParceiro(chaveUnica, statusAtual, bancoId) {
+  chaveUnicaAprovando = chaveUnica;
+  bancoIdAprovando = bancoId;
+  statusAtualAprovando = statusAtual;
+
+  const partes = chaveUnica.split('|');
+  const infoLinha = `Cliente: ${partes[1] || 'N/I'} | Linha: ${partes[2] || '---'} | Modalidade: ${partes[3] || '---'}`;
+  document.getElementById('modal-aprovar-info-linha').innerText = infoLinha;
+  document.getElementById('modal-aprovar-status-atual').innerText = statusAtual || 'PENDENTE';
+
+  document.getElementById('modal-aprovar-pagamento').style.display = 'flex';
+}
+
+function fecharModalAprovarPagamento() {
+  document.getElementById('modal-aprovar-pagamento').style.display = 'none';
+  chaveUnicaAprovando = null;
+  bancoIdAprovando = null;
+  statusAtualAprovando = null;
+}
+
+function confirmarAprovarPagamento(novoStatus) {
+  if (novoStatus === statusAtualAprovando) {
+    alert('⚠️ O status já está como ' + novoStatus);
+    fecharModalAprovarPagamento();
+    return;
+  }
+
+  const usuario = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}').username || 'Sistema';
+
+  const botoes = document.querySelectorAll('#modal-aprovar-pagamento button');
+  botoes.forEach(b => b.disabled = true);
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      botoes.forEach(b => b.disabled = false);
+      if (res.success) {
+        fecharModalAprovarPagamento();
+        // Atualiza apenas a linha modificada
+        atualizarLinhaTabela(chaveUnicaAprovando, novoStatus, null);
+        // Atualiza o total do card de comissão (opcional)
+        atualizarCardComissaoTotal();
+        alert('✅ Status atualizado para: ' + novoStatus);
+      } else {
+        alert('❌ Erro: ' + res.message);
+      }
+    })
+    .withFailureHandler(function(err) {
+      botoes.forEach(b => b.disabled = false);
+      alert('❌ Erro de comunicação: ' + err);
+    })
+    .p_salvarStatusPagamentoParceiro(chaveUnicaAprovando, novoStatus, null, bancoIdAprovando, usuario);
+}
+
+// ============================================================
+// ATUALIZAR CARD DE COMISSÃO TOTAL (opcional)
+// ============================================================
+function atualizarCardComissaoTotal() {
+  // Recalcula a soma das comissões exibidas na tabela
+  const rows = document.querySelectorAll('#tabela-vendas-parceiro tr');
+  let total = 0;
+  for (let row of rows) {
+    const totalCell = row.querySelector('td:nth-child(9) div');
+    if (totalCell) {
+      const valor = parseFloat(totalCell.innerText.replace(/[^0-9,.-]/g, '').replace(',', '.'));
+      if (!isNaN(valor)) total += valor;
+    }
+  }
+  const formatMoeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  document.getElementById('card-com-total-parceiro').innerText = formatMoeda(total);
+}
+
+function criarPainelTaxasParceiro() {
+  let div = document.getElementById('painel-taxas-parceiro');
+  if (!div) {
+    div = document.createElement('div');
+    div.id = 'painel-taxas-parceiro';
+    const parent = document.querySelector('#aba-parceiros') || document.body;
+    // Insere depois dos cards
+    const cardsGrid = document.querySelector('#aba-parceiros > div:nth-child(3)');
+    if (cardsGrid) {
+      cardsGrid.insertAdjacentElement('afterend', div);
+    } else {
+      parent.appendChild(div);
+    }
+  }
+  return div;
+}
+
+function carregarAbaParceiros() {
+  carregarListaParceiros();
+  document.getElementById('tabela-vendas-parceiro').innerHTML = `
+    <tr><td colspan="11" style="text-align: center; padding: 40px; color: #94a3b8;">Selecione um parceiro e clique em Atualizar.</td></tr>
+  `;
+  ['card-receita-parceiro', 'card-gross-parceiro', 'card-port-parceiro', 'card-mid-parceiro', 'card-com-total-parceiro']
+    .forEach(id => document.getElementById(id).innerHTML = 'R$ 0,00');
+}
+
+// ================================================================
+// 8. CONTROLE DE ABAS
+// ================================================================
+function mudarAbaFinanceiro(aba) {
+  document.querySelectorAll('.aba-financeiro').forEach(el => el.style.display = 'none');
+  const abaEl = document.getElementById('aba-' + aba);
+  if (abaEl) abaEl.style.display = 'block';
+
+  document.querySelectorAll('.tab-btn-financeiro').forEach(btn => btn.style.background = '#f1f5f9');
+  const btn = document.getElementById('btn-tab-' + aba);
+  if (btn) {
+    btn.style.background = '#1e3c72';
+    btn.style.color = 'white';
+  }
+
+  if (aba === 'parceiros') {
+    carregarAbaParceiros();
+  }
+}
+
+// ================================================================
+// 9. INICIALIZAÇÃO
+// ================================================================
+document.addEventListener('DOMContentLoaded', function() {
+  mudarAbaFinanceiro('geral');
+});
+
+carregarResumoConsolidado();
+</script>

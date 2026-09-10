@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    .config-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      animation: fadeIn 0.4s ease;
+    }
+    
+    .config-header {
+      margin-bottom: 30px;
+    }
+    
+    .config-header h2 {
+      color: #0f172a;
+      font-size: 24px;
+      font-weight: 800;
+      margin: 0 0 8px 0;
+    }
+    
+    .config-header p {
+      color: #64748b;
+      font-size: 14px;
+      margin: 0;
+    }
+    
+    .config-card {
+      background: white;
+      border-radius: 20px;
+      border: 1px solid #e2e8f0;
+      padding: 25px;
+      margin-bottom: 25px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+      transition: all 0.3s;
+    }
+    
+    .config-card:hover {
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1);
+    }
+    
+    .config-card h3 {
+      color: #1e293b;
+      font-size: 18px;
+      font-weight: 700;
+      margin: 0 0 12px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    
+    .config-card h3 i {
+      color: #3b82f6;
+    }
+    
+    .config-card p {
+      color: #64748b;
+      font-size: 13px;
+      line-height: 1.5;
+      margin-bottom: 20px;
+    }
+    
+    .btn-group {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    
+    .btn-primary {
+      background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 12px;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.3s;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3);
+    }
+    
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 700;
+    }
+    
+    .status-success {
+      background: #d1fae5;
+      color: #065f46;
+    }
+    
+    .info-box {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 15px;
+      margin-top: 15px;
+      border-left: 4px solid #3b82f6;
+    }
+    
+    .info-box p {
+      margin: 0;
+      font-size: 12px;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+<div class="config-container">
+  
+  <!-- CABEÇALHO -->
+  <div class="config-header">
+    <h2><i class="fa-brands fa-telegram"></i> Configurações do Sistema</h2>
+    <p>Gerencie as notificações do VEXO HUB via Telegram</p>
+  </div>
+  
+  <!-- CARD PRINCIPAL: TELEGRAM -->
+  <div class="config-card">
+    <h3>
+      <i class="fa-brands fa-telegram"></i> 
+      Telegram - Notificações em Tempo Real
+    </h3>
+    <p>
+      O VEXO HUB está integrado com o Telegram para enviar notificações instantâneas 
+      quando parceiros abrirem chamados, responderem tickets ou avaliarem atendimentos.
+    </p>
+    
+    <div id="telegram-status" style="margin-bottom: 20px;">
+      <div class="status-badge status-success">
+        ✅ Bot configurado e ativo
+      </div>
+    </div>
+    
+    <div class="btn-group">
+      <button onclick="testarTelegram()" class="btn-primary" id="btn-testar">
+        <i class="fa-regular fa-paper-plane"></i> Testar Notificação
+      </button>
+    </div>
+    
+    <div class="info-box">
+      <p>
+        <i class="fa-regular fa-circle-check"></i> 
+        <strong>Status atual:</strong> O bot do Telegram está ativo e configurado.<br>
+        📱 Você receberá alertas em tempo real no seu Telegram pessoal.
+      </p>
+    </div>
+  </div>
+  
+  <!-- CARD: INFORMAÇÕES -->
+  <div class="config-card">
+    <h3>
+      <i class="fa-regular fa-circle-info"></i> 
+      Sobre as Notificações
+    </h3>
+    <p>O VEXO HUB envia notificações automáticas para o Telegram nos seguintes eventos:</p>
+    
+    <ul style="margin: 15px 0 0 20px; color: #475569; font-size: 13px;">
+      <li>🆕 <strong>Novo ticket aberto</strong> - Imediatamente após o parceiro abrir um chamado</li>
+      <li>💬 <strong>Parceiro respondeu</strong> - Quando o parceiro adiciona uma resposta ao ticket</li>
+      <li>⭐ <strong>Ticket avaliado</strong> - Quando o parceiro avalia o atendimento (nota 1 a 5)</li>
+    </ul>
+    
+    <div class="info-box" style="margin-top: 20px;">
+      <p>
+        <i class="fa-regular fa-lightbulb"></i> 
+        <strong>Dica:</strong> Você pode criar um grupo no Telegram e adicionar o bot para que toda a equipe receba as notificações simultaneamente.
+      </p>
+    </div>
+  </div>
+  
+</div>
+
+<script>
+  // ============================================
+  // FUNÇÕES DO TELEGRAM
+  // ============================================
+  
+  function testarTelegram() {
+    const btn = document.getElementById('btn-testar');
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-regular fa-spinner fa-spin"></i> Enviando...';
+    
+    google.script.run
+      .withSuccessHandler(function(resultado) {
+        if (resultado && resultado.includes("✅")) {
+          alert('✅ Notificação enviada! Verifique seu Telegram.');
+        } else {
+          alert('⚠️ ' + resultado);
+        }
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-regular fa-paper-plane"></i> Testar Notificação';
+      })
+      .withFailureHandler(function(err) {
+        alert('❌ Erro ao enviar: ' + err);
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-regular fa-paper-plane"></i> Testar Notificação';
+      })
+      .p_testarTelegram();
+  }
+  
+  // Expor funções globalmente
+  window.testarTelegram = testarTelegram;
+  
+</script>
+</body>
+</html>

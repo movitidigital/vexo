@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <style>
+    :root {
+      --primary: #3b82f6;      --primary-hover: #2563eb;
+      --bg-dark: #0f172a;      --bg-side: #1e293b;
+      --text-main: #f8fafc;    --text-muted: #94a3b8;
+      --accent: #8b5cf6;       --white: #ffffff;
+      --sidebar-width: 260px;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif; }
+    body { background: #f1f5f9; display: flex; height: 100vh; overflow: hidden; position: relative; }
+
+    /* --- SIDEBAR --- */
+    aside {
+      width: var(--sidebar-width); background: var(--bg-side); height: 100%;
+      display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 4px 0 10px rgba(0,0,0,0.1); z-index: 1000;
+    }
+
+    .brand {
+      padding: 30px 25px; display: flex; align-items: center; gap: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .brand img { width: 40px; }
+    .brand h2 { color: white; font-size: 20px; font-weight: 800; letter-spacing: -1px; }
+
+    .nav-menu { flex: 1; padding: 20px 15px; overflow-y: auto; overflow-x: hidden; }
+    
+    /* --- CUSTOM SCROLLBAR (SaaS Style) --- */
+    .nav-menu::-webkit-scrollbar { width: 5px; }
+    .nav-menu::-webkit-scrollbar-track { background: transparent; }
+    .nav-menu::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    .nav-menu:hover::-webkit-scrollbar-thumb { background: var(--primary); }
+
+    .nav-section { color: var(--text-muted); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; margin: 20px 0 10px 10px; font-weight: 700; }
+
+    .menu-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 15px;
+      color: var(--text-muted); text-decoration: none; border-radius: 10px;
+      margin-bottom: 5px; cursor: pointer; transition: all 0.3s; font-size: 14px;
+    }
+    .menu-item:hover { background: rgba(255,255,255,0.05); color: var(--white); }
+    .menu-item.active { background: var(--primary); color: white; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+
+    /* --- CONTEÚDO --- */
+    main { flex: 1; display: flex; flex-direction: column; overflow: hidden; width: 100%; }
+
+    header {
+      height: 70px; background: white; border-bottom: 1px solid #e2e8f0;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+    }
+
+    /* Botão Hambúrguer (Mobile Only) */
+    #menu-toggle {
+      display: none; font-size: 22px; color: var(--bg-side); cursor: pointer;
+      background: #f8fafc; width: 40px; height: 40px; border-radius: 10px;
+      align-items: center; justify-content: center; border: 1px solid #e2e8f0;
+    }
+
+    .user-profile { display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .user-info { text-align: right; }
+    .user-info p { font-size: 14px; font-weight: 600; color: #1e293b; }
+    .user-info span { font-size: 11px; color: var(--text-muted); }
+    .user-avatar { width: 40px; height: 40px; border-radius: 10px; background: #e2e8f0; object-fit: cover; border: 2px solid var(--primary); }
+
+    #main-content { flex: 1; overflow-y: auto; padding: 30px; scroll-behavior: smooth; }
+    
+    /* Scrollbar do conteúdo principal */
+    #main-content::-webkit-scrollbar { width: 8px; }
+    #main-content::-webkit-scrollbar-track { background: #f1f5f9; }
+    #main-content::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+
+    .module-loader { display: flex; justify-content: center; align-items: center; height: 100%; }
+
+    /* --- RESPONSIVIDADE (MOBILE) --- */
+    .sidebar-overlay {
+      display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(2px); z-index: 999;
+    }
+
+    @media (max-width: 768px) {
+      #menu-toggle { display: flex; }
+      
+      aside {
+        position: fixed;
+        left: calc(-1 * var(--sidebar-width)); /* Esconde o menu */
+      }
+
+      aside.mobile-open {
+        left: 0; /* Mostra o menu */
+      }
+
+      .sidebar-overlay.active {
+        display: block;
+      }
+
+      header { padding: 0 15px; }
+      #main-content { padding: 15px; }
+      .user-info { display: none; } /* Esconde nome no mobile para ganhar espaço */
+    }
+  </style>
+</head>
+<body>
+
+  <div class="sidebar-overlay" id="overlay" onclick="window.toggleMobileMenu()"></div>
+
+  <aside id="sidebar">
+  <div class="brand">
+    <img src="https://www.weebly.com/editor/uploads/1/3/4/2/134260582/custom_themes/739339945850558639/files/vexo-imglogo.png" alt="Logo">
+    <h2>VEXO <span style="color:var(--primary)">HUB</span></h2>
+  </div>
+
+  <div class="nav-menu">
+    <div class="nav-section">Principal</div>
+    <div class="menu-item active" onclick="navegar('home_parceiro', this)">
+      <i class="fa-solid fa-house"></i> Dashboard
+    </div>
+    <div class="menu-item" id="btn-menu-vendas" onclick="navegar('vendas', this)">
+  <i class="fa-solid fa-cart-shopping"></i> Vendas TIM
+</div>
+    <div class="menu-item" id="btn-menu-pedidos-input" onclick="navegar('meus_pedidos', this)">
+  <i class="fa-solid fa-box"></i> Meus Pedidos
+</div>
+
+    <div class="nav-section">Operação</div>
+    <div class="menu-item" onclick="navegar('estoque', this)">
+      <i class="fa-solid fa-box-archive"></i> Produtos & Estoque
+    </div>
+    <div class="menu-item" id="btn-menu-suporte" onclick="navegar('suporte', this)">
+  <i class="fa-solid fa-headset"></i> Suporte Técnico
+</div>
+    <div class="menu-item" onclick="navegar('contratos', this)">
+      <i class="fa-solid fa-file-signature"></i> Contratos & Docs
+    </div>
+
+    <div class="nav-section">Resultados</div>
+    <div class="menu-item" onclick="navegar('financeiro_parceiro', this)">
+  <i class="fa-solid fa-coins"></i> Financeiro
+</div>
+    <div class="menu-item" onclick="navegar('comunicacao', this)">
+      <i class="fa-solid fa-comments"></i> Comunicação
+    </div>
+
+    <div class="nav-section">Gestão</div>
+<div class="menu-item" id="menu-credenciamento" onclick="navegar('credenciamento', this)">
+  <i class="fa-solid fa-user-check"></i> Credenciamento
+</div>
+<div class="menu-item" onclick="navegar('usuarios', this)">
+  <i class="fa-solid fa-users-gear"></i> Gestão de Usuários
+</div>
+
+<!-- 🌟 APENAS UM ITEM DE CONFIGURAÇÕES (visível apenas para ADMIN) -->
+<div class="menu-item" id="menu-configuracoes" onclick="navegar('configuracoes_parceiro', this)" style="display: none;">
+  <i class="fa-solid fa-gear"></i> Configurações do Sistema
+</div>
+    
+    <div class="menu-item" onclick="logout()" style="margin-top: 40px; color: #f43f5e;">
+      <i class="fa-solid fa-right-from-bracket"></i> Sair do Sistema
+    </div>
+  </div>
+</aside>
+
+  <main>
+    <header>
+      <div style="display: flex; align-items: center; gap: 15px;">
+        <div id="menu-toggle" onclick="window.toggleMobileMenu()">
+          <i class="fa-solid fa-bars-staggered"></i>
+        </div>
+        <div class="page-title">
+          <h4 id="current-page-name" style="color: #1e293b; font-weight: 700;">Dashboard</h4>
+        </div>
+      </div>
+
+      <div class="user-profile">
+        <div class="user-info">
+          <p id="user-display-name">Carregando...</p>
+          <span id="user-role">Parceiro PE</span>
+        </div>
+        <img src="" id="user-avatar" class="user-avatar" alt="User">
+      </div>
+    </header>
+
+    <div id="main-content">
+      <div class="module-loader">
+         <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 30px; color: var(--primary);"></i>
+       </div>
+    </div>
+  </main>
+
+  <script>
+    // ============================================
+    // FUNÇÕES DE INICIALIZAÇÃO DO DASHBOARD FREELANCER
+    // ============================================
+    window.inicializarHomeFreelancer = function() {
+      console.log('🚀 Inicializando Dashboard Freelancer (via função global)...');
+
+      // 1. IDENTIFICAÇÃO DO USUÁRIO
+      const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+      const nome = (user.username || user.nome || 'Freelancer').split(' ')[0];
+      const nomeEl = document.getElementById('freela-name');
+      if (nomeEl) nomeEl.innerText = nome;
+
+      // 2. DATA E SEMANA ATUAL
+      const hoje = new Date();
+      const dataEl = document.getElementById('data-atual');
+      if (dataEl) {
+        dataEl.innerText = hoje.toLocaleDateString('pt-BR', {
+          day: '2-digit', month: 'long', year: 'numeric'
+        });
+      }
+
+      const inicioAno = new Date(hoje.getFullYear(), 0, 1);
+      const semana = Math.ceil((hoje - inicioAno) / (7 * 24 * 60 * 60 * 1000));
+      const semanaEl = document.getElementById('semana-atual');
+      if (semanaEl) semanaEl.innerText = 'Semana ' + semana;
+
+      // 3. PREENCHER SELECT DE ANOS
+      const anoSelect = document.getElementById('ano-selecionado');
+      if (anoSelect) {
+        const anoAtual = hoje.getFullYear();
+        anoSelect.innerHTML = '';
+        for (let a = anoAtual - 2; a <= anoAtual + 1; a++) {
+          const opt = document.createElement('option');
+          opt.value = a;
+          opt.innerText = a;
+          if (a === anoAtual) opt.selected = true;
+          anoSelect.appendChild(opt);
+        }
+      }
+
+      // 4. SELECIONAR MÊS ATUAL
+      const mesSelect = document.getElementById('mes-selecionado');
+      if (mesSelect) {
+        mesSelect.value = hoje.getMonth() + 1;
+      }
+
+      // 5. CARREGAR DADOS
+      setTimeout(function() {
+        if (typeof window.carregarDadosFreelancer === 'function') {
+          window.carregarDadosFreelancer();
+        } else {
+          console.warn('⚠️ Função carregarDadosFreelancer não definida.');
+        }
+      }, 200);
+
+      // 6. CARREGAR COMUNICADOS
+      if (typeof window.carregarComunicadosFreelancer === 'function') {
+        window.carregarComunicadosFreelancer();
+      } else {
+        console.warn('⚠️ Função carregarComunicadosFreelancer não definida.');
+      }
+
+      console.log('✅ Dashboard Freelancer inicializado com sucesso!');
+    };
+
+    // ============================================
+    // FUNÇÃO PARA CARREGAR DADOS DO FREELANCER
+    // ============================================
+    window.carregarDadosFreelancer = function() {
+      const mesSelect = document.getElementById('mes-selecionado');
+      const anoSelect = document.getElementById('ano-selecionado');
+      if (!mesSelect || !anoSelect) {
+        console.error('❌ Selects não encontrados');
+        return;
+      }
+
+      const mes = parseInt(mesSelect.value);
+      const ano = parseInt(anoSelect.value);
+
+      const meses = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+                     'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+      const label = document.getElementById('periodo-label');
+      if (label) label.innerText = `${meses[mes-1]} de ${ano}`;
+
+      // Mostra loading
+      const loading = '⏳ Carregando...';
+      const ids = ['val-faturamento', 'val-comissao-vendas', 'val-comissao-reneg', 'val-comissao-total'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = loading;
+      });
+      ['resumo-comissao-vendas', 'resumo-comissao-reneg', 'resumo-comissao-total'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = '⏳';
+      });
+
+      console.log(`🔄 Chamando p_buscarDadosFreelancer(${mes}, ${ano})`);
+
+      google.script.run
+        .withSuccessHandler(function(res) {
+          console.log('✅ Resposta recebida:', res);
+          if (res.success) {
+            atualizarDadosFreelancer(res, mes, ano);
+          } else {
+            console.error('❌ Erro no backend:', res.message);
+            mostrarErroFreelancer('Erro: ' + res.message);
+          }
+        })
+        .withFailureHandler(function(err) {
+          console.error('❌ Falha na comunicação:', err);
+          mostrarErroFreelancer('Erro de comunicação: ' + err);
+        })
+        .p_buscarDadosFreelancer(mes, ano);
+    };
+
+    // ============================================
+    // ATUALIZAR DADOS NA TELA
+    // ============================================
+    function atualizarDadosFreelancer(res, mes, ano) {
+      const fmt = (v) => {
+        if (typeof v !== 'number' || isNaN(v)) v = 0;
+        return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      };
+
+      const faturamento = res.faturamentoMensal || 0;
+      const comVendas = res.comissaoVendas || 0;
+      const comReneg = res.comissaoReneg || 0;
+      const comTotal = res.comissaoTotal || 0;
+      const pctVendas = res.percentualVendas || 0;
+      const pctReneg = res.percentualReneg || 0;
+
+      const setText = (id, value) => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = value;
+      };
+
+      setText('val-faturamento', fmt(faturamento));
+      setText('val-comissao-vendas', fmt(comVendas));
+      setText('val-comissao-reneg', fmt(comReneg));
+      setText('val-comissao-total', fmt(comTotal));
+      setText('pct-vendas', pctVendas);
+      setText('pct-reneg', pctReneg);
+      setText('resumo-comissao-vendas', fmt(comVendas));
+      setText('resumo-comissao-reneg', fmt(comReneg));
+      setText('resumo-comissao-total', fmt(comTotal));
+
+      const trend = document.getElementById('trend-faturamento');
+      const qtd = res.debug ? res.debug.contaLinhas : 0;
+      if (trend) {
+        if (faturamento > 0) {
+          trend.innerText = `📈 ${qtd} venda(s) em ${mes}/${ano}`;
+          trend.className = 'kpi-trend-freela trend-up';
+        } else {
+          trend.innerText = `📭 Nenhuma venda em ${mes}/${ano}`;
+          trend.className = 'kpi-trend-freela trend-neutral';
+        }
+      }
+
+      if (res.debug && res.debug.todasVendas) {
+        console.log('📋 Vendas encontradas:', res.debug.todasVendas);
+      }
+    }
+
+    // ============================================
+    // MOSTRAR ERRO
+    // ============================================
+    function mostrarErroFreelancer(msg) {
+      const ids = ['val-faturamento', 'val-comissao-vendas', 'val-comissao-reneg', 'val-comissao-total'];
+      ids.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = '⚠️ Erro';
+      });
+      ['resumo-comissao-vendas', 'resumo-comissao-reneg', 'resumo-comissao-total'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerText = '⚠️';
+      });
+      const trend = document.getElementById('trend-faturamento');
+      if (trend) trend.innerText = '❌ ' + msg;
+    }
+
+    // ============================================
+    // CARREGAR COMUNICADOS
+    // ============================================
+    window.carregarComunicadosFreelancer = function() {
+      google.script.run
+        .withSuccessHandler(function(posts) {
+          const container = document.getElementById('home-comunicados-feed');
+          if (!container) return;
+          if (!posts || posts.length === 0) {
+            container.innerHTML = '<p style="font-size:13px;color:#94a3b8;text-align:center;padding:10px;">Nenhum comunicado recente.</p>';
+            return;
+          }
+          const ultimos = posts.slice(0, 2);
+          container.innerHTML = ultimos.map(function(p) {
+            var catClass = '';
+            var corBase = '#8b5cf6';
+            var cat = String(p.categoria).toUpperCase();
+            if (cat === 'URGENTE') { catClass = 'cat-urgente'; corBase = '#ef4444'; }
+            else if (cat === 'TREINAMENTO') { catClass = 'cat-treinamento'; corBase = '#10b981'; }
+            return '<div class="comunicado-item-freela" style="border-left-color:' + corBase + ';">' +
+                   '<span class="cat-tag ' + catClass + '">' + (p.categoria || 'Novidade') + '</span>' +
+                   '<p title="' + (p.titulo || '') + '">' + (p.titulo || 'Sem título') + '</p>' +
+                   '<small>' + (p.data ? p.data.split(' ')[0] : '') + '</small>' +
+                   '</div>';
+          }).join('');
+        })
+        .withFailureHandler(function(err) {
+          console.error('❌ Erro ao carregar comunicados:', err);
+          const container = document.getElementById('home-comunicados-feed');
+          if (container) {
+            container.innerHTML = '<p style="font-size:13px;color:#ef4444;text-align:center;padding:10px;">⚠️ Erro ao carregar comunicados</p>';
+          }
+        })
+        .p_listarComunicados();
+    };
+
+    // ============================================
+    // FUNÇÃO PARA NAVEGAR PARA VENDAS TIM
+    // ============================================
+    window.irParaVendas = function() {
+      var menuItem = document.querySelector('.menu-item[onclick*="vendas"]');
+      if (menuItem) {
+        navegar('vendas', menuItem);
+      } else {
+        if (typeof navegar === 'function') {
+          navegar('vendas');
+        } else {
+          console.error('Função navegar não encontrada');
+        }
+      }
+    };
+
+    // ============================================
+    // FUNÇÃO AUXILIAR PARA NAVEGAR PARA MÓDULOS
+    // ============================================
+    window.irParaModulo = function(pagina) {
+      var menuItem = document.querySelector('.menu-item[onclick*="' + pagina + '"]');
+      if (menuItem) {
+        navegar(pagina, menuItem);
+      } else {
+        if (typeof navegar === 'function') {
+          navegar(pagina);
+        } else {
+          console.error('Função navegar não encontrada para:', pagina);
+        }
+      }
+    };
+
+    // ============================================
+    // INICIALIZAÇÃO DO PERFIL
+    // ============================================
+    window.onload = () => {
+      const user = JSON.parse(sessionStorage.getItem('usuarioLogado'));
+      if (user) {
+        document.getElementById('user-display-name').innerText = user.username || user.nome;
+        document.getElementById('user-avatar').src = user.photoUrl || "https://ui-avatars.com/api/?name=" + user.username;
+      }
+      // Carrega o conteúdo inicial correto
+      navegar('home_parceiro', document.querySelector('.menu-item.active'));
+    };
+
+    // ============================================
+    // LÓGICA MOBILE
+    // ============================================
+    window.toggleMobileMenu = () => {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('overlay');
+      sidebar.classList.toggle('mobile-open');
+      overlay.classList.toggle('active');
+    };
+
+    // ============================================
+    // NAVEGAÇÃO ENTRE MÓDULOS
+    // ============================================
+    function navegar(pagina, element) {
+      if (!element) return;
+
+      // Garante que estamos pegando a div.menu-item, mesmo clicando no ícone ou no texto
+      const menuItem = element.closest('.menu-item') || element;
+
+      // ============================================
+      // 🔥 REDIRECIONAMENTO INTELIGENTE POR CARGO
+      // ============================================
+      // Verifica se o usuário é um freelancer/terceiro para carregar o dashboard correto
+      try {
+        const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+        const cargo = (user.role || user.cargo || '').toUpperCase().trim();
+
+        // Se a página solicitada for 'home_parceiro' e o cargo for FREELANCER ou TERCEIRO
+        if (pagina === 'home_parceiro' && (cargo === 'FREELANCER' || cargo === 'TERCEIRO')) {
+          pagina = 'home_freelancer';
+          console.log('🔄 Redirecionado para home_freelancer (cargo:', cargo, ')');
+        }
+      } catch (e) {
+        console.warn('⚠️ Erro ao verificar cargo para navegação:', e);
+      }
+
+      const tipo = sessionStorage.getItem('tipoAcessoLogado');
+      const content = document.getElementById('main-content');
+      const pageTitle = document.getElementById('current-page-name');
+
+      // 1. Controle de UX Mobile: Fecha o menu lateral ao selecionar uma opção
+      if (window.innerWidth <= 768) {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+        if (sidebar) sidebar.classList.remove('mobile-open');
+        if (overlay) overlay.classList.remove('active');
+      }
+
+      // 2. Atualiza a UI do Menu (Estado Ativo)
+      document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+      menuItem.classList.add('active');
+
+      // 3. Atualiza o Título da Página no Header
+      if (pageTitle) {
+        // Se for freelancer, podemos personalizar o título do Dashboard
+        if (pagina === 'home_freelancer') {
+          pageTitle.innerText = 'Dashboard Freelancer';
+        } else {
+          pageTitle.innerText = menuItem.innerText.trim();
+        }
+      }
+
+      // 4. Loader Visual (Feedback de carregamento)
+      content.innerHTML = `
+        <div class="module-loader" style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:15px;">
+          <i class="fa-solid fa-circle-notch fa-spin" style="font-size: 32px; color: var(--primary);"></i>
+          <span style="color: #94a3b8; font-size: 13px;">Carregando módulo...</span>
+        </div>`;
+
+      // 5. Chamada ao Servidor para buscar o HTML do módulo
+      google.script.run
+        .withSuccessHandler(html => {
+          content.innerHTML = '';
+
+          // Otimização: Força a execução de scripts internos dos módulos
+          const range = document.createRange();
+          range.selectNode(content);
+          const fragment = range.createContextualFragment(html);
+
+          content.appendChild(fragment);
+
+          // Garante que a página comece sempre no topo
+          content.scrollTop = 0;
+
+          // 🔥 ADICIONADO: Inicializa o dashboard freelancer se for a página correta
+          if (pagina === 'home_freelancer') {
+            console.log('🔄 Inicializando home_freelancer...');
+            // Usa setTimeout para garantir que o DOM foi completamente renderizado
+            setTimeout(function() {
+              if (typeof window.inicializarHomeFreelancer === 'function') {
+                window.inicializarHomeFreelancer();
+              } else {
+                console.warn('⚠️ Função inicializarHomeFreelancer não encontrada.');
+              }
+            }, 100);
+          }
+        })
+        .withFailureHandler(err => {
+          content.innerHTML = `
+            <div style="text-align:center; padding:50px;">
+              <i class="fa-solid fa-triangle-exclamation" style="font-size:40px; color:#ef4444; margin-bottom:15px;"></i>
+              <h3 style="color:#1e293b">Erro ao carregar módulo</h3>
+              <p style="color:#64748b; font-size:14px;">${err.message}</p>
+            </div>`;
+        })
+        .loadModule(pagina, tipo);
+    }
+
+// ============================================
+    // LOGOUT
+    // ============================================
+    function logout() {
+      // 1. Limpa todos os dados de segurança e sessão
+      sessionStorage.clear();
+      localStorage.clear();
+
+      // 2. Feedback visual rápido (UX)
+      const content = document.getElementById('main-content');
+      if(content) {
+        content.innerHTML = `
+          <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; gap:15px; animation: fadeIn 0.5s ease-in-out;">
+            <i class="fa-solid fa-right-from-bracket fa-fade" style="font-size: 32px; color: #f43f5e;"></i>
+            <span style="color: #94a3b8; font-size: 14px; font-weight: 600;">Encerrando sessão com segurança...</span>
+          </div>
+          <style>@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }</style>
+        `;
+      }
+
+      // 3. Redirecionamento restrito ao Iframe (Tela de Login)
+      setTimeout(() => {
+        google.script.run
+          .withSuccessHandler(url => {
+            // Usa window.location.replace para manter o redirecionamento apenas no iframe
+            // e não poluir o histórico de navegação (evita que o usuário clique em 'voltar' e acesse a tela logada)
+            window.location.replace(url); 
+          })
+          .getScriptURL(); 
+      }, 200);
+    }
+
+    // ============================================
+    // VERIFICAR PERMISSÕES DO MENU
+    // ============================================
+    function verificarPermissoesMenu() {
+      const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+      const cargo = user.role || '';
+      
+      // Mostrar menu de configurações apenas para ADMIN
+      const menuConfig = document.getElementById('menu-configuracoes');
+      if (menuConfig) {
+        if (cargo === 'ADMINISTRADOR' || cargo === 'MASTER') {
+          menuConfig.style.display = 'flex';
+        } else {
+          menuConfig.style.display = 'none';
+        }
+      }
+    }
+
+    // ============================================
+    // EXECUTAR VERIFICAÇÃO DE PERMISSÕES
+    // ============================================
+    verificarPermissoesMenu();
+// --- OCULTAR CREDENCIAMENTO PARA PARCEIROS COMUNS ---
+function verificarPermissaoCredenciamento() {
+  const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargo = (user.role || '').toUpperCase().trim();
+  
+  const menuCred = document.getElementById('menu-credenciamento');
+  if (menuCred) {
+    // Mostra apenas se for MASTER ou ADMINISTRADOR
+    if (cargo === 'MASTER' || cargo === 'ADMINISTRADOR') {
+      menuCred.style.display = 'flex'; // ou 'block'
+    } else {
+      menuCred.style.display = 'none';
+    }
+  }
+}
+
+// Chame essa função após o login (no onload ou no init)
+verificarPermissaoCredenciamento();
+  </script>
+</body>
+</html>

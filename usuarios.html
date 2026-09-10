@@ -1,0 +1,333 @@
+<div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); margin: 20px auto; max-width: 1000px; font-family: 'Poppins', sans-serif;">
+  
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+    <div>
+      <h2 style="color: #0f172a; margin: 0; font-weight: 800; letter-spacing: -1px;">👥 Time VEXO</h2>
+      <p style="margin: 0; font-size: 12px; color: #64748b;">Gestão de identidades e níveis de acesso dinâmicos</p>
+    </div>
+    <button id="btn-novo-membro" onclick="limparForm()" style="background: #f1f5f9; border: none; padding: 10px 20px; border-radius: 12px; cursor: pointer; font-weight: 600; color: #3b82f6; transition: 0.3s;">+ Adicionar Membro</button>
+  </div>
+
+  <div id="painel-cargos-admin" style="display: none; background: #fdf2ff; padding: 25px; border-radius: 20px; border: 1px dashed #d8b4fe; margin-bottom: 30px;">
+    <h4 style="margin-top: 0; color: #6b21a8; font-weight: 700;">🛡️ Gestão de Hierarquia (Painel Master)</h4>
+    <p style="font-size: 11px; color: #7e22ce; margin-bottom: 15px;">Defina os acessos padrão para cada nível de cargo no banco de dados.</p>
+    
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; align-items: flex-end;">
+      <div class="v-field">
+        <label style="font-size: 11px; font-weight: 700; color: #6b21a8;">CARGO PARA CONFIGURAR</label>
+        <select id="config_cargo_nome" onchange="buscarPermissoesDoBanco(this.value)" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #d8b4fe; outline: none;">
+          <option value="">-- Selecione --</option>
+          <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+          <option value="GERENTE/SUPERVISOR">GERENTE/SUPERVISOR</option>
+          <option value="BACKOFFICE">BACKOFFICE</option>
+          <option value="CONSULTOR DE VENDAS">CONSULTOR DE VENDAS</option>
+        </select>
+      </div>
+      <div style="flex: 2;">
+        <label style="font-size: 11px; font-weight: 700; color: #6b21a8;">MÓDULOS PERMITIDOS NO BANCO:</label>
+        <div style="display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px;">
+          <label style="font-size: 12px;"><input type="checkbox" class="master-perm" value="vendas"> Vendas</label>
+          <label style="font-size: 12px;"><input type="checkbox" class="master-perm" value="financeiro"> Financeiro</label>
+          <label style="font-size: 12px;"><input type="checkbox" class="master-perm" value="usuarios"> Time</label>
+          <label style="font-size: 12px;"><input type="checkbox" class="master-perm" value="relatorios"> Dados</label>
+          <label style="font-size: 12px;"><input type="checkbox" class="master-perm" value="prospeccao"> Leads</label>
+        </div>
+      </div>
+      <button onclick="salvarConfiguracaoNoBanco()" style="padding: 12px; background: #6b21a8; color: white; border: none; border-radius: 12px; font-weight: 600; cursor: pointer;">Salvar no Banco</button>
+    </div>
+  </div>
+
+  <div id="painel-editor" style="background: #f8fafc; padding: 25px; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 30px; display: none;">
+    <h4 id="editor-titulo" style="margin-top: 0; color: #1e293b; font-weight: 700;">Cadastrar Novo Colaborador</h4>
+    
+    <div style="display: flex; flex-wrap: wrap; gap: 25px; align-items: flex-start;">
+      <div style="text-align: center; flex: 0 0 130px;">
+        <div style="position: relative; display: inline-block;">
+          <img id="u_preview" src="https://ui-avatars.com/api/?name=?&background=3b82f6&color=fff" style="width: 110px; height: 110px; border-radius: 50%; object-fit: cover; border: 3px solid #fff; box-shadow: 0 5px 15px rgba(0,0,0,0.1);">
+          <label for="u_file" style="position: absolute; bottom: 5px; right: 5px; background: #3b82f6; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid #fff; font-size: 14px;">📸</label>
+        </div>
+        <input type="file" id="u_file" accept="image/*" style="display: none;" onchange="previewImage(this)">
+        <input type="hidden" id="u_photo_url">
+      </div>
+
+      <div style="flex: 1; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 15px;">
+        <div class="v-field"><label style="font-size:11px; font-weight:700;">MATRÍCULA</label><input type="text" id="u_user" placeholder="Login"></div>
+        <div class="v-field"><label style="font-size:11px; font-weight:700;">SENHA</label><input type="password" id="u_pass" placeholder="****"></div>
+        <div class="v-field"><label style="font-size:11px; font-weight:700;">NOME</label><input type="text" id="u_nome" placeholder="Emanuel"></div>
+        <div class="v-field"><label style="font-size:11px; font-weight:700;">SOBRENOME</label><input type="text" id="u_sobrenome" placeholder="Silva"></div>
+        <div class="v-field"><label style="font-size:11px; font-weight:700;">E-MAIL</label><input type="email" id="u_email" placeholder="nome@eenordeste.com.br"></div>
+        <div class="v-field">
+          <label style="font-size:11px; font-weight:700;">CARGO</label>
+          <select id="u_role" onchange="aplicarPermissoesPorCargo(this.value)" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; background: white;">
+            <option value="">-- Selecione --</option>
+            <option value="ADMINISTRADOR">ADMINISTRADOR</option>
+            <option value="GERENTE/SUPERVISOR">GERENTE/SUPERVISOR</option>
+            <option value="BACKOFFICE">BACKOFFICE</option>
+            <option value="CONSULTOR DE VENDAS">CONSULTOR DE VENDAS</option>
+          </select>
+        </div>
+        <div class="v-field">
+          <label style="font-size:11px; font-weight:700;">STATUS</label>
+          <select id="u_active" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; background: white;">
+            <option value="ATIVO">ATIVO</option>
+            <option value="INATIVO">INATIVO</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid #e2e8f0;">
+      <p style="font-weight: 700; font-size: 12px; color: #1e293b; margin-bottom: 12px;">PERMISSÕES ATRIBUÍDAS (VIA BANCO DE DADOS):</p>
+      <div id="perms-check-container" style="display: flex; flex-wrap: wrap; gap: 15px;">
+        <label><input type="checkbox" name="u_perm" value="vendas"> Vendas</label>
+        <label><input type="checkbox" name="u_perm" value="financeiro"> Financeiro</label>
+        <label><input type="checkbox" name="u_perm" value="usuarios"> Time</label>
+        <label><input type="checkbox" name="u_perm" value="relatorios"> Dados</label>
+        <label><input type="checkbox" name="u_perm" value="prospeccao"> Leads</label>
+      </div>
+    </div>
+
+    <button id="btnSalvarU" onclick="salvarUsuario()" style="margin-top: 25px; width: 100%; padding: 15px; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); color: white; border: none; border-radius: 14px; font-weight: 700; cursor: pointer;">
+      Confirmar Cadastro no Time
+    </button>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
+      <thead>
+        <tr style="text-align: left; border-bottom: 2px solid #f1f5f9; color: #64748b;">
+          <th style="padding: 15px;">COLABORADOR</th>
+          <th style="padding: 15px;">MATRÍCULA</th>
+          <th style="padding: 15px;">CARGO</th>
+          <th style="padding: 15px;">MÓDULOS</th>
+          <th style="padding: 15px;">STATUS</th>
+          <th style="padding: 15px; text-align: center;">AÇÃO</th>
+        </tr>
+      </thead>
+      <tbody id="lista-usuarios-tabela">
+        <tr><td colspan="6" style="text-align:center; padding: 40px; color: #94a3b8;">Sincronizando...</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  // --- SEGURANÇA: CONTROLE DE VISIBILIDADE ---
+  function verificarAcessoAdmin() {
+    const userLogado = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    if (userLogado.role === "ADMINISTRADOR") {
+      document.getElementById('painel-cargos-admin').style.display = 'block';
+      document.getElementById('painel-editor').style.display = 'block';
+    } else {
+      document.getElementById('btn-novo-membro').style.display = 'none';
+    }
+  }
+
+  // --- GESTÃO DE CARGOS (MASTER) ---
+  function buscarPermissoesDoBanco(cargo) {
+    if(!cargo) return;
+    google.script.run.withSuccessHandler(function(permsString) {
+      const permsArray = permsString ? permsString.split(',') : [];
+      document.querySelectorAll('.master-perm').forEach(cb => {
+        cb.checked = permsArray.includes(cb.value);
+      });
+    }).getPermissoesPorCargo(cargo);
+  }
+
+function salvarConfiguracaoNoBanco() {
+  const cargo = document.getElementById('config_cargo_nome').value;
+  if(!cargo) {
+    alert("Por favor, selecione um cargo antes de salvar.");
+    return;
+  }
+  
+  const selecionadas = [];
+  // Verifique se a classe das checkboxes no seu HTML é 'master-perm'
+  document.querySelectorAll('.master-perm:checked').forEach(cb => {
+    selecionadas.push(cb.value);
+  });
+  
+  const permsString = selecionadas.join(',');
+  console.log("Tentando salvar cargo:", cargo, "com perms:", permsString);
+
+  google.script.run
+    .withSuccessHandler(function(resposta) {
+      alert(resposta); // Se aparecer o alerta, a comunicação funcionou
+    })
+    .withFailureHandler(function(erro) {
+      alert("Erro na chamada do script: " + erro);
+    })
+    .salvarConfigCargo(cargo, permsString);
+}
+  // --- CADASTRO: APLICAÇÃO DINÂMICA ---
+  function aplicarPermissoesPorCargo(cargo) {
+    if(!cargo) return;
+    google.script.run.withSuccessHandler(function(permsString) {
+      const permsArray = permsString ? permsString.split(',') : [];
+      document.querySelectorAll('input[name="u_perm"]').forEach(cb => {
+        cb.checked = permsArray.includes(cb.value);
+      });
+    }).getPermissoesPorCargo(cargo);
+  }
+
+  // --- CRUD GERAL ---
+  function carregarUsuarios() {
+    google.script.run.withSuccessHandler(function(lista) {
+      const tbody = document.getElementById('lista-usuarios-tabela');
+      if (!lista || lista.length === 0) {
+        tbody.innerHTML = "<tr><td colspan='6' style='text-align:center;'>Vazio.</td></tr>";
+        return;
+      }
+      let html = "";
+      lista.forEach(u => {
+        const foto = u.photoUrl || 'https://ui-avatars.com/api/?name=' + u.nome + '&background=3b82f6&color=fff';
+        const permsHtml = u.permissoes.map(p => `<small style="background:#e0e7ff; color:#4338ca; padding:2px 6px; border-radius:6px; margin-right:3px; font-weight:600; font-size:10px;">${p.toUpperCase()}</small>`).join('');
+        const statusStyle = (u.active === 'ATIVO' || u.active === 'TRUE') ? 'background:#dcfce7; color:#15803d;' : 'background:#fee2e2; color:#b91c1c;';
+        
+        html += `<tr style="border-bottom: 1px solid #f8fafc;">` +
+          `<td style="padding: 15px; display: flex; align-items: center; gap: 10px;">` +
+            `<img src="${foto}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">` +
+            `<div><div style="font-weight: 700; color: #1e293b;">${u.nome} ${u.sobrenome}</div>` +
+            `<div style="font-size: 10px; color: #94a3b8;">${u.email || ''}</div></div></td>` +
+          `<td style="padding: 15px; font-family: monospace;">${u.user}</td>` +
+          `<td style="padding: 15px;">${u.role}</td>` +
+          `<td style="padding: 15px;">${permsHtml}</td>` +
+          `<td style="padding: 15px;"><span style="${statusStyle} padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800;">${u.active}</span></td>` +
+          `<td style="padding: 15px; text-align: center;">` +
+            `<button onclick="prepararEdicao('${u.user}', '${u.nome}', '${u.sobrenome}', '${u.email}', '${u.role}', '${u.active}', '${u.permissoes.join(',')}', '${u.photoUrl || ''}')" style="cursor:pointer; border:none; background:#f1f5f9; padding:8px; border-radius:10px; color:#3b82f6;">✏️</button>` +
+          `</td></tr>`;
+      });
+      tbody.innerHTML = html;
+    }).getListaUsuariosDetalhada();
+  }
+
+  // [Outras funções CRUD: previewImage, salvarUsuario, finalizarCadastro, prepararEdicao, limparForm como você já tem]
+  
+  // INICIALIZAÇÃO
+  verificarAcessoAdmin();
+  carregarUsuarios();
+
+  function prepararEdicao(user, nome, sobrenome, email, role, active, perms, photoUrl) {
+    // Preenche os campos de texto
+    document.getElementById('u_user').value = user;
+    document.getElementById('u_nome').value = nome;
+    document.getElementById('u_sobrenome').value = sobrenome;
+    document.getElementById('u_email').value = email;
+    document.getElementById('u_role').value = role;
+    document.getElementById('u_active').value = (active === "TRUE" || active === "ATIVO") ? "ATIVO" : "INATIVO";
+    
+    // Lida com a foto
+    document.getElementById('u_photo_url').value = photoUrl;
+    document.getElementById('u_preview').src = photoUrl || "https://ui-avatars.com/api/?name=" + nome;
+    
+    // Atualiza o título do painel para o usuário saber que está editando
+    document.getElementById('editor-titulo').innerText = "Editando Perfil: " + nome.toUpperCase();
+    
+    // Marca as checkboxes de permissão
+    const pArray = perms ? perms.split(',') : [];
+    document.querySelectorAll('input[name="u_perm"]').forEach(cb => {
+      cb.checked = pArray.includes(cb.value);
+    });
+
+    // Rola a tela suavemente para o formulário
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function salvarUsuario() {
+    const matricula = document.getElementById('u_user').value;
+    const nome = document.getElementById('u_nome').value;
+    const btn = document.getElementById('btnSalvarU');
+
+    if(!matricula || !nome) return alert("Matrícula e Nome são obrigatórios!");
+
+    btn.disabled = true;
+    btn.innerText = "⏳ Processando...";
+
+    const fileInput = document.getElementById('u_file');
+    
+    // Se selecionou uma NOVA foto, faz o upload primeiro
+    if (fileInput.files.length > 0) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        google.script.run.withSuccessHandler(res => {
+          if(res.success) finalizarCadastro(res.url);
+          else { alert("Erro upload: " + res.message); btn.disabled = false; }
+        }).uploadFotoPerfil(e.target.result, matricula + ".png");
+      };
+      reader.readAsDataURL(fileInput.files[0]);
+    } else {
+      // Se não mudou a foto, usa a URL que já estava no campo oculto
+      finalizarCadastro(document.getElementById('u_photo_url').value);
+    }
+}
+function finalizarCadastro(urlFoto) {
+  const perms = [];
+  document.querySelectorAll('input[name="u_perm"]:checked').forEach(c => perms.push(c.value));
+  
+  // Coleta todos os dados do formulário
+  const dados = {
+    user: document.getElementById('u_user').value.trim(),
+    pass: document.getElementById('u_pass').value, // Pode ir vazio na edição
+    nome: document.getElementById('u_nome').value.trim(),
+    sobrenome: document.getElementById('u_sobrenome').value.trim(),
+    email: document.getElementById('u_email').value.trim(),
+    role: document.getElementById('u_role').value,
+    active: document.getElementById('u_active').value,
+    permissoes: perms,
+    photoUrl: urlFoto
+  };
+
+  console.log("Enviando dados para o banco:", dados);
+
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res.success) {
+        alert(res.message);
+        limparForm(); // Limpa e reseta o título para "Cadastrar"
+        carregarUsuarios(); // Atualiza a tabela com os novos dados
+      } else {
+        alert("Erro: " + res.message);
+      }
+      // Reativa o botão
+      const btn = document.getElementById('btnSalvarU');
+      btn.disabled = false;
+      btn.innerText = "Confirmar Configurações VEXO";
+    })
+    .withFailureHandler(function(err) {
+      alert("Erro fatal na comunicação: " + err);
+      document.getElementById('btnSalvarU').disabled = false;
+    })
+    .salvarUsuarioCompleto(dados);
+}
+function limparForm() {
+    // 1. Limpa todos os campos de texto, senha e e-mail
+    const campos = ['u_user', 'u_pass', 'u_nome', 'u_sobrenome', 'u_email', 'u_photo_url', 'u_file'];
+    campos.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = "";
+    });
+
+    // 2. Reseta os Selects para a opção inicial
+    document.getElementById('u_role').value = "";
+    document.getElementById('u_active').value = "ATIVO";
+
+    // 3. Desmarca todas as checkboxes de permissão
+    document.querySelectorAll('input[name="u_perm"]').forEach(cb => {
+      cb.checked = false;
+    });
+
+    // 4. Reseta a imagem de preview para o avatar padrão da VEXO
+    document.getElementById('u_preview').src = "https://ui-avatars.com/api/?name=?&background=3b82f6&color=fff";
+
+    // 5. Volta o título do painel para o modo de cadastro
+    document.getElementById('editor-titulo').innerText = "Cadastrar Novo Colaborador";
+    
+    // 6. Garante que o botão de salvar exiba o texto original
+    const btn = document.getElementById('btnSalvarU');
+    btn.disabled = false;
+    btn.innerText = "Confirmar Configurações VEXO";
+
+    // 7. Rola a tela para o topo do formulário para facilitar o preenchimento
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+</script>
