@@ -156,7 +156,6 @@
 <body>
 
   <div id="splash-screen">
-    <!-- Ajuste o src da logo conforme o arquivo que você salvou no repositório (ex: logo.png) -->
     <img src="logo.png" class="splash-logo" alt="Carregando MVT" onerror="this.style.display='none'">
     <div style="color: #64748b; letter-spacing: 3px; font-size: 11px; font-weight: 600;">INICIALIZANDO SISTEMA</div>
   </div>
@@ -165,7 +164,6 @@
     
     <div class="form-side">
       <div class="logo-container">
-        <!-- Ajuste o src da logo conforme o arquivo que você salvou no repositório -->
         <img src="logo.png" alt="MOVITI DIGITAL Logo" class="logo-vexo" onerror="this.style.display='none'">
         <h2>MOVITI.DIGITAL</h2>
       </div>
@@ -224,7 +222,12 @@
 // ============================================
 const supabaseUrl = 'https://stibecxkiupfbarftftd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aWJlY3hraXVwZmJhcmZ0ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzE4NDMsImV4cCI6MjEwNDYwNzg0M30.hsaGJAs7HQfI3tssAI1ONa8TtbCVtqwNB1j-7-z7BeI';
-const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// Evita redeclaração da variável global do Supabase
+if (typeof window.supabaseClient === 'undefined') {
+  window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+}
+const db = window.supabaseClient;
 
 // ============================================
 // FUNÇÕES DE PREFERÊNCIA (LOCALSTORAGE)
@@ -286,8 +289,8 @@ async function executarLogin() {
   if(loader) loader.style.display = "inline-block";
   status.innerHTML = "<span style='color:#64748b'>Autenticando no servidor seguro...</span>";
 
-  // Comunicação direta com o Supabase Auth
-  const { data, error } = await supabase.auth.signInWithPassword({
+  // Comunicação direta com o Supabase Auth usando a referência 'db'
+  const { data, error } = await db.auth.signInWithPassword({
     email: user,
     password: pass,
   });
@@ -326,7 +329,6 @@ function carregarPainel(tipoAcesso) {
       if (statusTexto) statusTexto.innerText = "CARREGANDO PAINEL MVT...";
     }
 
-    // Define para qual dashboard o usuário será redirecionado
     const moduloDestino = (tipoAcesso === 'PARCEIRO') ? 'dashboard_parceiro.html' : 'dashboard.html';
     
     setTimeout(() => {
