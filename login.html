@@ -3,18 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Acesso | Moviti Digital</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Supabase CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
   <style>
     /* --- VEXO PREMIUM BRANDING --- */
     * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
     
     body { 
-      background: #0f172a; /* Fundo escuro Slate Dark */
+      background: #0f172a; 
       display: flex; align-items: center; justify-content: center; min-height: 100vh;
       overflow: hidden;
     }
 
-    /* 1. TELA DE CARREGAMENTO (SPLASH) */
     #splash-screen {
       position: fixed; top: 0; left: 0; width: 100%; height: 100%;
       background: #0f172a; z-index: 10000;
@@ -24,9 +28,8 @@
     .splash-logo { width: 120px; margin-bottom: 20px; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
 
-    /* 2. CONTAINER PRINCIPAL (SPLIT-SCREEN) */
     .login-wrapper {
-      display: none; /* Começa oculto */
+      display: none; 
       width: 1000px;
       max-width: 95%;
       min-height: 600px;
@@ -44,7 +47,6 @@
       transform: translateY(0) !important;
     }
 
-    /* --- LADO ESQUERDO: FORMULÁRIO --- */
     .form-side {
       width: 50%;
       padding: 60px;
@@ -57,7 +59,6 @@
     .logo-container { margin-bottom: 20px; text-align: left; }
     .logo-vexo { width: 90px; height: auto; user-select: none; margin-bottom: 5px; }
 
-    /* ESTILO SOLICITADO PARA O TÍTULO VEXO */
     .form-side h2 { 
       background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
       -webkit-background-clip: text;
@@ -70,7 +71,6 @@
 
     .form-side p { color: #64748b; font-size: 14px; margin-bottom: 25px; }
 
-    /* 🌟 NOVO: SELETOR DE ACESSO (MULTILOGIN) */
     .type-selector {
       display: flex; background: #f1f5f9; border-radius: 12px;
       padding: 5px; margin-bottom: 20px; border: 1px solid #e2e8f0;
@@ -115,7 +115,6 @@
     .assinatura span { font-size: 10px; color: #94a3b8; letter-spacing: 1px; font-weight: 500; text-transform: uppercase;}
     .assinatura b { color: #1e3c72; font-size: 11px; margin-left: 5px; font-weight: 700; letter-spacing: 0.5px; }
 
-    /* --- LADO DIREITO: BRANDING VISUAL --- */
     .brand-side {
       width: 50%;
       background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%);
@@ -157,7 +156,8 @@
 <body>
 
   <div id="splash-screen">
-    <img src="https://www.weebly.com/editor/uploads/1/3/4/2/134260582/custom_themes/739339945850558639/files/vexo-imglogo.png" class="splash-logo" alt="Carregando VEXO">
+    <!-- Ajuste o src da logo conforme o arquivo que você salvou no repositório (ex: logo.png) -->
+    <img src="logo.png" class="splash-logo" alt="Carregando MVT" onerror="this.style.display='none'">
     <div style="color: #64748b; letter-spacing: 3px; font-size: 11px; font-weight: 600;">INICIALIZANDO SISTEMA</div>
   </div>
 
@@ -165,25 +165,26 @@
     
     <div class="form-side">
       <div class="logo-container">
-        <img src="https://www.weebly.com/editor/uploads/1/3/4/2/134260582/custom_themes/739339945850558639/files/vexo-imglogo.png" alt="VEXO Logo" class="logo-vexo">
-        <h2>VEXO</h2>
+        <!-- Ajuste o src da logo conforme o arquivo que você salvou no repositório -->
+        <img src="logo.png" alt="MOVITI DIGITAL Logo" class="logo-vexo" onerror="this.style.display='none'">
+        <h2>MOVITI.DIGITAL</h2>
       </div>
       
       <p>Gestão Inteligente & Performance.</p>
 
       <div class="type-selector">
        <button type="button" class="type-btn active" id="btn-proprio">
-  🏢 Equipe E&E
-</button>
+          🏢 Equipe E&E
+       </button>
        <button type="button" class="type-btn" id="btn-parceiro">
-  🤝 Parceiro
-</button>
+          🤝 Parceiro
+       </button>
       </div>
       <input type="hidden" id="tipoAcesso" value="PROPRIO">
       
       <div class="input-group">
-        <label>Usuário</label>
-        <input type="text" id="user" placeholder="Digite seu usuário" autocomplete="off">
+        <label>Usuário (E-mail)</label>
+        <input type="email" id="user" placeholder="seu.email@movitidigital.com.br" autocomplete="off">
       </div>
       
       <div class="input-group">
@@ -219,32 +220,27 @@
 
 <script>
 // ============================================
+// CONFIGURAÇÃO DO BANCO DE DADOS (SUPABASE)
+// ============================================
+const supabaseUrl = 'https://stibecxkiupfbarftftd.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aWJlY3hraXVwZmJhcmZ0ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzE4NDMsImV4cCI6MjEwNDYwNzg0M30.hsaGJAs7HQfI3tssAI1ONa8TtbCVtqwNB1j-7-z7BeI';
+const supabase = supabase.createClient(supabaseUrl, supabaseKey);
+
+// ============================================
 // FUNÇÕES DE PREFERÊNCIA (LOCALSTORAGE)
 // ============================================
 
 function salvarPreferencia(tipo) {
   localStorage.setItem('vexo_ultimo_acesso', tipo);
-  console.log(`💾 Preferência salva: ${tipo}`);
 }
 
 function carregarPreferencia() {
   const ultimo = localStorage.getItem('vexo_ultimo_acesso');
   if (ultimo && (ultimo === 'PROPRIO' || ultimo === 'PARCEIRO')) {
-    console.log(`📀 Preferência carregada: ${ultimo}`);
     return ultimo;
   }
-  console.log(`📀 Nenhuma preferência encontrada, usando padrão: PROPRIO`);
   return 'PROPRIO';
 }
-
-function limparPreferencia() {
-  localStorage.removeItem('vexo_ultimo_acesso');
-  console.log(`🗑️ Preferência removida`);
-}
-
-// ============================================
-// FUNÇÃO setTipoAcesso (MODIFICADA)
-// ============================================
 
 function setTipoAcesso(tipo, salvar = true) {
   const inputTipo = document.getElementById('tipoAcesso');
@@ -255,48 +251,25 @@ function setTipoAcesso(tipo, salvar = true) {
   
   inputTipo.value = tipo;
   
-  // Atualiza estilo dos botões
   if (btnProprio) {
-    if (tipo === 'PROPRIO') {
-      btnProprio.classList.add('active');
-    } else {
-      btnProprio.classList.remove('active');
-    }
+    tipo === 'PROPRIO' ? btnProprio.classList.add('active') : btnProprio.classList.remove('active');
   }
   
   if (btnParceiro) {
-    if (tipo === 'PARCEIRO') {
-      btnParceiro.classList.add('active');
-    } else {
-      btnParceiro.classList.remove('active');
-    }
+    tipo === 'PARCEIRO' ? btnParceiro.classList.add('active') : btnParceiro.classList.remove('active');
   }
   
-  // Só salva se não for uma chamada de inicialização sem salvamento
-  if (salvar) {
-    salvarPreferencia(tipo);
-  }
-  
-  console.log(`🔄 Tipo alterado para: ${tipo} (salvar=${salvar})`);
+  if (salvar) salvarPreferencia(tipo);
 }
 
-// ============================================
-// HANDLER PARA CLIQUE NOS BOTÕES
-// ============================================
-
-function onProprioClick() {
-  setTipoAcesso('PROPRIO', true);
-}
-
-function onParceiroClick() {
-  setTipoAcesso('PARCEIRO', true);
-}
+function onProprioClick() { setTipoAcesso('PROPRIO', true); }
+function onParceiroClick() { setTipoAcesso('PARCEIRO', true); }
 
 // ============================================
-// FUNÇÃO executarLogin
+// INTEGRAÇÃO DE LOGIN COM SUPABASE
 // ============================================
 
-function executarLogin() {
+async function executarLogin() {
   const user = document.getElementById("user").value;
   const pass = document.getElementById("pass").value;
   const tipoAcesso = document.getElementById("tipoAcesso").value;
@@ -305,48 +278,43 @@ function executarLogin() {
   const status = document.getElementById("status");
 
   if(!user || !pass) {
-    status.innerHTML = "<span style='color:#ef4444'>Preencha todos os campos!</span>";
+    status.innerHTML = "<span style='color:#ef4444'>Preencha e-mail e senha!</span>";
     return;
   }
 
   btn.disabled = true;
   if(loader) loader.style.display = "inline-block";
-  status.innerHTML = "<span style='color:#64748b'>Validando acesso seguro...</span>";
+  status.innerHTML = "<span style='color:#64748b'>Autenticando no servidor seguro...</span>";
 
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res.success) {
-        sessionStorage.setItem('usuarioLogado', JSON.stringify(res));
-        sessionStorage.setItem('tipoAcessoLogado', tipoAcesso);
-        
-        salvarPreferencia(tipoAcesso);
-        
-        status.innerHTML = "<span style='color:#10b981'>Acesso Liberado!</span>";
-        carregarPainel(tipoAcesso);
-      } else {
-        status.innerHTML = "<span style='color:#ef4444'>" + res.message + "</span>";
-        btn.disabled = false;
-        if(loader) loader.style.display = "none";
-      }
-    })
-    .withFailureHandler(function(err) {
-      status.innerHTML = "<span style='color:#ef4444'>Falha no servidor. Tente novamente.</span>";
-      btn.disabled = false;
-      if(loader) loader.style.display = "none";
-    })
-    .loginServer(user, pass, tipoAcesso);
+  // Comunicação direta com o Supabase Auth
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: user,
+    password: pass,
+  });
+
+  if (error) {
+    status.innerHTML = "<span style='color:#ef4444'>Credenciais inválidas. Tente novamente.</span>";
+    btn.disabled = false;
+    if(loader) loader.style.display = "none";
+  } else {
+    // Autenticação aprovada
+    sessionStorage.setItem('usuarioLogado', JSON.stringify(data.user));
+    sessionStorage.setItem('tipoAcessoLogado', tipoAcesso);
+    salvarPreferencia(tipoAcesso);
+    
+    status.innerHTML = "<span style='color:#10b981'>Acesso Liberado!</span>";
+    carregarPainel(tipoAcesso);
+  }
 }
 
 // ============================================
-// FUNÇÃO carregarPainel
+// TRANSIÇÃO PARA O PAINEL
 // ============================================
 
 function carregarPainel(tipoAcesso) {
   const box = document.getElementById('login-box');
   const splash = document.getElementById('splash-screen');
   const statusTexto = splash.querySelector('div') || splash.querySelector('p');
-
-  sessionStorage.setItem('tipoAcessoLogado', tipoAcesso);
 
   if (box) box.classList.remove('login-revelado');
   
@@ -355,37 +323,21 @@ function carregarPainel(tipoAcesso) {
     if (splash) {
       splash.style.display = "flex";
       splash.style.opacity = "1";
-      if (statusTexto) statusTexto.innerText = "CARREGANDO SISTEMA VEXO...";
+      if (statusTexto) statusTexto.innerText = "CARREGANDO PAINEL MVT...";
     }
 
-    const moduloDestino = (tipoAcesso === 'PARCEIRO') ? 'dashboard_parceiro' : 'dashboard';
+    // Define para qual dashboard o usuário será redirecionado
+    const moduloDestino = (tipoAcesso === 'PARCEIRO') ? 'dashboard_parceiro.html' : 'dashboard.html';
     
-    console.log(`🔄 [LOGIN] Redirecionando para: ${moduloDestino} (tipo: ${tipoAcesso})`);
+    setTimeout(() => {
+      window.location.href = moduloDestino;
+    }, 1500);
 
-    google.script.run
-      .withSuccessHandler(function(html) {
-        document.open();
-        document.write(html);
-        document.close();
-      })
-      .withFailureHandler(function(err) {
-        console.error("❌ Erro ao carregar painel:", err);
-        alert("Erro ao abrir o sistema: " + err.message);
-        
-        if (splash) splash.style.display = "none";
-        if (box) {
-          box.style.display = "flex";
-          box.classList.add('login-revelado');
-        }
-        const statusDiv = document.getElementById('status');
-        if (statusDiv) statusDiv.innerHTML = "<span style='color:#ef4444'>Erro ao carregar módulo inicial.</span>";
-      })
-      .loadModule(moduloDestino, tipoAcesso);
   }, 300);
 }
 
 // ============================================
-// WINDOW.ONLOAD
+// INICIALIZAÇÃO E EVENTOS
 // ============================================
 
 window.onload = function() {
@@ -393,26 +345,19 @@ window.onload = function() {
   const splash = document.getElementById('splash-screen');
   
   const sessaoAtiva = sessionStorage.getItem('usuarioLogado');
-  const tipoAcessoSessao = sessionStorage.getItem('tipoAcessoLogado');
-
   if (sessaoAtiva) {
-    carregarPainel(tipoAcessoSessao);
+    carregarPainel(sessionStorage.getItem('tipoAcessoLogado'));
     return;
   }
   
-  // 🔥 CARREGA A ÚLTIMA PREFERÊNCIA (sem salvar novamente)
-  const ultimaPreferencia = carregarPreferencia();
-  setTipoAcesso(ultimaPreferencia, false); // ← salvar = false para não sobrescrever
+  setTipoAcesso(carregarPreferencia(), false);
   
-  // Remove os onclick dos botões do HTML e adiciona via JavaScript
   const btnProprio = document.getElementById('btn-proprio');
   const btnParceiro = document.getElementById('btn-parceiro');
   
-  // Remove atributos onclick antigos
   btnProprio.removeAttribute('onclick');
   btnParceiro.removeAttribute('onclick');
   
-  // Adiciona event listeners
   btnProprio.addEventListener('click', onProprioClick);
   btnParceiro.addEventListener('click', onParceiroClick);
   
@@ -429,16 +374,6 @@ window.onload = function() {
     if (e.key === 'Enter' && box.classList.contains('login-revelado')) executarLogin();
   });
 };
-
-// ============================================
-// FUNÇÃO AUXILIAR PARA RESET (OPCIONAL)
-// ============================================
-
-function resetarPreferencia() {
-  limparPreferencia();
-  setTipoAcesso('PROPRIO', true);
-  alert('✅ Preferência resetada! O padrão agora é EQUIPE E&E');
-}
 </script>
 </body>
 </html>
