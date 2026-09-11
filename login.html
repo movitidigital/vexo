@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Acesso | MOVITI DIGITAL</title>
+  <title>VEXO - Gestão Inteligente</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   
   <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
-    /* --- MOVITI DIGITAL BRANDING (LAYOUT ORIGINAL MANTIDO) --- */
+    /* --- VEXO PREMIUM BRANDING --- */
     * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
     
     body { 
@@ -156,35 +156,33 @@
 <body>
 
   <div id="splash-screen">
-    <!-- Logomarca oficial MOVITI carregada direto do diretório raiz -->
-    <img src="logo.png" class="splash-logo" alt="Carregando MVT" onerror="this.style.display='none'">
-    <div style="color: #64748b; letter-spacing: 3px; font-size: 11px; font-weight: 600;">INICIALIZANDO PLATAFORMA</div>
+    <img src="vexo-imglogo.png" class="splash-logo" alt="Carregando VEXO" onerror="this.style.display='none'">
+    <div style="color: #64748b; letter-spacing: 3px; font-size: 11px; font-weight: 600;">INICIALIZANDO SISTEMA VEXO</div>
   </div>
 
   <div class="login-wrapper" id="login-box">
     
     <div class="form-side">
       <div class="logo-container">
-        <!-- Logomarca oficial MOVITI carregada direto do diretório raiz -->
-        <img src="logo.png" alt="MOVITI DIGITAL Logo" class="logo-vexo" onerror="this.style.display='none'">
-        <h2>MOVITI.DIGITAL</h2>
+        <img src="vexo-imglogo.png" alt="VEXO" class="logo-vexo" onerror="this.style.display='none'">
+        <h2>SISTEMA VEXO</h2>
       </div>
       
-      <p>Inteligência Artificial & Cloud Core.</p>
+      <p>Gestão Inteligente & Performance.</p>
 
       <div class="type-selector">
        <button type="button" class="type-btn active" id="btn-proprio">
-          🏢 Equipe Interna
+          🏢 Equipe E&E
        </button>
        <button type="button" class="type-btn" id="btn-parceiro">
-          🤝 Parceiro / Cliente
+          🤝 Parceiro
        </button>
       </div>
       <input type="hidden" id="tipoAcesso" value="PROPRIO">
       
       <div class="input-group">
         <label>Usuário (E-mail)</label>
-        <input type="email" id="user" placeholder="nome@movitidigital.com.br" autocomplete="off">
+        <input type="email" id="user" placeholder="seu.email@empresa.com.br" autocomplete="off">
       </div>
       
       <div class="input-group">
@@ -210,9 +208,9 @@
       <div class="glass-circle c3"></div>
       
       <div class="brand-content">
-        <div class="brand-icon">☁️</div>
-        <h1 class="brand-title">AI-First &<br>Cloud-Agnostic</h1>
-        <p class="brand-desc">Colocamos IA em produção integrada ao core do negócio, modernizamos sistemas legados e operamos plataformas 24/7.</p>
+        <div class="brand-icon">🚀</div>
+        <h1 class="brand-title">Gestão Inteligente &<br>Performance</h1>
+        <p class="brand-desc">Automatização de rotinas, gerenciamento de clientes B2B e controle total de operações em um ambiente blindado e veloz.</p>
       </div>
     </div>
 
@@ -223,9 +221,8 @@
 // CONFIGURAÇÃO DO BANCO DE DADOS (SUPABASE)
 // ============================================
 const supabaseUrl = 'https://stibecxkiupfbarftftd.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aWJlY3hraXVwZmJhcmZ0ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzE4NDMsImV4cCI6MjEwNDYwNzg0M30.hsaGJAs7HQfI3tssAI1ONa8TtbCVtqwNB1j-7-z7BeI';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aWJlY3hraXVwZmJhcmZ0ZnRkIiwicm9sZSI6InFub24iLCJpYXQiOjE3ODkwMzE4NDMsImV4cCI6MjEwNDYwNzg0M30.hsaGJAs7HQfI3tssAI1ONa8TtbCVtqwNB1j-7-z7BeI';
 
-// Evita redeclaração da variável global do Supabase
 if (typeof window.supabaseClient === 'undefined') {
   window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 }
@@ -234,7 +231,6 @@ const db = window.supabaseClient;
 // ============================================
 // FUNÇÕES DE PREFERÊNCIA (LOCALSTORAGE)
 // ============================================
-
 function salvarPreferencia(tipo) {
   localStorage.setItem('vexo_ultimo_acesso', tipo);
 }
@@ -253,13 +249,11 @@ function setTipoAcesso(tipo, salvar = true) {
   const btnParceiro = document.getElementById('btn-parceiro');
   
   if (!inputTipo) return;
-  
   inputTipo.value = tipo;
   
   if (btnProprio) {
     tipo === 'PROPRIO' ? btnProprio.classList.add('active') : btnProprio.classList.remove('active');
   }
-  
   if (btnParceiro) {
     tipo === 'PARCEIRO' ? btnParceiro.classList.add('active') : btnParceiro.classList.remove('active');
   }
@@ -273,7 +267,6 @@ function onParceiroClick() { setTipoAcesso('PARCEIRO', true); }
 // ============================================
 // INTEGRAÇÃO DE LOGIN COM SUPABASE
 // ============================================
-
 async function executarLogin() {
   const user = document.getElementById("user").value;
   const pass = document.getElementById("pass").value;
@@ -289,9 +282,8 @@ async function executarLogin() {
 
   btn.disabled = true;
   if(loader) loader.style.display = "inline-block";
-  status.innerHTML = "<span style='color:#64748b'>Autenticando no servidor seguro...</span>";
+  status.innerHTML = "<span style='color:#64748b'>Validando acesso seguro VEXO...</span>";
 
-  // Comunicação direta com o Supabase Auth usando a referência 'db'
   const { data, error } = await db.auth.signInWithPassword({
     email: user,
     password: pass,
@@ -302,7 +294,6 @@ async function executarLogin() {
     btn.disabled = false;
     if(loader) loader.style.display = "none";
   } else {
-    // Autenticação aprovada
     sessionStorage.setItem('usuarioLogado', JSON.stringify(data.user));
     sessionStorage.setItem('tipoAcessoLogado', tipoAcesso);
     salvarPreferencia(tipoAcesso);
@@ -315,7 +306,6 @@ async function executarLogin() {
 // ============================================
 // TRANSIÇÃO PARA O PAINEL
 // ============================================
-
 function carregarPainel(tipoAcesso) {
   const box = document.getElementById('login-box');
   const splash = document.getElementById('splash-screen');
@@ -328,7 +318,7 @@ function carregarPainel(tipoAcesso) {
     if (splash) {
       splash.style.display = "flex";
       splash.style.opacity = "1";
-      if (statusTexto) statusTexto.innerText = "CARREGANDO PAINEL MVT...";
+      if (statusTexto) statusTexto.innerText = "CARREGANDO PAINEL VEXO...";
     }
 
     const moduloDestino = (tipoAcesso === 'PARCEIRO') ? 'dashboard_parceiro.html' : 'dashboard.html';
@@ -341,15 +331,13 @@ function carregarPainel(tipoAcesso) {
 }
 
 // ============================================
-// INICIALIZAÇÃO (SEM LOOP AUTOMÁTICO DE SESSÃO)
+// INICIALIZAÇÃO E EVENTOS
 // ============================================
-
 window.onload = function() {
   const box = document.getElementById('login-box');
   const splash = document.getElementById('splash-screen');
   
-  // Limpa a sessão antiga para forçar um login limpo e evitar o loop de redirecionamento 
-  // caso o dashboard expulse o usuário por configuração.
+  // Limpa sessão anterior para evitar loop de redirecionamento
   sessionStorage.removeItem('usuarioLogado');
   
   setTipoAcesso(carregarPreferencia(), false);
