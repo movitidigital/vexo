@@ -1101,7 +1101,7 @@ function renderizarDashboard(dados) {
   }, 50);
 }
 // ============================================================
-// 🚀 MOTOR DE CARREGAMENTO DE MÓDULOS (Supabase / Vercel)
+// 🚀 MOTOR DE CARREGAMENTO DE MÓDULOS (via iframe)
 // ============================================================
 const cacheModulosHTML = {};
 
@@ -1112,32 +1112,17 @@ async function abrirModulo(nome) {
   const container = document.getElementById('modulo-container');
   const btnVoltar = document.getElementById('btn-voltar-container');
 
-  // 1. Sincroniza a sidebar
+  // 1) Sincroniza a sidebar
   const idMenu = (nome === 'dash') ? 'btn-dash' : 'side-' + nome;
   gerenciarMenuAtivo(idMenu);
 
-  // 2. Transição do menu principal
+  // 2) Transição: esconde o menu, mostra o botão voltar
   menu.style.opacity = '0';
-  setTimeout(async () => {
+  setTimeout(() => {
     menu.style.display = 'none';
     btnVoltar.style.display = 'block';
 
-    // 3. Cache em memória
-    if (cacheModulosHTML[nome]) {
-      console.log('⚡ Módulo carregado do cache:', nome);
-      renderizarHTMLModulo(nome, cacheModulosHTML[nome], container);
-      return;
-    }
-
-    // 4. Skeleton
-    container.innerHTML = `
-      <div style="padding:30px;">
-        <div class="skeleton-loader" style="height:40px; width:300px; margin-bottom:25px; border-radius:8px;"></div>
-        <div class="skeleton-loader" style="height:500px; width:100%; border-radius:15px;"></div>
-      </div>`;
-    container.style.opacity = '1';
-
-    // 5. Mapeamento
+    // 3) Mapeamento módulo → arquivo
     const arquivosMap = {
       'vendas':         'vendas.html',
       'agenda':         'agenda.html',
@@ -1154,30 +1139,25 @@ async function abrirModulo(nome) {
     };
 
     const arquivo = arquivosMap[nome] || (nome + '.html');
+    console.log('📄 [abrirModulo] Carregando:', arquivo);
 
-    // 6. Fetch
-    try {
-      const response = await fetch(arquivo);
-      if (!response.ok) throw new Error(`HTTP ${response.status} — ${arquivo} não encontrado`);
-      const html = await response.text();
+    // 4) Injeta um IFRAME com o módulo (isolamento total)
+    container.innerHTML = `
+      <iframe
+        src="${arquivo}"
+        id="iframe-${nome}"
+        style="
+          width: 100%;
+          height: calc(100vh - 60px);
+          border: none;
+          display: block;
+          background: #f4f7fa;
+        "
+        title="Módulo ${nome}">
+      </iframe>
+    `;
 
-      cacheModulosHTML[nome] = html;
-      renderizarHTMLModulo(nome, html, container);
-    } catch (err) {
-      console.error('❌ Erro ao carregar módulo:', err);
-      container.innerHTML = `
-        <div style="text-align:center; padding:60px; font-family: Poppins, sans-serif;">
-          <div style="font-size:50px; margin-bottom:15px;">📦</div>
-          <h3 style="color:#0f172a; margin:0 0 10px 0;">Módulo em construção</h3>
-          <p style="color:#64748b; font-size:14px; margin:0 0 5px 0;">
-            Não foi possível carregar <b>${arquivo}</b>
-          </p>
-          <p style="font-size:11px; color:#94a3b8; margin: 0 0 20px 0;">${err.message}</p>
-          <button onclick="voltarAoMenu()" style="padding:10px 24px; background:#0f172a; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:600;">
-            ← Voltar ao Dashboard
-          </button>
-        </div>`;
-    }
+    console.log('✅ [abrirModulo] Iframe injetado:', arquivo);
   }, 100);
 }
 
@@ -1293,25 +1273,17 @@ function voltarAoMenu() {
   if (menuPrincipal) menuPrincipal.classList.remove('revelar-dash');
   menuPrincipal.style.display = 'block';
   menuPrincipal.style.opacity = '0';
+
+  // 2) Limpa o container (remove o iframe)
   moduloContainer.innerHTML = '';
+
+  // 3) Esconde o botão voltar
   btnVoltar.style.display = 'none';
 
-  // 2) 🔥 LIMPA OS FLAGS DE MÓDULOS (para poderem recarregar)
-  window._vexoUsuariosLoaded = false;
-  window._vexoVendasLoaded = false;
-  window._vexoMetasLoaded = false;
-  window._vexoProspeccaoLoaded = false;
-  // ... (adiciona outros quando criares mais)
-
-  // 3) Limpa o cache de HTML (força refetch na próxima vez)
-  if (typeof cacheModulosHTML !== 'undefined') {
-    Object.keys(cacheModulosHTML).forEach(k => delete cacheModulosHTML[k]);
-  }
-
-  // 4) Sidebar
+  // 4) Sidebar → Dashboard
   gerenciarMenuAtivo('btn-dash');
 
-  // 5) Fade-in
+  // 5) Fade-in suave
   setTimeout(() => {
     menuPrincipal.style.opacity = '1';
   }, 50);
