@@ -5,6 +5,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
   <style>
     /* --- VEXO BRANDING - ESTRUTURA ERP --- */
     body, html { margin: 0; padding: 0; height: 100%; font-family: 'Poppins', sans-serif; background: #f4f7fa; overflow: hidden; }
@@ -1098,48 +1100,83 @@ function renderizarDashboard(dados) {
     if(menuPrincipal) menuPrincipal.classList.add('revelar-dash');
   }, 50);
 }
-// --- FUNÇÕES AUXILIARES DO SISTEMA ---
-// 🌟 VARIÁVEL GLOBAL DE CACHE (Guarda as páginas já abertas na memória)
-const cacheModulosHTML = {}; 
+// ============================================================
+// 🚀 MOTOR DE CARREGAMENTO DE MÓDULOS (Supabase / Vercel)
+// ============================================================
+const cacheModulosHTML = {};
 
-function abrirModulo(nome) {
+async function abrirModulo(nome) {
+  console.log('🎯 [abrirModulo] chamada com:', nome);
+
   const menu = document.getElementById('menu-principal');
   const container = document.getElementById('modulo-container');
   const btnVoltar = document.getElementById('btn-voltar-container');
-  
-  // 1. SINCRONIZAÇÃO DA SIDEBAR
+
+  // 1. Sincroniza a sidebar
   const idMenu = (nome === 'dash') ? 'btn-dash' : 'side-' + nome;
   gerenciarMenuAtivo(idMenu);
 
-  // 2. Transição de saída do menu principal
-  menu.style.opacity = "0";
-  setTimeout(() => {
-    menu.style.display = "none";
-    btnVoltar.style.display = "block";
-    
-    // 🌟 3. O SEGREDO DA VELOCIDADE: Verifica se a página já está no Cache
-    if (cacheModulosHTML[nome]) {
-      console.log("⚡ Módulo carregado instantaneamente via Cache:", nome);
-      // Pula o servidor e o carregamento longo, renderiza na hora!
-      renderizarHTMLModulo(nome, cacheModulosHTML[nome], container);
-      
-    } else {
-      console.log("⬇️ Baixando módulo do servidor pela primeira vez:", nome);
-      
-      // Injeta esqueleto de carregamento (Skeleton Loader) enquanto busca no Google
-      container.innerHTML = `
-        <div style="padding:30px; animation: fadeIn 0.4s ease-out;">
-          <div class="skeleton-loader" style="height:40px; width:300px; margin-bottom:25px; border-radius:8px;"></div>
-          <div class="skeleton-loader" style="height:500px; width:100%; border-radius:15px;"></div>
-        </div>`;
-      container.style.opacity = "1";
+  // 2. Transição do menu principal
+  menu.style.opacity = '0';
+  setTimeout(async () => {
+    menu.style.display = 'none';
+    btnVoltar.style.display = 'block';
 
-      // Chamada ao Servidor
-      google.script.run.withSuccessHandler(function(html) {
-        // Salva o HTML no cache para a próxima vez ser instantâneo!
-        cacheModulosHTML[nome] = html; 
-        renderizarHTMLModulo(nome, html, container);
-      }).loadModule(nome);
+    // 3. Cache em memória
+    if (cacheModulosHTML[nome]) {
+      console.log('⚡ Módulo carregado do cache:', nome);
+      renderizarHTMLModulo(nome, cacheModulosHTML[nome], container);
+      return;
+    }
+
+    // 4. Skeleton
+    container.innerHTML = `
+      <div style="padding:30px;">
+        <div class="skeleton-loader" style="height:40px; width:300px; margin-bottom:25px; border-radius:8px;"></div>
+        <div class="skeleton-loader" style="height:500px; width:100%; border-radius:15px;"></div>
+      </div>`;
+    container.style.opacity = '1';
+
+    // 5. Mapeamento
+    const arquivosMap = {
+      'vendas':         'vendas.html',
+      'agenda':         'agenda.html',
+      'clientes':       'clientes.html',
+      'prospeccao':     'prospeccao.html',
+      'pedidos_gestao': 'pedidos_gestao.html',
+      'ofertas':        'ofertas.html',
+      'faturas':        'faturas.html',
+      'metas':          'metas.html',
+      'usuarios':       'usuarios.html',
+      'financeiro':     'financeiro.html',
+      'relatorios':     'relatorios.html',
+      'suporte':        'suporte_parceiro.html'
+    };
+
+    const arquivo = arquivosMap[nome] || (nome + '.html');
+
+    // 6. Fetch
+    try {
+      const response = await fetch(arquivo);
+      if (!response.ok) throw new Error(`HTTP ${response.status} — ${arquivo} não encontrado`);
+      const html = await response.text();
+
+      cacheModulosHTML[nome] = html;
+      renderizarHTMLModulo(nome, html, container);
+    } catch (err) {
+      console.error('❌ Erro ao carregar módulo:', err);
+      container.innerHTML = `
+        <div style="text-align:center; padding:60px; font-family: Poppins, sans-serif;">
+          <div style="font-size:50px; margin-bottom:15px;">📦</div>
+          <h3 style="color:#0f172a; margin:0 0 10px 0;">Módulo em construção</h3>
+          <p style="color:#64748b; font-size:14px; margin:0 0 5px 0;">
+            Não foi possível carregar <b>${arquivo}</b>
+          </p>
+          <p style="font-size:11px; color:#94a3b8; margin: 0 0 20px 0;">${err.message}</p>
+          <button onclick="voltarAoMenu()" style="padding:10px 24px; background:#0f172a; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:600;">
+            ← Voltar ao Dashboard
+          </button>
+        </div>`;
     }
   }, 100);
 }
@@ -1257,24 +1294,21 @@ function voltarAoMenu() {
   const menuPrincipal = document.getElementById('menu-principal');
   const moduloContainer = document.getElementById('modulo-container');
   const btnVoltar = document.getElementById('btn-voltar-container');
-  
-  // 1. Reset visual e de animação
-  areaPrincipal.classList.remove('revelar-dash');
-  menuPrincipal.classList.remove('revelar-dash');
-  menuPrincipal.style.display = "block";
-  menuPrincipal.style.opacity = "0";
-  moduloContainer.innerHTML = "";
-  btnVoltar.style.display = "none";
-  
-  // 🌟 2. SINCRONIZAÇÃO DA SIDEBAR: Volta o destaque para o Dashboard
+
+  // Reset
+  if (areaPrincipal) areaPrincipal.classList.remove('revelar-dash');
+  if (menuPrincipal) menuPrincipal.classList.remove('revelar-dash');
+  menuPrincipal.style.display = 'block';
+  menuPrincipal.style.opacity = '0';
+  moduloContainer.innerHTML = '';
+  btnVoltar.style.display = 'none';
+
+  // Sidebar
   gerenciarMenuAtivo('btn-dash');
-  
-  // 3. Recarrega os dados do dashboard (KPIs, Gráficos, etc)
-  inicializarDados(); 
-  
-  // 4. Efeito de fade-in suave
-  setTimeout(() => { 
-    menuPrincipal.style.opacity = "1"; 
+
+  // Fade-in suave
+  setTimeout(() => {
+    menuPrincipal.style.opacity = '1';
   }, 50);
 }
 
@@ -1294,35 +1328,7 @@ function gerenciarMenuAtivo(idAlvo) {
   }
 }
 
-function inicializarDados() {
-  // 1. TENTA CARREGAR O CACHE IMEDIATAMENTE (PERCEPÇÃO DE VELOCIDADE)
-  const cacheDados = localStorage.getItem('vertex_dash_cache');
-  
-  if (cacheDados) {
-    try {
-      const dadosCache = JSON.parse(cacheDados);
-      // Renderiza instantaneamente o que já temos salvo
-      renderizarDashboard(dadosCache);
-    } catch (e) {
-      console.warn("Erro ao ler cache:", e);
-    }
-  }
 
-  // 2. BUSCA DADOS ATUALIZADOS NO SERVIDOR (SINCRONIZAÇÃO EM SEGUNDO PLANO)
-  google.script.run
-    .withSuccessHandler(function(dadosNovos) {
-      // Salva a nova "foto" para o próximo acesso
-      localStorage.setItem('vertex_dash_cache', JSON.stringify(dadosNovos));
-      
-      // Atualiza a tela com os dados fresquinhos (sem piscar se forem iguais)
-      renderizarDashboard(dadosNovos);
-      setTimeout(() => carregarMetasIndividuaisTime(), 500);
-    })
-    .withFailureHandler(function(err) {
-      console.error("Falha ao sincronizar dashboard:", err);
-    })
-    .buscarDadosDashboard();
-}
 
 
 
@@ -1339,25 +1345,23 @@ function fecharAlertaVexo() {
   }
 }
 
-function logout() {
+async function logout() {
+  document.body.style.transition = 'opacity 0.4s ease';
+  document.body.style.opacity = '0';
+
+  try {
+    await sb.auth.signOut();
+  } catch (e) {
+    console.warn('Erro ao encerrar sessão:', e);
+  }
+
   sessionStorage.clear();
-  document.body.style.transition = "opacity 0.4s ease";
-  document.body.style.opacity = "0";
-  
+  localStorage.removeItem('vexo_ultimo_acesso');
+  localStorage.removeItem('vertex_dash_cache');
+
   setTimeout(() => {
-    document.body.innerHTML = `
-      <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0f172a; color:white; font-family:'Poppins', sans-serif;">
-        <div style="width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
-        <h2 style="margin-top:20px; font-weight:800; letter-spacing:-1px;">MOVITI DIGITAL</h2>
-        <p style="color:#94a3b8; font-size:14px;">Encerrando plataforma cloud...</p>
-      </div>`;
-    document.body.style.opacity = "1";
-  }, 300);
-  
-  // REDIRECIONAMENTO NATIVO (Substitui o google.script.run que travava a tela)
-  setTimeout(() => { 
-    window.location.href = 'login.html'; 
-  }, 1200);
+    window.location.href = 'login.html';
+  }, 400);
 }
 
 function gerarArteStatus() {
@@ -1408,51 +1412,6 @@ function gerarArteStatus() {
   });
 }
 
-function verificarAlertasCofre() {
-  console.log("🔍 Iniciando verificação estratégica de alertas...");
-  
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const nomeUsuario = sessao.nome || sessao.username; 
-  const cargoUsuario = sessao.role || sessao.cargo;
-
-  if (!nomeUsuario) {
-    console.warn("⚠️ Sessão não encontrada. Re-tentando...");
-    setTimeout(verificarAlertasCofre, 2000);
-    return;
-  }
-
-  google.script.run
-    .withSuccessHandler(function(pendentes) {
-      console.log("📊 Dados recebidos:", pendentes);
-      
-      const banner = document.getElementById('banner-alerta-cofre');
-      const listaTexto = document.getElementById('lista-clientes-pendentes');
-
-      if (pendentes && pendentes.length > 0) {
-        // Formata os nomes com um separador elegante (ponto médio)
-        const nomesEnfileirados = pendentes.map(p => p.nome).join("  •  ");
-        
-        // Limita o texto para não estourar o banner em telas menores
-        const limite = 150;
-        const textoFinal = nomesEnfileirados.length > limite 
-          ? nomesEnfileirados.substring(0, limite) + "..." 
-          : nomesEnfileirados;
-
-        // Insere o conteúdo com destaque no texto
-        listaTexto.innerHTML = `OPORTUNIDADE NO COFRE: <span style="color: #60a5fa; font-weight: 600;">${textoFinal}</span>`;
-        
-        // Exibe o banner com efeito (o CSS cuida da animação de entrada)
-        banner.style.display = 'block';
-        console.log("✅ Banner Premium ativado.");
-      } else {
-        banner.style.display = 'none';
-      }
-    })
-    .withFailureHandler(function(err) {
-      console.error("❌ Falha na sincronização VEXO:", err);
-    })
-    .buscarPendentesCofre(nomeUsuario, cargoUsuario);
-}
 
 function irParaAbaFuturos() {
   // Função para mudar para a aba de vendas e depois para a sub-aba de futuros
@@ -1607,45 +1566,21 @@ function limparNotificacoes() {
   badge.style.display = 'none';
 }
 
-// =========================================================================
-// SINO DE NOTIFICAÇÕES (FATURAS E VENCIMENTOS)
-// =========================================================================
-function dispararAlertasFinanceiros() {
-  console.log("🔍 VEXO: Iniciando varredura na aba VENDAS...");
-  
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res && res.erro) {
-        console.error("⚠️ Erro de Colunas:", res.erro);
-        return;
-      }
-      
-      if (res && res.length > 0) {
-        console.log(`🔔 Notificações: ${res.length} itens críticos encontrados.`);
-        res.forEach(item => {
-          criarNotificacao(item.titulo, item.mensagem, item.tipo);
-        });
-      }
-    })
-    .buscarAlertasFaturasSino();
-}
+
 
 // =========================================================================
 // 🚀 INICIALIZAÇÃO UNIFICADA DO SISTEMA VEXO
 // =========================================================================
 window.onload = function() {
-  console.log("🚀 VEXO: Sistema Iniciado. Sincronizando módulos...");
-  
-  // 🔥 Define o mês e ano atuais nos selects
+  console.log('🚀 VEXO: Sistema Iniciado.');
+
   definirMesAnoAtual();
-  
-  // 1. Carrega Perfil e Dados do Dash
-  sincronizarPerfil(); 
-  inicializarDados();
-  
-  // 2. Dispara os alertas com pequenos delays
-  setTimeout(verificarAlertasCofre, 2000);
-  setTimeout(dispararAlertasFinanceiros, 3500);
+  sincronizarPerfil();
+
+  // ⏸️ Módulos legados (GAS) — desativados até migrarmos cada um
+  // inicializarDados();
+  // setTimeout(verificarAlertasCofre, 2000);
+  // setTimeout(dispararAlertasFinanceiros, 3500);
 };
 
 // =========================================================================
@@ -1657,89 +1592,57 @@ let chartEvolucaoVexo = null;
 let historicoCompletoVexo = null; 
 let labelsMesesVexo = [];
 
-function sincronizarPerfil() {
-  const dadosSessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  
-  // O Supabase utiliza a chave 'email', e não 'username' como no Apps Script legado.
-  if (dadosSessao && dadosSessao.email) {
-    // Extrai o nome do email (ex: "ewerton" de ewerton@movitidigital.com.br)
-    const nomeBase = dadosSessao.user_metadata?.username || dadosSessao.email.split('@')[0];
-    const nomeParaExibir = nomeBase.toUpperCase();
-    
-    // Como ainda não temos os cargos cadastrados no Supabase, definimos um padrão temporário
-    const cargoUsuario = (dadosSessao.user_metadata?.role || "ADMINISTRADOR").toUpperCase();
+// ============================================================
+// 👤 SINCRONIZAR PERFIL (Supabase)
+// ============================================================
+async function sincronizarPerfil() {
+  // getProfile() vem do supabase-client.js — se não logado, redireciona pro login
+  const profile = await getProfile();
+  if (!profile) return;
 
-    document.getElementById('display-name').innerText = nomeParaExibir;
-    document.getElementById('display-role').innerText = cargoUsuario;
-    document.getElementById('display-photo').src = dadosSessao.user_metadata?.photoUrl || 
-      "https://ui-avatars.com/api/?background=0f172a&color=fff&name=" + nomeParaExibir;
-      
-    // Inicia os gráficos
-    if (typeof iniciarGraficoEvolucao === 'function') {
-      iniciarGraficoEvolucao(cargoUsuario, nomeParaExibir);
-    }
-  } else {
-    // Se a sessão realmente for inválida, ele executa o logout novo
-    logout();
-  }
+  console.log('👤 Perfil carregado:', profile);
+
+  // Nome
+  const nomeCompleto = [profile.nome, profile.sobrenome].filter(Boolean).join(' ').toUpperCase() || profile.email;
+
+  // Foto
+  const foto = profile.photo_url ||
+    `https://ui-avatars.com/api/?background=0f172a&color=fff&name=${encodeURIComponent(nomeCompleto)}`;
+
+  // Aplica no header
+  const elNome = document.getElementById('display-name');
+  const elRole = document.getElementById('display-role');
+  const elFoto = document.getElementById('display-photo');
+
+  if (elNome) elNome.innerText = nomeCompleto;
+  if (elRole) elRole.innerText = profile.role || 'USUÁRIO';
+  if (elFoto) elFoto.src = foto;
+
+  // Ajusta o menu por cargo
+  aplicarMenuPorCargo(profile.role);
 }
 
-// ⚠️ A FUNÇÃO QUE ESTAVA FALTANDO! (O Motor que puxa os dados)
-function iniciarGraficoEvolucao(cargoLogado, nomeLogado) {
-  google.script.run
-    .withSuccessHandler(function(resposta) {
-       if(resposta.erro) { 
-         console.error("Erro no gráfico:", resposta.msg); 
-         return; 
-       }
+// Mostra/oculta itens do menu conforme o cargo
+function aplicarMenuPorCargo(role) {
+  const cargo = String(role || '').toUpperCase().trim();
 
-       historicoCompletoVexo = resposta.historicoConsultores;
-       labelsMesesVexo = resposta.labelsMeses;
+  const regras = {
+    'side-gestao-pedidos': ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR', 'CONSULTOR DE VENDAS'],
+    'side-metas':          ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR'],
+    'side-usuarios':       ['ADMINISTRADOR'],
+    'side-financeiro':     ['ADMINISTRADOR', 'BACKOFFICE'],
+    'side-relatorios':     ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR'],
+    'side-faturas':        ['ADMINISTRADOR', 'BACKOFFICE'],
+    'side-ofertas':        ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR', 'CONSULTOR DE VENDAS']
+  };
 
-       const container = document.getElementById('container-evolucao-mensal');
-       if(container) {
-         container.style.display = 'block';
-         setTimeout(() => container.style.opacity = '1', 50);
-       }
-
-       let nomeParaExibir = resposta.nomeLogado;
-
-       if(resposta.isAdmin) {
-         const divFiltro = document.getElementById('area-filtro-gestao');
-         const select = document.getElementById('select-consultor-grafico');
-         
-         if(divFiltro && select) {
-           divFiltro.style.display = 'flex';
-           select.innerHTML = ''; 
-           
-           resposta.listaDropdown.forEach(consultor => {
-             let option = document.createElement('option');
-             option.value = consultor;
-             option.text = consultor;
-             if(consultor === nomeParaExibir) option.selected = true;
-             select.appendChild(option);
-           });
-
-           if(!historicoCompletoVexo[nomeParaExibir] && resposta.listaDropdown.length > 0) {
-             nomeParaExibir = resposta.listaDropdown[0];
-             select.value = nomeParaExibir;
-           }
-
-           select.addEventListener('change', function() {
-             desenharGrafico(this.value);
-           });
-         }
-       }
-
-       if (nomeParaExibir && historicoCompletoVexo[nomeParaExibir]) {
-         desenharGrafico(nomeParaExibir);
-       }
-    })
-    .withFailureHandler(function(erro) {
-       console.error("Falha de conexão com o histórico:", erro);
-    })
-    .buscarHistoricoAnualVexo(cargoLogado, nomeLogado);
+  Object.entries(regras).forEach(([id, cargos]) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.style.display = cargos.includes(cargo) ? 'flex' : 'none';
+  });
 }
+
 
 // 🎨 A FUNÇÃO QUE DESENHA A ARTE NA TELA
 function desenharGrafico(nomeConsultor) {
@@ -1951,270 +1854,20 @@ function navegar(pagina, element) {
     })
     .loadModule(pagina, tipo);
 }
+  
 // ============================================
 // 🎯 METAS INDIVIDUAIS DO TIME (DESAFIO DO MÊS)
 // ============================================
 
 let cardsExpandidos = new Set();
 
-async function carregarMetasIndividuaisTime() {
-  const container = document.getElementById('container-metas-individuais');
+  async function carregarMetasIndividuaisTime() {
+  console.log('⚠️ Metas individuais serão reimplementadas no Supabase');
   const bloco = document.getElementById('bloco-desempenho-time');
-  
-  if (!container) {
-    console.error('❌ Container não encontrado');
-    return;
-  }
-  if (!bloco) {
-    console.error('❌ Bloco de desempenho não encontrado');
-    return;
-  }
-
-  try {
-    // Usa os seletores do dashboard
-    const mesSelect = document.getElementById('dashboard_mes');
-    const anoSelect = document.getElementById('dashboard_ano');
-    
-    if (!mesSelect || !anoSelect) {
-      console.error('❌ Seletores de período não encontrados no dashboard');
-      container.innerHTML = `
-        <div style="text-align: center; padding: 40px; background: rgba(0,0,0,0.2); border-radius: 20px; color: #ef4444;">
-          ⚠️ Erro: Seletores de período não encontrados.
-        </div>
-      `;
-      return;
-    }
-    
-    const mes = mesSelect.value;
-    const ano = anoSelect.value;
-    
-    console.log(`🎯 Carregando metas individuais para ${mes}/${ano}`);
-    
-    container.innerHTML = `
-      <div style="text-align: center; padding: 40px; background: rgba(0,0,0,0.2); border-radius: 20px;">
-        <div style="width: 40px; height: 40px; border: 2px solid #3b82f6; border-top-color: transparent; border-radius: 50%; margin: 0 auto 15px auto; animation: spin 0.8s linear infinite;"></div>
-        Carregando time do mês...
-      </div>
-    `;
-    
-    // 🔥 Busca o time do mês
-    console.log('📡 Chamando buscarTimeMetas...');
-    const timeResponse = await new Promise((resolve, reject) => {
-      google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(reject)
-        .buscarTimeMetas(mes, ano);
-    });
-    
-    console.log('📡 Resposta buscarTimeMetas:', timeResponse);
-    
-    const timeVendedores = timeResponse?.time || [];
-    const qtdElement = document.getElementById('time-qtd-vendedores');
-    if (qtdElement) qtdElement.innerText = `${timeVendedores.length} vendedor(es)`;
-    
-    // 🔥 SE NÃO HOUVER VENDEDORES, OCULTA O BLOCO E LIMPA O CONTAINER
-    if (timeVendedores.length === 0) {
-      bloco.style.display = 'none';
-      container.innerHTML = '';
-      console.log(`ℹ️ Nenhum vendedor configurado para ${mes}/${ano}. Bloco ocultado.`);
-      return;
-    } else {
-      bloco.style.display = 'block';
-    }
-    
-    // 🔥 Busca as vendas realizadas
-    container.innerHTML = `
-      <div style="text-align: center; padding: 40px; background: rgba(0,0,0,0.2); border-radius: 20px;">
-        <div style="width: 40px; height: 40px; border: 2px solid #3b82f6; border-top-color: transparent; border-radius: 50%; margin: 0 auto 15px auto; animation: spin 0.8s linear infinite;"></div>
-        Buscando vendas realizadas...
-      </div>
-    `;
-    
-    const vendasData = await new Promise((resolve, reject) => {
-      google.script.run
-        .withSuccessHandler(resolve)
-        .withFailureHandler(reject)
-        .buscarVendasParaMetasIndividuais(mes, ano);
-    });
-    
-    console.log('📡 Vendas por vendedor (RAW):', vendasData?.vendedores);
-    
-    const vendasPorVendedor = vendasData?.vendedores || {};
-    
-    // 📋 LOG DETALHADO DOS VENDEDORES
-    console.log('📋 VENDEDORES COM VENDAS NO MÊS:');
-    for (const [id, dados] of Object.entries(vendasPorVendedor)) {
-      console.log(`   - ID: "${id}" | Nome: "${dados.nome}" | FAT: ${dados.fat} | PORT: ${dados.port} | MID: ${dados.midQtd}`);
-    }
-    
-    console.log('📋 VENDEDORES DO TIME:');
-    for (const v of timeVendedores) {
-      console.log(`   - ID: "${v.id}" | Nome: "${v.nome}"`);
-    }
-    
-    // 🔥 Monta os cards
-    let htmlCards = '';
-    let cardsComMatch = 0;
-    
-    for (const vendedor of timeVendedores) {
-      const vendedorId = vendedor.id;
-      const nome = vendedor.nome || 'Vendedor';
-      const cargo = vendedor.cargo || 'Consultor';
-      const meta = vendedor.meta || {};
-      
-      // 🔥 MATCH INTELIGENTE: Tenta encontrar as vendas do vendedor por diferentes critérios
-      let realizado = { fat: 0, port: 0, midQtd: 0, nome: '' };
-      const nomeBusca = nome.toUpperCase().trim();
-      
-      // 1. Tenta pelo ID exato
-      if (vendasPorVendedor[vendedorId]) {
-        realizado = vendasPorVendedor[vendedorId];
-        console.log(`✅ Match por ID: ${vendedorId} -> ${nome} | FAT: ${realizado.fat}`);
-        cardsComMatch++;
-      } 
-      // 2. Tenta pelo nome (ignorando maiúsculas/minúsculas)
-      else {
-        let encontrado = false;
-        for (const [vendId, vendData] of Object.entries(vendasPorVendedor)) {
-          const nomeVenda = (vendData.nome || "").toUpperCase().trim();
-          const vendIdUpper = vendId.toUpperCase().trim();
-          
-          // Comparações flexíveis
-          if (nomeVenda === nomeBusca || 
-              nomeVenda.includes(nomeBusca) || 
-              nomeBusca.includes(nomeVenda) ||
-              vendIdUpper === nomeBusca ||
-              vendIdUpper === vendedorId) {
-            realizado = vendData;
-            console.log(`✅ Match por NOME: "${nomeBusca}" -> "${vendData.nome}" (ID: ${vendId}) | FAT: ${realizado.fat}`);
-            encontrado = true;
-            cardsComMatch++;
-            break;
-          }
-        }
-        
-        if (!encontrado) {
-          console.log(`⚠️ NENHUM MATCH encontrado para: ${nome} (ID: ${vendedorId})`);
-        }
-      }
-      
-      // Log do resultado final para cada vendedor
-      console.log(`📊 ${nome}: Meta FAT=${meta.fat_target} | Realizado FAT=${realizado.fat} | ${((realizado.fat / meta.fat_target) * 100).toFixed(0)}%`);
-      
-      const percFat = meta.fat_target > 0 ? Math.min((realizado.fat / meta.fat_target) * 100, 100) : 0;
-      const percPort = meta.port_target > 0 ? Math.min((realizado.port / meta.port_target) * 100, 100) : 0;
-      const percMid = meta.mid_target > 0 ? Math.min((realizado.midQtd / meta.mid_target) * 100, 100) : 0;
-      
-      const statusFat = getStatusBadge(realizado.fat, meta.fat_min, meta.fat_target, meta.fat_sup);
-      const statusPort = getStatusBadge(realizado.port, meta.port_min, meta.port_target, meta.port_sup);
-      const statusMid = getStatusBadge(realizado.midQtd, meta.mid_min, meta.mid_target, meta.mid_sup);
-      
-      const percGeral = Math.round((percFat + percPort + percMid) / 3);
-      
-      let avatarColor = 'linear-gradient(135deg, #3b82f6, #8b5cf6)';
-      if (percGeral >= 80) avatarColor = 'linear-gradient(135deg, #10b981, #34d399)';
-      else if (percGeral >= 50) avatarColor = 'linear-gradient(135deg, #3b82f6, #60a5fa)';
-      else if (percGeral > 0) avatarColor = 'linear-gradient(135deg, #f59e0b, #fbbf24)';
-      
-      // 🔥 ADICIONA CLASSES E IDs PARA CONTROLE DE EXPANSÃO/RECOLHIMENTO
-      htmlCards += `
-        <div class="card-vendedor" data-vendedor-id="${vendedorId}" style="background: #0f172a; border-radius: 20px; border: 1px solid rgba(59,130,246,0.3); overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.2);">
-          <div style="padding: 16px 20px; background: #1e293b; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-            <div style="display: flex; align-items: center; gap: 14px;">
-              <div style="width: 46px; height: 46px; background: ${avatarColor}; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 22px;">${getAvatarIcon(nome)}</div>
-              <div>
-                <div style="font-weight: 800; color: white; font-size: 16px;">${escapeHtml(nome)}</div>
-                <div style="font-size: 10px; color: #94a3b8;">${escapeHtml(cargo)} • ID: ${vendedorId}</div>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 15px;">
-              <div style="text-align: right;">
-                <div style="font-size: 10px; color: #64748b;">Desempenho</div>
-                <div style="font-size: 18px; font-weight: 800; color: ${percGeral >= 80 ? '#10b981' : (percGeral >= 50 ? '#3b82f6' : '#f59e0b')};">${percGeral}%</div>
-              </div>
-              <!-- Ícone de toggle -->
-              <span id="toggle-icon-${vendedorId}" onclick="toggleCardVendedor('${vendedorId}')" style="cursor: pointer; font-size: 18px; color: #94a3b8;">▼</span>
-            </div>
-          </div>
-          
-          <!-- Corpo do card (expansível) -->
-          <div id="card-body-${vendedorId}" style="display: none;">
-            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: #1e293b;">
-              <!-- FATURAMENTO -->
-              <div style="background: #0f172a; padding: 16px;">
-                <div style="font-size: 10px; font-weight: 700; color: #94a3b8; margin-bottom: 8px;">💰 FATURAMENTO</div>
-                <div style="font-size: 24px; font-weight: 800; color: white;">${formatCurrency(realizado.fat)}</div>
-                <div style="font-size: 11px; color: #64748b; margin-bottom: 10px;">Meta: ${formatCurrency(meta.fat_target)}</div>
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 8px;">
-                  <div style="width: ${percFat}%; height: 100%; background: #3b82f6; border-radius: 10px;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="font-size: 12px; font-weight: 700; color: #60a5fa;">${percFat.toFixed(0)}%</span>
-                  <span style="font-size: 9px; padding: 2px 8px; border-radius: 20px; background: ${statusFat.bg}; color: ${statusFat.color};">${statusFat.label}</span>
-                </div>
-              </div>
-              
-              <!-- PORTABILIDADE -->
-              <div style="background: #0f172a; padding: 16px;">
-                <div style="font-size: 10px; font-weight: 700; color: #94a3b8; margin-bottom: 8px;">🔄 PORTABILIDADE</div>
-                <div style="font-size: 24px; font-weight: 800; color: white;">${formatCurrency(realizado.port)}</div>
-                <div style="font-size: 11px; color: #64748b; margin-bottom: 10px;">Meta: ${formatCurrency(meta.port_target)}</div>
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 8px;">
-                  <div style="width: ${percPort}%; height: 100%; background: #a855f7; border-radius: 10px;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="font-size: 12px; font-weight: 700; color: #c084fc;">${percPort.toFixed(0)}%</span>
-                  <span style="font-size: 9px; padding: 2px 8px; border-radius: 20px; background: ${statusPort.bg}; color: ${statusPort.color};">${statusPort.label}</span>
-                </div>
-              </div>
-              
-              <!-- RENEGOCIAÇÃO MID -->
-              <div style="background: #0f172a; padding: 16px;">
-                <div style="font-size: 10px; font-weight: 700; color: #94a3b8; margin-bottom: 8px;">📱 RENEGOCIAÇÃO MID</div>
-                <div style="font-size: 24px; font-weight: 800; color: white;">${realizado.midQtd} <span style="font-size: 12px;">unid.</span></div>
-                <div style="font-size: 11px; color: #64748b; margin-bottom: 10px;">Meta: ${meta.mid_target} unid.</div>
-                <div style="width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 10px; margin-bottom: 8px;">
-                  <div style="width: ${percMid}%; height: 100%; background: #f59e0b; border-radius: 10px;"></div>
-                </div>
-                <div style="display: flex; justify-content: space-between;">
-                  <span style="font-size: 12px; font-weight: 700; color: #fbbf24;">${percMid.toFixed(0)}%</span>
-                  <span style="font-size: 9px; padding: 2px 8px; border-radius: 20px; background: ${statusMid.bg}; color: ${statusMid.color};">${statusMid.label}</span>
-                </div>
-              </div>
-            </div>
-            
-            <div style="padding: 10px 20px; background: #0a0f1a; border-top: 1px solid rgba(255,255,255,0.03); font-size: 10px; color: #475569; display: flex; justify-content: space-between;">
-              <span>🎯 Mín FAT: ${formatCurrency(meta.fat_min)}</span>
-              <span>⭐ Target FAT: ${formatCurrency(meta.fat_target)}</span>
-              <span>🏆 Sup FAT: ${formatCurrency(meta.fat_sup)}</span>
-            </div>
-          </div>
-        </div>
-      `;
-    }
-    
-    container.innerHTML = htmlCards;
-    console.log(`✅ Cards renderizados com sucesso! Total de matches: ${cardsComMatch} de ${timeVendedores.length}`);
-    
-    // 🔥 RECOLHE TODOS OS CARDS POR PADRÃO
-    recolherTodosCards();
-    
-    // Se nenhum match foi encontrado, mostra aviso
-    if (cardsComMatch === 0 && timeVendedores.length > 0) {
-      console.warn('⚠️ ATENÇÃO: Nenhum vendedor teve match com as vendas! Verifique os IDs e nomes.');
-    }
-    
-  } catch (error) {
-    console.error('❌ Erro:', error);
-    container.innerHTML = `
-      <div style="text-align: center; padding: 40px; background: rgba(0,0,0,0.2); border-radius: 20px; color: #ef4444;">
-        ⚠️ Erro: ${escapeHtml(error.message)}<br>
-        <button onclick="carregarMetasIndividuaisTime()" style="margin-top: 15px; background: #3b82f6; border: none; padding: 8px 16px; border-radius: 8px; color: white; cursor: pointer;">🔄 Tentar Novamente</button>
-      </div>
-    `;
-  }
+  if (bloco) bloco.style.display = 'none';
 }
 
+  
 // Função para expandir/recolher um card específico
 function toggleCardVendedor(vendedorId) {
   const body = document.getElementById(`card-body-${vendedorId}`);
