@@ -1754,7 +1754,117 @@ function limparNotificacoes() {
 }
 
 
+// ============================================================
+// 📊 INICIALIZAR DADOS (Supabase · VENDAS + metas_config)
+// ============================================================
+async function inicializarDados() {
+  console.log('📊 [DASH] Carregando indicadores...');
+  const statusMeta = document.getElementById('status-meta');
+  if (statusMeta) statusMeta.innerText = 'Carregando indicadores...';
 
+  try {
+    const mesSelect = document.getElementById('dashboard_mes');
+    const anoSelect = document.getElementById('dashboard_ano');
+    const mes = (mesSelect?.value || 'JUNHO').toUpperCase();
+    const ano = parseInt(anoSelect?.value) || new Date().getFullYear();
+
+    // 1. Busca metas da loja
+    let metas = {
+      fat_min: 0, fat_target: 0, fat_sup: 0,
+      port_min: 0, port_target: 0, port_sup: 0,
+      reneg_min: 0, reneg_target: 0, reneg_sup: 0
+    };
+    try {
+      const { data: metaDB } = await sb
+        .from('metas_config')
+        .select('*')
+        .eq('mes', mes)
+        .eq('ano', ano)
+        .maybeSingle();
+      if (metaDB) metas = metaDB;
+    } catch (e) { console.warn('⚠️ metas_config indisponível:', e.message); }
+
+    // 2. Busca todas as vendas
+    const { data: vendasRaw, error } = await sb.from('VENDAS').select('*');
+    if (error) throw error;
+
+    // 3. Mapeia mês → número
+    const mapaMeses = {
+      'JANEIRO':'01','FEVEREIRO':'02','MARÇO':'03','MARCO':'03','ABRIL':'04',
+      'MAIO':'05','JUNHO':'06','JULHO':'07','AGOSTO':'08','SETEMBRO':'09',
+      'OUTUBRO':'10','NOVEMBRO':'11','DEZEMBRO':'12'
+    };
+    const mesNum = mapaMeses[mes] || String(new Date().getMonth() + 1).padStart(2, '0');
+
+    const parseValor = (v) => {
+      if (!v) return 0;
+      let s = String(v).replace('R$', '').trim();
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      const n = parseFloat(s.replace(/[^\d.-]/g, ''));
+      return isNaN(n) ? 0 : n;
+    };
+
+    // 4. Filtra do mês
+    const vendasMes = (vendasRaw || []).filter(v => {
+      const partes = String(v.data_da_venda || '').split('/');
+      if (partes.length !== 3) return false;
+      const mm = String(partes[1]).padStart(2, '0');
+      let aaaa = String(partes[2]);
+      if (aaaa.length === 2) aaaa = '20' + aaaa;
+      return mm === mesNum && aaaa === String(ano);
+    });
+
+    // 5. Processa
+    const ranking = {};
+    const vendasTratadas = [];
+
+    vendasMes.forEach(v => {
+      const valor = parseValor(v.valor_contratado);
+      const modalidade = String(v.modalidade || '').toUpperCase();
+      const consultor = String(v.consultor_que_vendeu || 'NÃO INFORMADO').toUpperCase().trim();
+      const temAtivacao = v.data_de_ativacao_no_radar && String(v.data_de_ativacao_no_radar).trim() !== '';
+
+      if (temAtivacao && consultor) {
+        ranking[consultor] = (ranking[consultor] || 0) + valor;
+      }
+
+      vendasTratadas.push({
+        cliente: v.razao_social || 'Cliente',
+        plano: v.plano || '-',
+        valor: valor,
+        modalidade: modalidade,
+        status: temAtivacao ? 'ATIVADO' : 'PENDENTE',
+        data: v.data_da_venda || ''
+      });
+    });
+
+    const dados = {
+      metaValor:     Number(metas.fat_target) || 0,
+      metaMin:       Number(metas.fat_min) || 0,
+      metaSup:       Number(metas.fat_sup) || 0,
+      portMeta:      Number(metas.port_target) || 0,
+      portMin:       Number(metas.port_min) || 0,
+      portSup:       Number(metas.port_sup) || 0,
+      renegMeta:     Number(metas.reneg_target) || 0,
+      renegMin:      Number(metas.reneg_min) || 0,
+      renegSup:      Number(metas.reneg_sup) || 0,
+      ranking: ranking,
+      vendas: vendasTratadas,
+      erro: false,
+      msgErro: ''
+    };
+
+    console.log(`✅ ${vendasTratadas.length} vendas · metas carregadas · ${Object.keys(ranking).length} consultores`);
+    renderizarDashboard(dados);
+
+    // Depois de renderizar, carrega o bloco do time
+    setTimeout(() => carregarMetasIndividuaisTime(), 400);
+
+  } catch (e) {
+    console.error('❌ [DASH]', e);
+    if (statusMeta) statusMeta.innerText = 'Erro ao carregar';
+  }
+}
 // =========================================================================
 // 🚀 INICIALIZAÇÃO UNIFICADA DO SISTEMA VEXO
 // =========================================================================
@@ -2042,16 +2152,164 @@ function navegar(pagina, element) {
     .loadModule(pagina, tipo);
 }
   
-// ============================================
-// 🎯 METAS INDIVIDUAIS DO TIME (DESAFIO DO MÊS)
-// ============================================
-
-let cardsExpandidos = new Set();
-
-  async function carregarMetasIndividuaisTime() {
-  console.log('⚠️ Metas individuais serão reimplementadas no Supabase');
+// ============================================================
+// 👥 METAS INDIVIDUAIS DO TIME (Supabase)
+// ============================================================
+async function carregarMetasIndividuaisTime() {
+  console.log('👥 [DASH] Carregando metas do time...');
+  const container = document.getElementById('container-metas-individuais');
   const bloco = document.getElementById('bloco-desempenho-time');
-  if (bloco) bloco.style.display = 'none';
+  if (!container || !bloco) return;
+
+  try {
+    const mes = (document.getElementById('dashboard_mes')?.value || '').toUpperCase();
+    const ano = parseInt(document.getElementById('dashboard_ano')?.value) || new Date().getFullYear();
+    if (!mes) return;
+
+    // 1. Busca metas individuais do mês
+    const { data: metasTime, error: errMetas } = await sb
+      .from('metas_time_mes')
+      .select('*')
+      .eq('mes', mes)
+      .eq('ano', ano);
+
+    if (errMetas) throw errMetas;
+
+    if (!metasTime || metasTime.length === 0) {
+      bloco.style.display = 'none';
+      container.innerHTML = '';
+      console.log(`ℹ️ Nenhuma meta de time cadastrada para ${mes}/${ano}`);
+      return;
+    }
+
+    bloco.style.display = 'block';
+    document.getElementById('time-qtd-vendedores').innerText = `${metasTime.length} vendedor(es)`;
+
+    // 2. Busca todas as vendas do mês para cruzar
+    const mapaMeses = {
+      'JANEIRO':'01','FEVEREIRO':'02','MARÇO':'03','MARCO':'03','ABRIL':'04',
+      'MAIO':'05','JUNHO':'06','JULHO':'07','AGOSTO':'08','SETEMBRO':'09',
+      'OUTUBRO':'10','NOVEMBRO':'11','DEZEMBRO':'12'
+    };
+    const mesNum = mapaMeses[mes] || String(new Date().getMonth() + 1).padStart(2, '0');
+
+    const { data: vendas } = await sb.from('VENDAS').select('*');
+
+    const parseValor = (v) => {
+      if (!v) return 0;
+      let s = String(v).replace('R$', '').trim();
+      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+      return parseFloat(s.replace(/[^\d.-]/g, '')) || 0;
+    };
+
+    // Agrupa vendas por consultor (só ativas)
+    const porConsultor = {};
+    (vendas || []).forEach(v => {
+      const partes = String(v.data_da_venda || '').split('/');
+      if (partes.length !== 3) return;
+      const mm = String(partes[1]).padStart(2, '0');
+      let aaaa = String(partes[2]);
+      if (aaaa.length === 2) aaaa = '20' + aaaa;
+      if (mm !== mesNum || aaaa !== String(ano)) return;
+
+      const temAtivacao = v.data_de_ativacao_no_radar && String(v.data_de_ativacao_no_radar).trim() !== '';
+      if (!temAtivacao) return;
+
+      const nome = String(v.consultor_que_vendeu || '').toUpperCase().trim();
+      if (!nome) return;
+
+      if (!porConsultor[nome]) porConsultor[nome] = { fat: 0, port: 0, reneg: 0 };
+      const valor = parseValor(v.valor_contratado);
+      const mod = String(v.modalidade || '').toUpperCase();
+
+      if (mod.includes('RENEG')) porConsultor[nome].reneg++;
+      else {
+        porConsultor[nome].fat += valor;
+        if (mod.includes('PORTABILIDADE')) porConsultor[nome].port += valor;
+      }
+    });
+
+    // 3. Renderiza cards
+    let html = '';
+    metasTime.forEach(mt => {
+      const nomeUpper = String(mt.nome || '').toUpperCase().trim();
+      const realizado = porConsultor[nomeUpper] || { fat: 0, port: 0, reneg: 0 };
+
+      const percFat = mt.meta_target_fat > 0 ? Math.min((realizado.fat / mt.meta_target_fat) * 100, 100) : 0;
+      const percPort = mt.meta_target_port > 0 ? Math.min((realizado.port / mt.meta_target_port) * 100, 100) : 0;
+      const percMid = mt.meta_target_reneg > 0 ? Math.min((realizado.reneg / mt.meta_target_reneg) * 100, 100) : 0;
+      const percGeral = Math.round((percFat + percPort + percMid) / 3);
+
+      let avatarColor = 'linear-gradient(135deg, #3b82f6, #8b5cf6)';
+      if (percGeral >= 80) avatarColor = 'linear-gradient(135deg, #10b981, #34d399)';
+      else if (percGeral >= 50) avatarColor = 'linear-gradient(135deg, #3b82f6, #60a5fa)';
+      else if (percGeral > 0) avatarColor = 'linear-gradient(135deg, #f59e0b, #fbbf24)';
+
+      const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+      html += `
+        <div class="card-vendedor" data-vendedor-id="${mt.matricula}" style="background:#0f172a; border-radius:20px; border:1px solid rgba(59,130,246,0.3); overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
+          <div style="padding:16px 20px; background:#1e293b; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div style="width:46px; height:46px; background:${avatarColor}; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">👤</div>
+              <div>
+                <div style="font-weight:800; color:white; font-size:16px;">${mt.nome}</div>
+                <div style="font-size:10px; color:#94a3b8;">${mt.cargo || 'Consultor'} • ${mt.matricula}</div>
+              </div>
+            </div>
+            <div style="display:flex; align-items:center; gap:15px;">
+              <div style="text-align:right;">
+                <div style="font-size:10px; color:#64748b;">Desempenho</div>
+                <div style="font-size:18px; font-weight:800; color:${percGeral >= 80 ? '#10b981' : (percGeral >= 50 ? '#3b82f6' : '#f59e0b')};">${percGeral}%</div>
+              </div>
+              <span id="toggle-icon-${mt.matricula}" onclick="toggleCardVendedor('${mt.matricula}')" style="cursor:pointer; font-size:18px; color:#94a3b8;">▼</span>
+            </div>
+          </div>
+
+          <div id="card-body-${mt.matricula}" style="display:none;">
+            <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:#1e293b;">
+              <div style="background:#0f172a; padding:16px;">
+                <div style="font-size:10px; font-weight:700; color:#94a3b8; margin-bottom:8px;">💰 FATURAMENTO</div>
+                <div style="font-size:22px; font-weight:800; color:white;">${fmt(realizado.fat)}</div>
+                <div style="font-size:11px; color:#64748b; margin-bottom:10px;">Meta: ${fmt(mt.meta_target_fat)}</div>
+                <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:10px; margin-bottom:8px;">
+                  <div style="width:${percFat}%; height:100%; background:#3b82f6; border-radius:10px;"></div>
+                </div>
+                <div style="font-size:12px; font-weight:700; color:#60a5fa;">${percFat.toFixed(0)}%</div>
+              </div>
+
+              <div style="background:#0f172a; padding:16px;">
+                <div style="font-size:10px; font-weight:700; color:#94a3b8; margin-bottom:8px;">🔄 PORTABILIDADE</div>
+                <div style="font-size:22px; font-weight:800; color:white;">${fmt(realizado.port)}</div>
+                <div style="font-size:11px; color:#64748b; margin-bottom:10px;">Meta: ${fmt(mt.meta_target_port)}</div>
+                <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:10px; margin-bottom:8px;">
+                  <div style="width:${percPort}%; height:100%; background:#a855f7; border-radius:10px;"></div>
+                </div>
+                <div style="font-size:12px; font-weight:700; color:#c084fc;">${percPort.toFixed(0)}%</div>
+              </div>
+
+              <div style="background:#0f172a; padding:16px;">
+                <div style="font-size:10px; font-weight:700; color:#94a3b8; margin-bottom:8px;">📱 RENEGOCIAÇÃO</div>
+                <div style="font-size:22px; font-weight:800; color:white;">${realizado.reneg} <span style="font-size:12px;">un.</span></div>
+                <div style="font-size:11px; color:#64748b; margin-bottom:10px;">Meta: ${mt.meta_target_reneg} un.</div>
+                <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:10px; margin-bottom:8px;">
+                  <div style="width:${percMid}%; height:100%; background:#f59e0b; border-radius:10px;"></div>
+                </div>
+                <div style="font-size:12px; font-weight:700; color:#fbbf24;">${percMid.toFixed(0)}%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+
+    container.innerHTML = html;
+    console.log(`✅ ${metasTime.length} cards do time renderizados`);
+
+  } catch (e) {
+    console.error('❌ [DASH] Erro metas time:', e);
+    container.innerHTML = `<p style="text-align:center; color:#ef4444; padding:20px;">Erro: ${e.message}</p>`;
+  }
 }
 
   
