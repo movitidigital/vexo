@@ -8,6 +8,32 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
   <style>
+    /* ============================================================ */
+/* FIX: módulo injetado dentro do dashboard */
+/* ============================================================ */
+#main-content-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+#modulo-container {
+  display: block;
+  width: 100%;
+  flex: 1;
+  min-height: 0;
+  opacity: 1 !important; /* nunca invisível */
+}
+
+#modulo-container iframe {
+  width: 100%;
+  height: 100%;
+  min-height: 600px;
+  border: none;
+  display: block;
+  background: #f4f7fa;
+}
     /* --- VEXO BRANDING - ESTRUTURA ERP --- */
     body, html { margin: 0; padding: 0; height: 100%; font-family: 'Poppins', sans-serif; background: #f4f7fa; overflow: hidden; }
     .dash-wrapper { display: flex; height: 100vh; width: 100%; }
@@ -1111,18 +1137,22 @@ async function abrirModulo(nome) {
   const menu = document.getElementById('menu-principal');
   const container = document.getElementById('modulo-container');
   const btnVoltar = document.getElementById('btn-voltar-container');
+  const areaPrincipal = document.getElementById('main-content-area');
 
-  // 1) Sincroniza a sidebar
+  // 🔥 CORREÇÃO: força o #main-content-area visível (ele tem opacity: 0 por padrão)
+  if (areaPrincipal) areaPrincipal.classList.add('revelar-dash');
+  if (container) container.style.opacity = '1';
+
+  // Sincroniza a sidebar
   const idMenu = (nome === 'dash') ? 'btn-dash' : 'side-' + nome;
   gerenciarMenuAtivo(idMenu);
 
-  // 2) Transição: esconde o menu, mostra o botão voltar
+  // Esconde o menu, mostra o botão voltar
   menu.style.opacity = '0';
   setTimeout(() => {
     menu.style.display = 'none';
     btnVoltar.style.display = 'block';
 
-    // 3) Mapeamento módulo → arquivo
     const arquivosMap = {
       'vendas':         'vendas.html',
       'agenda':         'agenda.html',
@@ -1141,14 +1171,20 @@ async function abrirModulo(nome) {
     const arquivo = arquivosMap[nome] || (nome + '.html');
     console.log('📄 [abrirModulo] Carregando:', arquivo);
 
-    // 4) Injeta um IFRAME com o módulo (isolamento total)
+    // 🔥 Container também precisa estar visível e com altura
+    container.style.display = 'block';
+    container.style.opacity = '1';
+    container.style.minHeight = 'calc(100vh - 130px)';
+
+    // Injeta iframe com altura correta
     container.innerHTML = `
       <iframe
         src="${arquivo}"
         id="iframe-${nome}"
         style="
           width: 100%;
-          height: calc(100vh - 60px);
+          height: calc(100vh - 130px);
+          min-height: 600px;
           border: none;
           display: block;
           background: #f4f7fa;
@@ -1268,24 +1304,23 @@ function voltarAoMenu() {
   const moduloContainer = document.getElementById('modulo-container');
   const btnVoltar = document.getElementById('btn-voltar-container');
 
-  // 1) Reset visual
+  // Reset
   if (areaPrincipal) areaPrincipal.classList.remove('revelar-dash');
   if (menuPrincipal) menuPrincipal.classList.remove('revelar-dash');
+
   menuPrincipal.style.display = 'block';
   menuPrincipal.style.opacity = '0';
 
-  // 2) Limpa o container (remove o iframe)
   moduloContainer.innerHTML = '';
-
-  // 3) Esconde o botão voltar
+  moduloContainer.style.display = 'none';
   btnVoltar.style.display = 'none';
 
-  // 4) Sidebar → Dashboard
   gerenciarMenuAtivo('btn-dash');
 
-  // 5) Fade-in suave
+  // Fade-in do menu
   setTimeout(() => {
     menuPrincipal.style.opacity = '1';
+    if (areaPrincipal) areaPrincipal.classList.add('revelar-dash');
   }, 50);
 }
 
