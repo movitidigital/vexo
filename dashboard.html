@@ -1755,109 +1755,194 @@ function limparNotificacoes() {
 
 
 // ============================================================
-// 📊 INICIALIZAR DADOS (Supabase · VENDAS + metas_config)
+// 📊 BUSCAR DADOS DO DASHBOARD (réplica fiel do GAS)
+// Regra de data:
+//   • PENDENTE (sem data de ativação) = arrasta para o mês atual
+//   • ATIVADO (data de ativação no mês atual) = conta no mês
+//   • Data de ativação em outro mês = NÃO conta
 // ============================================================
 async function inicializarDados() {
-  console.log('📊 [DASH] Carregando indicadores...');
+  console.log('📊 [DASH] Buscando dados...');
   const statusMeta = document.getElementById('status-meta');
   if (statusMeta) statusMeta.innerText = 'Carregando indicadores...';
 
   try {
-    const mesSelect = document.getElementById('dashboard_mes');
-    const anoSelect = document.getElementById('dashboard_ano');
-    const mes = (mesSelect?.value || 'JUNHO').toUpperCase();
-    const ano = parseInt(anoSelect?.value) || new Date().getFullYear();
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth() + 1;
+    const anoAtual = hoje.getFullYear();
 
-    // 1. Busca metas da loja
-    let metas = {
-      fat_min: 0, fat_target: 0, fat_sup: 0,
-      port_min: 0, port_target: 0, port_sup: 0,
-      reneg_min: 0, reneg_target: 0, reneg_sup: 0
+    // ---- 1. Mapeia USERS (matrícula → nome, nome → foto) ----
+    const mapaUsuarios = {};
+    const mapaFotos = {};
+    const listaConsultores = [];
+
+    try {
+      const { data: users } = await sb.from('profiles').select('*');
+      (users || []).forEach(u => {
+        const matricula = String(u.matricula || '').trim().toUpperCase();
+        const nome = String(u.nome || '').trim();
+        const sobrenome = String(u.sobrenome || '').trim();
+        const foto = u.photo_url || '';
+        if (!nome && !sobrenome) return;
+
+        const nomeCompleto = `${nome} ${sobrenome}`.trim().toUpperCase();
+        if (matricula) mapaUsuarios[matricula] = nomeCompleto;
+        mapaFotos[nomeCompleto] = foto;
+        if (!listaConsultores.includes(nomeCompleto)) listaConsultores.push(nomeCompleto);
+      });
+      listaConsultores.sort();
+    } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
+
+    // ---- 2. Busca METAS_CONFIG do mês atual ----
+    const mapaMesesNum = {
+      'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,
+      'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,
+      'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12
     };
+    const mesSelecionado = (document.getElementById('dashboard_mes')?.value || '').toUpperCase();
+    const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || anoAtual;
+    const mesNumericoSelecionado = mapaMesesNum[mesSelecionado] || mesAtual;
+
+    let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0;
+    let metaFaturamentoSup = 0, metaPortabilidadeSup = 0, metaRenegociacaoSup = 0;
+    let metaEncontrada = false;
+
     try {
       const { data: metaDB } = await sb
         .from('metas_config')
         .select('*')
-        .eq('mes', mes)
-        .eq('ano', ano)
-        .maybeSingle();
-      if (metaDB) metas = metaDB;
+        .eq('ano', anoSelecionado);
+
+      if (metaDB && metaDB.length > 0) {
+        // Filtra pelo mês (aceita 'JUNHO', 'JUNHO' com acento ou número)
+        const metaDoMes = metaDB.find(m => {
+          const mNum = mapaMesesNum[String(m.mes).toUpperCase().trim()] || parseInt(m.mes);
+          return mNum === mesNumericoSelecionado;
+        });
+
+        if (metaDoMes) {
+          metaFaturamento      = Number(metaDoMes.fat_target) || 0;
+          metaFaturamentoSup   = Number(metaDoMes.fat_sup) || 0;
+          metaPortabilidade    = Number(metaDoMes.port_target) || 0;
+          metaPortabilidadeSup = Number(metaDoMes.port_sup) || 0;
+          metaRenegociacao     = Number(metaDoMes.reneg_target) || 0;
+          metaRenegociacaoSup  = Number(metaDoMes.reneg_sup) || 0;
+          metaEncontrada = true;
+        }
+      }
     } catch (e) { console.warn('⚠️ metas_config indisponível:', e.message); }
 
-    // 2. Busca todas as vendas
-    const { data: vendasRaw, error } = await sb.from('VENDAS').select('*');
+    // ---- 3. Processa VENDAS (mesma lógica GAS) ----
+    const { data: dataVendas, error } = await sb.from('VENDAS').select('*');
     if (error) throw error;
 
-    // 3. Mapeia mês → número
-    const mapaMeses = {
-      'JANEIRO':'01','FEVEREIRO':'02','MARÇO':'03','MARCO':'03','ABRIL':'04',
-      'MAIO':'05','JUNHO':'06','JULHO':'07','AGOSTO':'08','SETEMBRO':'09',
-      'OUTUBRO':'10','NOVEMBRO':'11','DEZEMBRO':'12'
-    };
-    const mesNum = mapaMeses[mes] || String(new Date().getMonth() + 1).padStart(2, '0');
+    const ranking = {};
+    const listaVendasDashboard = [];
 
     const parseValor = (v) => {
       if (!v) return 0;
       let s = String(v).replace('R$', '').trim();
       if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
-      const n = parseFloat(s.replace(/[^\d.-]/g, ''));
-      return isNaN(n) ? 0 : n;
+      return parseFloat(s.replace(/[^\d.-]/g, '')) || 0;
     };
 
-    // 4. Filtra do mês
-    const vendasMes = (vendasRaw || []).filter(v => {
-      const partes = String(v.data_da_venda || '').split('/');
-      if (partes.length !== 3) return false;
-      const mm = String(partes[1]).padStart(2, '0');
-      let aaaa = String(partes[2]);
-      if (aaaa.length === 2) aaaa = '20' + aaaa;
-      return mm === mesNum && aaaa === String(ano);
-    });
+    // Helper para normalizar data (dd/mm/yyyy → Date)
+    const parseDataBR = (str) => {
+      if (!str) return null;
+      const p = String(str).trim().split(' ')[0].split('/');
+      if (p.length !== 3) return null;
+      let ano = parseInt(p[2]); if (ano < 100) ano += 2000;
+      const d = new Date(ano, parseInt(p[1]) - 1, parseInt(p[0]));
+      return isNaN(d.getTime()) ? null : d;
+    };
 
-    // 5. Processa
-    const ranking = {};
-    const vendasTratadas = [];
+    (dataVendas || []).forEach(v => {
+      const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
+      if (statusBruto.includes('CANCELADO')) return;
 
-    vendasMes.forEach(v => {
+      // Data de ativação (coluna AK na planilha)
+      const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
+
+      // Normaliza modalidade (igual GAS)
+      let modalidade = String(v.modalidade || '').toUpperCase().trim();
+      let modalidadeParaPainel = modalidade;
+      if (modalidade.includes('MIGRA'))       modalidadeParaPainel = 'MIGRAÇÃO TT';
+      else if (modalidade.includes('ATIVA'))  modalidadeParaPainel = 'PRIMEIRA ATIVAÇÃO';
+      else if (modalidade.includes('ADITIVO'))modalidadeParaPainel = 'ADITIVO';
+
+      const isReceita =
+        modalidadeParaPainel === 'MIGRAÇÃO TT' ||
+        modalidadeParaPainel === 'PRIMEIRA ATIVAÇÃO' ||
+        modalidadeParaPainel === 'ADITIVO' ||
+        modalidade.includes('PORTABIL');
+
+      if (!isReceita) return;
+
       const valor = parseValor(v.valor_contratado);
-      const modalidade = String(v.modalidade || '').toUpperCase();
-      const consultor = String(v.consultor_que_vendeu || 'NÃO INFORMADO').toUpperCase().trim();
-      const temAtivacao = v.data_de_ativacao_no_radar && String(v.data_de_ativacao_no_radar).trim() !== '';
+      const matriculaVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
+      const nomeParaExibir = mapaUsuarios[matriculaVenda] || matriculaVenda || 'DESCONHECIDO';
 
-      if (temAtivacao && consultor) {
-        ranking[consultor] = (ranking[consultor] || 0) + valor;
+      // ---- LÓGICA DE INCLUSÃO (idêntica ao GAS) ----
+      let incluir = false;
+      let statusFinalPainel = 'PENDENTE';
+      let dataParaDashboard = null;
+
+      if (dataAtivacao) {
+        // Tem data de ativação: só inclui se for do MÊS/ANO SELECIONADO
+        if ((dataAtivacao.getMonth() + 1) === mesNumericoSelecionado &&
+             dataAtivacao.getFullYear() === anoSelecionado) {
+          incluir = true;
+          statusFinalPainel = 'ATIVADO';
+          dataParaDashboard = dataAtivacao;
+        }
+      } else {
+        // Sem ativação: pendente, arrasta para o mês atual
+        if (mesNumericoSelecionado === mesAtual && anoSelecionado === anoAtual) {
+          incluir = true;
+          statusFinalPainel = 'PENDENTE';
+          dataParaDashboard = hoje;
+        }
       }
 
-      vendasTratadas.push({
-        cliente: v.razao_social || 'Cliente',
-        plano: v.plano || '-',
-        valor: valor,
-        modalidade: modalidade,
-        status: temAtivacao ? 'ATIVADO' : 'PENDENTE',
-        data: v.data_da_venda || ''
-      });
+      if (incluir) {
+        ranking[nomeParaExibir] = (ranking[nomeParaExibir] || 0) + valor;
+
+        const dia = String(dataParaDashboard.getDate()).padStart(2,'0');
+        const mes = String(dataParaDashboard.getMonth() + 1).padStart(2,'0');
+        const ano = dataParaDashboard.getFullYear();
+        listaVendasDashboard.push({
+          cliente: v.razao_social,
+          plano: v.plano || modalidade,
+          valor: valor,
+          modalidade: modalidadeParaPainel,
+          status: statusFinalPainel,
+          data: `${dia}/${mes}/${ano}`
+        });
+      }
     });
 
+    // ---- 4. Monta objeto e renderiza ----
     const dados = {
-      metaValor:     Number(metas.fat_target) || 0,
-      metaMin:       Number(metas.fat_min) || 0,
-      metaSup:       Number(metas.fat_sup) || 0,
-      portMeta:      Number(metas.port_target) || 0,
-      portMin:       Number(metas.port_min) || 0,
-      portSup:       Number(metas.port_sup) || 0,
-      renegMeta:     Number(metas.reneg_target) || 0,
-      renegMin:      Number(metas.reneg_min) || 0,
-      renegSup:      Number(metas.reneg_sup) || 0,
+      metaValor: metaFaturamento,
+      metaSup: metaFaturamentoSup,
+      portMeta: metaPortabilidade,
+      portSup: metaPortabilidadeSup,
+      renegMeta: metaRenegociacao,
+      renegSup: metaRenegociacaoSup,
       ranking: ranking,
-      vendas: vendasTratadas,
-      erro: false,
-      msgErro: ''
+      fotos: mapaFotos,
+      consultores: listaConsultores,
+      vendas: listaVendasDashboard,
+      erro: !metaEncontrada,
+      msgErro: !metaEncontrada
+        ? `Meta de ${mesNumericoSelecionado}/${anoSelecionado} não encontrada.`
+        : ''
     };
 
-    console.log(`✅ ${vendasTratadas.length} vendas · metas carregadas · ${Object.keys(ranking).length} consultores`);
+    console.log(`✅ ${listaVendasDashboard.length} vendas processadas, ${Object.keys(ranking).length} consultores`);
     renderizarDashboard(dados);
 
-    // Depois de renderizar, carrega o bloco do time
+    // Carrega bloco do time após render
     setTimeout(() => carregarMetasIndividuaisTime(), 400);
 
   } catch (e) {
@@ -2153,7 +2238,7 @@ function navegar(pagina, element) {
 }
   
 // ============================================================
-// 👥 METAS INDIVIDUAIS DO TIME (Supabase)
+// 👥 METAS INDIVIDUAIS DO TIME (réplica fiel do GAS)
 // ============================================================
 async function carregarMetasIndividuaisTime() {
   console.log('👥 [DASH] Carregando metas do time...');
@@ -2162,38 +2247,39 @@ async function carregarMetasIndividuaisTime() {
   if (!container || !bloco) return;
 
   try {
-    const mes = (document.getElementById('dashboard_mes')?.value || '').toUpperCase();
-    const ano = parseInt(document.getElementById('dashboard_ano')?.value) || new Date().getFullYear();
-    if (!mes) return;
+    const mapaMesesNum = {
+      'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,
+      'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,
+      'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12
+    };
+    const mesSelecionado = (document.getElementById('dashboard_mes')?.value || '').toUpperCase();
+    const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || new Date().getFullYear();
+    const mesNum = mapaMesesNum[mesSelecionado] || new Date().getMonth() + 1;
 
-    // 1. Busca metas individuais do mês
-    const { data: metasTime, error: errMetas } = await sb
+    // ---- 1. Busca METAS_TIME_MES ----
+    const { data: metasTime } = await sb
       .from('metas_time_mes')
       .select('*')
-      .eq('mes', mes)
-      .eq('ano', ano);
+      .eq('ano', anoSelecionado);
 
-    if (errMetas) throw errMetas;
+    // Filtra pelo mês (aceita número ou nome)
+    const timeVendedores = (metasTime || []).filter(mt => {
+      const mNum = mapaMesesNum[String(mt.mes).toUpperCase().trim()] || parseInt(mt.mes);
+      return mNum === mesNum;
+    });
 
-    if (!metasTime || metasTime.length === 0) {
+    document.getElementById('time-qtd-vendedores').innerText = `${timeVendedores.length} vendedor(es)`;
+
+    if (timeVendedores.length === 0) {
       bloco.style.display = 'none';
       container.innerHTML = '';
-      console.log(`ℹ️ Nenhuma meta de time cadastrada para ${mes}/${ano}`);
+      console.log(`ℹ️ Nenhuma meta de time para ${mesSelecionado}/${anoSelecionado}`);
       return;
     }
-
     bloco.style.display = 'block';
-    document.getElementById('time-qtd-vendedores').innerText = `${metasTime.length} vendedor(es)`;
 
-    // 2. Busca todas as vendas do mês para cruzar
-    const mapaMeses = {
-      'JANEIRO':'01','FEVEREIRO':'02','MARÇO':'03','MARCO':'03','ABRIL':'04',
-      'MAIO':'05','JUNHO':'06','JULHO':'07','AGOSTO':'08','SETEMBRO':'09',
-      'OUTUBRO':'10','NOVEMBRO':'11','DEZEMBRO':'12'
-    };
-    const mesNum = mapaMeses[mes] || String(new Date().getMonth() + 1).padStart(2, '0');
-
-    const { data: vendas } = await sb.from('VENDAS').select('*');
+    // ---- 2. Busca VENDAS para cruzar ----
+    const { data: dataVendas } = await sb.from('VENDAS').select('*');
 
     const parseValor = (v) => {
       if (!v) return 0;
@@ -2201,43 +2287,61 @@ async function carregarMetasIndividuaisTime() {
       if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
       return parseFloat(s.replace(/[^\d.-]/g, '')) || 0;
     };
+    const parseDataBR = (str) => {
+      if (!str) return null;
+      const p = String(str).trim().split(' ')[0].split('/');
+      if (p.length !== 3) return null;
+      let ano = parseInt(p[2]); if (ano < 100) ano += 2000;
+      const d = new Date(ano, parseInt(p[1]) - 1, parseInt(p[0]));
+      return isNaN(d.getTime()) ? null : d;
+    };
 
-    // Agrupa vendas por consultor (só ativas)
-    const porConsultor = {};
-    (vendas || []).forEach(v => {
-      const partes = String(v.data_da_venda || '').split('/');
-      if (partes.length !== 3) return;
-      const mm = String(partes[1]).padStart(2, '0');
-      let aaaa = String(partes[2]);
-      if (aaaa.length === 2) aaaa = '20' + aaaa;
-      if (mm !== mesNum || aaaa !== String(ano)) return;
+    // Agrupa por consultor (só ATIVADAS no mês)
+    const vendasPorVendedor = {};
+    (dataVendas || []).forEach(v => {
+      const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
+      if (!dataAtivacao) return;
+      if ((dataAtivacao.getMonth() + 1) !== mesNum) return;
+      if (dataAtivacao.getFullYear() !== anoSelecionado) return;
 
-      const temAtivacao = v.data_de_ativacao_no_radar && String(v.data_de_ativacao_no_radar).trim() !== '';
-      if (!temAtivacao) return;
+      const matricula = String(v.consultor_que_vendeu || '').trim().toUpperCase();
+      if (!matricula) return;
 
-      const nome = String(v.consultor_que_vendeu || '').toUpperCase().trim();
-      if (!nome) return;
+      if (!vendasPorVendedor[matricula]) {
+        vendasPorVendedor[matricula] = { fat: 0, port: 0, midQtd: 0, nome: matricula };
+      }
 
-      if (!porConsultor[nome]) porConsultor[nome] = { fat: 0, port: 0, reneg: 0 };
       const valor = parseValor(v.valor_contratado);
-      const mod = String(v.modalidade || '').toUpperCase();
+      const modalidade = String(v.modalidade || '').toUpperCase();
 
-      if (mod.includes('RENEG')) porConsultor[nome].reneg++;
-      else {
-        porConsultor[nome].fat += valor;
-        if (mod.includes('PORTABILIDADE')) porConsultor[nome].port += valor;
+      if (/PRIMEIRA|NOVA|PORT|ADITIVO|MIGRA/i.test(modalidade)) {
+        vendasPorVendedor[matricula].fat += valor;
+      }
+      if (/PORT/i.test(modalidade)) {
+        vendasPorVendedor[matricula].port += valor;
+      }
+      if (/MID|RENEG/i.test(modalidade)) {
+        vendasPorVendedor[matricula].midQtd++;
       }
     });
 
-    // 3. Renderiza cards
+    // ---- 3. Renderiza cards ----
     let html = '';
-    metasTime.forEach(mt => {
-      const nomeUpper = String(mt.nome || '').toUpperCase().trim();
-      const realizado = porConsultor[nomeUpper] || { fat: 0, port: 0, reneg: 0 };
+    for (const vendedor of timeVendedores) {
+      const matricula = String(vendedor.matricula || '').trim().toUpperCase();
+      const nome = vendedor.nome || 'Vendedor';
+      const cargo = vendedor.cargo || 'Consultor';
 
-      const percFat = mt.meta_target_fat > 0 ? Math.min((realizado.fat / mt.meta_target_fat) * 100, 100) : 0;
-      const percPort = mt.meta_target_port > 0 ? Math.min((realizado.port / mt.meta_target_port) * 100, 100) : 0;
-      const percMid = mt.meta_target_reneg > 0 ? Math.min((realizado.reneg / mt.meta_target_reneg) * 100, 100) : 0;
+      // Match por matrícula
+      let realizado = vendasPorVendedor[matricula] || { fat: 0, port: 0, midQtd: 0 };
+
+      const metaFat  = Number(vendedor.meta_target_fat) || 0;
+      const metaPort = Number(vendedor.meta_target_port) || 0;
+      const metaMid  = Number(vendedor.meta_target_reneg) || 0;
+
+      const percFat  = metaFat  > 0 ? Math.min((realizado.fat / metaFat) * 100, 100) : 0;
+      const percPort = metaPort > 0 ? Math.min((realizado.port / metaPort) * 100, 100) : 0;
+      const percMid  = metaMid  > 0 ? Math.min((realizado.midQtd / metaMid) * 100, 100) : 0;
       const percGeral = Math.round((percFat + percPort + percMid) / 3);
 
       let avatarColor = 'linear-gradient(135deg, #3b82f6, #8b5cf6)';
@@ -2248,13 +2352,13 @@ async function carregarMetasIndividuaisTime() {
       const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
       html += `
-        <div class="card-vendedor" data-vendedor-id="${mt.matricula}" style="background:#0f172a; border-radius:20px; border:1px solid rgba(59,130,246,0.3); overflow:hidden; box-shadow:0 4px 15px rgba(0,0,0,0.2);">
-          <div style="padding:16px 20px; background:#1e293b; border-bottom:1px solid rgba(255,255,255,0.05); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <div class="card-vendedor" data-vendedor-id="${matricula}" style="background:#0f172a; border-radius:20px; border:1px solid rgba(59,130,246,0.3); overflow:hidden;">
+          <div style="padding:16px 20px; background:#1e293b; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div style="display:flex; align-items:center; gap:14px;">
               <div style="width:46px; height:46px; background:${avatarColor}; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">👤</div>
               <div>
-                <div style="font-weight:800; color:white; font-size:16px;">${mt.nome}</div>
-                <div style="font-size:10px; color:#94a3b8;">${mt.cargo || 'Consultor'} • ${mt.matricula}</div>
+                <div style="font-weight:800; color:white; font-size:16px;">${nome}</div>
+                <div style="font-size:10px; color:#94a3b8;">${cargo} • ${matricula}</div>
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:15px;">
@@ -2262,16 +2366,16 @@ async function carregarMetasIndividuaisTime() {
                 <div style="font-size:10px; color:#64748b;">Desempenho</div>
                 <div style="font-size:18px; font-weight:800; color:${percGeral >= 80 ? '#10b981' : (percGeral >= 50 ? '#3b82f6' : '#f59e0b')};">${percGeral}%</div>
               </div>
-              <span id="toggle-icon-${mt.matricula}" onclick="toggleCardVendedor('${mt.matricula}')" style="cursor:pointer; font-size:18px; color:#94a3b8;">▼</span>
+              <span onclick="toggleCardVendedor('${matricula}')" id="toggle-icon-${matricula}" style="cursor:pointer; font-size:18px; color:#94a3b8;">▼</span>
             </div>
           </div>
 
-          <div id="card-body-${mt.matricula}" style="display:none;">
+          <div id="card-body-${matricula}" style="display:none;">
             <div style="display:grid; grid-template-columns:repeat(3, 1fr); gap:1px; background:#1e293b;">
               <div style="background:#0f172a; padding:16px;">
-                <div style="font-size:10px; font-weight:700; color:#94a3b8; margin-bottom:8px;">💰 FATURAMENTO</div>
-                <div style="font-size:22px; font-weight:800; color:white;">${fmt(realizado.fat)}</div>
-                <div style="font-size:11px; color:#64748b; margin-bottom:10px;">Meta: ${fmt(mt.meta_target_fat)}</div>
+                <div style="font-size:10px; color:#94a3b8;">💰 FATURAMENTO</div>
+                <div style="font-size:22px; font-weight:800; color:white; margin-top:8px;">${fmt(realizado.fat)}</div>
+                <div style="font-size:11px; color:#64748b; margin:8px 0;">Meta: ${fmt(metaFat)}</div>
                 <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:10px; margin-bottom:8px;">
                   <div style="width:${percFat}%; height:100%; background:#3b82f6; border-radius:10px;"></div>
                 </div>
@@ -2279,9 +2383,9 @@ async function carregarMetasIndividuaisTime() {
               </div>
 
               <div style="background:#0f172a; padding:16px;">
-                <div style="font-size:10px; font-weight:700; color:#94a3b8; margin-bottom:8px;">🔄 PORTABILIDADE</div>
-                <div style="font-size:22px; font-weight:800; color:white;">${fmt(realizado.port)}</div>
-                <div style="font-size:11px; color:#64748b; margin-bottom:10px;">Meta: ${fmt(mt.meta_target_port)}</div>
+                <div style="font-size:10px; color:#94a3b8;">🔄 PORTABILIDADE</div>
+                <div style="font-size:22px; font-weight:800; color:white; margin-top:8px;">${fmt(realizado.port)}</div>
+                <div style="font-size:11px; color:#64748b; margin:8px 0;">Meta: ${fmt(metaPort)}</div>
                 <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:10px; margin-bottom:8px;">
                   <div style="width:${percPort}%; height:100%; background:#a855f7; border-radius:10px;"></div>
                 </div>
@@ -2289,9 +2393,9 @@ async function carregarMetasIndividuaisTime() {
               </div>
 
               <div style="background:#0f172a; padding:16px;">
-                <div style="font-size:10px; font-weight:700; color:#94a3b8; margin-bottom:8px;">📱 RENEGOCIAÇÃO</div>
-                <div style="font-size:22px; font-weight:800; color:white;">${realizado.reneg} <span style="font-size:12px;">un.</span></div>
-                <div style="font-size:11px; color:#64748b; margin-bottom:10px;">Meta: ${mt.meta_target_reneg} un.</div>
+                <div style="font-size:10px; color:#94a3b8;">📱 RENEGOCIAÇÃO</div>
+                <div style="font-size:22px; font-weight:800; color:white; margin-top:8px;">${realizado.midQtd} <span style="font-size:12px;">un.</span></div>
+                <div style="font-size:11px; color:#64748b; margin:8px 0;">Meta: ${metaMid} un.</div>
                 <div style="width:100%; height:6px; background:rgba(255,255,255,0.1); border-radius:10px; margin-bottom:8px;">
                   <div style="width:${percMid}%; height:100%; background:#f59e0b; border-radius:10px;"></div>
                 </div>
@@ -2301,10 +2405,10 @@ async function carregarMetasIndividuaisTime() {
           </div>
         </div>
       `;
-    });
+    }
 
     container.innerHTML = html;
-    console.log(`✅ ${metasTime.length} cards do time renderizados`);
+    console.log(`✅ ${timeVendedores.length} cards do time renderizados`);
 
   } catch (e) {
     console.error('❌ [DASH] Erro metas time:', e);
