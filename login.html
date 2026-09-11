@@ -5,10 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Acesso | MOVITI DIGITAL</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Supabase CDN -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
-    /* --- MOVITI DIGITAL BRANDING --- */
+    /* --- MOVITI DIGITAL BRANDING (LAYOUT ORIGINAL MANTIDO) --- */
     * { box-sizing: border-box; font-family: 'Poppins', sans-serif; margin: 0; padding: 0; }
     
     body { 
@@ -23,33 +25,48 @@
       display: flex; flex-direction: column; align-items: center; justify-content: center;
       transition: opacity 0.5s ease;
     }
-    
-    .splash-logo { width: 140px; margin-bottom: 20px; animation: pulse 1.5s infinite; }
+    .splash-logo { width: 120px; margin-bottom: 20px; animation: pulse 1.5s infinite; }
     @keyframes pulse { 0% { transform: scale(1); opacity: 0.8; } 50% { transform: scale(1.05); opacity: 1; } 100% { transform: scale(1); opacity: 0.8; } }
 
     .login-wrapper {
       display: none; 
-      width: 1000px; max-width: 95%; min-height: 600px;
-      background: white; border-radius: 24px;
-      box-shadow: 0 35px 60px rgba(0,0,0,0.5); overflow: hidden;
-      opacity: 0; transform: translateY(20px);
+      width: 1000px;
+      max-width: 95%;
+      min-height: 600px;
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 35px 60px rgba(0,0,0,0.5);
+      overflow: hidden;
+      opacity: 0;
+      transform: translateY(20px);
       transition: all 0.7s cubic-bezier(0.22, 1, 0.36, 1);
     }
-    
     .login-revelado {
-      display: flex !important; opacity: 1 !important; transform: translateY(0) !important;
+      display: flex !important;
+      opacity: 1 !important;
+      transform: translateY(0) !important;
     }
 
     .form-side {
-      width: 50%; padding: 60px; display: flex; flex-direction: column; justify-content: center; background: white;
+      width: 50%;
+      padding: 60px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background: white;
     }
     
     .logo-container { margin-bottom: 20px; text-align: left; }
-    
+    .logo-vexo { width: 90px; height: auto; user-select: none; margin-bottom: 5px; }
+
     .form-side h2 { 
       background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      margin: 0 0 5px 0; font-weight: 800; font-size: 32px; letter-spacing: -1px;
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin: 0 0 5px 0;
+      font-weight: 800;
+      font-size: 32px;
+      letter-spacing: -1px;
     }
 
     .form-side p { color: #64748b; font-size: 14px; margin-bottom: 25px; }
@@ -63,6 +80,7 @@
       padding: 12px; border-radius: 10px; font-weight: 600; font-size: 13px;
       cursor: pointer; transition: all 0.3s ease; display: flex; align-items: center; justify-content: center; gap: 8px;
     }
+    .type-btn:hover { color: #1e3c72; }
     .type-btn.active {
       background: white; color: #1e3c72; box-shadow: 0 4px 10px rgba(0,0,0,0.05);
     }
@@ -79,7 +97,8 @@
 
     button#btn-login {
       width: 100%; padding: 16px; border: none; border-radius: 12px;
-      background: #0f172a; color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px;
+      background: #0f172a; 
+      color: white; font-size: 15px; font-weight: 600; cursor: pointer; transition: 0.3s; margin-top: 10px;
       box-shadow: 0 4px 15px rgba(15, 23, 42, 0.2);
     }
     button#btn-login:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(15, 23, 42, 0.3); background: #1e293b; }
@@ -87,10 +106,27 @@
 
     #status { margin-top: 20px; font-size: 13px; font-weight: 500; text-align: center; min-height: 20px; }
 
+    .assinatura { 
+      margin-top: 30px;
+      text-align: center; 
+      border-top: 1px solid #f1f5f9; 
+      padding-top: 15px; 
+    }
+    .assinatura span { font-size: 10px; color: #94a3b8; letter-spacing: 1px; font-weight: 500; text-transform: uppercase;}
+    .assinatura b { color: #1e3c72; font-size: 11px; margin-left: 5px; font-weight: 700; letter-spacing: 0.5px; }
+
     .brand-side {
-      width: 50%; background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%);
-      position: relative; overflow: hidden; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; padding: 40px; color: white; text-align: center;
+      width: 50%;
+      background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+      color: white;
+      text-align: center;
     }
 
     .glass-circle {
@@ -100,7 +136,8 @@
     }
     .c1 { width: 350px; height: 350px; top: -100px; right: -100px; }
     .c2 { width: 200px; height: 200px; bottom: -50px; left: -50px; }
-    
+    .c3 { width: 100px; height: 100px; top: 40%; left: 10%; background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%); opacity: 0.8; filter: blur(30px); }
+
     .brand-content { position: relative; z-index: 2; }
     .brand-icon { font-size: 48px; margin-bottom: 20px; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.3)); }
     .brand-title { font-size: 28px; font-weight: 800; margin-bottom: 15px; letter-spacing: -0.5px; line-height: 1.2; }
@@ -119,15 +156,17 @@
 <body>
 
   <div id="splash-screen">
-    <div style="color: #64748b; letter-spacing: 3px; font-size: 11px; font-weight: 600; margin-top: 20px;">INICIALIZANDO PLATAFORMA</div>
+    <!-- Logomarca oficial MOVITI carregada direto do diretório raiz -->
+    <img src="logo.png" class="splash-logo" alt="Carregando MVT" onerror="this.style.display='none'">
+    <div style="color: #64748b; letter-spacing: 3px; font-size: 11px; font-weight: 600;">INICIALIZANDO PLATAFORMA</div>
   </div>
 
   <div class="login-wrapper" id="login-box">
     
     <div class="form-side">
       <div class="logo-container">
-        <!-- Logo institucional Moviti carregada da Vercel -->
-        <img src="logo.png" alt="MOVITI" style="height:40px; margin-bottom: 10px;" onerror="this.style.display='none'">
+        <!-- Logomarca oficial MOVITI carregada direto do diretório raiz -->
+        <img src="logo.png" alt="MOVITI DIGITAL Logo" class="logo-vexo" onerror="this.style.display='none'">
         <h2>MOVITI.DIGITAL</h2>
       </div>
       
@@ -138,37 +177,42 @@
           🏢 Equipe Interna
        </button>
        <button type="button" class="type-btn" id="btn-parceiro">
-          🤝 Cliente / Parceiro
+          🤝 Parceiro / Cliente
        </button>
       </div>
       <input type="hidden" id="tipoAcesso" value="PROPRIO">
       
       <div class="input-group">
-        <label>Credencial (E-mail)</label>
+        <label>Usuário (E-mail)</label>
         <input type="email" id="user" placeholder="nome@movitidigital.com.br" autocomplete="off">
       </div>
       
       <div class="input-group">
-        <label>Senha Segura</label>
+        <label>Senha</label>
         <input type="password" id="pass" placeholder="••••••••••••" autocomplete="off">
       </div>
       
       <button id="btn-login" onclick="executarLogin()">
         <span id="loader" class="loader"></span>
-        <span id="btn-text">Acessar Plataforma</span>
+        <span id="btn-text">Acessar Painel</span>
       </button>
       
       <div id="status"></div>
+
+      <div class="assinatura">
+        <span>Desenvolvido por</span> <b>EWERTON BENEVIDES</b>
+      </div>
     </div>
 
     <div class="brand-side">
       <div class="glass-circle c1"></div>
       <div class="glass-circle c2"></div>
+      <div class="glass-circle c3"></div>
       
       <div class="brand-content">
         <div class="brand-icon">☁️</div>
         <h1 class="brand-title">AI-First &<br>Cloud-Agnostic</h1>
-        <p class="brand-desc">Operação de plataformas 24/7 e modernização de infraestrutura baseada em dados.</p>
+        <p class="brand-desc">Colocamos IA em produção integrada ao core do negócio, modernizamos sistemas legados e operamos plataformas 24/7.</p>
       </div>
     </div>
 
@@ -176,36 +220,60 @@
 
 <script>
 // ============================================
-// CONFIGURAÇÃO SUPABASE
+// CONFIGURAÇÃO DO BANCO DE DADOS (SUPABASE)
 // ============================================
 const supabaseUrl = 'https://stibecxkiupfbarftftd.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aWJlY3hraXVwZmJhcmZ0ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzE4NDMsImV4cCI6MjEwNDYwNzg0M30.hsaGJAs7HQfI3tssAI1ONa8TtbCVtqwNB1j-7-z7BeI';
 
+// Evita redeclaração da variável global do Supabase
 if (typeof window.supabaseClient === 'undefined') {
   window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
 }
 const db = window.supabaseClient;
 
 // ============================================
-// LÓGICA DE INTERFACE
+// FUNÇÕES DE PREFERÊNCIA (LOCALSTORAGE)
 // ============================================
-function setTipoAcesso(tipo) {
-  document.getElementById('tipoAcesso').value = tipo;
+
+function salvarPreferencia(tipo) {
+  localStorage.setItem('vexo_ultimo_acesso', tipo);
+}
+
+function carregarPreferencia() {
+  const ultimo = localStorage.getItem('vexo_ultimo_acesso');
+  if (ultimo && (ultimo === 'PROPRIO' || ultimo === 'PARCEIRO')) {
+    return ultimo;
+  }
+  return 'PROPRIO';
+}
+
+function setTipoAcesso(tipo, salvar = true) {
+  const inputTipo = document.getElementById('tipoAcesso');
   const btnProprio = document.getElementById('btn-proprio');
   const btnParceiro = document.getElementById('btn-parceiro');
   
-  if (tipo === 'PROPRIO') {
-    btnProprio.classList.add('active');
-    btnParceiro.classList.remove('active');
-  } else {
-    btnParceiro.classList.add('active');
-    btnProprio.classList.remove('active');
+  if (!inputTipo) return;
+  
+  inputTipo.value = tipo;
+  
+  if (btnProprio) {
+    tipo === 'PROPRIO' ? btnProprio.classList.add('active') : btnProprio.classList.remove('active');
   }
+  
+  if (btnParceiro) {
+    tipo === 'PARCEIRO' ? btnParceiro.classList.add('active') : btnParceiro.classList.remove('active');
+  }
+  
+  if (salvar) salvarPreferencia(tipo);
 }
 
+function onProprioClick() { setTipoAcesso('PROPRIO', true); }
+function onParceiroClick() { setTipoAcesso('PARCEIRO', true); }
+
 // ============================================
-// AUTENTICAÇÃO
+// INTEGRAÇÃO DE LOGIN COM SUPABASE
 // ============================================
+
 async function executarLogin() {
   const user = document.getElementById("user").value;
   const pass = document.getElementById("pass").value;
@@ -221,72 +289,96 @@ async function executarLogin() {
 
   btn.disabled = true;
   if(loader) loader.style.display = "inline-block";
-  status.innerHTML = "<span style='color:#64748b'>Validando no ambiente cloud...</span>";
+  status.innerHTML = "<span style='color:#64748b'>Autenticando no servidor seguro...</span>";
 
+  // Comunicação direta com o Supabase Auth usando a referência 'db'
   const { data, error } = await db.auth.signInWithPassword({
     email: user,
     password: pass,
   });
 
   if (error) {
-    status.innerHTML = "<span style='color:#ef4444'>Acesso negado. Credenciais inválidas.</span>";
+    status.innerHTML = "<span style='color:#ef4444'>Credenciais inválidas. Tente novamente.</span>";
     btn.disabled = false;
     if(loader) loader.style.display = "none";
   } else {
+    // Autenticação aprovada
     sessionStorage.setItem('usuarioLogado', JSON.stringify(data.user));
     sessionStorage.setItem('tipoAcessoLogado', tipoAcesso);
+    salvarPreferencia(tipoAcesso);
     
-    status.innerHTML = "<span style='color:#10b981'>Conexão estabelecida!</span>";
+    status.innerHTML = "<span style='color:#10b981'>Acesso Liberado!</span>";
     carregarPainel(tipoAcesso);
   }
 }
 
 // ============================================
-// TRANSIÇÃO SEGURA (SEM LOOP)
+// TRANSIÇÃO PARA O PAINEL
 // ============================================
+
 function carregarPainel(tipoAcesso) {
   const box = document.getElementById('login-box');
   const splash = document.getElementById('splash-screen');
+  const statusTexto = splash ? (splash.querySelector('div') || splash.querySelector('p')) : null;
 
-  if (box) box.style.display = "none";
-  if (splash) {
-    splash.style.display = "flex";
-    splash.style.opacity = "1";
-    splash.innerHTML = `<div style="color: #64748b; letter-spacing: 3px; font-size: 11px; font-weight: 600; margin-top: 20px;">DIRECIONANDO PARA O DASHBOARD...</div>`;
-  }
-
+  if (box) box.classList.remove('login-revelado');
+  
   setTimeout(() => {
-    window.location.href = (tipoAcesso === 'PARCEIRO') ? 'dashboard_parceiro.html' : 'dashboard.html';
-  }, 1000);
+    if (box) box.style.display = "none";
+    if (splash) {
+      splash.style.display = "flex";
+      splash.style.opacity = "1";
+      if (statusTexto) statusTexto.innerText = "CARREGANDO PAINEL MVT...";
+    }
+
+    const moduloDestino = (tipoAcesso === 'PARCEIRO') ? 'dashboard_parceiro.html' : 'dashboard.html';
+    
+    setTimeout(() => {
+      window.location.href = moduloDestino;
+    }, 1500);
+
+  }, 300);
 }
 
 // ============================================
-// INICIALIZAÇÃO
+// INICIALIZAÇÃO (SEM LOOP AUTOMÁTICO DE SESSÃO)
 // ============================================
+
 window.onload = function() {
-  const sessaoAtiva = sessionStorage.getItem('usuarioLogado');
-  if (sessaoAtiva) {
-    carregarPainel(sessionStorage.getItem('tipoAcessoLogado') || 'PROPRIO');
-    return;
-  }
-  
   const box = document.getElementById('login-box');
   const splash = document.getElementById('splash-screen');
   
-  document.getElementById('btn-proprio').addEventListener('click', () => setTipoAcesso('PROPRIO'));
-  document.getElementById('btn-parceiro').addEventListener('click', () => setTipoAcesso('PARCEIRO'));
+  // Limpa a sessão antiga para forçar um login limpo e evitar o loop de redirecionamento 
+  // caso o dashboard expulse o usuário por configuração.
+  sessionStorage.removeItem('usuarioLogado');
+  
+  setTipoAcesso(carregarPreferencia(), false);
+  
+  const btnProprio = document.getElementById('btn-proprio');
+  const btnParceiro = document.getElementById('btn-parceiro');
+  
+  if (btnProprio && btnParceiro) {
+    btnProprio.removeAttribute('onclick');
+    btnParceiro.removeAttribute('onclick');
+    
+    btnProprio.addEventListener('click', onProprioClick);
+    btnParceiro.addEventListener('click', onParceiroClick);
+  }
   
   setTimeout(() => {
-    splash.style.opacity = '0';
+    if (splash) splash.style.opacity = '0';
     setTimeout(() => {
-      splash.style.display = 'none';
-      box.classList.add('login-revelado');
-      document.getElementById('user').focus();
-    }, 400);
-  }, 500);
+      if (splash) splash.style.display = 'none';
+      if (box) {
+        box.classList.add('login-revelado');
+        const userInput = document.getElementById('user');
+        if (userInput) userInput.focus();
+      }
+    }, 500);
+  }, 400);
 
   document.addEventListener('keypress', function(e) {
-    if (e.key === 'Enter' && box.classList.contains('login-revelado')) executarLogin();
+    if (e.key === 'Enter' && box && box.classList.contains('login-revelado')) executarLogin();
   });
 };
 </script>
