@@ -503,7 +503,7 @@
   };
 
   // ============================================================
-  // SALVAR VENDA (INSERT em "VENDAS")
+  // SALVAR VENDA (INSERT em "VENDAS" — colunas snake_case)
   // ============================================================
   window._salvarVenda = async function() {
     const btn = document.getElementById('btn_finalizar');
@@ -559,41 +559,33 @@
 
       // Monta uma linha da tabela para CADA plano
       const registros = linhas.map(l => ({
-        "DATA DE VENC.":                      nullIfEmpty(venc),
-        "DATA DA VENDA":                      dataVendaBR,
-        "CNPJ":                               cnpj,
-        "RAZÃO SOCIAL":                       razao.toUpperCase(),
-        "MODALIDADE":                         l.modalidade,
-        "PLANO":                              l.plano,
-        "NÚMERO DA LINHA":                    l.numero,
-        "VALOR CONTRATADO":                   formatarValorBR(l.valor),
-        "OPERADORA DOADORA":                  l.operadora || null,
-        "CONSULTOR QUE VENDEU":               nomeConsultor,
-        "CONSULTOR DO INPUT NO EASY VENDAS":  null,
-        "CEP":                                get('v_cep'),
-        "ENDEREÇO":                           get('v_endereco'),
-        "Nº":                                 get('v_numero'),
-        "COMPL.":                             get('v_compl'),
-        "BAIRRO":                             get('v_bairro'),
-        "CIDADE":                             get('v_cidade'),
-        "UF":                                 get('v_uf'),
-        "CPF ADMINISTRADOR":                  get('v_cpf_admin'),
-        "NOME ADMINISTRADOR":                 get('v_nome_admin').toUpperCase(),
-        "EMAIL":                              get('v_email'),
-        "CONTATO FINANCEIRO":                 get('v_contato_fin'),
-        "PEDIDO RADAR":                       nullIfEmpty(radar),
-        "PEDIDO P2B":                         get('v_p2b'),
-        "STATUS DO PEDIDO":                   "PENDENTE DE INPUT",
-        "ATIVAÇÃO EM SISTEMA TIM":            null,
-        "M1":                                 null,
-        "M2":                                 null,
-        "M3":                                 null,
-        "M7":                                 null,
-        "M14":                                null,
-        "CÓDIGO DO CLIENTE":                  null,
-        "ADMINISTRADOR (LOGIN)":              null,
-        "SENHA MEU TIM":                      null,
-        "INSCRIÇÃO ESTADUAL":                 get('v_ie')
+        data_de_venc:                    nullIfEmpty(venc),
+        data_da_venda:                   dataVendaBR,
+        cnpj:                            cnpj,
+        razao_social:                    razao.toUpperCase(),
+        modalidade:                      l.modalidade,
+        plano:                           l.plano,
+        numero_da_linha:                 l.numero,
+        valor_contratado:                formatarValorBR(l.valor),
+        operadora_doadora:               l.operadora || null,
+        consultor_que_vendeu:            nomeConsultor,
+        consultor_do_input_no_easy_vendas: null,
+        cep:                             get('v_cep'),
+        endereco:                        get('v_endereco'),
+        numero:                          get('v_numero'),
+        compl:                           get('v_compl'),
+        bairro:                          get('v_bairro'),
+        cidade:                          get('v_cidade'),
+        uf:                              get('v_uf'),
+        cpf_administrador:               get('v_cpf_admin'),
+        nome_administrador:              get('v_nome_admin').toUpperCase(),
+        email:                           get('v_email'),
+        contato_financeiro:              get('v_contato_fin'),
+        pedido_radar:                    nullIfEmpty(radar),
+        pedido_p2b:                      get('v_p2b'),
+        status_do_pedido:                'PENDENTE DE INPUT',
+        ativacao_em_sistema_tim:         null,
+        inscricao_estadual:              get('v_ie')
       }));
 
       console.log(`📤 Inserindo ${registros.length} linha(s) em VENDAS...`);
