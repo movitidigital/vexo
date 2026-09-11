@@ -1650,66 +1650,28 @@ let historicoCompletoVexo = null;
 let labelsMesesVexo = [];
 
 function sincronizarPerfil() {
-  // 1. Pega os dados da sessão
   const dadosSessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
   
-  if (dadosSessao && dadosSessao.username) {
-    // 2. Preenche a interface
-    const nomeParaExibir = dadosSessao.username.toUpperCase();
-    const cargoUsuario = (dadosSessao.role || "").toUpperCase().trim();
+  // O Supabase utiliza a chave 'email', e não 'username' como no Apps Script legado.
+  if (dadosSessao && dadosSessao.email) {
+    // Extrai o nome do email (ex: "ewerton" de ewerton@movitidigital.com.br)
+    const nomeBase = dadosSessao.user_metadata?.username || dadosSessao.email.split('@')[0];
+    const nomeParaExibir = nomeBase.toUpperCase();
+    
+    // Como ainda não temos os cargos cadastrados no Supabase, definimos um padrão temporário
+    const cargoUsuario = (dadosSessao.user_metadata?.role || "ADMINISTRADOR").toUpperCase();
 
     document.getElementById('display-name').innerText = nomeParaExibir;
     document.getElementById('display-role').innerText = cargoUsuario;
-    document.getElementById('display-photo').src = dadosSessao.photoUrl || 
+    document.getElementById('display-photo').src = dadosSessao.user_metadata?.photoUrl || 
       "https://ui-avatars.com/api/?background=0f172a&color=fff&name=" + nomeParaExibir;
-
-    // 3. CONFIGURAÇÃO DE ACESSOS POR CARGO (ATUALIZADO)
-    let modulosBloqueados = [];
-    let itensSideParaBloquear = [];
-
-    if (cargoUsuario === "CONSULTOR DE VENDAS") {
-      modulosBloqueados = ['usuarios', 'relatorios'];
-      itensSideParaBloquear = ['side-usuarios', 'side-relatorios'];
-    } 
-    else if (cargoUsuario === "BACKOFFICE") {
-      modulosBloqueados = ['usuarios', 'relatorios'];
-      itensSideParaBloquear = ['side-usuarios', 'side-relatorios'];
-    }
-
-    if (modulosBloqueados.length > 0) {
-      console.log(`🔒 Modo ${cargoUsuario} Ativado.`);
-
-      itensSideParaBloquear.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-          el.style.opacity = "0.6"; 
-          el.style.cursor = "pointer";
-        }
-      });
-
-      const originalAbrir = window.abrirModulo;
-      window.abrirModulo = function(nome) {
-        if (modulosBloqueados.includes(nome)) {
-          const modal = document.getElementById('modal-bloqueio-vexo');
-          const txtModulo = document.getElementById('nome-modulo-negado');
-          if (modal && txtModulo) {
-            txtModulo.innerText = nome.toUpperCase();
-            modal.style.display = 'flex';
-            setTimeout(() => { modal.style.opacity = '1'; }, 10);
-          }
-          return;
-        }
-        if (typeof originalAbrir === 'function') originalAbrir(nome);
-      };
-    }
-    
-    // 🌟 ADICIONE ESTA LINHA - INICIA O GRÁFICO DE EVOLUÇÃO
+      
+    // Inicia os gráficos
     if (typeof iniciarGraficoEvolucao === 'function') {
-      console.log("🎯 Iniciando gráfico de evolução para:", nomeParaExibir, "Cargo:", cargoUsuario);
       iniciarGraficoEvolucao(cargoUsuario, nomeParaExibir);
     }
-    
   } else {
+    // Se a sessão realmente for inválida, ele executa o logout novo
     logout();
   }
 }
