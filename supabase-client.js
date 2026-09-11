@@ -1,14 +1,20 @@
 // ============================================================
 // VEXO HUB · Cliente Supabase + Helpers
-// Usado por TODAS as páginas do sistema
+// Idempotente: pode ser carregado várias vezes sem quebrar
 // ============================================================
 
-// ⚠️ TROQUE pelos dados do SEU projeto (mesmos do login.html)
-const SUPABASE_URL = 'https://stibecxkiupfbarftftd.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aWJlY3hraXVwZmJhcmZ0ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzE4NDMsImV4cCI6MjEwNDYwNzg0M30.hsaGJAs7HQfI3tssAI1ONa8TtbCVtqwNB1j-7-z7BeI';
+// ⚠️ Só declara uma vez (evita "already declared")
+if (typeof window.SUPABASE_URL === 'undefined') {
+  window.SUPABASE_URL = 'https://stibecxkiupfbarftftd.supabase.co';
+}
+if (typeof window.SUPABASE_ANON_KEY === 'undefined') {
+  window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aWJlY3hraXVwZmJhcmZ0ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzE4NDMsImV4cCI6MjEwNDYwNzg0M30.hsaGJAs7HQfI3tssAI1ONa8TtbCVtqwNB1j-7-z7BeI';
+}
 
-// Cliente global
-window.sb = window.sb || supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Cliente global (só cria se ainda não existir)
+if (!window.sb) {
+  window.sb = supabase.createClient(window.SUPABASE_URL, window.SUPABASE_ANON_KEY);
+}
 
 // ------------------------------------------------------------
 // Cache do profile do usuário logado
