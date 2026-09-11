@@ -1755,14 +1755,11 @@ function limparNotificacoes() {
 
 
 // ============================================================
-// 📊 BUSCAR DADOS DO DASHBOARD (réplica fiel do GAS)
-// Regra de data:
-//   • PENDENTE (sem data de ativação) = arrasta para o mês atual
-//   • ATIVADO (data de ativação no mês atual) = conta no mês
-//   • Data de ativação em outro mês = NÃO conta
+// 📊 INICIALIZAR DADOS (Supabase · VENDAS + metas_config)
+// Réplica fiel da lógica GAS + parse de data robusto
 // ============================================================
 async function inicializarDados() {
-  console.log('📊 [DASH] Buscando dados...');
+  console.log('🔵 [DASH] ============ INÍCIO ============');
   const statusMeta = document.getElementById('status-meta');
   if (statusMeta) statusMeta.innerText = 'Carregando indicadores...';
 
@@ -1771,11 +1768,35 @@ async function inicializarDados() {
     const mesAtual = hoje.getMonth() + 1;
     const anoAtual = hoje.getFullYear();
 
-    // ---- 1. Mapeia USERS (matrícula → nome, nome → foto) ----
+    // ---- 0. Mês/Ano selecionados ----
+    const mapaMesesNum = {
+      'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,
+      'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,
+      'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12
+    };
+    const mesSelecionado = (document.getElementById('dashboard_mes')?.value || '').toUpperCase().trim();
+    const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || anoAtual;
+    const mesNumericoSelecionado = mapaMesesNum[mesSelecionado] || mesAtual;
+
+    console.log(`🔵 [DASH] Período selecionado: ${mesSelecionado}/${anoSelecionado} (mês num: ${mesNumericoSelecionado})`);
+
+    // ---- 1. Perfil do usuário logado ----
+    let perfilLogado = null;
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) {
+        const { data: p } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        perfilLogado = p;
+        console.log(`🔵 [DASH] Perfil: ${p?.nome} (${p?.role}) | tenant: ${p?.tenant_id}`);
+      } else {
+        console.warn('⚠️ [DASH] Nenhum usuário logado!');
+      }
+    } catch (e) { console.warn('⚠️ profiles:', e.message); }
+
+    // ---- 2. Mapeia USERS (matrícula → nome, nome → foto) ----
     const mapaUsuarios = {};
     const mapaFotos = {};
     const listaConsultores = [];
-
     try {
       const { data: users } = await sb.from('profiles').select('*');
       (users || []).forEach(u => {
@@ -1784,61 +1805,69 @@ async function inicializarDados() {
         const sobrenome = String(u.sobrenome || '').trim();
         const foto = u.photo_url || '';
         if (!nome && !sobrenome) return;
-
         const nomeCompleto = `${nome} ${sobrenome}`.trim().toUpperCase();
         if (matricula) mapaUsuarios[matricula] = nomeCompleto;
         mapaFotos[nomeCompleto] = foto;
         if (!listaConsultores.includes(nomeCompleto)) listaConsultores.push(nomeCompleto);
       });
       listaConsultores.sort();
+      console.log(`🔵 [DASH] ${listaConsultores.length} consultores mapeados`);
     } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
 
-    // ---- 2. Busca METAS_CONFIG do mês atual ----
-    const mapaMesesNum = {
-      'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,
-      'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,
-      'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12
-    };
-    const mesSelecionado = (document.getElementById('dashboard_mes')?.value || '').toUpperCase();
-    const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || anoAtual;
-    const mesNumericoSelecionado = mapaMesesNum[mesSelecionado] || mesAtual;
-
-    let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0;
-    let metaFaturamentoSup = 0, metaPortabilidadeSup = 0, metaRenegociacaoSup = 0;
+    // ---- 3. Busca METAS_CONFIG ----
+    let metaFaturamento = 0, metaFaturamentoSup = 0;
+    let metaPortabilidade = 0, metaPortabilidadeSup = 0;
+    let metaRenegociacao = 0, metaRenegociacaoSup = 0;
     let metaEncontrada = false;
 
     try {
-      const { data: metaDB } = await sb
+      const { data: metaDB, error: errMeta } = await sb
         .from('metas_config')
         .select('*')
         .eq('ano', anoSelecionado);
 
-      if (metaDB && metaDB.length > 0) {
-        // Filtra pelo mês (aceita 'JUNHO', 'JUNHO' com acento ou número)
-        const metaDoMes = metaDB.find(m => {
-          const mNum = mapaMesesNum[String(m.mes).toUpperCase().trim()] || parseInt(m.mes);
-          return mNum === mesNumericoSelecionado;
-        });
-
-        if (metaDoMes) {
-          metaFaturamento      = Number(metaDoMes.fat_target) || 0;
-          metaFaturamentoSup   = Number(metaDoMes.fat_sup) || 0;
-          metaPortabilidade    = Number(metaDoMes.port_target) || 0;
-          metaPortabilidadeSup = Number(metaDoMes.port_sup) || 0;
-          metaRenegociacao     = Number(metaDoMes.reneg_target) || 0;
-          metaRenegociacaoSup  = Number(metaDoMes.reneg_sup) || 0;
-          metaEncontrada = true;
+      if (errMeta) {
+        console.warn('⚠️ [DASH] metas_config erro:', errMeta.message);
+      } else {
+        console.log(`🔵 [DASH] metas_config: ${metaDB?.length || 0} registros para ${anoSelecionado}`);
+        if (metaDB && metaDB.length > 0) {
+          const metaDoMes = metaDB.find(m => {
+            const mNum = mapaMesesNum[String(m.mes).toUpperCase().trim()] || parseInt(m.mes);
+            return mNum === mesNumericoSelecionado;
+          });
+          if (metaDoMes) {
+            metaFaturamento      = Number(metaDoMes.fat_target) || 0;
+            metaFaturamentoSup   = Number(metaDoMes.fat_sup) || 0;
+            metaPortabilidade    = Number(metaDoMes.port_target) || 0;
+            metaPortabilidadeSup = Number(metaDoMes.port_sup) || 0;
+            metaRenegociacao     = Number(metaDoMes.reneg_target) || 0;
+            metaRenegociacaoSup  = Number(metaDoMes.reneg_sup) || 0;
+            metaEncontrada = true;
+            console.log(`✅ [DASH] Meta do mês encontrada: FAT R$ ${metaFaturamento} | PORT R$ ${metaPortabilidade}`);
+          } else {
+            console.warn(`⚠️ [DASH] Nenhuma meta cadastrada para ${mesSelecionado}/${anoSelecionado}`);
+          }
         }
       }
     } catch (e) { console.warn('⚠️ metas_config indisponível:', e.message); }
 
-    // ---- 3. Processa VENDAS (mesma lógica GAS) ----
+    // ---- 4. Busca VENDAS ----
+    console.log('🔵 [DASH] Buscando VENDAS...');
     const { data: dataVendas, error } = await sb.from('VENDAS').select('*');
-    if (error) throw error;
+    if (error) {
+      console.error('🔴 [DASH] Erro ao buscar VENDAS:', error);
+      throw new Error(`Erro ao ler tabela VENDAS: ${error.message}`);
+    }
 
-    const ranking = {};
-    const listaVendasDashboard = [];
+    console.log(`🔵 [DASH] Total de linhas em VENDAS: ${dataVendas?.length || 0}`);
 
+    if (!dataVendas || dataVendas.length === 0) {
+      console.warn('⚠️ [DASH] Tabela VENDAS está VAZIA');
+      mostrarDashboardVazio('Nenhuma venda cadastrada na base ainda.');
+      return;
+    }
+
+    // ---- 5. Helpers ----
     const parseValor = (v) => {
       if (!v) return 0;
       let s = String(v).replace('R$', '').trim();
@@ -1846,29 +1875,72 @@ async function inicializarDados() {
       return parseFloat(s.replace(/[^\d.-]/g, '')) || 0;
     };
 
-    // Helper para normalizar data (dd/mm/yyyy → Date)
+    // 🔥 PARSE ROBUSTO: aceita dd/mm/yyyy, dd-mm-yyyy, yyyy-mm-dd, ISO, com ou sem hora
     const parseDataBR = (str) => {
       if (!str) return null;
-      const p = String(str).trim().split(' ')[0].split('/');
-      if (p.length !== 3) return null;
-      let ano = parseInt(p[2]); if (ano < 100) ano += 2000;
-      const d = new Date(ano, parseInt(p[1]) - 1, parseInt(p[0]));
-      return isNaN(d.getTime()) ? null : d;
+      str = String(str).trim();
+      if (str === '' || str === '-') return null;
+
+      // Formato ISO: 2026-09-11T...
+      if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
+      }
+
+      // Só a parte da data
+      const apenasData = str.split(' ')[0];
+
+      // dd/mm/yyyy ou dd-mm-yyyy
+      const p = apenasData.split(/[\/\-]/);
+      if (p.length === 3) {
+        let ano = parseInt(p[2]);
+        if (ano < 100) ano += 2000;
+        const mes = parseInt(p[1]) - 1;
+        const dia = parseInt(p[0]);
+        const d = new Date(ano, mes, dia);
+        return isNaN(d.getTime()) ? null : d;
+      }
+
+      return null;
     };
+
+    // 🔥 DIAGNÓSTICO: quantas vendas têm data_de_ativacao_no_radar preenchida?
+    const comAtivacao = (dataVendas || []).filter(v =>
+      v.data_de_ativacao_no_radar && String(v.data_de_ativacao_no_radar).trim() !== ''
+    );
+    console.log(`🔵 [DASH] Vendas com data_de_ativacao_no_radar preenchida: ${comAtivacao.length}`);
+    if (comAtivacao.length > 0) {
+      console.log('🔵 [DASH] Amostra das 3 primeiras datas de ativação:',
+        comAtivacao.slice(0, 3).map(v => v.data_de_ativacao_no_radar));
+    }
+
+    // 🔥 DIAGNÓSTICO: quantas vendas são de SETEMBRO/2026 (pela data da venda)?
+    const doMes = (dataVendas || []).filter(v => {
+      const d = parseDataBR(v.data_da_venda);
+      return d && (d.getMonth() + 1) === mesNumericoSelecionado && d.getFullYear() === anoSelecionado;
+    });
+    console.log(`🔵 [DASH] Vendas com data_da_venda em ${mesSelecionado}/${anoSelecionado}: ${doMes.length}`);
+
+    // ---- 6. Processa vendas ----
+    const ranking = {};
+    const listaVendasDashboard = [];
+    let ignoradasCancel = 0;
+    let ignoradasModalidade = 0;
 
     (dataVendas || []).forEach(v => {
       const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
-      if (statusBruto.includes('CANCELADO')) return;
+      if (statusBruto.includes('CANCELADO')) {
+        ignoradasCancel++;
+        return;
+      }
 
-      // Data de ativação (coluna AK na planilha)
       const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
 
-      // Normaliza modalidade (igual GAS)
       let modalidade = String(v.modalidade || '').toUpperCase().trim();
       let modalidadeParaPainel = modalidade;
-      if (modalidade.includes('MIGRA'))       modalidadeParaPainel = 'MIGRAÇÃO TT';
-      else if (modalidade.includes('ATIVA'))  modalidadeParaPainel = 'PRIMEIRA ATIVAÇÃO';
-      else if (modalidade.includes('ADITIVO'))modalidadeParaPainel = 'ADITIVO';
+      if (modalidade.includes('MIGRA'))        modalidadeParaPainel = 'MIGRAÇÃO TT';
+      else if (modalidade.includes('ATIVA'))   modalidadeParaPainel = 'PRIMEIRA ATIVAÇÃO';
+      else if (modalidade.includes('ADITIVO')) modalidadeParaPainel = 'ADITIVO';
 
       const isReceita =
         modalidadeParaPainel === 'MIGRAÇÃO TT' ||
@@ -1876,19 +1948,20 @@ async function inicializarDados() {
         modalidadeParaPainel === 'ADITIVO' ||
         modalidade.includes('PORTABIL');
 
-      if (!isReceita) return;
+      if (!isReceita) {
+        ignoradasModalidade++;
+        return;
+      }
 
       const valor = parseValor(v.valor_contratado);
       const matriculaVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
       const nomeParaExibir = mapaUsuarios[matriculaVenda] || matriculaVenda || 'DESCONHECIDO';
 
-      // ---- LÓGICA DE INCLUSÃO (idêntica ao GAS) ----
       let incluir = false;
       let statusFinalPainel = 'PENDENTE';
       let dataParaDashboard = null;
 
       if (dataAtivacao) {
-        // Tem data de ativação: só inclui se for do MÊS/ANO SELECIONADO
         if ((dataAtivacao.getMonth() + 1) === mesNumericoSelecionado &&
              dataAtivacao.getFullYear() === anoSelecionado) {
           incluir = true;
@@ -1896,7 +1969,6 @@ async function inicializarDados() {
           dataParaDashboard = dataAtivacao;
         }
       } else {
-        // Sem ativação: pendente, arrasta para o mês atual
         if (mesNumericoSelecionado === mesAtual && anoSelecionado === anoAtual) {
           incluir = true;
           statusFinalPainel = 'PENDENTE';
@@ -1906,7 +1978,6 @@ async function inicializarDados() {
 
       if (incluir) {
         ranking[nomeParaExibir] = (ranking[nomeParaExibir] || 0) + valor;
-
         const dia = String(dataParaDashboard.getDate()).padStart(2,'0');
         const mes = String(dataParaDashboard.getMonth() + 1).padStart(2,'0');
         const ano = dataParaDashboard.getFullYear();
@@ -1921,7 +1992,9 @@ async function inicializarDados() {
       }
     });
 
-    // ---- 4. Monta objeto e renderiza ----
+    console.log(`🔵 [DASH] Processamento: ${listaVendasDashboard.length} vendas incluídas | ${ignoradasCancel} canceladas | ${ignoradasModalidade} fora de receita`);
+
+    // ---- 7. Monta dados e renderiza ----
     const dados = {
       metaValor: metaFaturamento,
       metaSup: metaFaturamentoSup,
@@ -1935,20 +2008,50 @@ async function inicializarDados() {
       vendas: listaVendasDashboard,
       erro: !metaEncontrada,
       msgErro: !metaEncontrada
-        ? `Meta de ${mesNumericoSelecionado}/${anoSelecionado} não encontrada.`
+        ? `Meta de ${mesSelecionado}/${anoSelecionado} não cadastrada.`
         : ''
     };
 
-    console.log(`✅ ${listaVendasDashboard.length} vendas processadas, ${Object.keys(ranking).length} consultores`);
+    console.log('🔵 [DASH] Chamando renderizarDashboard...');
     renderizarDashboard(dados);
+    console.log('🟢 [DASH] Renderizado com sucesso!');
 
-    // Carrega bloco do time após render
-    setTimeout(() => carregarMetasIndividuaisTime(), 400);
+    // 🔥 SEMPRE carrega o bloco do time, independente de metas
+    setTimeout(() => {
+      try {
+        carregarMetasIndividuaisTime();
+      } catch (e) {
+        console.error('🔴 [DASH] Erro no bloco do time:', e);
+        const bloco = document.getElementById('bloco-desempenho-time');
+        if (bloco) bloco.style.display = 'none';
+      }
+    }, 400);
 
   } catch (e) {
-    console.error('❌ [DASH]', e);
-    if (statusMeta) statusMeta.innerText = 'Erro ao carregar';
+    console.error('🔴 [DASH] ERRO CRÍTICO:', e);
+    if (statusMeta) {
+      statusMeta.innerHTML = `<span style="color:#ef4444;">❌ Erro: ${e.message}</span>`;
+    }
+    mostrarDashboardVazio(`Erro ao carregar dashboard: ${e.message}`);
+  } finally {
+    console.log('🔵 [DASH] ============ FIM ============');
   }
+}
+
+// ============================================================
+// 🚫 ESTADO VAZIO (quando não há dados)
+// ============================================================
+function mostrarDashboardVazio(msg) {
+  const gridMetas = document.getElementById('container-grid-metas');
+  if (gridMetas) {
+    gridMetas.innerHTML = `
+      <div style="grid-column:1/-1; padding:40px; text-align:center; background:rgba(255,255,255,0.03); border:1px dashed rgba(255,255,255,0.1); border-radius:16px; color:#94a3b8;">
+        <div style="font-size:32px; margin-bottom:10px;">📭</div>
+        <p style="margin:0; font-weight:600;">${msg}</p>
+      </div>`;
+  }
+  const bloco = document.getElementById('bloco-desempenho-time');
+  if (bloco) bloco.style.display = 'none';
 }
 // =========================================================================
 // 🚀 INICIALIZAÇÃO UNIFICADA DO SISTEMA VEXO
