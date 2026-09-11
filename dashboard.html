@@ -5,9 +5,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;800&display=swap" rel="stylesheet">
   <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  <!-- Supabase SDK + cliente VEXO -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="supabase-client.js"></script>
   <style>
     /* --- VEXO BRANDING - ESTRUTURA ERP --- */
     body, html { margin: 0; padding: 0; height: 100%; font-family: 'Poppins', sans-serif; background: #f4f7fa; overflow: hidden; }
@@ -1101,82 +1098,48 @@ function renderizarDashboard(dados) {
     if(menuPrincipal) menuPrincipal.classList.add('revelar-dash');
   }, 50);
 }
-// ============================================================
-// 🚀 MOTOR DE CARREGAMENTO DE MÓDULOS (Supabase / Vercel)
-// ============================================================
-const cacheModulosHTML = {};
+// --- FUNÇÕES AUXILIARES DO SISTEMA ---
+// 🌟 VARIÁVEL GLOBAL DE CACHE (Guarda as páginas já abertas na memória)
+const cacheModulosHTML = {}; 
 
-async function abrirModulo(nome) {
+function abrirModulo(nome) {
   const menu = document.getElementById('menu-principal');
   const container = document.getElementById('modulo-container');
   const btnVoltar = document.getElementById('btn-voltar-container');
-
-  // 1. Sincronização da sidebar
+  
+  // 1. SINCRONIZAÇÃO DA SIDEBAR
   const idMenu = (nome === 'dash') ? 'btn-dash' : 'side-' + nome;
   gerenciarMenuAtivo(idMenu);
 
   // 2. Transição de saída do menu principal
   menu.style.opacity = "0";
-  setTimeout(async () => {
+  setTimeout(() => {
     menu.style.display = "none";
     btnVoltar.style.display = "block";
-
-    // 3. Verifica cache em memória
+    
+    // 🌟 3. O SEGREDO DA VELOCIDADE: Verifica se a página já está no Cache
     if (cacheModulosHTML[nome]) {
       console.log("⚡ Módulo carregado instantaneamente via Cache:", nome);
+      // Pula o servidor e o carregamento longo, renderiza na hora!
       renderizarHTMLModulo(nome, cacheModulosHTML[nome], container);
-      return;
-    }
-
-    // 4. Skeleton de carregamento
-    container.innerHTML = `
-      <div style="padding:30px; animation: fadeIn 0.4s ease-out;">
-        <div class="skeleton-loader" style="height:40px; width:300px; margin-bottom:25px; border-radius:8px;"></div>
-        <div class="skeleton-loader" style="height:500px; width:100%; border-radius:15px;"></div>
-      </div>`;
-    container.style.opacity = "1";
-
-    // 5. Mapeia nome do módulo → arquivo HTML
-    const arquivosMap = {
-      'vendas':         'vendas.html',
-      'agenda':         'agenda.html',
-      'clientes':       'clientes.html',
-      'prospeccao':     'prospeccao.html',
-      'pedidos_gestao': 'pedidos_gestao.html',
-      'ofertas':        'ofertas.html',
-      'faturas':        'faturas.html',
-      'metas':          'metas.html',
-      'usuarios':       'usuarios.html',
-      'financeiro':     'financeiro.html',
-      'relatorios':     'relatorios.html',
-      'suporte':        'suporte_parceiro.html',
-      'home_freelancer': 'home_freelancer.html'
-    };
-
-    const arquivo = arquivosMap[nome] || (nome + '.html');
-
-    // 6. Fetch do HTML
-    try {
-      const response = await fetch(arquivo);
-      if (!response.ok) throw new Error(`HTTP ${response.status} — arquivo ${arquivo} não encontrado`);
-      const html = await response.text();
-
-      cacheModulosHTML[nome] = html;
-      renderizarHTMLModulo(nome, html, container);
-    } catch (err) {
-      console.error('❌ Erro ao carregar módulo:', err);
+      
+    } else {
+      console.log("⬇️ Baixando módulo do servidor pela primeira vez:", nome);
+      
+      // Injeta esqueleto de carregamento (Skeleton Loader) enquanto busca no Google
       container.innerHTML = `
-        <div style="text-align:center; padding:60px; font-family: Poppins, sans-serif;">
-          <div style="font-size:50px; margin-bottom:15px;">📦</div>
-          <h3 style="color:#0f172a; margin:0 0 10px 0;">Módulo em construção</h3>
-          <p style="color:#64748b; font-size:14px; margin:0 0 5px 0;">
-            Não foi possível carregar <b>${arquivo}</b>
-          </p>
-          <p style="font-size:11px; color:#94a3b8; margin: 0 0 20px 0;">${err.message}</p>
-          <button onclick="voltarAoMenu()" style="padding:10px 24px; background:#0f172a; color:white; border:none; border-radius:10px; cursor:pointer; font-weight:600;">
-            ← Voltar ao Dashboard
-          </button>
+        <div style="padding:30px; animation: fadeIn 0.4s ease-out;">
+          <div class="skeleton-loader" style="height:40px; width:300px; margin-bottom:25px; border-radius:8px;"></div>
+          <div class="skeleton-loader" style="height:500px; width:100%; border-radius:15px;"></div>
         </div>`;
+      container.style.opacity = "1";
+
+      // Chamada ao Servidor
+      google.script.run.withSuccessHandler(function(html) {
+        // Salva o HTML no cache para a próxima vez ser instantâneo!
+        cacheModulosHTML[nome] = html; 
+        renderizarHTMLModulo(nome, html, container);
+      }).loadModule(nome);
     }
   }, 100);
 }
@@ -1376,26 +1339,25 @@ function fecharAlertaVexo() {
   }
 }
 
-// ============================================================
-// 🚪 LOGOUT (Supabase)
-// ============================================================
-async function logout() {
-  document.body.style.transition = 'opacity 0.4s ease';
-  document.body.style.opacity = '0';
-
-  try {
-    await sb.auth.signOut();
-  } catch (e) {
-    console.warn('Erro ao encerrar sessão Supabase:', e);
-  }
-
+function logout() {
   sessionStorage.clear();
-  localStorage.removeItem('vexo_ultimo_acesso');
-  localStorage.removeItem('vertex_dash_cache');
-
+  document.body.style.transition = "opacity 0.4s ease";
+  document.body.style.opacity = "0";
+  
   setTimeout(() => {
-    window.location.href = 'login.html';
-  }, 400);
+    document.body.innerHTML = `
+      <div style="height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; background:#0f172a; color:white; font-family:'Poppins', sans-serif;">
+        <div style="width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-top: 3px solid #3b82f6; border-radius: 50%; animation: spin 0.8s linear infinite;"></div>
+        <h2 style="margin-top:20px; font-weight:800; letter-spacing:-1px;">MOVITI DIGITAL</h2>
+        <p style="color:#94a3b8; font-size:14px;">Encerrando plataforma cloud...</p>
+      </div>`;
+    document.body.style.opacity = "1";
+  }, 300);
+  
+  // REDIRECIONAMENTO NATIVO (Substitui o google.script.run que travava a tela)
+  setTimeout(() => { 
+    window.location.href = 'login.html'; 
+  }, 1200);
 }
 
 function gerarArteStatus() {
@@ -1695,63 +1657,31 @@ let chartEvolucaoVexo = null;
 let historicoCompletoVexo = null; 
 let labelsMesesVexo = [];
 
-// ============================================================
-// 👤 SINCRONIZAR PERFIL (Supabase)
-// ============================================================
-async function sincronizarPerfil() {
-  // getProfile() já trata: se não estiver logado → redireciona pro login.html
-  const profile = await getProfile();
-  if (!profile) return;
+function sincronizarPerfil() {
+  const dadosSessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  
+  // O Supabase utiliza a chave 'email', e não 'username' como no Apps Script legado.
+  if (dadosSessao && dadosSessao.email) {
+    // Extrai o nome do email (ex: "ewerton" de ewerton@movitidigital.com.br)
+    const nomeBase = dadosSessao.user_metadata?.username || dadosSessao.email.split('@')[0];
+    const nomeParaExibir = nomeBase.toUpperCase();
+    
+    // Como ainda não temos os cargos cadastrados no Supabase, definimos um padrão temporário
+    const cargoUsuario = (dadosSessao.user_metadata?.role || "ADMINISTRADOR").toUpperCase();
 
-  console.log('👤 Perfil carregado:', profile);
-
-  // Nome completo
-  const nomeCompleto = [profile.nome, profile.sobrenome].filter(Boolean).join(' ').toUpperCase() || profile.email;
-
-  // Foto
-  const foto = profile.photo_url ||
-    `https://ui-avatars.com/api/?background=0f172a&color=fff&name=${encodeURIComponent(nomeCompleto)}`;
-
-  // Aplica no header
-  const elNome  = document.getElementById('display-name');
-  const elRole  = document.getElementById('display-role');
-  const elFoto  = document.getElementById('display-photo');
-
-  if (elNome) elNome.innerText  = nomeCompleto;
-  if (elRole) elRole.innerText  = profile.role || 'USUÁRIO';
-  if (elFoto) elFoto.src        = foto;
-
-  // Ajusta o menu por cargo
-  aplicarMenuPorCargo(profile.role);
-
-  // Inicia o gráfico de evolução
-  if (typeof iniciarGraficoEvolucao === 'function') {
-    // iniciarGraficoEvolucao ainda usa google.script.run — vamos neutralizar
-    // pra não quebrar o dashboard enquanto migramos o módulo de relatórios.
-    console.warn('⚠️ iniciarGraficoEvolucao ainda depende do GAS — aguardando migração.');
+    document.getElementById('display-name').innerText = nomeParaExibir;
+    document.getElementById('display-role').innerText = cargoUsuario;
+    document.getElementById('display-photo').src = dadosSessao.user_metadata?.photoUrl || 
+      "https://ui-avatars.com/api/?background=0f172a&color=fff&name=" + nomeParaExibir;
+      
+    // Inicia os gráficos
+    if (typeof iniciarGraficoEvolucao === 'function') {
+      iniciarGraficoEvolucao(cargoUsuario, nomeParaExibir);
+    }
+  } else {
+    // Se a sessão realmente for inválida, ele executa o logout novo
+    logout();
   }
-}
-
-// Ajusta a visibilidade de itens do menu conforme o cargo
-function aplicarMenuPorCargo(role) {
-  const cargo = String(role || '').toUpperCase().trim();
-
-  const regras = {
-    // ID do item            → cargos que podem ver
-    'side-gestao-pedidos':   ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR', 'CONSULTOR DE VENDAS'],
-    'side-metas':            ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR'],
-    'side-usuarios':         ['ADMINISTRADOR'],
-    'side-financeiro':       ['ADMINISTRADOR', 'BACKOFFICE'],
-    'side-relatorios':       ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR'],
-    'side-faturas':          ['ADMINISTRADOR', 'BACKOFFICE'],
-    'side-ofertas':          ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR', 'CONSULTOR DE VENDAS']
-  };
-
-  Object.entries(regras).forEach(([id, cargosPermitidos]) => {
-    const el = document.getElementById(id);
-    if (!el) return;
-    el.style.display = cargosPermitidos.includes(cargo) ? 'flex' : 'none';
-  });
 }
 
 // ⚠️ A FUNÇÃO QUE ESTAVA FALTANDO! (O Motor que puxa os dados)
