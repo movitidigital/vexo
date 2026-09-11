@@ -221,7 +221,8 @@
 // CONFIGURAÇÃO DO BANCO DE DADOS (SUPABASE)
 // ============================================
 const supabaseUrl = 'https://stibecxkiupfbarftftd.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aWJlY3hraXVwZmJhcmZ0ZnRkIiwicm9sZSI6InFub24iLCJpYXQiOjE3ODkwMzE4NDMsImV4cCI6MjEwNDYwNzg0M30.hsaGJAs7HQfI3tssAI1ONa8TtbCVtqwNB1j-7-z7BeI';
+// ⚠️ CORREÇÃO: chave idêntica à do sistema MOVITI (role: "anon")
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN0aWJlY3hraXVwZmJhcmZ0ZnRkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkwMzE4NDMsImV4cCI6MjEwNDYwNzg0M30.hsaGJAs7HQfI3tssAI1ONa8TtbCVtqwNB1j-7-z7BeI';
 
 if (typeof window.supabaseClient === 'undefined') {
   window.supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
@@ -290,6 +291,7 @@ async function executarLogin() {
   });
 
   if (error) {
+    console.error('[VEXO][Login]', error);
     status.innerHTML = "<span style='color:#ef4444'>Credenciais inválidas. Tente novamente.</span>";
     btn.disabled = false;
     if(loader) loader.style.display = "none";
@@ -309,7 +311,7 @@ async function executarLogin() {
 function carregarPainel(tipoAcesso) {
   const box = document.getElementById('login-box');
   const splash = document.getElementById('splash-screen');
-  const statusTexto = splash ? (splash.querySelector('div') || splash.querySelector('p')) : null;
+  const statusTexto = splash ? splash.querySelector('div') : null;
 
   if (box) box.classList.remove('login-revelado');
   
