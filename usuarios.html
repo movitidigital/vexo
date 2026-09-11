@@ -6,10 +6,18 @@
   <title>Time VEXO · Usuários</title>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Cliente VEXO + helpers -->
-  <script src="supabase-client.js"></script>
+  <!-- Carrega o SDK do Supabase SOMENTE se ainda não existir na página -->
+  <script>
+    if (typeof supabase === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
+    }
+  </script>
+  <!-- Carrega o cliente VEXO SOMENTE se ainda não existir -->
+  <script>
+    if (typeof window.sb === 'undefined') {
+      document.write('<script src="supabase-client.js"><\/script>');
+    }
+  </script>
 </head>
 <body style="font-family: 'Poppins', sans-serif; background: #f1f5f9; margin: 0; padding: 20px;">
 
@@ -164,369 +172,410 @@
 
 <script>
 // ============================================================
-// VARIÁVEIS GLOBAIS
+// VEXO · MÓDULO USUÁRIOS
+// Envelopado em IIFE para evitar redeclaração quando o módulo
+// é reinjetado no dashboard.html via fetch()
 // ============================================================
-let PERMISSOES_DISPONIVEIS = [];
-let PROFILE_ATUAL = null;
+(function () {
+  'use strict';
 
-// ============================================================
-// INICIALIZAÇÃO
-// ============================================================
-(async function init() {
-  PROFILE_ATUAL = await getProfile();
-  if (!PROFILE_ATUAL) return;
-
-  // Carrega a lista de permissões do banco
-  const { data: perms } = await sb.from('permissions').select('*').order('codigo');
-  PERMISSOES_DISPONIVEIS = perms || [];
-
-  renderPermissoesCheckboxes();
-
-  // Só administrador vê os painéis
-  if (PROFILE_ATUAL.role === 'ADMINISTRADOR') {
-    document.getElementById('painel-cargos-admin').style.display = 'block';
-    document.getElementById('painel-editor').style.display = 'block';
-  } else {
-    document.getElementById('btn-novo-membro').style.display = 'none';
-  }
-
-  carregarUsuarios();
-})();
-
-// ============================================================
-// RENDER DE CHECKBOXES DE PERMISSÃO
-// ============================================================
-function renderPermissoesCheckboxes() {
-  const html = PERMISSOES_DISPONIVEIS.map(p => `
-    <label style="font-size: 12px; display: flex; align-items: center; gap: 6px;">
-      <input type="checkbox" name="u_perm" value="${p.codigo}"> ${p.codigo}
-    </label>
-  `).join('');
-
-  document.getElementById('perms-check-container').innerHTML = html;
-  document.getElementById('master-perms-container').innerHTML = html.replace(/name="u_perm"/g, 'class="master-perm"');
-}
-
-// ============================================================
-// CRUD — CARREGAR USUÁRIOS
-// ============================================================
-async function carregarUsuarios() {
-  const tbody = document.getElementById('lista-usuarios-tabela');
-
-  let query = sb.from('profiles').select('*').order('nome');
-
-  // Consultor só vê a si mesmo; admin vê todos
-  if (PROFILE_ATUAL.role !== 'ADMINISTRADOR') {
-    query = query.eq('id', PROFILE_ATUAL.id);
-  }
-
-  const { data, error } = await query;
-
-  if (error) {
-    console.error('Erro ao carregar usuários:', error);
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#dc2626;">Erro: ${error.message}</td></tr>`;
+  // 🔒 Guard: se já foi inicializado nesta página, não faz nada
+  if (window._vexoUsuariosLoaded) {
+    console.log('ℹ️ [VEXO] usuarios.html já inicializado, ignorando duplicata');
     return;
   }
+  window._vexoUsuariosLoaded = true;
 
-  if (!data || data.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:30px;">Nenhum usuário cadastrado.</td></tr>`;
-    return;
-  }
+  // ============================================================
+  // VARIÁVEIS LOCAIS (dentro da IIFE — sem conflito global)
+  // ============================================================
+  let PERMISSOES_DISPONIVEIS = [];
+  let PROFILE_ATUAL = null;
 
-  tbody.innerHTML = data.map(u => {
-    const foto = u.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.nome || 'U')}&background=3b82f6&color=fff`;
-    const permsHtml = (u.permissoes || []).map(p =>
-      `<small style="background:#e0e7ff; color:#4338ca; padding:2px 6px; border-radius:6px; margin-right:3px; font-weight:600; font-size:10px;">${p.toUpperCase()}</small>`
-    ).join('');
-    const ativo = u.ativo === true;
-    const statusStyle = ativo
-      ? 'background:#dcfce7; color:#15803d;'
-      : 'background:#fee2e2; color:#b91c1c;';
-
-    const podeEditar = PROFILE_ATUAL.role === 'ADMINISTRADOR';
-
-    return `
-      <tr style="border-bottom: 1px solid #f8fafc;">
-        <td style="padding: 15px; display: flex; align-items: center; gap: 10px;">
-          <img src="${foto}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">
-          <div>
-            <div style="font-weight: 700; color: #1e293b;">${u.nome || ''} ${u.sobrenome || ''}</div>
-            <div style="font-size: 10px; color: #94a3b8;">${u.email || ''}</div>
-          </div>
-        </td>
-        <td style="padding: 15px; font-family: monospace;">${u.matricula || ''}</td>
-        <td style="padding: 15px;">${u.role || ''}</td>
-        <td style="padding: 15px;">${permsHtml}</td>
-        <td style="padding: 15px;">
-          <span style="${statusStyle} padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800;">
-            ${ativo ? 'ATIVO' : 'INATIVO'}
-          </span>
-        </td>
-        <td style="padding: 15px; text-align: center;">
-          ${podeEditar ? `<button onclick="prepararEdicao('${u.id}')" style="cursor:pointer; border:none; background:#f1f5f9; padding:8px; border-radius:10px; color:#3b82f6;">✏️</button>` : '—'}
-        </td>
-      </tr>
-    `;
-  }).join('');
-}
-
-// ============================================================
-// FORM — PREVIEW DA FOTO
-// ============================================================
-function previewImage(input) {
-  if (!input.files || !input.files[0]) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    document.getElementById('u_preview').src = e.target.result;
-  };
-  reader.readAsDataURL(input.files[0]);
-}
-
-// ============================================================
-// FORM — LIMPAR
-// ============================================================
-function limparForm() {
-  ['u_user','u_pass','u_nome','u_sobrenome','u_email','u_photo_url','u_file'].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  document.getElementById('u_role').value = '';
-  document.getElementById('u_active').value = 'true';
-  document.querySelectorAll('input[name="u_perm"]').forEach(cb => cb.checked = false);
-  document.getElementById('u_preview').src = 'https://ui-avatars.com/api/?name=?&background=3b82f6&color=fff';
-  document.getElementById('editor-titulo').innerText = 'Cadastrar Novo Colaborador';
-
-  const btn = document.getElementById('btnSalvarU');
-  btn.dataset.editing = '';
-  btn.dataset.editId = '';
-  btn.innerText = 'Confirmar Cadastro no Time';
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ============================================================
-// FORM — PERMISSÕES POR CARGO
-// ============================================================
-async function aplicarPermissoesPorCargo(cargo) {
-  if (!cargo) return;
-  const { data, error } = await sb
-    .from('role_permissions')
-    .select('permission')
-    .eq('role', cargo);
-
-  if (error) { console.error(error); return; }
-
-  const permsArray = (data || []).map(r => r.permission);
-  document.querySelectorAll('input[name="u_perm"]').forEach(cb => {
-    cb.checked = permsArray.includes(cb.value);
-  });
-}
-
-// ============================================================
-// FORM — EDITAR
-// ============================================================
-async function prepararEdicao(id) {
-  const { data: u, error } = await sb.from('profiles').select('*').eq('id', id).single();
-  if (error || !u) { alert('Erro ao carregar usuário: ' + (error?.message || 'sem dados')); return; }
-
-  document.getElementById('u_user').value = u.matricula || '';
-  document.getElementById('u_pass').value = '';
-  document.getElementById('u_nome').value = u.nome || '';
-  document.getElementById('u_sobrenome').value = u.sobrenome || '';
-  document.getElementById('u_email').value = u.email || '';
-  document.getElementById('u_role').value = u.role || '';
-  document.getElementById('u_active').value = u.ativo ? 'true' : 'false';
-  document.getElementById('u_photo_url').value = u.photo_url || '';
-  document.getElementById('u_preview').src = u.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.nome || 'U')}&background=3b82f6&color=fff`;
-
-  document.querySelectorAll('input[name="u_perm"]').forEach(cb => {
-    cb.checked = (u.permissoes || []).includes(cb.value);
-  });
-
-  document.getElementById('editor-titulo').innerText = 'Editando Perfil: ' + (u.nome || '').toUpperCase();
-
-  const btn = document.getElementById('btnSalvarU');
-  btn.dataset.editing = 'true';
-  btn.dataset.editId = u.id;
-  btn.innerText = 'Salvar Alterações';
-
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-}
-
-// ============================================================
-// FORM — SALVAR (criar ou editar)
-// ============================================================
-async function salvarUsuario() {
-  const btn = document.getElementById('btnSalvarU');
-  const editing = btn.dataset.editing === 'true';
-  const editId = btn.dataset.editId || '';
-
-  const matricula = document.getElementById('u_user').value.trim();
-  const nome      = document.getElementById('u_nome').value.trim();
-  const sobrenome = document.getElementById('u_sobrenome').value.trim();
-  const email     = document.getElementById('u_email').value.trim();
-  const senha     = document.getElementById('u_pass').value;
-  const role      = document.getElementById('u_role').value;
-  const ativo     = document.getElementById('u_active').value === 'true';
-
-  const perms = [];
-  document.querySelectorAll('input[name="u_perm"]:checked').forEach(c => perms.push(c.value));
-
-  // ---- Validações ----
-  if (!matricula || !nome || !email || !role) {
-    alert('Matrícula, Nome, E-mail e Cargo são obrigatórios.');
-    return;
-  }
-  if (!editing && !senha) {
-    alert('Defina uma senha para o novo colaborador.');
-    return;
-  }
-  if (senha && senha.length < 6) {
-    alert('A senha precisa ter pelo menos 6 caracteres.');
-    return;
-  }
-
-  btn.disabled = true;
-  btn.innerText = '⏳ Processando...';
-
-  try {
-    // ---- Upload de foto (se houver nova) ----
-    let photoUrl = document.getElementById('u_photo_url').value || null;
-    const fileInput = document.getElementById('u_file');
-    if (fileInput.files.length > 0) {
-      const file = fileInput.files[0];
-      const ext = file.name.split('.').pop();
-      const path = `${matricula}-${Date.now()}.${ext}`;
-
-      const { error: upErr } = await sb.storage
-        .from('avatars')
-        .upload(path, file, { upsert: true });
-
-      if (upErr) throw new Error('Upload de foto falhou: ' + upErr.message);
-
-      const { data: urlData } = sb.storage.from('avatars').getPublicUrl(path);
-      photoUrl = urlData.publicUrl;
+  // ============================================================
+  // INICIALIZAÇÃO
+  // ============================================================
+  (async function init() {
+    // Verifica se os helpers estão disponíveis
+    if (typeof window.getProfile !== 'function') {
+      console.error('❌ [VEXO] getProfile() não encontrado. Verifique se o supabase-client.js foi carregado.');
+      return;
     }
-
-    // ---- EDITAR EXISTENTE ----
-    if (editing && editId) {
-      const { error: upProfErr } = await sb
-        .from('profiles')
-        .update({
-          matricula, nome, sobrenome, email, role, ativo,
-          permissoes: perms,
-          photo_url: photoUrl
-        })
-        .eq('id', editId);
-
-      if (upProfErr) throw upProfErr;
-
-      alert('✅ Colaborador atualizado com sucesso!');
-      limparForm();
-      carregarUsuarios();
-      btn.disabled = false;
+    if (!window.sb) {
+      console.error('❌ [VEXO] Cliente Supabase (window.sb) não encontrado.');
       return;
     }
 
-    // ---- CRIAR NOVO ----
-    // Descobre o tenant do admin logado
-    const tenant_id = PROFILE_ATUAL.tenant_id;
+    PROFILE_ATUAL = await getProfile();
+    if (!PROFILE_ATUAL) {
+      console.warn('⚠️ [VEXO] Profile do usuário logado não encontrado.');
+      return;
+    }
 
-    // 1) Cria no auth (signUp)
-    const { data: signData, error: signErr } = await sb.auth.signUp({
-      email,
-      password: senha,
-      options: {
-        data: {
-          nome, sobrenome, matricula, role, tenant_id
-        }
+    // Carrega a lista de permissões do banco
+    const { data: perms } = await sb.from('permissions').select('*').order('codigo');
+    PERMISSOES_DISPONIVEIS = perms || [];
+
+    renderPermissoesCheckboxes();
+
+    // Só administrador vê os painéis
+    if (PROFILE_ATUAL.role === 'ADMINISTRADOR') {
+      document.getElementById('painel-cargos-admin').style.display = 'block';
+      document.getElementById('painel-editor').style.display = 'block';
+    } else {
+      document.getElementById('btn-novo-membro').style.display = 'none';
+    }
+
+    carregarUsuarios();
+  })();
+
+  // ============================================================
+  // RENDER DE CHECKBOXES DE PERMISSÃO
+  // ============================================================
+  function renderPermissoesCheckboxes() {
+    const html = PERMISSOES_DISPONIVEIS.map(p => `
+      <label style="font-size: 12px; display: flex; align-items: center; gap: 6px;">
+        <input type="checkbox" name="u_perm" value="${p.codigo}"> ${p.codigo}
+      </label>
+    `).join('');
+
+    const containerPerms = document.getElementById('perms-check-container');
+    const containerMaster = document.getElementById('master-perms-container');
+    if (containerPerms) containerPerms.innerHTML = html;
+    if (containerMaster) containerMaster.innerHTML = html.replace(/name="u_perm"/g, 'class="master-perm"');
+  }
+
+  // ============================================================
+  // CRUD — CARREGAR USUÁRIOS
+  // ============================================================
+  async function carregarUsuarios() {
+    const tbody = document.getElementById('lista-usuarios-tabela');
+
+    // ⚠️ Guard: aguarda o profile estar pronto
+    if (!PROFILE_ATUAL) {
+      console.warn('⏳ [VEXO] PROFILE_ATUAL ainda não pronto. Tentando carregar...');
+      PROFILE_ATUAL = await getProfile();
+      if (!PROFILE_ATUAL) {
+        console.error('❌ [VEXO] Não foi possível carregar o profile.');
+        return;
       }
+    }
+
+    let query = sb.from('profiles').select('*').order('nome');
+
+    // Consultor só vê a si mesmo; admin vê todos
+    if (PROFILE_ATUAL.role !== 'ADMINISTRADOR') {
+      query = query.eq('id', PROFILE_ATUAL.id);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      console.error('Erro ao carregar usuários:', error);
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#dc2626;">Erro: ${error.message}</td></tr>`;
+      return;
+    }
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:30px;">Nenhum usuário cadastrado.</td></tr>`;
+      return;
+    }
+
+    tbody.innerHTML = data.map(u => {
+      const foto = u.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.nome || 'U')}&background=3b82f6&color=fff`;
+      const permsHtml = (u.permissoes || []).map(p =>
+        `<small style="background:#e0e7ff; color:#4338ca; padding:2px 6px; border-radius:6px; margin-right:3px; font-weight:600; font-size:10px;">${p.toUpperCase()}</small>`
+      ).join('');
+      const ativo = u.ativo === true;
+      const statusStyle = ativo
+        ? 'background:#dcfce7; color:#15803d;'
+        : 'background:#fee2e2; color:#b91c1c;';
+
+      const podeEditar = PROFILE_ATUAL.role === 'ADMINISTRADOR';
+
+      return `
+        <tr style="border-bottom: 1px solid #f8fafc;">
+          <td style="padding: 15px; display: flex; align-items: center; gap: 10px;">
+            <img src="${foto}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">
+            <div>
+              <div style="font-weight: 700; color: #1e293b;">${u.nome || ''} ${u.sobrenome || ''}</div>
+              <div style="font-size: 10px; color: #94a3b8;">${u.email || ''}</div>
+            </div>
+          </td>
+          <td style="padding: 15px; font-family: monospace;">${u.matricula || ''}</td>
+          <td style="padding: 15px;">${u.role || ''}</td>
+          <td style="padding: 15px;">${permsHtml}</td>
+          <td style="padding: 15px;">
+            <span style="${statusStyle} padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800;">
+              ${ativo ? 'ATIVO' : 'INATIVO'}
+            </span>
+          </td>
+          <td style="padding: 15px; text-align: center;">
+            ${podeEditar ? `<button onclick="prepararEdicao('${u.id}')" style="cursor:pointer; border:none; background:#f1f5f9; padding:8px; border-radius:10px; color:#3b82f6;">✏️</button>` : '—'}
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  // ============================================================
+  // FORM — PREVIEW DA FOTO
+  // ============================================================
+  function previewImage(input) {
+    if (!input.files || !input.files[0]) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      document.getElementById('u_preview').src = e.target.result;
+    };
+    reader.readAsDataURL(input.files[0]);
+  }
+
+  // ============================================================
+  // FORM — LIMPAR
+  // ============================================================
+  function limparForm() {
+    ['u_user','u_pass','u_nome','u_sobrenome','u_email','u_photo_url','u_file'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+    document.getElementById('u_role').value = '';
+    document.getElementById('u_active').value = 'true';
+    document.querySelectorAll('input[name="u_perm"]').forEach(cb => cb.checked = false);
+    document.getElementById('u_preview').src = 'https://ui-avatars.com/api/?name=?&background=3b82f6&color=fff';
+    document.getElementById('editor-titulo').innerText = 'Cadastrar Novo Colaborador';
+
+    const btn = document.getElementById('btnSalvarU');
+    btn.dataset.editing = '';
+    btn.dataset.editId = '';
+    btn.innerText = 'Confirmar Cadastro no Time';
+
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  // ============================================================
+  // FORM — PERMISSÕES POR CARGO
+  // ============================================================
+  async function aplicarPermissoesPorCargo(cargo) {
+    if (!cargo) return;
+    const { data, error } = await sb
+      .from('role_permissions')
+      .select('permission')
+      .eq('role', cargo);
+
+    if (error) { console.error(error); return; }
+
+    const permsArray = (data || []).map(r => r.permission);
+    document.querySelectorAll('input[name="u_perm"]').forEach(cb => {
+      cb.checked = permsArray.includes(cb.value);
+    });
+  }
+
+  // ============================================================
+  // FORM — EDITAR
+  // ============================================================
+  async function prepararEdicao(id) {
+    const { data: u, error } = await sb.from('profiles').select('*').eq('id', id).single();
+    if (error || !u) { alert('Erro ao carregar usuário: ' + (error?.message || 'sem dados')); return; }
+
+    document.getElementById('u_user').value = u.matricula || '';
+    document.getElementById('u_pass').value = '';
+    document.getElementById('u_nome').value = u.nome || '';
+    document.getElementById('u_sobrenome').value = u.sobrenome || '';
+    document.getElementById('u_email').value = u.email || '';
+    document.getElementById('u_role').value = u.role || '';
+    document.getElementById('u_active').value = u.ativo ? 'true' : 'false';
+    document.getElementById('u_photo_url').value = u.photo_url || '';
+    document.getElementById('u_preview').src = u.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.nome || 'U')}&background=3b82f6&color=fff`;
+
+    document.querySelectorAll('input[name="u_perm"]').forEach(cb => {
+      cb.checked = (u.permissoes || []).includes(cb.value);
     });
 
-    if (signErr) throw signErr;
-    if (!signData.user) throw new Error('Não foi possível criar o usuário.');
+    document.getElementById('editor-titulo').innerText = 'Editando Perfil: ' + (u.nome || '').toUpperCase();
 
-    // 2) Atualiza profile com permissões, foto e status
-    //    (o trigger já criou o profile básico; aqui refinamos)
-    const { error: updErr } = await sb
-      .from('profiles')
-      .update({
-        permissoes: perms,
-        photo_url: photoUrl,
-        ativo
-      })
-      .eq('id', signData.user.id);
+    const btn = document.getElementById('btnSalvarU');
+    btn.dataset.editing = 'true';
+    btn.dataset.editId = u.id;
+    btn.innerText = 'Salvar Alterações';
 
-    if (updErr) throw updErr;
-
-    alert('✅ Colaborador cadastrado com sucesso!');
-    limparForm();
-    carregarUsuarios();
-
-  } catch (e) {
-    console.error(e);
-    alert('❌ Erro: ' + (e.message || e));
-  } finally {
-    btn.disabled = false;
-    if (btn.dataset.editing !== 'true') {
-      btn.innerText = 'Confirmar Cadastro no Time';
-    } else {
-      btn.innerText = 'Salvar Alterações';
-    }
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
-}
 
-// ============================================================
-// MASTER — PERMISSÕES POR CARGO
-// ============================================================
-async function buscarPermissoesDoBanco(cargo) {
-  if (!cargo) return;
-  const { data, error } = await sb
-    .from('role_permissions')
-    .select('permission')
-    .eq('role', cargo);
+  // ============================================================
+  // FORM — SALVAR (criar ou editar)
+  // ============================================================
+  async function salvarUsuario() {
+    const btn = document.getElementById('btnSalvarU');
+    const editing = btn.dataset.editing === 'true';
+    const editId = btn.dataset.editId || '';
 
-  if (error) { console.error(error); return; }
+    const matricula = document.getElementById('u_user').value.trim();
+    const nome      = document.getElementById('u_nome').value.trim();
+    const sobrenome = document.getElementById('u_sobrenome').value.trim();
+    const email     = document.getElementById('u_email').value.trim();
+    const senha     = document.getElementById('u_pass').value;
+    const role      = document.getElementById('u_role').value;
+    const ativo     = document.getElementById('u_active').value === 'true';
 
-  const permsArray = (data || []).map(r => r.permission);
-  document.querySelectorAll('.master-perm').forEach(cb => {
-    cb.checked = permsArray.includes(cb.value);
-  });
-}
+    const perms = [];
+    document.querySelectorAll('input[name="u_perm"]:checked').forEach(c => perms.push(c.value));
 
-async function salvarConfiguracaoNoBanco() {
-  const cargo = document.getElementById('config_cargo_nome').value;
-  if (!cargo) { alert('Selecione um cargo.'); return; }
-
-  const selecionadas = [];
-  document.querySelectorAll('.master-perm:checked').forEach(cb => selecionadas.push(cb.value));
-
-  try {
-    // Apaga as permissões antigas e regrava
-    await sb.from('role_permissions').delete().eq('role', cargo);
-
-    if (selecionadas.length > 0) {
-      const rows = selecionadas.map(p => ({ role: cargo, permission: p }));
-      const { error } = await sb.from('role_permissions').insert(rows);
-      if (error) throw error;
+    // ---- Validações ----
+    if (!matricula || !nome || !email || !role) {
+      alert('Matrícula, Nome, E-mail e Cargo são obrigatórios.');
+      return;
+    }
+    if (!editing && !senha) {
+      alert('Defina uma senha para o novo colaborador.');
+      return;
+    }
+    if (senha && senha.length < 6) {
+      alert('A senha precisa ter pelo menos 6 caracteres.');
+      return;
     }
 
-    alert('✅ Permissões de "' + cargo + '" salvas com sucesso!');
-  } catch (e) {
-    console.error(e);
-    alert('❌ Erro: ' + e.message);
-  }
-}
+    btn.disabled = true;
+    btn.innerText = '⏳ Processando...';
 
-// Expor globalmente
-window.limparForm = limparForm;
-window.salvarUsuario = salvarUsuario;
-window.prepararEdicao = prepararEdicao;
-window.previewImage = previewImage;
-window.aplicarPermissoesPorCargo = aplicarPermissoesPorCargo;
-window.buscarPermissoesDoBanco = buscarPermissoesDoBanco;
-window.salvarConfiguracaoNoBanco = salvarConfiguracaoNoBanco;
-window.logout = logout;
+    try {
+      // ---- Upload de foto (se houver nova) ----
+      let photoUrl = document.getElementById('u_photo_url').value || null;
+      const fileInput = document.getElementById('u_file');
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const ext = file.name.split('.').pop();
+        const path = `${matricula}-${Date.now()}.${ext}`;
+
+        const { error: upErr } = await sb.storage
+          .from('avatars')
+          .upload(path, file, { upsert: true });
+
+        if (upErr) throw new Error('Upload de foto falhou: ' + upErr.message);
+
+        const { data: urlData } = sb.storage.from('avatars').getPublicUrl(path);
+        photoUrl = urlData.publicUrl;
+      }
+
+      // ---- EDITAR EXISTENTE ----
+      if (editing && editId) {
+        const { error: upProfErr } = await sb
+          .from('profiles')
+          .update({
+            matricula, nome, sobrenome, email, role, ativo,
+            permissoes: perms,
+            photo_url: photoUrl
+          })
+          .eq('id', editId);
+
+        if (upProfErr) throw upProfErr;
+
+        alert('✅ Colaborador atualizado com sucesso!');
+        limparForm();
+        carregarUsuarios();
+        return;
+      }
+
+      // ---- CRIAR NOVO ----
+      const tenant_id = PROFILE_ATUAL.tenant_id;
+
+      // 1) Cria no auth (signUp)
+      const { data: signData, error: signErr } = await sb.auth.signUp({
+        email,
+        password: senha,
+        options: {
+          data: {
+            nome, sobrenome, matricula, role, tenant_id
+          }
+        }
+      });
+
+      if (signErr) throw signErr;
+      if (!signData.user) throw new Error('Não foi possível criar o usuário.');
+
+      // 2) Atualiza profile com permissões, foto e status
+      const { error: updErr } = await sb
+        .from('profiles')
+        .update({
+          permissoes: perms,
+          photo_url: photoUrl,
+          ativo
+        })
+        .eq('id', signData.user.id);
+
+      if (updErr) throw updErr;
+
+      alert('✅ Colaborador cadastrado com sucesso!');
+      limparForm();
+      carregarUsuarios();
+
+    } catch (e) {
+      console.error(e);
+      alert('❌ Erro: ' + (e.message || e));
+    } finally {
+      btn.disabled = false;
+      if (btn.dataset.editing !== 'true') {
+        btn.innerText = 'Confirmar Cadastro no Time';
+      } else {
+        btn.innerText = 'Salvar Alterações';
+      }
+    }
+  }
+
+  // ============================================================
+  // MASTER — PERMISSÕES POR CARGO
+  // ============================================================
+  async function buscarPermissoesDoBanco(cargo) {
+    if (!cargo) return;
+    const { data, error } = await sb
+      .from('role_permissions')
+      .select('permission')
+      .eq('role', cargo);
+
+    if (error) { console.error(error); return; }
+
+    const permsArray = (data || []).map(r => r.permission);
+    document.querySelectorAll('.master-perm').forEach(cb => {
+      cb.checked = permsArray.includes(cb.value);
+    });
+  }
+
+  async function salvarConfiguracaoNoBanco() {
+    const cargo = document.getElementById('config_cargo_nome').value;
+    if (!cargo) { alert('Selecione um cargo.'); return; }
+
+    const selecionadas = [];
+    document.querySelectorAll('.master-perm:checked').forEach(cb => selecionadas.push(cb.value));
+
+    try {
+      await sb.from('role_permissions').delete().eq('role', cargo);
+
+      if (selecionadas.length > 0) {
+        const rows = selecionadas.map(p => ({ role: cargo, permission: p }));
+        const { error } = await sb.from('role_permissions').insert(rows);
+        if (error) throw error;
+      }
+
+      alert('✅ Permissões de "' + cargo + '" salvas com sucesso!');
+    } catch (e) {
+      console.error(e);
+      alert('❌ Erro: ' + e.message);
+    }
+  }
+
+  // ============================================================
+  // EXPOSIÇÃO GLOBAL (necessário para os onclick="..." do HTML)
+  // ============================================================
+  window.limparForm                = limparForm;
+  window.salvarUsuario             = salvarUsuario;
+  window.prepararEdicao            = prepararEdicao;
+  window.previewImage              = previewImage;
+  window.aplicarPermissoesPorCargo = aplicarPermissoesPorCargo;
+  window.buscarPermissoesDoBanco   = buscarPermissoesDoBanco;
+  window.salvarConfiguracaoNoBanco = salvarConfiguracaoNoBanco;
+  window.carregarUsuarios          = carregarUsuarios;
+
+  console.log('✅ [VEXO] Módulo Usuários inicializado');
+})();
 </script>
 </body>
 </html>
