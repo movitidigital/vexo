@@ -1205,88 +1205,81 @@ window.addEventListener('message', function(event) {
 // 🌟 FUNÇÃO AUXILIAR DE RENDERIZAÇÃO E INICIALIZAÇÃO
 // =========================================================================
 function renderizarHTMLModulo(nome, html, container) {
-  const tempDiv = document.createElement('div');
-  tempDiv.innerHTML = html;
-  container.innerHTML = "";
-  container.appendChild(tempDiv);
-  
-  // 1. Executa scripts inseridos no HTML
-  const scripts = tempDiv.getElementsByTagName("script");
-  for (let i = 0; i < scripts.length; i++) {
-    const scriptNode = document.createElement("script");
-    if (scripts[i].src) scriptNode.src = scripts[i].src;
-    else scriptNode.text = scripts[i].text;
-    document.head.appendChild(scriptNode);
-    document.head.removeChild(scriptNode);
-  }
-  
-  // --- 2. LÓGICA DE TRAVA DE EDIÇÃO PARA METAS (SEGURANÇA ADMIN) ---
-  if (nome === 'metas') {
-    const dadosSessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-    const cargo = (dadosSessao.role || "").toUpperCase().trim();
+  console.log('🎨 [renderizar] START:', nome, '| bytes:', html.length);
 
-    if (cargo !== "ADMINISTRADOR") {
-      setTimeout(() => {
-        const inputs = container.querySelectorAll('input, select, textarea');
-        inputs.forEach(el => {
-          el.disabled = true;
-          el.style.backgroundColor = "#f8fafc";
-          el.style.cursor = "not-allowed";
-        });
+  try {
+    // 1) Parseia o HTML usando DOMParser (respeita <body>)
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
 
-        const botoes = container.querySelectorAll('button');
-        botoes.forEach(btn => {
-          const txt = btn.innerText.toUpperCase();
-          if (txt.includes("SALVAR") || txt.includes("GRAVAR") || txt.includes("ATUALIZAR")) {
-            btn.style.display = "none";
-          }
-        });
+    // 2) Captura os scripts ANTES de mexer no HTML
+    const scriptsBody = Array.from(doc.body.querySelectorAll('script'));
+    const scriptsHeadExternos = Array.from(doc.head.querySelectorAll('script[src]'))
+      .filter(s => s.src && !s.src.includes('supabase')); // ignora SDK já carregado
 
-        const aviso = document.createElement('div');
-        aviso.innerHTML = "💡 <b>Modo de Visualização:</b> Você pode acompanhar os KPIs, mas a edição é exclusiva da diretoria.";
-        aviso.style = "background: #eff6ff; color: #1e40af; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 13px; border: 1px solid #bfdbfe; text-align: center;";
-        container.prepend(aviso);
-      }, 500);
+    // 3) Remove os <script> do body para não duplicar
+    scriptsBody.forEach(s => s.remove());
+
+    // 4) Injeta APENAS o conteúdo do <body>
+    container.innerHTML = doc.body.innerHTML;
+    console.log('✅ [renderizar] HTML injetado | tamanho container:', container.innerHTML.length);
+
+    // 5) Reexecuta os scripts (na ordem: head externos → body)
+    [...scriptsHeadExternos, ...scriptsBody].forEach(oldScript => {
+      const newScript = document.createElement('script');
+      if (oldScript.src) {
+        newScript.src = oldScript.src;
+        newScript.async = false;
+      } else {
+        newScript.text = oldScript.text;
+      }
+      document.head.appendChild(newScript);
+      document.head.removeChild(newScript);
+    });
+
+    // 6) Trava de edição de metas (mantida igual)
+    if (nome === 'metas') {
+      const dadosSessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+      const cargo = (dadosSessao.role || '').toUpperCase().trim();
+
+      if (cargo !== 'ADMINISTRADOR') {
+        setTimeout(() => {
+          const inputs = container.querySelectorAll('input, select, textarea');
+          inputs.forEach(el => {
+            el.disabled = true;
+            el.style.backgroundColor = '#f8fafc';
+            el.style.cursor = 'not-allowed';
+          });
+          const botoes = container.querySelectorAll('button');
+          botoes.forEach(btn => {
+            const txt = btn.innerText.toUpperCase();
+            if (txt.includes('SALVAR') || txt.includes('GRAVAR') || txt.includes('ATUALIZAR')) {
+              btn.style.display = 'none';
+            }
+          });
+          const aviso = document.createElement('div');
+          aviso.innerHTML = '💡 <b>Modo de Visualização:</b> Você pode acompanhar os KPIs, mas a edição é exclusiva da diretoria.';
+          aviso.style = 'background: #eff6ff; color: #1e40af; padding: 15px; border-radius: 12px; margin-bottom: 25px; font-size: 13px; border: 1px solid #bfdbfe; text-align: center;';
+          container.prepend(aviso);
+        }, 500);
+      }
     }
-  }
 
-  // --- 3. INICIALIZAÇÃO DE FUNÇÕES ESPECÍFICAS DOS MÓDULOS ---
-  setTimeout(() => {
-    tempDiv.style.opacity = "1";
-    
-    if(nome === 'usuarios' && typeof carregarUsuarios === 'function') carregarUsuarios();
-    if(nome === 'faturas' && typeof renderizarFaturas === 'function') renderizarFaturas();
-    if(nome === 'clientes' && typeof iniciarModuloClientes === 'function') iniciarModuloClientes();
-    
-    // 🌟 NOVO: Inicializa o módulo de agenda quando for carregado
-    if(nome === 'agenda') {
-      // Aguarda um pequeno delay para garantir que o DOM do módulo foi totalmente carregado
-      setTimeout(() => {
-        if (typeof iniciarAgendaVexo === 'function') {
-          iniciarAgendaVexo();
-        } else if (typeof inicializarModuloAgenda === 'function') {
-          inicializarModuloAgenda();
-        } else if (typeof window.inicializarModuloAgenda === 'function') {
-          window.inicializarModuloAgenda();
-        }
-        
-        // Tenta localizar o container do calendário e forçar o redimensionamento
-        const calendarEl = document.getElementById('calendario-vexo');
-        if (calendarEl && typeof FullCalendar !== 'undefined') {
-          // Se o calendário já existe, força o redimensionamento
-          if (window.calendarioVexo) {
-            setTimeout(() => {
-              if (window.calendarioVexo) {
-                window.calendarioVexo.updateSize();
-                window.calendarioVexo.render();
-              }
-            }, 200);
-          }
-        }
-      }, 300);
-    }
-    
-  }, 100);
+    // 7) Ajustes finos de layout pra ficar bonito no dashboard
+    container.style.opacity = '1';
+    container.style.animation = 'fadeIn 0.3s ease-out';
+
+    console.log('✅ [renderizar] Concluído:', nome);
+
+  } catch (err) {
+    console.error('❌ [renderizar] Erro:', err);
+    container.innerHTML = `
+      <div style="padding:40px; text-align:center; font-family:Poppins,sans-serif;">
+        <div style="font-size:40px; margin-bottom:10px;">⚠️</div>
+        <h3 style="color:#0f172a;">Erro ao renderizar módulo</h3>
+        <p style="color:#64748b; font-size:13px;">${err.message}</p>
+      </div>`;
+  }
 }
 
 function voltarAoMenu() {
@@ -1295,7 +1288,7 @@ function voltarAoMenu() {
   const moduloContainer = document.getElementById('modulo-container');
   const btnVoltar = document.getElementById('btn-voltar-container');
 
-  // Reset
+  // 1) Reset visual
   if (areaPrincipal) areaPrincipal.classList.remove('revelar-dash');
   if (menuPrincipal) menuPrincipal.classList.remove('revelar-dash');
   menuPrincipal.style.display = 'block';
@@ -1303,10 +1296,22 @@ function voltarAoMenu() {
   moduloContainer.innerHTML = '';
   btnVoltar.style.display = 'none';
 
-  // Sidebar
+  // 2) 🔥 LIMPA OS FLAGS DE MÓDULOS (para poderem recarregar)
+  window._vexoUsuariosLoaded = false;
+  window._vexoVendasLoaded = false;
+  window._vexoMetasLoaded = false;
+  window._vexoProspeccaoLoaded = false;
+  // ... (adiciona outros quando criares mais)
+
+  // 3) Limpa o cache de HTML (força refetch na próxima vez)
+  if (typeof cacheModulosHTML !== 'undefined') {
+    Object.keys(cacheModulosHTML).forEach(k => delete cacheModulosHTML[k]);
+  }
+
+  // 4) Sidebar
   gerenciarMenuAtivo('btn-dash');
 
-  // Fade-in suave
+  // 5) Fade-in
   setTimeout(() => {
     menuPrincipal.style.opacity = '1';
   }, 50);
