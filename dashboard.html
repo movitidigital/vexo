@@ -9,6 +9,24 @@
 <script src="supabase-client.js"></script>
   <style>
     /* ============================================================ */
+/* FIX: wrapper de módulos injetados (sem iframe) */
+/* ============================================================ */
+#modulo-container {
+  display: block;
+  width: 100%;
+  opacity: 1 !important;
+  padding: 0;
+  margin: 0;
+}
+
+.vexo-modulo-wrapper {
+  display: block;
+  width: 100%;
+  min-height: calc(100vh - 130px);
+  padding: 0;
+  margin: 0;
+}
+    /* ============================================================ */
 /* FIX: módulo injetado dentro do dashboard */
 /* ============================================================ */
 #main-content-area {
@@ -1127,7 +1145,7 @@ function renderizarDashboard(dados) {
   }, 50);
 }
 // ============================================================
-// 🚀 MOTOR DE CARREGAMENTO DE MÓDULOS (via iframe)
+// 🚀 MOTOR DE CARREGAMENTO DE MÓDULOS (SEM IFRAME)
 // ============================================================
 const cacheModulosHTML = {};
 
@@ -1139,17 +1157,14 @@ async function abrirModulo(nome) {
   const btnVoltar = document.getElementById('btn-voltar-container');
   const areaPrincipal = document.getElementById('main-content-area');
 
-  // 🔥 CORREÇÃO: força o #main-content-area visível (ele tem opacity: 0 por padrão)
   if (areaPrincipal) areaPrincipal.classList.add('revelar-dash');
   if (container) container.style.opacity = '1';
 
-  // Sincroniza a sidebar
   const idMenu = (nome === 'dash') ? 'btn-dash' : 'side-' + nome;
   gerenciarMenuAtivo(idMenu);
 
-  // Esconde o menu, mostra o botão voltar
   menu.style.opacity = '0';
-  setTimeout(() => {
+  setTimeout(async () => {
     menu.style.display = 'none';
     btnVoltar.style.display = 'block';
 
@@ -1171,32 +1186,180 @@ async function abrirModulo(nome) {
     const arquivo = arquivosMap[nome] || (nome + '.html');
     console.log('📄 [abrirModulo] Carregando:', arquivo);
 
-    // 🔥 Container também precisa estar visível e com altura
     container.style.display = 'block';
     container.style.opacity = '1';
     container.style.minHeight = 'calc(100vh - 130px)';
+    container.innerHTML = '<div style="padding:40px; text-align:center; color:#94a3b8;">⏳ Carregando módulo...</div>';
 
-    // Injeta iframe com altura correta
-    container.innerHTML = `
-      <iframe
-        src="${arquivo}"
-        id="iframe-${nome}"
-        style="
-          width: 100%;
-          height: calc(100vh - 130px);
-          min-height: 600px;
-          border: none;
-          display: block;
-          background: #f4f7fa;
-        "
-        title="Módulo ${nome}">
-      </iframe>
-    `;
+    try {
+      const response = await fetch(arquivo);
+      if (!response.ok) throw new Error(`HTTP ${response.status} — ${arquivo} não encontrado`);
+      const html = await response.text();
 
-    console.log('✅ [abrirModulo] Iframe injetado:', arquivo);
+      injetarModuloSemIframe(nome, html, container);
+    } catch (err) {
+      console.error('❌ [abrirModulo] Erro:', err);
+      container.innerHTML = `
+        <div style="padding:40px; text-align:center; font-family:Poppins,sans-serif;">
+          <div style="font-size:40px; margin-bottom:10px;">⚠️</div>
+          <h3 style="color:#0f172a;">Erro ao carregar módulo</h3>
+          <p style="color:#64748b; font-size:13px;">${err.message}</p>
+          <button onclick="voltarAoMenu()" style="margin-top:20px; padding:10px 20px; background:#0f172a; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:600;">
+            ← Voltar ao Dashboard
+          </button>
+        </div>`;
+    }
   }, 100);
 }
 
+/**
+ * Injeta o HTML de um módulo DENTRO do dashboard (sem iframe).
+ * - Extrai CSS do <style>, escopa com o wrapper e injeta
+ * - Extrai scripts do <body>, remove do HTML, reinjeta no <head>
+ * - Move o <body style="..."> pro wrapper
+ */
+function injetarModuloSemIframe(nome, html, container) {
+  console.log('🎨 [injetarModulo] START:', nome);
+
+  const parser = new DOMParser();
+  const doc = parser.parseFromString(html, 'text/html');
+
+  const wrapperId = `vexo-modulo-${nome}`;
+
+  // ===== 0. Remove scripts antigos deste módulo (se houver recarregamento) =====
+  document.querySelectorAll(`script[data-vexo-modulo="${nome}"]`).forEach(s => s.remove());
+
+  // ===== 1. CSS =====
+  const styles = Array.from(doc.querySelectorAll('style'));
+  const cssOriginal = styles.map(s => s.textContent).join('\n\n');
+  const cssEscopado = escoparCSS(cssOriginal, wrapperId);
+
+  // ===== 2. Scripts do body (remove do HTML) =====
+  const scriptsBody = Array.from(doc.body.querySelectorAll('script'));
+  scriptsBody.forEach(s => s.remove());
+
+  // ===== 3. Body style inline =====
+  const bodyStyle = doc.body.getAttribute('style') || '';
+
+  // ===== 4. Conteúdo do body =====
+  const bodyHTML = doc.body.innerHTML;
+
+  // ===== 5. Injeta CSS + wrapper =====
+  container.innerHTML = `
+    <style id="css-vexo-modulo-${nome}">${cssEscopado}</style>
+    <div id="${wrapperId}" class="vexo-modulo-wrapper" style="${bodyStyle}">
+      ${bodyHTML}
+    </div>
+  `;
+
+  console.log('✅ [injetarModulo] HTML+CSS injetados | wrapper:', wrapperId);
+
+  // ===== 6. Reexecuta scripts no document principal =====
+  scriptsBody.forEach(oldScript => {
+    // Pula SDK e client já carregados
+    if (oldScript.src) {
+      const src = oldScript.src.toLowerCase();
+      if (src.includes('supabase-js') || src.includes('supabase-client')) {
+        console.log('  ↪ Ignorando script já carregado:', oldScript.src);
+        return;
+      }
+    }
+
+    const newScript = document.createElement('script');
+    newScript.setAttribute('data-vexo-modulo', nome);
+    if (oldScript.src) {
+      newScript.src = oldScript.src;
+      newScript.async = false;
+    } else {
+      newScript.text = oldScript.text;
+    }
+    document.head.appendChild(newScript);
+    document.head.removeChild(newScript);
+  });
+
+  // ===== 7. Reinicializa módulos específicos (opcional) =====
+  // Se o módulo tiver funções de init globais, chama-as aqui
+  setTimeout(() => {
+    if (nome === 'usuarios' && typeof window.carregarUsuarios === 'function') {
+      // já é chamada dentro do próprio script do módulo
+    }
+  }, 100);
+
+  console.log('✅ [injetarModulo] Concluído:', nome);
+}
+
+/**
+ * Escopa um bloco de CSS para que só afete o wrapper informado.
+ * Regras:
+ *   - `body`, `html`, `*`           → viram `#wrapper`
+ *   - `body .classe`                → vira `#wrapper .classe`
+ *   - `.classe`                     → vira `#wrapper .classe`
+ *   - `@media`, `@keyframes`, etc.  → mantidos sem prefixo (com regras internas escopadas)
+ */
+function escoparCSS(css, wrapperId) {
+  const wrapper = `#${wrapperId}`;
+
+  // Remove comentários /* ... */
+  css = css.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  let resultado = '';
+  let depth = 0;
+  let buffer = '';
+
+  for (let i = 0; i < css.length; i++) {
+    const ch = css[i];
+
+    if (ch === '{') {
+      const seletor = buffer.trim();
+      buffer = '';
+
+      const ehAtRule = seletor.startsWith('@');
+
+      if (ehAtRule) {
+        resultado += seletor + ' {';
+      } else {
+        const escopado = escoparSeletor(seletor, wrapper);
+        resultado += escopado + ' {';
+      }
+      depth++;
+    } else if (ch === '}') {
+      depth--;
+      resultado += buffer + '}';
+      buffer = '';
+    } else {
+      buffer += ch;
+    }
+  }
+
+  if (buffer.trim()) resultado += buffer;
+
+  return resultado;
+}
+
+function escoparSeletor(seletor, wrapper) {
+  return seletor
+    .split(',')
+    .map(s => {
+      const sTrim = s.trim();
+      if (!sTrim) return '';
+
+      // Substitui body/html/:root/* pelo wrapper
+      if (sTrim === 'body' || sTrim === 'html' || sTrim === ':root' || sTrim === '*') {
+        return wrapper;
+      }
+
+      // Substitui body/html no início
+      if (sTrim.startsWith('body ') || sTrim.startsWith('html ')) {
+        return wrapper + ' ' + sTrim.substring(5);
+      }
+
+      // Prefixa normalmente
+      return `${wrapper} ${sTrim}`;
+    })
+    .filter(Boolean)
+    .join(', ');
+}
+  
 // ============================================
 // COMUNICAÇÃO COM MÓDULOS INTERNOS (IFRAMES)
 // ============================================
@@ -1304,20 +1467,32 @@ function voltarAoMenu() {
   const moduloContainer = document.getElementById('modulo-container');
   const btnVoltar = document.getElementById('btn-voltar-container');
 
-  // Reset
+  // Reset visual
   if (areaPrincipal) areaPrincipal.classList.remove('revelar-dash');
   if (menuPrincipal) menuPrincipal.classList.remove('revelar-dash');
 
   menuPrincipal.style.display = 'block';
   menuPrincipal.style.opacity = '0';
 
+  // 🔥 Remove os scripts de TODOS os módulos (para poderem recarregar)
+  document.querySelectorAll('script[data-vexo-modulo]').forEach(s => s.remove());
+
+  // 🔥 Remove CSS dinâmico de módulos
+  document.querySelectorAll('style[id^="css-vexo-modulo-"]').forEach(s => s.remove());
+
+  // 🔥 Reset dos flags de módulo (para permitir reinicialização)
+  window._vexoUsuariosLoaded = false;
+  window._vexoVendasLoaded = false;
+  window._vexoMetasLoaded = false;
+  window._vexoProspeccaoLoaded = false;
+
+  // Limpa o container
   moduloContainer.innerHTML = '';
   moduloContainer.style.display = 'none';
   btnVoltar.style.display = 'none';
 
   gerenciarMenuAtivo('btn-dash');
 
-  // Fade-in do menu
   setTimeout(() => {
     menuPrincipal.style.opacity = '1';
     if (areaPrincipal) areaPrincipal.classList.add('revelar-dash');
