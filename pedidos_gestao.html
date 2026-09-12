@@ -976,6 +976,61 @@
 
 
 <script>
+
+  // ═══════════════════════════════════════════════════════════
+// PONTE SUPABASE — substitui google.script.run
+// ═══════════════════════════════════════════════════════════
+(function () {
+  if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
+
+  const MAP = {
+    p_listarPedidosGestao:            { rpc: 'p_listar_pedidos_gestao',            args: (f) => ({ p_filtros: f || {} }) },
+    p_atualizarStatusPedidoGestao:    { rpc: 'p_atualizar_status_pedido_gestao',    args: (a,b,c,d,e,f,g,h,i) => ({
+                                          p_linha: a, p_origem: b, p_novo_status: c,
+                                          p_data_ativacao: d, p_data_boc: e, p_usuario: f,
+                                          p_id_unico: g, p_banco_id: h, p_modalidade: i
+                                       }) },
+    p_detalhesPedidoGestao:           { rpc: 'p_detalhes_pedido_gestao',           args: (a,b,c,d,e,f) => ({
+                                          p_linha: a, p_origem: b, p_cnpj: c,
+                                          p_data_key: d, p_banco_id: e, p_modalidade: f
+                                       }) },
+    listarLinhasDoPedido:             { rpc: 'listar_linhas_do_pedido',            args: (id,o) => ({ p_id_unico: id, p_origem: o }) },
+    excluirPedidoPlanilha:            { rpc: 'excluir_pedido_planilha',            args: (ids,o,iu,m) => ({
+                                          p_ids: Array.isArray(ids) ? ids.map(String) : [],
+                                          p_origem: o, p_id_unico: iu, p_modalidade: m
+                                       }) },
+    salvarDataRadarBackend:           { rpc: 'salvar_data_radar_backend',          args: (iu,o,d,b) => ({ p_id_unico: iu, p_origem: o, p_data_radar: d, p_banco_id: b }) },
+    salvarCodigoClienteBackend:       { rpc: 'salvar_codigo_cliente_backend',      args: (iu,o,c,b) => ({ p_id_unico: iu, p_origem: o, p_codigo: c, p_banco_id: b }) },
+  };
+
+  function makeRunner() {
+    let ok = null, fail = null;
+    const runner = {
+      withSuccessHandler(fn) { ok = fn; return runner; },
+      withFailureHandler(fn) { fail = fn; return runner; },
+    };
+    Object.keys(MAP).forEach(nome => {
+      runner[nome] = async function (...params) {
+        const cfg = MAP[nome];
+        try {
+          const args = cfg.args(...params);
+          const { data, error } = await window.sb.rpc(cfg.rpc, args);
+          if (error) throw error;
+          if (ok) ok(data);
+        } catch (err) {
+          console.error(`❌ RPC ${cfg.rpc}:`, err);
+          if (fail) fail(err.message || String(err));
+        }
+      };
+    });
+    return runner;
+  }
+
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  Object.defineProperty(window.google.script, 'run', { get: () => makeRunner() });
+  console.log('✅ Ponte Supabase ativa — pedidos_gestao.html');
+})();
   // ============================================
   // 🚀 MÓDULO GESTÃO DE PEDIDOS - VERSÃO PREMIUM
   // ============================================
@@ -1291,10 +1346,11 @@ function carregarPedidos() {
   };
   
   google.script.run
-    .withSuccessHandler(function(resposta) {
-      if (resposta && resposta.success) {
-        window.todosPedidos = resposta.pedidos || [];
-        todosPedidos = window.todosPedidos;
+    .withSuccessHandler(function(pedidosArray) {
+  if (Array.isArray(pedidosArray)) {
+    const novosPedidos = pedidosArray;
+    if (!mostrarConcluidos) todosPedidos = novosPedidos.filter(p => p.status_etapa < 6);
+    else todosPedidos = novosPedidos;
         
         if (!window.mostrarConcluidos) {
           todosPedidos = todosPedidos.filter(p => p.status_etapa < 6);
@@ -1437,13 +1493,13 @@ function renderizarTabela() {
     
     const btnAvancarRender = isPendente
       ? `<button class="btn-action btn-teleport" style="background: #1e3c72; color: #fff; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;" 
-          onclick="avancarPedidoParaInput('${pedido.linha}', '${pedido.origem}')">
+          onclick="avancarPedidoParaInput('${pedido.id_unico || pedido.linha}', '${pedido.origem}')">
           <i class="fas fa-rocket"></i> Lançar Venda
          </button>`
-      : `<button class="btn-action btn-forward" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-direcao="avancar"><i class="fas fa-arrow-right"></i> Avançar</button>`;
+      : `<button class="btn-action btn-forward" data-linha="${pedido.linha}" data-id-unico="${pedido.id_unico || ''}" data-origem="${pedido.origem}" data-direcao="avancar"><i class="fas fa-arrow-right"></i> Avançar</button>`;
 
     const btnVoltarRender = podeVoltar 
-      ? `<button class="btn-action btn-back" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-direcao="voltar"><i class="fas fa-arrow-left"></i> Voltar</button>` 
+      ? `<button class="btn-action btn-back" data-linha="${pedido.linha}" data-id-unico="${pedido.id_unico || ''}" data-origem="${pedido.origem}" data-direcao="voltar"><i class="fas fa-arrow-left"></i> Voltar</button>` 
       : '';
 
     return `
@@ -1477,7 +1533,7 @@ function renderizarTabela() {
               ${btnVoltarRender}
               ${podeAvancar ? btnAvancarRender : ''}
             ` : `<span class="view-only-badge"><i class="fas fa-lock"></i> Apenas visualização</span>`}
-            <button class="btn-action btn-detail" data-linha="${pedido.linha}" data-origem="${pedido.origem}"><i class="fas fa-eye"></i> Detalhes</button>
+            <button class="btn-action btn-detail" data-linha="${pedido.linha}" data-id-unico="${pedido.id_unico || ''}" data-origem="${pedido.origem}"><i class="fas fa-eye"></i> Detalhes</button>
             ${podeExcluir ? `<button class="btn-action btn-delete" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-id-unico="${pedido.id_unico || ''}" onclick="excluirPedido(this)"><i class="fas fa-trash-alt"></i> Excluir</button>` : ''}
           </div>
          </td>
@@ -1511,7 +1567,7 @@ function renderizarTabela() {
 }
 
 function excluirPedido(btn) {
-  const linha = parseInt(btn.getAttribute('data-linha'));
+  const idUnico = btn.getAttribute('data-id-unico') || btn.getAttribute('data-linha');
   const origem = btn.getAttribute('data-origem');
   const idUnico = btn.getAttribute('data-id-unico');
   
@@ -1733,14 +1789,14 @@ function showConfirmModal(title, message, onConfirm, onCancel, hasTwoOptions, on
   
 function handleStatusClick(event) {
   const btn = event.currentTarget;
-  const linha = parseInt(btn.dataset.linha);
+  const idUnico = btn.dataset.idUnico || btn.dataset.linha;
   const origem = btn.dataset.origem;
   const direcao = btn.dataset.direcao;
   
   console.log(`🔄 [handleStatusClick] linha=${linha}, origem=${origem}, direcao=${direcao}`);
   
   // Busca o pedido na lista global para ter o bancoDeDadosId (apenas para log)
-  const pedido = window.todosPedidos?.find(p => p.linha === linha && p.origem === origem);
+  const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico || p.linha === idUnico);
   if (pedido) {
     console.log(`📌 bancoDeDadosId do pedido: ${pedido.bancoDeDadosId || 'NULL'}`);
   } else {
@@ -1752,10 +1808,10 @@ function handleStatusClick(event) {
   
 function handleDetailClick(event) {
   const btn = event.currentTarget;
-  const linha = parseInt(btn.dataset.linha);
+  const idUnico = btn.dataset.idUnico || btn.dataset.linha;
   const origem = btn.dataset.origem;
   console.log("🖱️ Botão Detalhes clicado - Linha:", linha, "Origem:", origem);
-  abrirDetalhes(linha, origem);
+  abrirDetalhes(idUnico, origem);
 }
   
   function gerarTimeline(etapaAtual) {
@@ -1809,7 +1865,7 @@ function handleDetailClick(event) {
   
 function atualizarStatus(linha, direcao, origem) {
   // 🔥 BUSCA O PEDIDO NA LISTA GLOBAL
-  const pedido = window.todosPedidos?.find(p => p.linha === linha && p.origem === origem);
+  const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico || p.linha === idUnico);
   
   if (!pedido) {
     showToast('Pedido não encontrado na lista. Recarregue a página.', 'error');
