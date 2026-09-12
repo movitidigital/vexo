@@ -1207,6 +1207,65 @@ function moverCardParaColuna(idLead, novaEtapa) {
     console.log("✅ Card " + idLead + " movido para " + novaEtapa);
   }
 }
+
+// ═══════════════════════════════════════════════════════════
+// PONTE SUPABASE — substitui google.script.run
+// ═══════════════════════════════════════════════════════════
+(function () {
+  if (!window.sb) {
+    console.error('❌ supabase-client.js não carregado (window.sb ausente)');
+    return;
+  }
+
+  const MAP = {
+    getLeadsDisponiveis:         { rpc: 'leads_disponiveis',         args: () => ({}) },
+    getMeusLeadsKanban:          { rpc: 'meus_leads_kanban',         args: (u) => ({ p_usuario: u }) },
+    atribuirLead:                { rpc: 'atribuir_lead',             args: (id, _u, st) => ({ p_id: id, p_novo_status: st || 'OPORTUNIDADE' }) },
+    atualizarStatusLeadPlanilha: { rpc: 'atualizar_status_lead',     args: (id, st) => ({ p_id: id, p_novo_status: st }) },
+    registrarProspeccao:         { rpc: 'registrar_prospeccao',      args: (d) => ({ p_dados: d }) },
+    adicionarComentarioLead:     { rpc: 'adicionar_comentario',      args: (id, t) => ({ p_id: id, p_texto: t }) },
+    excluirLeadPlanilha:         { rpc: 'excluir_lead',              args: (id) => ({ p_id: id }) },
+    getDadosCompletosLead:       { rpc: 'dados_completos_lead',      args: (id) => ({ p_id: id }) },
+    getHistoricoLead:            { rpc: 'dados_completos_lead',      args: (id) => ({ p_id: id }) },
+    salvarDadosContato:          { rpc: 'salvar_contato_e_avancar',  args: (id, d) => ({ p_id: id, p_dados: d }) },
+    salvarContatoEAvancar:       { rpc: 'salvar_contato_e_avancar',  args: (id, d) => ({ p_id: id, p_dados: d }) },
+    carregarPropostaCompleta:    { rpc: 'carregar_proposta_completa',args: (id) => ({ p_id: id }) },
+    salvarPropostaCompleta:      { rpc: 'salvar_proposta_completa',  args: (id, p) => ({ p_id: id, p_payload: p }) },
+    getOfertasTim:               { rpc: 'ofertas_tim_listar',        args: () => ({}) },
+    verificarLeadsParados:       { rpc: 'verificar_leads_parados',   args: () => ({}) },
+    testarConexaoBackend:        { rpc: 'leads_disponiveis',         args: () => ({}) },
+  };
+
+  function makeRunner() {
+    let ok = null, fail = null;
+    const runner = {
+      withSuccessHandler(fn) { ok = fn; return runner; },
+      withFailureHandler(fn) { fail = fn; return runner; },
+    };
+    Object.keys(MAP).forEach(nome => {
+      runner[nome] = async function (...params) {
+        const cfg = MAP[nome];
+        try {
+          const args = cfg.args(...params);
+          const { data, error } = await window.sb.rpc(cfg.rpc, args);
+          if (error) throw error;
+          if (ok) ok(data);
+        } catch (err) {
+          console.error(`❌ RPC ${cfg.rpc}:`, err);
+          if (fail) fail(err.message || String(err));
+        }
+      };
+    });
+    return runner;
+  }
+
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  Object.defineProperty(window.google.script, 'run', { get: () => makeRunner() });
+
+  console.log('✅ Ponte Supabase ativa — prospeccao.html');
+})();
+  
 // ==========================================
 // NAVEGAÇÃO ENTRE ABAS
 // ==========================================
