@@ -2056,16 +2056,42 @@ function mostrarDashboardVazio(msg) {
 // =========================================================================
 // 🚀 INICIALIZAÇÃO UNIFICADA DO SISTEMA VEXO
 // =========================================================================
-window.onload = function() {
+window.onload = function () {
   console.log('🚀 VEXO: Sistema Iniciado.');
 
-  definirMesAnoAtual();
-  sincronizarPerfil();
+  // 1. Aguarda o supabase-client.js terminar de carregar (é assíncrono)
+  function tentarInicializar(tentativas = 0) {
+    if (typeof window.sb === 'undefined' || typeof window.getProfile !== 'function') {
+      if (tentativas < 20) {  // tenta por até 2 segundos
+        console.log('⏳ [ONLOAD] Aguardando supabase-client.js...', tentativas + 1);
+        setTimeout(() => tentarInicializar(tentativas + 1), 100);
+        return;
+      }
+      console.error('❌ [ONLOAD] supabase-client.js não carregou!');
+      return;
+    }
 
-  // ⏸️ Módulos legados (GAS) — desativados até migrarmos cada um
-  // inicializarDados();
-  // setTimeout(verificarAlertasCofre, 2000);
-  // setTimeout(dispararAlertasFinanceiros, 3500);
+    console.log('✅ [ONLOAD] Supabase pronto. Inicializando dashboard...');
+
+    // 2. Define mês/ano atuais nos selects (ANTES de buscar dados)
+    definirMesAnoAtual();
+
+    // 3. Carrega perfil (nome/cargo/foto no header + aplica regras de menu)
+    sincronizarPerfil();
+
+    // 4. 🔥 CARREGA OS INDICADORES (estava comentado!)
+    // Delay curto pra garantir que os selects já têm valor definido
+    setTimeout(() => {
+      console.log('📊 [ONLOAD] Chamando inicializarDados()...');
+      inicializarDados();
+    }, 200);
+
+    // 5. Alertas (quando migrarmos cada módulo, descomentamos)
+    // setTimeout(verificarAlertasCofre, 2000);
+    // setTimeout(dispararAlertasFinanceiros, 3500);
+  }
+
+  tentarInicializar();
 };
 
 // =========================================================================
