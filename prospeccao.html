@@ -1888,9 +1888,24 @@ function carregarMeuFunil() {
        console.error("Erro no Backend: ", erro);
        notificar("Erro ao buscar leads no banco de dados.", "erro");
     })
-    .withSuccessHandler(function(leads) {
-      // Limpa as colunas
-      colunasIds.forEach(c => {
+    .withSuccessHandler(function(leadsRaw) {
+  // 🔄 Adapta snake_case do banco → camelCase do HTML
+  const leads = (leadsRaw || []).map(l => ({
+    id: l.id,
+    razao: l.razao_social,
+    cnpj: l.cnpj,
+    contato: l.contato,
+    contato_alt: l.contato_alt,
+    bairro: l.bairro,
+    status: l.status,
+    captador: l.captacao_do_lead,
+    diasParado: l.dias_parado,
+    diasNoFunil: l.dias_no_funil,
+    podeExcluir: l.pode_excluir
+  }));
+
+  // Limpa as colunas
+  colunasIds.forEach(c => {
         const el = document.getElementById('k_' + c);
         if (el) el.innerHTML = "";
       });
@@ -2140,8 +2155,20 @@ function carregarMural() {
     return tel;
   };
 
-  google.script.run.withSuccessHandler(leads => {
-    mural.innerHTML = "";
+ google.script.run.withSuccessHandler(leadsRaw => {
+  // 🔄 Adapta snake_case do banco → camelCase do HTML
+  const leads = (leadsRaw || []).map(l => ({
+    id: l.id,
+    razao: l.razao_social,
+    cnpj: l.cnpj,
+    admin: l.nome_administrador,
+    contato: l.contato,
+    contato_alt: l.contato_alt,
+    cidade: l.cidade,
+    uf: l.uf
+  }));
+
+  mural.innerHTML = "";
 
     if (!leads || leads.length === 0) {
       mural.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; background: #f8fafc; border-radius: 15px; border: 2px dashed #e2e8f0;"><p style="color:#94a3b8; font-size: 14px; font-weight: 700;">🌐 O MURAL ESTÁ VAZIO<br><small style="font-weight:400; font-size:12px;">Novos leads aparecerão aqui em breve.</small></p></div>';
