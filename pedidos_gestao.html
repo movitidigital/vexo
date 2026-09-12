@@ -1031,6 +1031,7 @@
   Object.defineProperty(window.google.script, 'run', { get: () => makeRunner() });
   console.log('✅ Ponte Supabase ativa — pedidos_gestao.html');
 })();
+  
   // ============================================
   // 🚀 MÓDULO GESTÃO DE PEDIDOS - VERSÃO PREMIUM
   // ============================================
@@ -1348,23 +1349,22 @@ function carregarPedidos() {
   google.script.run
     .withSuccessHandler(function(pedidosArray) {
   if (Array.isArray(pedidosArray)) {
-    const novosPedidos = pedidosArray;
-    if (!mostrarConcluidos) todosPedidos = novosPedidos.filter(p => p.status_etapa < 6);
-    else todosPedidos = novosPedidos;
-        
-        if (!window.mostrarConcluidos) {
-          todosPedidos = todosPedidos.filter(p => p.status_etapa < 6);
-          window.todosPedidos = todosPedidos;
-        }
-        
-        atualizarSelectParceiros();
-        aplicarFiltros();
-        atualizarKPIs();
-      } else {
-        tbody.innerHTML = `<td><td colspan="7" class="loading-state"><i class="fas fa-exclamation-triangle"></i> ${resposta?.message || 'Falha ao carregar'}</td></tr>`;
-        showToast(resposta?.message || 'Falha ao carregar pedidos', 'error');
-      }
-    })
+    window.todosPedidos = pedidosArray;
+    todosPedidos = window.todosPedidos;
+
+    if (!window.mostrarConcluidos) {
+      todosPedidos = todosPedidos.filter(p => p.status_etapa < 6);
+      window.todosPedidos = todosPedidos;
+    }
+
+    atualizarSelectParceiros();
+    aplicarFiltros();
+    atualizarKPIs();
+  } else {
+    tbody.innerHTML = '<tr><td colspan="7" class="loading-state"><i class="fas fa-exclamation-triangle"></i> Falha ao carregar</td></tr>';
+    showToast('Falha ao carregar pedidos', 'error');
+  }
+})
     .withFailureHandler(function(erro) {
       console.error("❌ Erro:", erro);
       tbody.innerHTML = `<tr><td colspan="7" class="loading-state"><i class="fas fa-wifi"></i> Erro de comunicação: ${erro.message || erro}</td></tr>`;
@@ -1569,28 +1569,25 @@ function renderizarTabela() {
 function excluirPedido(btn) {
   const idUnico = btn.getAttribute('data-id-unico') || btn.getAttribute('data-linha');
   const origem = btn.getAttribute('data-origem');
-  const idUnico = btn.getAttribute('data-id-unico');
-  
-  const pedido = window.todosPedidos.find(p => p.linha === linha && p.origem === origem);
+
+  const pedido = window.todosPedidos.find(p => p.id_unico === idUnico);
   if (!pedido) {
     showToast('Pedido não encontrado', 'error');
     return;
   }
-  
+
   const qtdLinhas = pedido.linhas_agrupadas ? pedido.linhas_agrupadas.length : 1;
-  
-  console.log(`🗑️ Excluindo pedido: linha=${linha}, origem=${origem}, idUnico=${idUnico}`);
-  
+
+  console.log(`🗑️ Excluindo pedido: idUnico=${idUnico}, origem=${origem}`);
+
   if (qtdLinhas === 1) {
-    // Exclusão simples
     showConfirmModal(
       'Excluir Pedido',
       'Deseja excluir este pedido?',
-      () => executarExclusao([linha], origem, idUnico),
+      () => executarExclusao([], origem, idUnico),
       null
     );
   } else {
-    // Buscar lista de linhas reais na planilha (todas as linhas do pedido)
     showLoading('Carregando linhas do pedido...');
     google.script.run
       .withSuccessHandler(res => {
@@ -1605,7 +1602,7 @@ function excluirPedido(btn) {
         hideLoading();
         showToast('Erro ao carregar linhas: ' + err, 'error');
       })
-      .listarLinhasDoPedido(idUnico, origem); // sem modalidade
+      .listarLinhasDoPedido(idUnico, origem);
   }
 }
 function mostrarModalSelecaoLinhas(linhas, origem, idUnico) {
@@ -1787,30 +1784,30 @@ function showConfirmModal(title, message, onConfirm, onCancel, hasTwoOptions, on
   modalEl.classList.add('active');
 }
   
+
 function handleStatusClick(event) {
   const btn = event.currentTarget;
   const idUnico = btn.dataset.idUnico || btn.dataset.linha;
   const origem = btn.dataset.origem;
   const direcao = btn.dataset.direcao;
-  
-  console.log(`🔄 [handleStatusClick] linha=${linha}, origem=${origem}, direcao=${direcao}`);
-  
-  // Busca o pedido na lista global para ter o bancoDeDadosId (apenas para log)
-  const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico || p.linha === idUnico);
+
+  console.log(`🔄 [handleStatusClick] idUnico=${idUnico}, origem=${origem}, direcao=${direcao}`);
+
+  const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico);
   if (pedido) {
-    console.log(`📌 bancoDeDadosId do pedido: ${pedido.bancoDeDadosId || 'NULL'}`);
+    console.log(`📌 Pedido: ${pedido.cliente}`);
   } else {
-    console.warn(`⚠️ Pedido não encontrado na lista global: linha=${linha}, origem=${origem}`);
+    console.warn(`⚠️ Pedido não encontrado: ${idUnico}`);
   }
-  
-  atualizarStatus(linha, direcao, origem);
+
+  atualizarStatus(idUnico, direcao, origem);
 }
-  
+
 function handleDetailClick(event) {
   const btn = event.currentTarget;
   const idUnico = btn.dataset.idUnico || btn.dataset.linha;
   const origem = btn.dataset.origem;
-  console.log("🖱️ Botão Detalhes clicado - Linha:", linha, "Origem:", origem);
+  console.log("🖱️ Botão Detalhes clicado - idUnico:", idUnico, "Origem:", origem);
   abrirDetalhes(idUnico, origem);
 }
   
@@ -1863,16 +1860,17 @@ function handleDetailClick(event) {
   // ATUALIZAR STATUS (COM MODAIS PERSONALIZADOS)
   // ============================================
   
-function atualizarStatus(linha, direcao, origem) {
-  // 🔥 BUSCA O PEDIDO NA LISTA GLOBAL
-  const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico || p.linha === idUnico);
-  
+function atualizarStatus(idUnico, direcao, origem) {
+  const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico);
+
   if (!pedido) {
     showToast('Pedido não encontrado na lista. Recarregue a página.', 'error');
     return;
   }
-  
-  console.log(`🔄 [atualizarStatus] linha=${linha}, direcao=${direcao}, origem=${origem}`);
+
+  const linha = idUnico; // compatibilidade com o resto da função
+
+  console.log(`🔄 [atualizarStatus] idUnico=${idUnico}, direcao=${direcao}, origem=${origem}`);
   console.log(`📌 bancoDeDadosId do pedido: ${pedido.bancoDeDadosId || 'NULL'}`);
   console.log(`📌 idUnico do pedido: ${pedido.id_unico || 'N/A'}`);
   console.log(`📌 data_radar do pedido: ${pedido.data_radar || 'NÃO PREENCHIDA'}`);
@@ -1995,12 +1993,14 @@ function atualizarStatus(linha, direcao, origem) {
   );
 }
   
-function executarAtualizacaoStatus(linha, origem, novoStatus, dataAtivacao, dataBoc) {
+function executarAtualizacaoStatus(idUnico, origem, novoStatus, dataAtivacao, dataBoc) {
   const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
   const nomeUsuario = sessao.nome || sessao.username || 'Sistema';
-  
-  // 🔥 BUSCA O PEDIDO NA LISTA GLOBAL POR linha E origem
-  let pedido = window.todosPedidos?.find(p => p.linha === linha && p.origem === origem);
+
+  const linha = idUnico; // compatibilidade
+
+  // 🔥 BUSCA O PEDIDO NA LISTA GLOBAL POR id_unico
+  let pedido = window.todosPedidos?.find(p => p.id_unico === idUnico);
   let idUnico = '';
   let bancoDeDadosId = null;
   
@@ -2160,10 +2160,9 @@ function carregarPedidosSilenciosamente() {
   };
   
   google.script.run
-    .withSuccessHandler(function(resposta) {
-      if (resposta && resposta.success) {
-        // Atualizar dados em background
-        const novosPedidos = resposta.pedidos || [];
+    .withSuccessHandler(function(pedidosArray) {
+  if (Array.isArray(pedidosArray)) {
+    const novosPedidos = pedidosArray;
         
         if (!mostrarConcluidos) {
           todosPedidos = novosPedidos.filter(p => p.status_etapa < 6);
@@ -2205,11 +2204,13 @@ function carregarPedidosSilenciosamente() {
   // DETALHES DO PEDIDO
   // ============================================
   
-function abrirDetalhes(linha, origem) {
-  console.log("🔍 Abrindo detalhes - Linha:", linha, "Origem:", origem);
-  
+function abrirDetalhes(idUnico, origem) {
+  console.log("🔍 Abrindo detalhes - idUnico:", idUnico, "Origem:", origem);
+
+  const linha = idUnico; // compatibilidade
+
   // 🔥 RECUPERA O PEDIDO COMPLETO DA LISTA GLOBAL
-  const pedido = window.todosPedidos.find(p => p.linha === linha && p.origem === origem);
+  const pedido = window.todosPedidos.find(p => p.id_unico === idUnico);
   if (!pedido) {
     showToast('Pedido não encontrado na lista. Tente recarregar.', 'error');
     return;
@@ -2260,7 +2261,7 @@ function abrirDetalhes(linha, origem) {
       showToast('Erro ao carregar detalhes do pedido', 'error');
     })
     .p_detalhesPedidoGestao(
-      linha,                 // linha
+      idUnico,                 // idUnico
       origem,                // origem
       pedido.cnpj,           // cnpjParam
       pedido.data_key,       // dataKeyParam
@@ -3219,11 +3220,13 @@ function forcarCarregamentoLista() {
 // =========================================================================
 // UX AVANÇADA: TRANSIÇÃO DE "PENDENTE DE INPUT" PARA LANÇAMENTO DE VENDAS
 // =========================================================================
-function avancarPedidoParaInput(linha, origem) {
-  console.log("🚀 1. Iniciando teletransporte para linha:", linha, "origem:", origem);
-  
+function avancarPedidoParaInput(idUnico, origem) {
+  console.log("🚀 1. Iniciando teletransporte para idUnico:", idUnico, "origem:", origem);
+
+  const linha = idUnico; // compatibilidade
+
   // --- 1. Buscar pedido na lista global ---
-  const pedido = window.todosPedidos.find(p => p.linha == linha && p.origem === origem);
+  const pedido = window.todosPedidos.find(p => p.id_unico === idUnico);
   if (!pedido) {
     console.error("❌ 2. Pedido não encontrado");
     showToast('Pedido não encontrado.', 'error');
