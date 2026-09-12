@@ -1892,6 +1892,7 @@ function carregarMeuFunil() {
   // 🔄 Adapta snake_case do banco → camelCase do HTML
   const leads = (leadsRaw || []).map(l => ({
     id: l.id,
+    codigo: l.codigo,
     razao: l.razao_social,
     cnpj: l.cnpj,
     contato: l.contato,
@@ -2052,7 +2053,7 @@ function carregarMeuFunil() {
               "<div class='temp-bar " + corT + "' style='position: absolute; left: 0; top: 0; bottom: 0; width: 5px; border-radius: 8px 0 0 8px;'></div>" +
               "<div class='card-header' style='padding-left: 10px; display:flex; justify-content:space-between; align-items:center;'>" +
                 "<div style='display:flex; align-items:center; gap:5px;'>" +
-                  "<span class='card-id'>#" + leadId + "</span>" + alertaHTML +
+                  "<span class='card-id'>#" + (lead.codigo || leadId.substring(0, 8)) + "</span>" + alertaHTML +
                 "</div>" +
                 "<div style='display:flex; align-items:center; gap:4px;'>" +
                   (lead.podeExcluir ? "<button class='btn-voltar-mural' style='background:none; border:none; cursor:pointer; font-size:14px; padding:0 5px; color:#2563eb;' title='RETORNAR PARA OPORTUNIDADES' onclick='event.stopPropagation(); retornarLeadAoMural(\"" + leadId + "\")'>↩️</button>" : "") +
