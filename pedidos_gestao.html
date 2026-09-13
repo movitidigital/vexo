@@ -3161,7 +3161,7 @@ function renderizarDetalhes(pedido) {
   // ============================================
 function salvarCodigoCliente() {
   const input = document.getElementById('codigo-cliente-input');
-  const codigo = input?.value?.trim() ||;
+  const codigo = input?.value?.trim() || '';
   if (!codigo) {
     showToast('Informe um código de cliente válido.', 'warning');
     return;
