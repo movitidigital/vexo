@@ -1629,52 +1629,99 @@ function renderizarTabela() {
 }
 
 function excluirPedido(btn) {
+  console.log('🧭 [excluirPedido] iniciado');
+
   const idUnicoAttr = btn.getAttribute('data-id-unico');
   const linhaAttr   = btn.getAttribute('data-linha');
   const origem      = btn.getAttribute('data-origem');
 
-  // 🔥 Tenta achar o pedido de várias formas
-  let pedido = null;
-  let idUnico = idUnicoAttr && idUnicoAttr.trim() !== '' ? idUnicoAttr : null;
+  console.log('   data-id-unico:', JSON.stringify(idUnicoAttr));
+  console.log('   data-linha   :', JSON.stringify(linhaAttr));
+  console.log('   data-origem  :', JSON.stringify(origem));
 
+  if (!Array.isArray(window.todosPedidos) || window.todosPedidos.length === 0) {
+    console.error('❌ window.todosPedidos está vazio');
+    showToast('Lista de pedidos ainda não carregou. Recarregue a página.', 'error');
+    return;
+  }
+
+  // 🔥 Cadeia de resolução — tenta várias formas
+  let pedido = null;
+  let idUnico = (idUnicoAttr && idUnicoAttr.trim() !== '') ? idUnicoAttr.trim() : null;
+
+  // 1) por id_unico direto
   if (idUnico) {
     pedido = window.todosPedidos.find(p => p.id_unico === idUnico);
+    console.log('   → busca por id_unico:', pedido ? '✅ achou' : '❌ nada');
   }
-  // Fallback 1: pela linha + origem
+
+  // 2) fallback: linha + origem
   if (!pedido && linhaAttr) {
     pedido = window.todosPedidos.find(
       p => String(p.linha) === String(linhaAttr) && p.origem === origem
     );
+    console.log('   → busca por linha+origem:', pedido ? '✅ achou' : '❌ nada');
     if (pedido && pedido.id_unico) idUnico = pedido.id_unico;
   }
-  // Fallback 2: último recurso — pelo primeiro match de linha só
+
+  // 3) fallback: só linha
   if (!pedido && linhaAttr) {
     pedido = window.todosPedidos.find(p => String(p.linha) === String(linhaAttr));
+    console.log('   → busca só por linha:', pedido ? '✅ achou' : '❌ nada');
     if (pedido && pedido.id_unico) idUnico = pedido.id_unico;
   }
 
-  console.log('🗑️ [excluirPedido] idUnico resolvido:', idUnico, '| pedido:', pedido);
+  // 4) fallback: se só tem 1 pedido na lista e clicaram nele
+  if (!pedido && window.todosPedidos.length === 1) {
+    pedido = window.todosPedidos[0];
+    idUnico = pedido.id_unico;
+    console.log('   → fallback: único pedido da lista');
+  }
 
-  if (!pedido || !idUnico) {
-    console.error('❌ Pedido não encontrado para exclusão', { idUnicoAttr, linhaAttr, origem });
-    showToast('Pedido não encontrado. Recarregue a lista.', 'error');
+  if (!pedido) {
+    console.error('❌ Pedido não encontrado com nenhuma estratégia');
+    console.error('   Amostra de id_unico na lista:', window.todosPedidos.slice(0, 3).map(p => p.id_unico));
+    showToast('Pedido não encontrado na lista. Recarregue a página.', 'error');
     return;
   }
 
+  if (!idUnico) {
+    console.error('❌ Pedido encontrado, mas sem id_unico:', pedido);
+    showToast('Pedido sem ID único. Não é possível excluir.', 'error');
+    return;
+  }
+
+  console.log('   ✅ Pedido resolvido:', pedido.cliente, '| idUnico:', idUnico);
+
   const qtdLinhas = Array.isArray(pedido.linhas_agrupadas) ? pedido.linhas_agrupadas.length : 1;
+  console.log('   📦 linhas_agrupadas:', qtdLinhas);
 
   if (qtdLinhas <= 1) {
-    showConfirmModal(
-      'Excluir Pedido',
-      `Deseja excluir o pedido <strong>${pedido.cliente || pedido.id}</strong>?`,
-      () => executarExclusao([], origem, idUnico),
-      null
-    );
+    console.log('   🔔 Abrindo showConfirmModal (1 linha)');
+    try {
+      showConfirmModal(
+        'Excluir Pedido',
+        `Deseja excluir o pedido <strong>${pedido.cliente || pedido.id}</strong>?`,
+        () => {
+          console.log('   ✅ Usuário confirmou exclusão');
+          executarExclusao([], origem, idUnico);
+        },
+        () => {
+          console.log('   ⏹️ Usuário cancelou');
+          showToast('Operação cancelada', 'info');
+        }
+      );
+      console.log('   ✔️ showConfirmModal retornou sem erro');
+    } catch (e) {
+      console.error('💥 Erro dentro de showConfirmModal:', e);
+    }
   } else {
+    console.log('   🔔 Múltiplas linhas → carregar linhas antes');
     showLoading('Carregando linhas do pedido...');
     google.script.run
       .withSuccessHandler(res => {
         hideLoading();
+        console.log('   📨 listarLinhasDoPedido respondeu:', res);
         if (res && res.success && res.linhas?.length) {
           mostrarModalSelecaoLinhas(res.linhas, origem, idUnico);
         } else {
@@ -1683,6 +1730,7 @@ function excluirPedido(btn) {
       })
       .withFailureHandler(err => {
         hideLoading();
+        console.error('❌ Erro listarLinhasDoPedido:', err);
         showToast('Erro ao carregar linhas: ' + err, 'error');
       })
       .listarLinhasDoPedido(idUnico, origem);
