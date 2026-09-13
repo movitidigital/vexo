@@ -1593,6 +1593,12 @@ function renderizarTabela() {
     btn.removeEventListener('click', handleDetailClick);
     btn.addEventListener('click', handleDetailClick);
   });
+
+  // 🔥 NOVO — listener do botão Excluir (event delegation via data-*)
+  document.querySelectorAll('.btn-delete').forEach(btn => {
+    btn.removeEventListener('click', handleDeleteClick);
+    btn.addEventListener('click', handleDeleteClick);
+  });
   
   // Paginação
   const pagContainer = document.getElementById('pagination-container');
@@ -3367,6 +3373,16 @@ window.fecharConfirmModal = fecharConfirmModal;
 window.fecharDateModal = fecharDateModal;
 window.resetModuloGestao = resetModuloGestao;
 window.destacarMenuItem = destacarMenuItem;
+window.excluirPedido              = excluirPedido;
+window.executarExclusao           = executarExclusao;
+window.mostrarModalSelecaoLinhas  = mostrarModalSelecaoLinhas;
+window.fecharModalSelecaoLinhas   = fecharModalSelecaoLinhas;
+window.avancarPedidoParaInput     = avancarPedidoParaInput;
+window.salvarCodigoCliente        = salvarCodigoCliente;
+window.salvarDataRadar            = salvarDataRadar;
+window.showToast                  = showToast;
+window.showConfirmModal           = showConfirmModal;
+window.handleDeleteClick          = handleDeleteClick;   // 🔥 novo handler	
 
 // INICIAR (sempre resetar ao entrar no módulo)
 resetModuloGestao();
