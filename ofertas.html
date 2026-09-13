@@ -812,9 +812,9 @@
       // INICIALIZAÇÃO
       // ============================================
       
-      function init() {
-        console.log('🚀 Inicializando Módulo Ofertas TIM...');
-        carregarPermissoes();
+      async function init() {
+  console.log('🚀 Inicializando Módulo Ofertas TIM...');
+  await carregarPermissoes();   // 🔥 await
         
         // Eventos
         buscaInput.addEventListener('keyup', aplicarFiltros);
