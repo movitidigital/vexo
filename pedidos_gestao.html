@@ -1901,28 +1901,28 @@ function excluirPedido(btn) {
   }
 }
 function mostrarModalSelecaoLinhas(linhas, origem, idUnico) {
+  console.log('🎨 [mostrarModalSelecaoLinhas] iniciado com', linhas.length, 'linha(s)');
+
   // Remove modal antigo se existir
   const modalAntigo = document.getElementById('modal-selecao-linhas');
   if (modalAntigo) modalAntigo.remove();
-  
-  // Cria o modal
+
   const modal = document.createElement('div');
   modal.id = 'modal-selecao-linhas';
   modal.className = 'vexo-modal';
-  modal.style.display = 'flex';
-  
+
   let linhasHtml = '';
   linhas.forEach((linha, idx) => {
     linhasHtml += `
       <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 8px; background: #f8fafc; border-radius: 8px;">
         <input type="checkbox" class="linha-checkbox" data-linha="${linha.linha}" id="chk_${idx}" style="width: 18px; height: 18px;">
         <label for="chk_${idx}" style="flex: 1; font-size: 14px; font-weight: 500;">
-          📱 Número: ${linha.numero} (Linha ${linha.linha})
+          📱 Número: ${linha.numero || '—'} <span style="color:#94a3b8;">(${linha.plano || 'sem plano'})</span>
         </label>
       </div>
     `;
   });
-  
+
   modal.innerHTML = `
     <div class="modal-container" style="max-width: 500px;">
       <div class="modal-header" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
@@ -1947,27 +1947,38 @@ function mostrarModalSelecaoLinhas(linhas, origem, idUnico) {
       </div>
     </div>
   `;
-  
+
   document.body.appendChild(modal);
-  
+
+  // 🔥 Força visibilidade por AMBOS os caminhos: inline + classe .active (com !important no CSS)
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+
+  console.log('   ✔️ Modal anexado ao DOM');
+  console.log('   computed display:', getComputedStyle(modal).display);
+  console.log('   computed z-index:', getComputedStyle(modal).zIndex);
+
   // Evento "Selecionar todas"
   const chkAll = document.getElementById('selecionar-todas');
-  const checkboxes = document.querySelectorAll('.linha-checkbox');
+  const checkboxes = modal.querySelectorAll('.linha-checkbox');
+
   chkAll.addEventListener('change', function(e) {
     checkboxes.forEach(cb => cb.checked = e.target.checked);
   });
-  
+
   // Botão confirmar
   document.getElementById('btn-confirmar-exclusao').addEventListener('click', () => {
     const selecionadas = Array.from(checkboxes)
       .filter(cb => cb.checked)
-      .map(cb => parseInt(cb.getAttribute('data-linha')));
-    
+      .map(cb => cb.getAttribute('data-linha'));   // 🔥 mantém UUID como string, não parseInt
+
+    console.log('   🗑️ Linhas selecionadas:', selecionadas);
+
     if (selecionadas.length === 0) {
       showToast('Selecione pelo menos uma linha para excluir.', 'warning');
       return;
     }
-    
+
     fecharModalSelecaoLinhas();
     executarExclusao(selecionadas, origem, idUnico);
   });
