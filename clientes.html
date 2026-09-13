@@ -158,7 +158,7 @@
   </div>
 
   <div class="search-section">
-    <div class="search-box"> <i class="fas fa-search search-icon"></i> <input type="search" id="inputBusca" placeholder="Buscar por CNPJ, Razão Social ou Código..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" name="vexo_busca_clientes_nao_autofill" data-lpignore="true" data-form-type="other" > </div>
+    <div class="search-box"> <i class="fas fa-search search-icon"></i> <input type="text" id="inputBusca" placeholder="Buscar por CNPJ, Razão Social ou Código..." class="search-input" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" name="vexo_busca_xyz_nao_autofill_123" data-lpignore="true" data-form-type="other" data-1p-ignore="true" > </div>
     <div class="filter-box"><i class="fas fa-map-marker-alt filter-icon"></i><select id="selectUF" class="filter-select"><option value="">Todos os Estados</option><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option></select></div>
   </div>
 
@@ -318,13 +318,20 @@
       tbody.innerHTML = '<tr><td colspan="5" class="loading-cell"><div class="loading-spinner"></div><span>Carregando clientes...</span></td></tr>';
 
       google.script.run
-        .withSuccessHandler(function(dados) {
-          // 🔥 garante array limpo (remove null/undefined)
-          clientesData = (Array.isArray(dados) ? dados : []).filter(Boolean);
-          console.log(`✅ ${clientesData.length} clientes carregados`);
-          atualizarStats();
-          filtrarClientes();
-        })
+       .withSuccessHandler(function(dados) {
+  // 🔥 garante array limpo (remove null/undefined)
+  clientesData = (Array.isArray(dados) ? dados : []).filter(Boolean);
+
+  // 🔥 ANTI-AUTOFILL: se o navegador preencheu com e-mail, limpa
+  if (inputBusca.value && inputBusca.value.includes('@')) {
+    console.log('🧹 Removendo autofill do Chrome:', inputBusca.value);
+    inputBusca.value = '';
+  }
+
+  console.log(`✅ ${clientesData.length} clientes carregados`);
+  atualizarStats();
+  filtrarClientes();
+})
         .withFailureHandler(function(err) {
           console.error("❌ Erro ao buscar clientes:", err);
           tbody.innerHTML = '<tr><td colspan="5" class="loading-cell" style="color:#ef4444;">' +
