@@ -531,6 +531,47 @@
 </div>
 
 <script>
+  // ═══════════════════════════════════════════════════════════
+// PONTE SUPABASE — substitui google.script.run
+// ═══════════════════════════════════════════════════════════
+(function () {
+  if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
+
+  const MAP = {
+    obterDadosFaturasFrontend:  { rpc: 'faturas_carregar_dados',          args: () => ({}) },
+    atualizarStatusFaturasComLog:{ rpc: 'faturas_baixar_pagamento',       args: (ids, usuario) => ({ p_ids: Array.isArray(ids) ? ids.map(String) : [], p_usuario: usuario }) },
+    estornarStatusFaturas:      { rpc: 'faturas_estornar_pagamento',      args: (ids, usuario) => ({ p_ids: Array.isArray(ids) ? ids.map(String) : [], p_usuario: usuario }) },
+    registrarLogWhatsApp:       { rpc: 'faturas_registrar_log_whatsapp',  args: (ids, usuario) => ({ p_ids: Array.isArray(ids) ? ids.map(String) : [], p_usuario: usuario }) },
+  };
+
+  function makeRunner() {
+    let ok = null, fail = null;
+    const runner = {
+      withSuccessHandler(fn) { ok = fn; return runner; },
+      withFailureHandler(fn) { fail = fn; return runner; },
+    };
+    Object.keys(MAP).forEach(nome => {
+      runner[nome] = async function (...params) {
+        const cfg = MAP[nome];
+        try {
+          const args = cfg.args(...params);
+          const { data, error } = await window.sb.rpc(cfg.rpc, args);
+          if (error) throw error;
+          if (ok) ok(data);
+        } catch (err) {
+          console.error(`❌ RPC ${cfg.rpc}:`, err);
+          if (fail) fail(err.message || String(err));
+        }
+      };
+    });
+    return runner;
+  }
+
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  Object.defineProperty(window.google.script, 'run', { get: () => makeRunner() });
+  console.log('✅ Ponte Supabase ativa — faturas.html');
+})();
   // =========================================================
   // GLOBAIS
   // =========================================================
@@ -547,18 +588,22 @@
   // =========================================================
   // FUNÇÃO AUXILIAR PARA OBTER NOME DO USUÁRIO LOGADO
   // =========================================================
-  function obterNomeUsuario() {
-    try {
-      var usuario = sessionStorage.getItem('usuarioLogado');
-      if (usuario) {
-        var obj = JSON.parse(usuario);
-        return obj.username || obj.nome || 'Sistema';
+ async function obterNomeUsuario() {
+  try {
+    if (window.sb) {
+      const { data: { user } } = await window.sb.auth.getUser();
+      if (user) {
+        const { data: prof } = await window.sb
+          .from('profiles')
+          .select('nome, sobrenome')
+          .eq('id', user.id)
+          .single();
+        if (prof) return ((prof.nome || '') + ' ' + (prof.sobrenome || '')).trim() || user.email;
       }
-    } catch (e) {
-      console.warn('Erro ao obter usuário do sessionStorage:', e);
     }
-    return 'Sistema';
-  }
+  } catch (e) { console.warn('Erro obterNomeUsuario:', e); }
+  return 'Sistema';
+}
 
   // =========================================================
   // GERAR MENSAGEM PERSONALIZADA PARA WHATSAPP (sem codificação)
@@ -640,22 +685,45 @@
   // =========================================================
   // CARREGAR DADOS
   // =========================================================
-  function carregarDados() {
-    var loading = document.getElementById('loading');
-    var tbody = document.getElementById('tbody-clientes');
-    loading.style.display = 'block';
-    loading.innerHTML = '⏳ Sincronizando Motor Inteligente...';
-    tbody.innerHTML = '';
+ function carregarDados() {
+  var loading = document.getElementById('loading');
+  var tbody = document.getElementById('tbody-clientes');
+  loading.style.display = 'block';
+  loading.innerHTML = '⏳ Sincronizando Motor Inteligente...';
+  tbody.innerHTML = '';
 
-    google.script.run
-      .withSuccessHandler(processarDados)
-      .withFailureHandler(function(erro) {
-        console.error('❌ Erro:', erro);
-        loading.innerHTML = '<div style="color:#ef4444;">❌ Erro ao carregar: ' + (erro.message || 'Falha de comunicação') + '</div>';
-        loading.style.display = 'block';
-      })
-      .obterDadosFaturasFrontend();
-  }
+  google.script.run
+    .withSuccessHandler(function(dados) {
+      // 🔥 Supabase devolve array de objetos direto (não é mais string JSON)
+      document.getElementById('loading').style.display = 'none';
+
+      try {
+        if (!dados || !Array.isArray(dados)) {
+          document.getElementById('loading').innerHTML =
+            '<div style="color:#ef4444; text-align:center; padding:1rem;">⚠️ Nenhum dado recebido do banco.</div>';
+          document.getElementById('loading').style.display = 'block';
+          return;
+        }
+
+        console.log(`✅ ${dados.length} cliente(s) carregado(s) do Supabase`);
+        cacheClientes = dados;
+        renderizarTabela(cacheClientes);
+
+      } catch (e) {
+        console.error('❌ Erro ao processar dados:', e);
+        document.getElementById('loading').innerHTML =
+          '<div style="color:#ef4444; text-align:center; padding:1rem;">❌ Erro: ' + e.message + '</div>';
+        document.getElementById('loading').style.display = 'block';
+      }
+    })
+    .withFailureHandler(function(erro) {
+      console.error('❌ Erro na RPC:', erro);
+      document.getElementById('loading').innerHTML =
+        '<div style="color:#ef4444;">❌ Erro ao carregar: ' + (erro.message || erro || 'Falha de comunicação') + '</div>';
+      document.getElementById('loading').style.display = 'block';
+    })
+    .obterDadosFaturasFrontend();
+}
 
   // =========================================================
   // PROCESSAR DADOS
