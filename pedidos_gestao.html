@@ -3435,6 +3435,7 @@ function avancarPedidoParaInput(idUnico, origem) {
 
   // --- 6. Salvar no sessionStorage ---
   try {
+	sessionStorage.removeItem('pedidoParaInputConsumido');   
     sessionStorage.setItem('pedidoParaInput', JSON.stringify(pedidoData));
     console.log("✅ Dados salvos no sessionStorage");
 
