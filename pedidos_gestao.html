@@ -1258,52 +1258,85 @@ var STATUS_LIST = [
   // INICIALIZAÇÃO
   // ============================================
   
-function inicializarModulo() {
+async function inicializarModulo() {
   console.log("🚀 Inicializando Módulo Gestão de Pedidos...");
-  
-  // Forçar reset do módulo a cada carregamento
+
   resetModuloGestao();
-  
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  userCargo = (sessao.role || "").toUpperCase().trim();
-  userNome = (sessao.nome || sessao.username || "").toUpperCase().trim();
-  userTipoAcesso = (sessao.tipoAcesso || "PROPRIO").toUpperCase().trim(); // <-- NOVO
+
+  // 🔥 LÊ A SESSÃO
+  let sessao = {};
+  try { sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}'); } catch(e) {}
+
+  // 🔥 FALLBACK: BUSCA O ROLE REAL NO BANCO
+  let role = (sessao.role || "").toUpperCase().trim();
+  let nome = (sessao.nome || sessao.username || "").toUpperCase().trim();
+
+  // Se o role for genérico ('AUTHENTICATED') ou vazio, consulta profiles
+  if (!role || role === 'AUTHENTICATED' || role === 'USER') {
+    try {
+      console.log('🔍 Buscando role real no Supabase...');
+      const { data: { user } } = await window.sb.auth.getUser();
+      if (user) {
+        const { data: prof, error } = await window.sb
+          .from('profiles')
+          .select('nome, sobrenome, role, tenant_id')
+          .eq('id', user.id)
+          .single();
+
+        if (!error && prof) {
+          role = (prof.role || "").toUpperCase().trim();
+          nome = ((prof.nome || '') + ' ' + (prof.sobrenome || '')).trim().toUpperCase();
+          // Atualiza a sessão para as próximas chamadas
+          const novaSessao = { ...sessao, nome: prof.nome, sobrenome: prof.sobrenome, role: prof.role, tenant_id: prof.tenant_id };
+          sessionStorage.setItem('usuarioLogado', JSON.stringify(novaSessao));
+          console.log('✅ Role atualizado da profiles:', role);
+        }
+      }
+    } catch(e) {
+      console.warn('⚠️ Não foi possível buscar role do banco:', e);
+    }
+  }
+
+  userCargo = role;
+  userNome = nome;
+  const userTipoAcesso = (sessao.tipoAcesso || "PROPRIO").toUpperCase().trim();
   userPodeEditar = (userCargo === "ADMINISTRADOR" || userCargo === "BACKOFFICE");
-  
-  // Atualizar variáveis globais
+
   window.userCargo = userCargo;
   window.userNome = userNome;
-  window.userTipoAcesso = userTipoAcesso; // <-- NOVO
+  window.userTipoAcesso = userTipoAcesso;
   window.userPodeEditar = userPodeEditar;
   window.todosPedidos = [];
   window.pedidosFiltrados = [];
   window.paginaAtual = 1;
-  
-  // Atualizar aliases locais
+
   todosPedidos = window.todosPedidos;
   pedidosFiltrados = window.pedidosFiltrados;
   paginaAtual = window.paginaAtual;
-  
-  // Atualizar badge
+
+  // 🔥 ATUALIZA O BADGE
   const badge = document.getElementById('cargo-badge');
   if (badge) {
-    badge.innerHTML = userPodeEditar ? `✏️ ${userCargo} (Edição liberada)` : `👁️ ${userCargo} (Apenas visualização)`;
+    badge.innerHTML = userPodeEditar
+      ? `✏️ ${userCargo} (Edição liberada)`
+      : `👁️ ${userCargo} (Apenas visualização)`;
+    badge.classList.remove('editor', 'viewer');
     badge.classList.add(userPodeEditar ? 'editor' : 'viewer');
+    badge.style.background = userPodeEditar ? '#dcfce7' : '#fef3c7';
+    badge.style.color      = userPodeEditar ? '#166534' : '#b45309';
   }
-  
+
   // Ocultar filtro de parceiro para não administradores
   if (userCargo !== "ADMINISTRADOR" && userCargo !== "BACKOFFICE") {
     const filtroParceiro = document.getElementById('filtro-parceiro-group');
     if (filtroParceiro) filtroParceiro.style.display = 'none';
   }
-  
-  // Destacar item do menu
+
   destacarMenuItem();
-  
-  // 🔥 Pequeno atraso para garantir que o DOM esteja estável antes de carregar os pedidos
-  setTimeout(() => {
-    carregarPedidos();
-  }, 150);
+
+  setTimeout(() => { carregarPedidos(); }, 150);
+
+  console.log('✅ Módulo pronto. Cargo:', userCargo, '| Pode editar:', userPodeEditar);
 }
 
 function destacarMenuItem() {
