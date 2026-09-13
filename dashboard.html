@@ -1273,8 +1273,16 @@ function injetarModuloSemIframe(nome, html, container) {
     } else {
       newScript.text = oldScript.text;
     }
-    document.head.appendChild(newScript);
-    document.head.removeChild(newScript);
+        try {
+      // 🔥 Valida a sintaxe ANTES de anexar
+      new Function(oldScript.text);
+      document.head.appendChild(newScript);
+      document.head.removeChild(newScript);
+    } catch(syntaxErr) {
+      console.error(`❌ [injetarModulo] Erro de sintaxe no script do módulo "${nome}":`, syntaxErr.message);
+      console.error('   Primeiros 500 chars:', oldScript.text.slice(0, 500));
+      console.error('   Últimos 500 chars:', oldScript.text.slice(-500));
+    }
   });
 
   // ===== 7. Reinicializa módulos específicos (opcional) =====
