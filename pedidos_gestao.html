@@ -1092,6 +1092,11 @@
   style.id = 'vexo-pedidos-critical-styles';
   style.textContent = `
     /* ═══ TOAST sempre no topo ═══ */
+	    body.modal-open {
+      overflow: hidden !important;
+      padding-right: 0 !important;
+      width: 100% !important;
+    }
     .vexo-toast {
       position: fixed !important;
       bottom: 30px !important;
@@ -1786,6 +1791,17 @@ async function inicializarModulo() {
 
   setTimeout(() => { carregarPedidos(); }, 150);
 
+  // 🔥 Move modais para o <body> — evita que o "position: fixed"
+  //    seja calculado relativo a um ancestral com transform/filter
+  ['modal-detalhes', 'vexo-confirm-modal', 'vexo-date-modal',
+   'modal-selecao-linhas', 'modal-exclusao-pedido'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && el.parentElement !== document.body) {
+      document.body.appendChild(el);
+      console.log(`📦 Modal "${id}" movido para <body>`);
+    }
+  });
+	
   console.log(`✅ Módulo pronto. Cargo: "${userCargo}" | Pode editar: ${userPodeEditar}`);
 }
 function destacarMenuItem() {
@@ -3021,27 +3037,35 @@ function abrirDetalhes(idUnico, origem) {
     showToast('Pedido não encontrado na lista. Tente recarregar.', 'error');
     return;
   }
-  
+
   // 🔥 CAPTURA O bancoDeDadosId DO PEDIDO
   const bancoDeDadosId = pedido.bancoDeDadosId || null;
   console.log(`🏦 bancoDeDadosId para detalhes: ${bancoDeDadosId || 'NULL'}`);
-  
-  const modal = document.getElementById('modal-detalhes');
+
+  let modal = document.getElementById('modal-detalhes');
   const modalBody = document.getElementById('modal-body');
-  
+
   if (!modal) {
     console.error("❌ Modal não encontrado!");
     showToast('Erro: Modal de detalhes não encontrado', 'error');
     return;
   }
-  
+
+  // 🔥 Move o modal para o <body> — escapa de ancestrais com transform/filter
+  //    que quebram o "position: fixed" e causam o deslocamento
+  if (modal.parentElement !== document.body) {
+    document.body.appendChild(modal);
+    console.log('📦 Modal "modal-detalhes" movido para <body>');
+  }
+
   document.body.classList.add('modal-open');
   document.body.style.overflow = 'hidden';
 
   const scrollY = window.scrollY;
   modal.setAttribute('data-scroll', scrollY);
 
-  // 🔥 Reforça estilos inline (sobrevive ao CSS escopado)
+  // 🔥 Zera estilos inline anteriores e aplica os corretos
+  modal.removeAttribute('style');
   modal.style.cssText = `
     position: fixed !important;
     top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
@@ -3049,6 +3073,7 @@ function abrirDetalhes(idUnico, origem) {
     margin: 0 !important; padding: 20px !important;
     background: rgba(15, 23, 42, 0.85) !important;
     backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
@@ -3057,8 +3082,29 @@ function abrirDetalhes(idUnico, origem) {
     overflow: hidden !important;
   `;
   modal.classList.add('active');
-  modalBody.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>Carregando detalhes...</div>';
-  
+
+  // 🔥 Reforça o container interno também (sobrevive ao CSS escopado)
+  const container = modal.querySelector('.modal-container');
+  if (container) {
+    container.style.cssText = `
+      position: relative !important;
+      background: white !important;
+      width: 100% !important;
+      max-width: 920px !important;
+      max-height: 90vh !important;
+      margin: 0 !important;
+      border-radius: 24px !important;
+      overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+    `;
+  }
+
+  if (modalBody) {
+    modalBody.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>Carregando detalhes...</div>';
+  }
+
   // 🔥 NÃO ENVIA A MODALIDADE - o backend retorna todas as linhas do pedido
   google.script.run
     .withSuccessHandler(function(res) {
