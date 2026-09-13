@@ -3373,30 +3373,41 @@ function fecharModal() {
 }
   
 // ============================================
-// EXPORTAR FUNÇÕES GLOBAIS
+// EXPORTAR FUNÇÕES GLOBAIS (defensivo)
 // ============================================
-window.carregarPedidos = carregarPedidos;
-window.limparFiltros = limparFiltros;
-window.toggleMostrarConcluidos = toggleMostrarConcluidos;
-window.paginaAnterior = paginaAnterior;
-window.proximaPagina = proximaPagina;
-window.atualizarStatus = atualizarStatus;
-window.abrirDetalhes = abrirDetalhes;
-window.fecharModal = fecharModal;
-window.fecharConfirmModal = fecharConfirmModal;
-window.fecharDateModal = fecharDateModal;
-window.resetModuloGestao = resetModuloGestao;
-window.destacarMenuItem = destacarMenuItem;
-window.excluirPedido              = excluirPedido;
-window.executarExclusao           = executarExclusao;
-window.mostrarModalSelecaoLinhas  = mostrarModalSelecaoLinhas;
-window.fecharModalSelecaoLinhas   = fecharModalSelecaoLinhas;
-window.avancarPedidoParaInput     = avancarPedidoParaInput;
-window.salvarCodigoCliente        = salvarCodigoCliente;
-window.salvarDataRadar            = salvarDataRadar;
-window.showToast                  = showToast;
-window.showConfirmModal           = showConfirmModal;
-window.handleDeleteClick          = handleDeleteClick;   // 🔥 novo handler	
+(function exportarGlobais() {
+  const mapa = {
+    carregarPedidos:           typeof carregarPedidos           !== 'undefined' ? carregarPedidos           : null,
+    limparFiltros:             typeof limparFiltros             !== 'undefined' ? limparFiltros             : null,
+    toggleMostrarConcluidos:   typeof toggleMostrarConcluidos   !== 'undefined' ? toggleMostrarConcluidos   : null,
+    paginaAnterior:            typeof paginaAnterior            !== 'undefined' ? paginaAnterior            : null,
+    proximaPagina:             typeof proximaPagina             !== 'undefined' ? proximaPagina             : null,
+    atualizarStatus:           typeof atualizarStatus           !== 'undefined' ? atualizarStatus           : null,
+    abrirDetalhes:             typeof abrirDetalhes             !== 'undefined' ? abrirDetalhes             : null,
+    fecharModal:               typeof fecharModal               !== 'undefined' ? fecharModal               : null,
+    fecharConfirmModal:        typeof fecharConfirmModal        !== 'undefined' ? fecharConfirmModal        : null,
+    fecharDateModal:           typeof fecharDateModal           !== 'undefined' ? fecharDateModal           : null,
+    resetModuloGestao:         typeof resetModuloGestao         !== 'undefined' ? resetModuloGestao         : null,
+    destacarMenuItem:          typeof destacarMenuItem          !== 'undefined' ? destacarMenuItem          : null,
+    excluirPedido:             typeof excluirPedido             !== 'undefined' ? excluirPedido             : null,
+    executarExclusao:          typeof executarExclusao          !== 'undefined' ? executarExclusao          : null,
+    mostrarModalSelecaoLinhas: typeof mostrarModalSelecaoLinhas !== 'undefined' ? mostrarModalSelecaoLinhas : null,
+    fecharModalSelecaoLinhas:  typeof fecharModalSelecaoLinhas  !== 'undefined' ? fecharModalSelecaoLinhas  : null,
+    avancarPedidoParaInput:    typeof avancarPedidoParaInput    !== 'undefined' ? avancarPedidoParaInput    : null,
+    salvarDataRadar:           typeof salvarDataRadar           !== 'undefined' ? salvarDataRadar           : null,
+    showToast:                 typeof showToast                 !== 'undefined' ? showToast                 : null,
+    showConfirmModal:          typeof showConfirmModal          !== 'undefined' ? showConfirmModal          : null,
+    handleDeleteClick:         typeof handleDeleteClick         !== 'undefined' ? handleDeleteClick         : null,
+    // ⚠️ salvarCodigoCliente NÃO entra aqui — é interna de renderizarDetalhes
+  };
+
+  Object.entries(mapa).forEach(([nome, fn]) => {
+    if (fn) window[nome] = fn;
+    else console.warn(`⚠️ Export ignorado (${nome}): função não encontrada no escopo global`);
+  });
+
+  console.log('✅ Exports globais concluídos');
+})();
 
 // INICIAR (sempre resetar ao entrar no módulo)
 resetModuloGestao();
