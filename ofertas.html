@@ -837,37 +837,44 @@
       // ============================================
       // PERMISSÕES (USANDO getPerfilUsuario existente)
       // ============================================
-      
-  async function carregarPermissoes() {
-  // 1) Tenta várias fontes em ordem de confiabilidade
+async function carregarPermissoes() {
   let cargo = '';
   let nome  = '';
+  let userId = null;
 
-  // Fonte A: window.VEXO (dashboard com Supabase Auth)
-  const meta = window.VEXO?.user?.user_metadata || {};
-  if (meta.role) cargo = meta.role;
-  if (meta.nome) nome  = meta.nome;
+  // 1) Pega o user id da sessão do Supabase (que está em sessionStorage.usuarioLogado)
+  try {
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    userId = sessao.id || sessao.user?.id || null;
+    nome   = sessao.email || '';
+  } catch(e) {}
 
-  // Fonte B: sessionStorage (fallback)
-  if (!cargo) {
-    try {
-      const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-      cargo = sessao.role || sessao.cargo || '';
-      nome  = sessao.nome || nome;
-    } catch(e) {}
+  // Fallback: window.VEXO
+  if (!userId && window.VEXO?.user?.id) {
+    userId = window.VEXO.user.id;
   }
 
-  // Fonte C: consulta direta na tabela profiles (último recurso, sempre funciona)
-  if (!cargo && window.sb && window.VEXO?.user?.id) {
+  console.log('🔑 user id (ofertas):', userId);
+
+  // 2) Busca o cargo real na tabela profiles
+  if (userId && window.sb) {
     try {
-      const { data } = await window.sb
+      const { data, error } = await window.sb
         .from('profiles')
-        .select('nome, sobrenome, role')
-        .eq('id', window.VEXO.user.id)
+        .select('nome, sobrenome, role, ativo')
+        .eq('id', userId)
         .single();
+
+      if (error) throw error;
+
       if (data) {
         cargo = data.role || '';
         nome  = [data.nome, data.sobrenome].filter(Boolean).join(' ').trim() || nome;
+
+        // Bloqueia usuário inativo
+        if (data.ativo === false) {
+          cargo = ''; // força cair em "acesso negado"
+        }
       }
     } catch(e) {
       console.warn('⚠️ Falha ao buscar profile:', e);
@@ -877,12 +884,11 @@
   cargo = String(cargo).toUpperCase().trim();
   console.log('📌 Cargo do usuário (ofertas):', cargo);
 
-  permissoes.podeEditar = ['ADMINISTRADOR', 'BACKOFFICE', 'PROPRIETÁRIO', 'PROPRIETARIO'].includes(cargo);
+  permissoes.podeEditar     = ['ADMINISTRADOR', 'BACKOFFICE', 'PROPRIETÁRIO', 'PROPRIETARIO'].includes(cargo);
   permissoes.podeVisualizar = permissoes.podeEditar || cargo === 'CONSULTOR DE VENDAS';
   permissoes.cargo = cargo;
 
   const badge = document.getElementById('permissao-badge');
-  const btnGroup = document.getElementById('btn-group-acoes');
 
   if (permissoes.podeEditar) {
     badge.innerHTML = '<span>👑</span> Modo Administrador - Edição liberada';
@@ -892,13 +898,13 @@
     btnNovaOferta.style.display = 'none';
   } else {
     badge.innerHTML = '<span>⚠️</span> Acesso negado';
-    document.querySelector('.ofertas-container').innerHTML =
-      `<div class="empty-state">
-        ❌ Você não tem permissão para acessar este módulo.<br>
-        <small style="font-size:12px; color:#94a3b8; margin-top:8px; display:block;">
-          Cargo detectado: "${cargo || 'vazio'}"
+    document.querySelector('.ofertas-container').innerHTML = `
+      <div class="empty-state">
+        ❌ Você não tem permissão para acessar este módulo.
+        <br><small style="font-size:12px; color:#94a3b8; margin-top:8px; display:block;">
+          Cargo detectado: "${cargo || 'vazio'}" | User ID: ${userId || 'não encontrado'}
         </small>
-       </div>`;
+      </div>`;
     return;
   }
 
