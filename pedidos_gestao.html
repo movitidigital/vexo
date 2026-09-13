@@ -1610,33 +1610,174 @@ function excluirPedido(btn) {
     return;
   }
 
-  const qtdLinhas = pedido.linhas_agrupadas ? pedido.linhas_agrupadas.length : 1;
+  const linhas = pedido.linhas_agrupadas || [];
+  console.log(`🗑️ Excluir clicado: idUnico=${idUnico}, linhas=${linhas.length}`);
 
-  console.log(`🗑️ Excluindo pedido: idUnico=${idUnico}, origem=${origem}`);
+  // 🔥 SEMPRE abre o modal de seleção (não importa se é 1 ou várias)
+  mostrarModalExclusaoPedido(pedido, idUnico, origem, linhas);
+}
+	function mostrarModalExclusaoPedido(pedido, idUnico, origem, linhas) {
+  const antigo = document.getElementById('modal-exclusao-pedido');
+  if (antigo) antigo.remove();
 
-  if (qtdLinhas === 1) {
-    showConfirmModal(
-      'Excluir Pedido',
-      'Deseja excluir este pedido?',
-      () => executarExclusao([], origem, idUnico),
-      null
-    );
-  } else {
+  // Se por algum motivo não vier linhas_agrupadas, busca do banco
+  if (!linhas || linhas.length === 0) {
     showLoading('Carregando linhas do pedido...');
-    google.script.run
-      .withSuccessHandler(res => {
+    (async () => {
+      try {
+        const [cnpj, dataVenda] = idUnico.split('|');
+        const { data, error } = await window.sb
+          .from('VENDAS')
+          .select('id, numero_da_linha, plano, valor_numeric')
+          .eq('cnpj', cnpj)
+          .eq('data_da_venda', dataVenda);
+
         hideLoading();
-        if (res && res.success && res.linhas.length > 0) {
-          mostrarModalSelecaoLinhas(res.linhas, origem, idUnico);
-        } else {
+
+        if (error || !data || !data.length) {
           showToast('Não foi possível carregar as linhas do pedido.', 'error');
+          return;
         }
-      })
-      .withFailureHandler(err => {
+
+        const linhasFormatadas = data.map(r => ({
+          linha: r.id,
+          numero: r.numero_da_linha,
+          plano: r.plano,
+          valor: Number(r.valor_numeric) || 0
+        }));
+
+        mostrarModalExclusaoPedido(pedido, idUnico, origem, linhasFormatadas);
+      } catch(e) {
         hideLoading();
-        showToast('Erro ao carregar linhas: ' + err, 'error');
-      })
-      .listarLinhasDoPedido(idUnico, origem);
+        showToast('Erro: ' + e.message, 'error');
+      }
+    })();
+    return;
+  }
+
+  const modal = document.createElement('div');
+  modal.id = 'modal-exclusao-pedido';
+  modal.className = 'vexo-modal';
+  modal.style.display = 'flex';
+
+  const totalLinhas = linhas.length;
+  const linhasHtml = linhas.map((l) => `
+    <label style="display:flex;gap:12px;padding:12px;background:#f8fafc;border-radius:8px;margin-bottom:8px;cursor:pointer;border:1px solid #e2e8f0;">
+      <input type="checkbox" class="linha-check-exclusao"
+             data-id="${l.linha}"
+             checked
+             style="width:18px;height:18px;cursor:pointer;margin-top:2px;">
+      <div style="flex:1;">
+        <div style="font-weight:600;font-size:13px;">📱 ${l.numero || 'sem número'}</div>
+        <div style="font-size:12px;color:#64748b;margin-top:2px;">${l.plano || '—'} — R$ ${(Number(l.valor) || 0).toFixed(2)}</div>
+      </div>
+    </label>
+  `).join('');
+
+  modal.innerHTML = `
+    <div class="modal-container" style="max-width: 520px;">
+      <div class="modal-header" style="background:linear-gradient(135deg,#0f172a,#1e293b);">
+        <h3 style="font-size:16px;"><i class="fas fa-trash-alt"></i> Excluir Pedido</h3>
+        <button class="modal-close" onclick="document.getElementById('modal-exclusao-pedido').remove()">✕</button>
+      </div>
+      <div class="modal-body">
+        <p style="margin-bottom:14px;color:#475569;font-size:14px;line-height:1.5;">
+          <strong>${pedido.cliente || 'Pedido'}</strong><br>
+          <span style="font-size:13px;color:#64748b;">
+            Este pedido tem <b>${totalLinhas}</b> linha(s). Marque quais deseja excluir:
+          </span>
+        </p>
+
+        <div style="display:flex;gap:8px;margin-bottom:12px;">
+          <button type="button" id="btn-marcar-todas"
+                  style="flex:1;padding:8px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">
+            ✓ Marcar todas
+          </button>
+          <button type="button" id="btn-desmarcar-todas"
+                  style="flex:1;padding:8px;background:#f1f5f9;border:1px solid #cbd5e1;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600;">
+            ✗ Desmarcar
+          </button>
+        </div>
+
+        <div style="max-height:320px;overflow-y:auto;margin-bottom:8px;">
+          ${linhasHtml}
+        </div>
+      </div>
+      <div class="modal-footer" style="display:flex;gap:12px;">
+        <button class="btn-secondary" id="btn-cancelar-exclusao" style="flex:1;">Cancelar</button>
+        <button class="btn-primary" id="btn-confirmar-exclusao-pedido"
+                style="flex:2;background:#dc2626;">
+          🗑️ Excluir Selecionadas
+        </button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+
+  // Eventos
+  document.getElementById('btn-marcar-todas').onclick = () => {
+    document.querySelectorAll('.linha-check-exclusao').forEach(c => c.checked = true);
+  };
+  document.getElementById('btn-desmarcar-todas').onclick = () => {
+    document.querySelectorAll('.linha-check-exclusao').forEach(c => c.checked = false);
+  };
+  document.getElementById('btn-cancelar-exclusao').onclick = () => modal.remove();
+
+  document.getElementById('btn-confirmar-exclusao-pedido').onclick = async () => {
+    const ids = Array.from(document.querySelectorAll('.linha-check-exclusao:checked'))
+      .map(c => c.getAttribute('data-id'));
+
+    if (ids.length === 0) {
+      showToast('Selecione pelo menos uma linha.', 'warning');
+      return;
+    }
+
+    modal.remove();
+    await executarExclusaoPedido(ids, idUnico, origem);
+  };
+}
+	async function executarExclusaoPedido(ids, idUnico, origem) {
+  if (!window.sb) {
+    showToast('Supabase não disponível', 'error');
+    return;
+  }
+
+  showLoading(`Excluindo ${ids.length} linha(s)...`);
+
+  try {
+    console.log('🗑️ DELETE ids:', ids);
+
+    const { data, error } = await window.sb
+      .from('VENDAS')
+      .delete()
+      .in('id', ids)
+      .select('id');
+
+    hideLoading();
+
+    if (error) {
+      console.error('❌ Erro no delete:', error);
+      showToast('Erro ao excluir: ' + (error.message || JSON.stringify(error)), 'error');
+      return;
+    }
+
+    const count = (data || []).length;
+    console.log(`✅ ${count} linha(s) excluída(s) no banco`);
+
+    if (count === 0) {
+      showToast('Nenhuma linha foi excluída (verifique permissões).', 'warning');
+    } else {
+      showToast(`✅ ${count} linha(s) excluída(s).`, 'success');
+    }
+
+    // Recarrega o Kanban
+    setTimeout(() => carregarPedidos(), 300);
+
+  } catch(e) {
+    hideLoading();
+    console.error('❌ Exceção:', e);
+    showToast('Erro: ' + e.message, 'error');
   }
 }
 function mostrarModalSelecaoLinhas(linhas, origem, idUnico) {
