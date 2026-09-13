@@ -314,12 +314,27 @@
 (function () {
   if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
 
-  const MAP = {
-    obterDadosFaturasFrontend:  { rpc: 'faturas_carregar_dados',          args: () => ({}) },
-    atualizarStatusFaturasComLog:{ rpc: 'faturas_baixar_pagamento',       args: (ids, usuario) => ({ p_ids: Array.isArray(ids) ? ids.map(String) : [], p_usuario: usuario }) },
-    estornarStatusFaturas:      { rpc: 'faturas_estornar_pagamento',      args: (ids, usuario) => ({ p_ids: Array.isArray(ids) ? ids.map(String) : [], p_usuario: usuario }) },
-    registrarLogWhatsApp:       { rpc: 'faturas_registrar_log_whatsapp',  args: (ids, usuario) => ({ p_ids: Array.isArray(ids) ? ids.map(String) : [], p_usuario: usuario }) },
-  };
+// 🔥 Normaliza cada item do array para um UUID string.
+// Aceita 3 formatos:
+//   1) string direta: "abc-123"
+//   2) objeto com .coluna: { linha: "...", coluna: "abc-123" }
+//   3) objeto com .id: { id: "abc-123" }
+const _extractUuid = (x) => {
+  if (!x) return null;
+  if (typeof x === 'string') return x;
+  return x.coluna || x.id || x.uuid || x.lancamento_id || null;
+};
+
+const _mapUuids = (ids) => Array.isArray(ids)
+  ? ids.map(_extractUuid).filter(Boolean)
+  : [];
+
+const MAP = {
+  obterDadosFaturasFrontend:  { rpc: 'faturas_carregar_dados',          args: () => ({}) },
+  atualizarStatusFaturasComLog:{ rpc: 'faturas_baixar_pagamento',       args: (ids, usuario) => ({ p_ids: _mapUuids(ids), p_usuario: usuario }) },
+  estornarStatusFaturas:      { rpc: 'faturas_estornar_pagamento',      args: (ids, usuario) => ({ p_ids: _mapUuids(ids), p_usuario: usuario }) },
+  registrarLogWhatsApp:       { rpc: 'faturas_registrar_log_whatsapp',  args: (ids, usuario) => ({ p_ids: _mapUuids(ids), p_usuario: usuario }) },
+};
 
   function makeRunner() {
     let ok = null, fail = null;
@@ -949,7 +964,7 @@ detalheHtml += '<div class="grupo-card">' +
   // =========================================================
   // DAR BAIXA EM UM GRUPO (por data de vencimento) - COM LOG
   // =========================================================
-function darBaixaGrupo(codigoCliente, dataVencimento) {
+async function darBaixaGrupo(codigoCliente, dataVencimento) {
   var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
   if (!cliente) {
     alert('Cliente não encontrado.');
@@ -979,7 +994,7 @@ function darBaixaGrupo(codigoCliente, dataVencimento) {
 
   if (!confirm('Deseja baixar ' + celulas.length + ' fatura(s) com vencimento ' + dataVencimento + '?')) return;
 
-  var nomeUsuario = obterNomeUsuario();
+  var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
 
   google.script.run
     .withSuccessHandler(function() {
@@ -1005,7 +1020,7 @@ function darBaixaGrupo(codigoCliente, dataVencimento) {
   // =========================================================
   // BAIXAR TODAS AS PENDENTES DO CLIENTE - COM LOG
   // =========================================================
-  function baixarTodasPendentes(codigoCliente) {
+  async function baixarTodasPendentes(codigoCliente) {
     var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
     if (!cliente) {
       alert('Cliente não encontrado.');
@@ -1066,7 +1081,7 @@ function darBaixaGrupo(codigoCliente, dataVencimento) {
   // =========================================================
 // ESTORNAR GRUPO (desfaz o pagamento)
 // =========================================================
-function estornarGrupo(codigoCliente, dataVencimento) {
+async function estornarGrupo(codigoCliente, dataVencimento) {
   var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
   if (!cliente) {
     alert('Cliente não encontrado.');
@@ -1130,7 +1145,7 @@ function enviarWhatsAppComLog(numeroContato, msg, codigoCliente, dataVencimento)
     })
     .registrarLogWhatsApp(codigoCliente, dataVencimento, nomeUsuario);
 }
-function registrarLogWhatsAppFrontend(codigoCliente, dataVencimento) {
+async function registrarLogWhatsAppFrontend(codigoCliente, dataVencimento) {
   var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
   if (!cliente) {
     return; // não faz nada se não encontrar
@@ -1153,7 +1168,8 @@ function registrarLogWhatsAppFrontend(codigoCliente, dataVencimento) {
     return;
   }
 
-  var nomeUsuario = obterNomeUsuario();
+  // 🔥 await na função async
+  var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
 
   // Envia o log em background (não espera resposta para não travar)
   google.script.run
