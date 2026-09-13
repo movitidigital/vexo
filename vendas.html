@@ -738,116 +738,269 @@ window.gerarFormularioVenda = function() {
     return `R$ ${Number(n).toFixed(2).replace('.', ',')}`;
   };
 
-  // ============================================================
-  // SALVAR VENDA (INSERT em "VENDAS" — colunas snake_case)
-  // ============================================================
-  window._salvarVenda = async function() {
-    const btn = document.getElementById('btn_finalizar');
-    if (!btn) return;
+// ============================================================
+// SALVAR VENDA — dispatcher (decide entre INSERT e UPDATE)
+// ============================================================
+window._salvarVenda = async function() {
+  const btn = document.getElementById('btn_finalizar');
+  if (!btn) return;
 
-    const cnpj = get('v_cnpj');
-    const razao = get('v_razao');
+  const cnpj = get('v_cnpj');
+  const razao = get('v_razao');
+  if (!cnpj || !razao) {
+    alert('⚠️ CNPJ e Razão Social são obrigatórios!');
+    return;
+  }
 
-    if (!cnpj || !razao) {
-      alert('⚠️ CNPJ e Razão Social são obrigatórios!');
-      return;
+  // 🔥 Detecta se é finalização de pedido existente
+  let pedidoPendente = null;
+  try {
+    const raw = sessionStorage.getItem('pedidoParaInput');
+    if (raw) pedidoPendente = JSON.parse(raw);
+  } catch(e) {
+    console.warn('⚠️ Erro ao ler pedidoParaInput:', e);
+  }
+
+  btn.disabled = true;
+  btn.innerText = pedidoPendente ? '💾 Finalizando pedido...' : '💾 Gravando venda...';
+
+  try {
+    if (pedidoPendente) {
+      await _finalizarPedidoExistente(pedidoPendente);
+    } else {
+      await _inserirVendaNova();
     }
+  } catch (e) {
+    console.error('❌ Erro ao salvar:', e);
+    alert('❌ Erro: ' + (e.message || e));
+  } finally {
+    btn.disabled = false;
+    btn.innerText = pedidoPendente
+      ? '🚀 Finalizar Pedido'
+      : '🚀 Finalizar e Gravar Venda';
+  }
+};
 
-    // Coleta as linhas
-    const linhas = [];
-    document.querySelectorAll('.linha-plano-item').forEach(div => {
-      const plano = div.querySelector('.input-plano')?.value?.trim();
-      if (!plano) return;
-
-      linhas.push({
-        modalidade: div.dataset.modalidade,
-        plano,
-        numero: div.querySelector('.input-numero')?.value?.trim() || '',
-        valor: parseValorBR(div.querySelector('.input-valor')?.value || '0'),
-        operadora: div.querySelector('.input-operadora')?.value?.trim() || ''
-      });
+// ============================================================
+// HELPERS — coleta de dados do formulário
+// ============================================================
+function _coletarLinhasDoFormulario() {
+  const linhas = [];
+  document.querySelectorAll('.linha-plano-item').forEach(div => {
+    const plano = div.querySelector('.input-plano')?.value?.trim();
+    if (!plano) return;
+    linhas.push({
+      modalidade: div.dataset.modalidade,
+      plano,
+      numero:     div.querySelector('.input-numero')?.value?.trim() || '',
+      valor:      parseValorBR(div.querySelector('.input-valor')?.value || '0'),
+      operadora:  div.querySelector('.input-operadora')?.value?.trim() || ''
     });
+  });
+  return linhas;
+}
 
+function _coletarCamposComuns() {
+  const dataVendaISO = get('v_data');
+  const [ano, mes, dia] = dataVendaISO.split('-');
+  const dataVendaBR = `${dia}/${mes}/${ano}`;
+
+  const vencRaw = get('v_venc');
+  const venc = vencRaw ? parseInt(vencRaw, 10) : null;
+
+  const radarRaw = get('v_radar');
+  const radar = radarRaw ? parseInt(radarRaw.replace(/\D/g, ''), 10) : null;
+
+  return {
+    data_da_venda:          dataVendaBR,
+    cnpj:                   get('v_cnpj'),
+    razao_social:           get('v_razao').toUpperCase(),
+    data_de_venc:           nullIfEmpty(venc),
+    pedido_radar:           nullIfEmpty(radar),
+    pedido_p2b:             get('v_p2b'),
+    cep:                    get('v_cep'),
+    endereco:               get('v_endereco'),
+    numero:                 get('v_numero'),
+    compl:                  get('v_compl'),
+    bairro:                 get('v_bairro'),
+    cidade:                 get('v_cidade'),
+    uf:                     get('v_uf'),
+    cpf_administrador:      get('v_cpf_admin'),
+    nome_administrador:     get('v_nome_admin').toUpperCase(),
+    email:                  get('v_email'),
+    contato_financeiro:     get('v_contato_fin'),
+    inscricao_estadual:     get('v_ie'),
+    codigo_do_cliente:      nullIfEmpty(get('v_codigo_cliente')),
+    consultor_do_input_no_easy_vendas: get('v_consultor_input') || null
+  };
+}
+
+// ============================================================
+// INSERIR VENDA NOVA (comportamento original)
+// ============================================================
+async function _inserirVendaNova() {
+  const linhas = _coletarLinhasDoFormulario();
+  if (linhas.length === 0) {
+    alert('⚠️ Adicione pelo menos uma linha com plano!');
+    return;
+  }
+
+  const campos = _coletarCamposComuns();
+  const TENANT = 'f9cca67a-41f8-4ad7-a119-74bc58018dee';
+
+  const nomeConsultor = [PERFIL_USUARIO.nome, PERFIL_USUARIO.sobrenome]
+    .filter(Boolean).join(' ').toUpperCase() || PERFIL_USUARIO.email;
+
+  const registros = linhas.map(l => ({
+    ...campos,
+    modalidade:                l.modalidade,
+    plano:                     l.plano,
+    numero_da_linha:           l.numero,
+    valor_contratado:          formatarValorBR(l.valor),
+    operadora_doadora:         l.operadora || null,
+    consultor_que_vendeu:      nomeConsultor,
+    status_do_pedido:          'PENDENTE DE INPUT',
+    ativacao_em_sistema_tim:   null,
+    tenant_id:                 TENANT
+  }));
+
+  console.log(`📤 INSERT de ${registros.length} linha(s) em VENDAS...`);
+  const { error } = await sb.from('VENDAS').insert(registros);
+  if (error) throw error;
+
+  window._toast(`✅ ${registros.length} linha(s) salva(s) com sucesso!`, 'success');
+  document.getElementById('v-modal-sucesso').style.display = 'flex';
+
+  // Limpa qualquer resíduo de pedido pré-carregado
+  _limparPedidoPendente();
+}
+
+// ============================================================
+// FINALIZAR PEDIDO EXISTENTE (DELETE + INSERT por modalidade)
+// ============================================================
+async function _finalizarPedidoExistente(pedido) {
+  // Guarda contra duplo clique
+  if (window._finalizandoPedido) {
+    window._toast('⏳ Já está finalizando este pedido...', 'warning');
+    return;
+  }
+  window._finalizandoPedido = true;
+
+  try {
+    const linhas = _coletarLinhasDoFormulario();
     if (linhas.length === 0) {
       alert('⚠️ Adicione pelo menos uma linha com plano!');
       return;
     }
 
-    btn.disabled = true;
-    btn.innerText = '💾 Gravando...';
+    const campos = _coletarCamposComuns();
+    const TENANT = 'f9cca67a-41f8-4ad7-a119-74bc58018dee';
 
-    try {
-      const nomeConsultor = [PERFIL_USUARIO.nome, PERFIL_USUARIO.sobrenome]
-        .filter(Boolean).join(' ').toUpperCase() || PERFIL_USUARIO.email;
+    // 🔥 Descobre a data original do pedido (formato BR) — usada pra localizar linhas antigas
+    let dataOriginal = '';
+    if (pedido.id_unico && pedido.id_unico.includes('|')) {
+      // id_unico = "cnpj|data_key" → pega a segunda parte
+      dataOriginal = pedido.id_unico.split('|')[1] || '';
+    }
+    if (!dataOriginal && pedido.dataVenda) {
+      let d = pedido.dataVenda;
+      if (d.includes('T')) d = d.split('T')[0];
+      if (d.includes('-')) {
+        const [a, m, dia] = d.split('-');
+        dataOriginal = `${dia}/${m}/${a}`;
+      } else {
+        dataOriginal = d;
+      }
+    }
 
-      // Data da venda → dd/mm/yyyy
-      const dataVendaISO = get('v_data');
-      const [ano, mes, dia] = dataVendaISO.split('-');
-      const dataVendaBR = `${dia}/${mes}/${ano}`;
+    const cnpj = pedido.cnpj || campos.cnpj;
 
-      // Vencimento → número inteiro
-      const vencRaw = get('v_venc');
-      const venc = vencRaw ? parseInt(vencRaw, 10) : null;
+    // 🔥 Modalidades a tratar (original + formulário)
+    const modsOriginais = [];
+    if (pedido.linhasPorModalidade && typeof pedido.linhasPorModalidade === 'object') {
+      modsOriginais.push(...Object.keys(pedido.linhasPorModalidade));
+    } else if (Array.isArray(pedido.modalidadesList)) {
+      modsOriginais.push(...pedido.modalidadesList);
+    }
+    const modsForm = linhas.map(l => l.modalidade);
+    const todasModalidades = [...new Set([...modsOriginais, ...modsForm])];
 
-      // Radar → número inteiro ou null
-      const radarRaw = get('v_radar');
-      const radar = radarRaw ? parseInt(radarRaw.replace(/\D/g, ''), 10) : null;
+    console.log('🎯 [FINALIZAR PEDIDO EXISTENTE]');
+    console.log('   CNPJ:', cnpj);
+    console.log('   Data original:', dataOriginal);
+    console.log('   Data nova (form):', campos.data_da_venda);
+    console.log('   Modalidades:', todasModalidades);
 
-      // Monta uma linha da tabela para CADA plano
-      const registros = linhas.map(l => ({
-        data_de_venc:                    nullIfEmpty(venc),
-        data_da_venda:                   dataVendaBR,
-        cnpj:                            cnpj,
-        razao_social:                    razao.toUpperCase(),
-        modalidade:                      l.modalidade,
-        plano:                           l.plano,
-        numero_da_linha:                 l.numero,
-        valor_contratado:                formatarValorBR(l.valor),
-        operadora_doadora:               l.operadora || null,
-        consultor_que_vendeu:            nomeConsultor,
-        consultor_do_input_no_easy_vendas: null,
-        cep:                             get('v_cep'),
-        endereco:                        get('v_endereco'),
-        numero:                          get('v_numero'),
-        compl:                           get('v_compl'),
-        bairro:                          get('v_bairro'),
-        cidade:                          get('v_cidade'),
-        uf:                              get('v_uf'),
-        cpf_administrador:               get('v_cpf_admin'),
-        nome_administrador:              get('v_nome_admin').toUpperCase(),
-        email:                           get('v_email'),
-        contato_financeiro:              get('v_contato_fin'),
-        pedido_radar:                    nullIfEmpty(radar),
-        pedido_p2b:                      get('v_p2b'),
-        status_do_pedido:                'PENDENTE DE INPUT',
-        ativacao_em_sistema_tim:         null,
-        inscricao_estadual:              get('v_ie')
+    if (!dataOriginal) {
+      throw new Error('Não foi possível determinar a data original do pedido. Recarregue a tela.');
+    }
+
+    const nomeConsultor = [PERFIL_USUARIO.nome, PERFIL_USUARIO.sobrenome]
+      .filter(Boolean).join(' ').toUpperCase() || PERFIL_USUARIO.email;
+
+    let totalLinhasGravadas = 0;
+
+    for (const modalidade of todasModalidades) {
+      // 1) DELETE — só apaga o que ainda está em "PENDENTE DE INPUT" (segurança)
+      const { error: errDel } = await sb
+        .from('VENDAS')
+        .delete()
+        .eq('tenant_id', TENANT)
+        .eq('cnpj', cnpj)
+        .eq('data_da_venda', dataOriginal)
+        .eq('modalidade', modalidade)
+        .eq('status_do_pedido', 'PENDENTE DE INPUT');
+
+      if (errDel) {
+        console.warn('⚠️ Erro ao deletar linhas antigas de', modalidade, errDel);
+      } else {
+        console.log(`   🗑️ Deletadas linhas antigas de "${modalidade}"`);
+      }
+
+      // 2) INSERT — só insere se ainda tem linhas dessa modalidade no formulário
+      const linhasMod = linhas.filter(l => l.modalidade === modalidade);
+      if (linhasMod.length === 0) continue;
+
+      const registros = linhasMod.map(l => ({
+        ...campos,
+        modalidade:                l.modalidade,
+        plano:                     l.plano,
+        numero_da_linha:           l.numero,
+        valor_contratado:          formatarValorBR(l.valor),
+        operadora_doadora:         l.operadora || null,
+        consultor_que_vendeu:      nomeConsultor,
+        status_do_pedido:          '1. INPUT REALIZADO',  // 🔥 NOVO STATUS
+        ativacao_em_sistema_tim:   null,
+        tenant_id:                 TENANT
       }));
 
-      console.log(`📤 Inserindo ${registros.length} linha(s) em VENDAS...`);
-      console.log('📦 Amostra:', registros[0]);
+      const { error: errIns } = await sb.from('VENDAS').insert(registros);
+      if (errIns) throw errIns;
 
-      const { error } = await sb.from('VENDAS').insert(registros);
-      if (error) throw error;
-
-      window._toast(`✅ ${registros.length} linha(s) salva(s) com sucesso!`, 'success');
-      document.getElementById('v-modal-sucesso').style.display = 'flex';
-
-      // 🔥 Limpa o pedido pré-carregado (já foi utilizado)
-sessionStorage.removeItem('pedidoParaInput');
-sessionStorage.removeItem('pedidoParaInputConsumido');
-sessionStorage.removeItem('bancoDeDadosIdAtual');
-localStorage.removeItem('ultimoPedidoParaInput');
-localStorage.removeItem('ultimoBancoDeDadosId');
-      
-    } catch (e) {
-      console.error('❌ Erro ao salvar:', e);
-      alert('❌ Erro: ' + (e.message || e));
-    } finally {
-      btn.disabled = false;
-      btn.innerText = '🚀 Finalizar e Gravar Venda';
+      totalLinhasGravadas += registros.length;
+      console.log(`   ✅ ${registros.length} linha(s) gravada(s) em "${modalidade}"`);
     }
-  };
+
+    // 🔥 Limpa o sessionStorage (pedido consumido)
+    _limparPedidoPendente();
+
+    window._toast(`✅ Pedido finalizado! ${totalLinhasGravadas} linha(s) atualizada(s).`, 'success');
+    document.getElementById('v-modal-sucesso').style.display = 'flex';
+
+  } finally {
+    window._finalizandoPedido = false;
+  }
+}
+
+// ============================================================
+// Limpeza do pedido pré-carregado
+// ============================================================
+function _limparPedidoPendente() {
+  ['pedidoParaInput', 'pedidoParaInputConsumido', 'bancoDeDadosIdAtual']
+    .forEach(k => { try { sessionStorage.removeItem(k); } catch(e) {} });
+  ['ultimoPedidoParaInput', 'ultimoBancoDeDadosId']
+    .forEach(k => { try { localStorage.removeItem(k); } catch(e) {} });
+}
 
   // ============================================================
   // RESET
