@@ -568,7 +568,10 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
       </div>
     `;
 
-    areaVenda.innerHTML = html;
+      areaVenda.innerHTML = html;
+
+    // 🔥 Popula o select de consultores AGORA (o select acabou de ser criado)
+    popularSelectConsultores();
 
     selecionadas.forEach(m => {
       const modID = m.replace(/[^a-zA-Z0-9]/g, '');
@@ -578,7 +581,6 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
     const btn = document.getElementById('btn_finalizar');
     if (btn) btn.addEventListener('click', window._salvarVenda);
   };
-
   // ============================================================
   // ADICIONAR LINHA
   // ============================================================
@@ -971,8 +973,11 @@ async function carregarConsultoresAtivos() {
       };
     });
 
-    console.log(`✅ [vendas] ${consultoresAtivos.length} consultores carregados do Supabase`);
-    popularSelectConsultores();
+ console.log(`✅ [vendas] ${consultoresAtivos.length} consultores carregados do Supabase`);
+
+// Popula se o select já existir (ex: pedido pré-carregado recriou a tela)
+// Se não existir, gerarFormularioVenda() chamará quando criar
+popularSelectConsultores();
 
   } catch (e) {
     console.error('❌ [vendas] Erro ao carregar consultores:', e);
