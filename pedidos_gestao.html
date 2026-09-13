@@ -6,6 +6,14 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 <style>
+	.btn-delete {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+.btn-delete:hover {
+  background: #ef4444;
+  color: white;
+}
     /* ============================================
        MÓDULO GESTÃO DE PEDIDOS - VEXO HUB
        Design System Premium (VERSÃO CORRIGIDA)
@@ -1568,7 +1576,7 @@ function renderizarTabela() {
               ${podeAvancar ? btnAvancarRender : ''}
             ` : `<span class="view-only-badge"><i class="fas fa-lock"></i> Apenas visualização</span>`}
             <button class="btn-action btn-detail" data-linha="${pedido.linha}" data-id-unico="${pedido.id_unico || ''}" data-origem="${pedido.origem}"><i class="fas fa-eye"></i> Detalhes</button>
-            ${podeExcluir ? `<button class="btn-action btn-delete" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-id-unico="${pedido.id_unico || ''}" onclick="excluirPedido(this)"><i class="fas fa-trash-alt"></i> Excluir</button>` : ''}
+            ${podeExcluir ? ` <button class="btn-action btn-delete" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-id-unico="${pedido.id_unico || ''}"> <i class="fas fa-trash-alt"></i> Excluir </button>` : ''}
           </div>
          </td>
         </tr>
@@ -1601,20 +1609,64 @@ function renderizarTabela() {
 }
 
 function excluirPedido(btn) {
-  const idUnico = btn.getAttribute('data-id-unico') || btn.getAttribute('data-linha');
-  const origem = btn.getAttribute('data-origem');
+  const idUnicoAttr = btn.getAttribute('data-id-unico');
+  const linhaAttr   = btn.getAttribute('data-linha');
+  const origem      = btn.getAttribute('data-origem');
 
-  const pedido = window.todosPedidos.find(p => p.id_unico === idUnico);
-  if (!pedido) {
-    showToast('Pedido não encontrado', 'error');
+  // 🔥 Tenta achar o pedido de várias formas
+  let pedido = null;
+  let idUnico = idUnicoAttr && idUnicoAttr.trim() !== '' ? idUnicoAttr : null;
+
+  if (idUnico) {
+    pedido = window.todosPedidos.find(p => p.id_unico === idUnico);
+  }
+  // Fallback 1: pela linha + origem
+  if (!pedido && linhaAttr) {
+    pedido = window.todosPedidos.find(
+      p => String(p.linha) === String(linhaAttr) && p.origem === origem
+    );
+    if (pedido && pedido.id_unico) idUnico = pedido.id_unico;
+  }
+  // Fallback 2: último recurso — pelo primeiro match de linha só
+  if (!pedido && linhaAttr) {
+    pedido = window.todosPedidos.find(p => String(p.linha) === String(linhaAttr));
+    if (pedido && pedido.id_unico) idUnico = pedido.id_unico;
+  }
+
+  console.log('🗑️ [excluirPedido] idUnico resolvido:', idUnico, '| pedido:', pedido);
+
+  if (!pedido || !idUnico) {
+    console.error('❌ Pedido não encontrado para exclusão', { idUnicoAttr, linhaAttr, origem });
+    showToast('Pedido não encontrado. Recarregue a lista.', 'error');
     return;
   }
 
-  const linhas = pedido.linhas_agrupadas || [];
-  console.log(`🗑️ Excluir clicado: idUnico=${idUnico}, linhas=${linhas.length}`);
+  const qtdLinhas = Array.isArray(pedido.linhas_agrupadas) ? pedido.linhas_agrupadas.length : 1;
 
-  // 🔥 SEMPRE abre o modal de seleção (não importa se é 1 ou várias)
-  mostrarModalExclusaoPedido(pedido, idUnico, origem, linhas);
+  if (qtdLinhas <= 1) {
+    showConfirmModal(
+      'Excluir Pedido',
+      `Deseja excluir o pedido <strong>${pedido.cliente || pedido.id}</strong>?`,
+      () => executarExclusao([], origem, idUnico),
+      null
+    );
+  } else {
+    showLoading('Carregando linhas do pedido...');
+    google.script.run
+      .withSuccessHandler(res => {
+        hideLoading();
+        if (res && res.success && res.linhas?.length) {
+          mostrarModalSelecaoLinhas(res.linhas, origem, idUnico);
+        } else {
+          showToast('Não foi possível carregar as linhas do pedido.', 'error');
+        }
+      })
+      .withFailureHandler(err => {
+        hideLoading();
+        showToast('Erro ao carregar linhas: ' + err, 'error');
+      })
+      .listarLinhasDoPedido(idUnico, origem);
+  }
 }
 	function mostrarModalExclusaoPedido(pedido, idUnico, origem, linhas) {
   const antigo = document.getElementById('modal-exclusao-pedido');
@@ -3762,6 +3814,14 @@ function obterUsuarioLogado() {
 
   console.log('✅ [pedidos_gestao] Auto-recarga configurada');
 })();
+	function handleDeleteClick(event) {
+  const btn = event.currentTarget;
+  console.log('🗑️ [handleDeleteClick] clicado');
+  console.log('   data-id-unico:', JSON.stringify(btn.dataset.idUnico));
+  console.log('   data-linha   :', JSON.stringify(btn.dataset.linha));
+  console.log('   data-origem  :', JSON.stringify(btn.dataset.origem));
+  excluirPedido(btn);
+}
 </script>
 
 </body>
