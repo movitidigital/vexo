@@ -1214,14 +1214,13 @@ function salvarOferta() {
       // CRUD - EXCLUIR
       // ============================================
       
-      window.excluirOferta = function(id) {
+     window.excluirOferta = function(id) {
   if (!permissoes.podeEditar) {
     mostrarToast('Você não tem permissão para excluir ofertas', 'error');
     return;
   }
   
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const cargoUsuario = (sessao.role || "").toUpperCase().trim();
+  const cargoUsuario = permissoes.cargo || '';   // 🔥 mesmo ajuste
   
   if (confirm('⚠️ Tem certeza que deseja excluir esta oferta?\n\nEsta ação não pode ser desfeita.')) {
     google.script.run
