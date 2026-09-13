@@ -72,6 +72,26 @@
     .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
     .page-info { font-size: 13px; color: #64748b; font-weight: 500; }
 
+    /* ═══════ TOAST ═══════ */
+    .vexo-toast {
+      position: fixed; bottom: 24px; right: 24px;
+      min-width: 280px; max-width: 420px;
+      background: white; border-radius: 14px;
+      padding: 14px 18px; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.15);
+      display: flex; align-items: center; gap: 12px;
+      z-index: 99999; animation: slideInRight 0.3s ease-out;
+      border-left: 4px solid;
+    }
+    .vexo-toast-success { border-left-color: #10b981; }
+    .vexo-toast-error { border-left-color: #ef4444; }
+    .vexo-toast-warning { border-left-color: #f59e0b; }
+    .vexo-toast-info { border-left-color: #3b82f6; }
+    .vexo-toast-icon { font-size: 22px; }
+    .vexo-toast-content { flex: 1; }
+    .vexo-toast-title { font-weight: 700; font-size: 13px; color: #0f172a; margin-bottom: 2px; }
+    .vexo-toast-message { font-size: 12px; color: #475569; }
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
     @media (max-width: 768px) {
       .clientes-container { padding: 16px; }
       .clientes-table th, .clientes-table td { padding: 12px; }
@@ -114,7 +134,7 @@
 <body>
 
 <div class="clientes-container">
-  
+
   <div class="clientes-header">
     <div class="header-title">
       <div class="title-icon"><i class="fas fa-users"></i></div>
@@ -172,6 +192,59 @@
   </div>
 </div>
 
+<!-- ═══════════════════════════════════════════════════════════
+     PONTE SUPABASE — substitui google.script.run
+     ═══════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
+  if (window.__vexoPonteClientesInstalada) {
+    console.log('ℹ️ Ponte Supabase já instalada — reaproveitando');
+    return;
+  }
+
+  const MAP = {
+    buscarBaseClientes:          { rpc: 'buscar_base_clientes',           args: ()      => ({}) },
+    atualizarCadastroCliente:    { rpc: 'atualizar_cadastro_cliente',     args: (dados) => ({ p_dados: dados || {} }) },
+    sincronizarClientesDaVendas: { rpc: 'sincronizar_clientes_da_vendas', args: ()      => ({}) },
+  };
+
+  function makeRunner() {
+    let ok = null, fail = null;
+    const runner = {
+      withSuccessHandler(fn) { ok = fn; return runner; },
+      withFailureHandler(fn) { fail = fn; return runner; },
+    };
+    Object.keys(MAP).forEach(nome => {
+      runner[nome] = async function (...params) {
+        const cfg = MAP[nome];
+        try {
+          const args = cfg.args(...params);
+          const { data, error } = await window.sb.rpc(cfg.rpc, args);
+          if (error) throw error;
+          if (ok) ok(data);
+        } catch (err) {
+          console.error(`❌ RPC ${cfg.rpc}:`, err);
+          if (fail) fail(err.message || String(err));
+        }
+      };
+    });
+    return runner;
+  }
+
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  Object.defineProperty(window.google.script, 'run', {
+    get: () => makeRunner(),
+    configurable: true,
+    enumerable: true
+  });
+
+  window.__vexoPonteClientesInstalada = true;
+  console.log('✅ Ponte Supabase ativa — clientes.html');
+})();
+</script>
+
 <script>
   (function() {
     let clientesData = [];
@@ -180,8 +253,11 @@
     const ITENS_POR_PAGINA = 15;
     let dadosFiltrados = [];
 
-    // Sessão do usuário
-    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    // Sessão do usuário — pega do window.VEXO (dashboard) ou sessionStorage
+    const sessao = window.VEXO?.user
+      ? { role: window.VEXO.user.user_metadata?.role || '', nome: window.VEXO.user.user_metadata?.nome || '' }
+      : JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+
     const cargoUsuario = (sessao.role || "").toUpperCase().trim();
     const podeEditar = (cargoUsuario === "ADMINISTRADOR" || cargoUsuario === "BACKOFFICE");
     const podeVerPendencias = (cargoUsuario === "ADMINISTRADOR" || cargoUsuario === "BACKOFFICE");
@@ -202,6 +278,23 @@
     const btnNextPage = document.getElementById('btnNextPage');
     const pageInfo = document.getElementById('pageInfo');
 
+    // ====================== TOAST ======================
+    function showToast(message, type = 'info') {
+      document.querySelectorAll('.vexo-toast').forEach(t => t.remove());
+      const toast = document.createElement('div');
+      toast.className = `vexo-toast vexo-toast-${type}`;
+      const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+      toast.innerHTML = `
+        <div class="vexo-toast-icon">${icons[type] || 'ℹ️'}</div>
+        <div class="vexo-toast-content">
+          <div class="vexo-toast-title">${type === 'success' ? 'Sucesso' : type === 'error' ? 'Erro' : type === 'warning' ? 'Atenção' : 'Informação'}</div>
+          <div class="vexo-toast-message">${message}</div>
+        </div>
+      `;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 4000);
+    }
+
     // Exibe ou esconde aba Pendentes conforme permissão
     if (podeVerPendencias) {
       btnPendentes.style.display = 'flex';
@@ -217,11 +310,12 @@
     // ====================== CARREGAR CLIENTES ======================
     function carregarClientes() {
       tbody.innerHTML = '<tr><td colspan="5" class="loading-cell"><div class="loading-spinner"></div><span>Carregando clientes...</span></td></tr>';
-      
+
       google.script.run
         .withSuccessHandler(function(dados) {
-          // Garantir que dados é um array
-          clientesData = Array.isArray(dados) ? dados : [];
+          // 🔥 garante array limpo (remove null/undefined)
+          clientesData = (Array.isArray(dados) ? dados : []).filter(Boolean);
+          console.log(`✅ ${clientesData.length} clientes carregados`);
           atualizarStats();
           filtrarClientes();
         })
@@ -301,7 +395,6 @@
 
       let html = '';
       clientesPagina.forEach(c => {
-        // Garantir que todos os campos sejam strings
         const razao = String(c.razao || '---');
         const cnpj = String(c.cnpj || '---');
         const dataCadastro = String(c.dataCadastro || '---');
@@ -309,11 +402,10 @@
         const uf = String(c.uf || '');
         const local = (cidade || uf) ? `${cidade}${uf ? '/'+uf : ''}` : 'Não informado';
 
-        const statusHtml = c.estaIncompleto 
+        const statusHtml = c.estaIncompleto
           ? `<span class="status-badge status-pendente"><i class="fas fa-exclamation-triangle"></i> ${c.camposFaltantes || 0} pendente(s)</span>`
           : `<span class="status-badge status-completo"><i class="fas fa-check-circle"></i> Cadastro completo</span>`;
 
-        // Contato - TRATAMENTO ROBUSTO
         let contatoHtml = '';
         const contatoFin = String(c.contatoFin || '').trim();
         if (contatoFin) {
@@ -326,7 +418,7 @@
           contatoHtml = '<span style="color:#94a3b8; font-size:11px;"><i class="fas fa-phone-slash"></i> Não informado</span>';
         }
 
-        const botaoAcao = podeEditar 
+        const botaoAcao = podeEditar
           ? `<button class="action-btn edit" data-linha="${c.linha}"><i class="fas fa-edit"></i> Editar</button>`
           : `<button class="action-btn view" data-linha="${c.linha}"><i class="fas fa-eye"></i> Visualizar</button>`;
 
@@ -345,12 +437,12 @@
 
       tbody.innerHTML = html;
 
-      // Event listeners para botões de ação
       document.querySelectorAll('.action-btn.edit, .action-btn.view').forEach(btn => {
         btn.addEventListener('click', function() {
           const linha = this.getAttribute('data-linha');
-          const cliente = clientesData.find(c => c.linha == linha);
+          const cliente = clientesData.find(c => String(c.linha) === String(linha));
           if (cliente) abrirModal(cliente);
+          else showToast('Cliente não encontrado', 'error');
         });
       });
     }
@@ -373,7 +465,6 @@
 
     // ====================== MODAL ======================
     function abrirModal(cliente) {
-      // Preencher campos...
       document.getElementById('editLinha').value = cliente.linha || '';
       document.getElementById('editCnpj').value = String(cliente.cnpj || '');
       document.getElementById('editIe').value = String(cliente.ie || '');
@@ -394,7 +485,6 @@
       document.getElementById('editEmail').value = String(cliente.email || '');
       document.getElementById('editTelefone').value = String(cliente.contatoFin || '');
 
-      // Aplicar máscaras se houver valor
       if (document.getElementById('editTelefone').value) mascaraTelefone(document.getElementById('editTelefone'));
       if (document.getElementById('editCpf').value) mascaraCPF(document.getElementById('editCpf'));
 
@@ -446,7 +536,7 @@
     // ====================== SALVAR CLIENTE ======================
     function salvarCliente() {
       if (!podeEditar) {
-        alert("Você não tem permissão para editar clientes.");
+        showToast("Você não tem permissão para editar clientes.", 'error');
         return;
       }
       const btn = document.getElementById('btnSalvarModal');
@@ -477,20 +567,20 @@
 
       google.script.run
         .withSuccessHandler(function(res) {
-          btn.innerText = '💾 Salvar';
+          btn.innerText = '💾 Salvar Alterações';
           btn.disabled = false;
-          if (res.success) {
-            alert('✅ Cliente atualizado com sucesso!');
+          if (res && res.success) {
+            showToast('Cliente atualizado com sucesso!', 'success');
             fecharModal();
             carregarClientes();
           } else {
-            alert('❌ Erro: ' + res.message);
+            showToast('Erro: ' + (res?.message || 'desconhecido'), 'error');
           }
         })
         .withFailureHandler(function(err) {
-          btn.innerText = '💾 Salvar';
+          btn.innerText = '💾 Salvar Alterações';
           btn.disabled = false;
-          alert('❌ Erro de comunicação: ' + err);
+          showToast('Erro de comunicação: ' + err, 'error');
         })
         .atualizarCadastroCliente(dados);
     }
@@ -547,6 +637,12 @@
       }
     };
 
+    document.getElementById('btnSincronizar').onclick = function() {
+      if (confirm("Sincronizar a base de clientes a partir de VENDAS?\n\nClientes existentes serão atualizados e novos podem ser inseridos.")) {
+        sincronizarEAtualizar();
+      }
+    };
+
     inputBusca.onkeyup = filtrarClientes;
     selectUF.onchange = filtrarClientes;
 
@@ -560,28 +656,80 @@
     // ====================== SINCRONIZAR ======================
     function sincronizarEAtualizar() {
       const btn = document.getElementById('btnAtualizar');
+      const btnSinc = document.getElementById('btnSincronizar');
       const textoOriginal = btn.innerHTML;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Sincronizando...';
       btn.disabled = true;
+      btnSinc.disabled = true;
 
       google.script.run
         .withSuccessHandler(function(res) {
           btn.innerHTML = textoOriginal;
           btn.disabled = false;
-          if (res.success) {
-            alert(res.message);
+          btnSinc.disabled = false;
+          if (res && res.success) {
+            showToast(res.message || 'Sincronização concluída!', 'success');
             carregarClientes();
           } else {
-            alert('Erro na sincronização: ' + res.message);
+            showToast('Erro na sincronização: ' + (res?.message || 'desconhecido'), 'error');
           }
         })
         .withFailureHandler(function(err) {
           btn.innerHTML = textoOriginal;
           btn.disabled = false;
-          alert('Erro de comunicação: ' + err);
+          btnSinc.disabled = false;
+          showToast('Erro de comunicação: ' + err, 'error');
         })
         .sincronizarClientesDaVendas();
     }
+
+    // ====================== AUTO-RELOAD (igual outros módulos) ======================
+    (function setupAutoReloadClientes() {
+      let ultimaCarga = 0;
+      const INTERVALO_MIN = 2000;
+
+      function moduloVisivel() {
+        const wrap = document.querySelector('.clientes-container');
+        return wrap && wrap.offsetParent !== null;
+      }
+
+      function tabelaVazia() {
+        const tb = document.getElementById('tbodyClientes');
+        if (!tb) return false;
+        const html = tb.innerHTML || '';
+        return (
+          html.includes('Carregando clientes') ||
+          html.includes('Erro ao carregar') ||
+          html.includes('Nenhum cliente') ||
+          tb.children.length === 0
+        );
+      }
+
+      function tentarRecarregar(origem) {
+        const agora = Date.now();
+        if (agora - ultimaCarga < INTERVALO_MIN) return;
+        if (!moduloVisivel()) return;
+        if (!tabelaVazia()) return;
+
+        console.log(`🔄 [clientes] Auto-recarga (${origem})`);
+        ultimaCarga = agora;
+        try { carregarClientes(); } catch (e) { console.warn(e); }
+      }
+
+      const observer = new MutationObserver(() => tentarRecarregar('mutation'));
+      observer.observe(document.body, {
+        childList: true, subtree: true,
+        attributes: true, attributeFilter: ['style', 'class']
+      });
+
+      document.addEventListener('click', (e) => {
+        const menu = e.target.closest('.menu-item, .sidebar-item, [data-modulo], a[href*="clientes"]');
+        if (menu) setTimeout(() => tentarRecarregar('clique-menu'), 350);
+      });
+
+      setTimeout(() => tentarRecarregar('init'), 500);
+      console.log('✅ [clientes] Auto-recarga configurada');
+    })();
 
     // ====================== INICIAR ======================
     carregarClientes();
