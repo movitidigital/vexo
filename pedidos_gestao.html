@@ -1263,7 +1263,7 @@ async function inicializarModulo() {
 
   resetModuloGestao();
 
-  // 🔥 Busca o usuário autenticado no Supabase Auth
+  // 🔥 Pega o usuário autenticado no Supabase Auth
   let userAuth = null;
   try {
     const { data } = await window.sb.auth.getUser();
@@ -1277,22 +1277,20 @@ async function inicializarModulo() {
   let nome = '';
   let sobrenome = '';
   let tenantId = '';
-  let tipoAcesso = 'PROPRIO';
 
   if (userAuth) {
     try {
       const { data: prof, error } = await window.sb
         .from('profiles')
-        .select('nome, sobrenome, role, tenant_id, tipo_acesso')
+        .select('nome, sobrenome, role, tenant_id')
         .eq('id', userAuth.id)
         .single();
 
       if (!error && prof) {
-        role       = (prof.role || '').toUpperCase().trim();
-        nome       = prof.nome || '';
-        sobrenome  = prof.sobrenome || '';
-        tenantId   = prof.tenant_id || '';
-        tipoAcesso = (prof.tipo_acesso || 'PROPRIO').toUpperCase();
+        role      = (prof.role || '').toUpperCase().trim();
+        nome      = prof.nome || '';
+        sobrenome = prof.sobrenome || '';
+        tenantId  = prof.tenant_id || '';
         console.log('✅ Perfil carregado do banco:', { role, nome, tenantId });
       } else {
         console.warn('⚠️ Profile não encontrado ou erro:', error);
@@ -1310,7 +1308,6 @@ async function inicializarModulo() {
 
   userCargo       = role;
   userNome        = (nome + ' ' + sobrenome).trim().toUpperCase();
-  window.userTipoAcesso = tipoAcesso;
   userPodeEditar  = (userCargo === "ADMINISTRADOR" || userCargo === "BACKOFFICE");
 
   window.userCargo      = userCargo;
@@ -1347,7 +1344,6 @@ async function inicializarModulo() {
 
   console.log(`✅ Módulo pronto. Cargo: "${userCargo}" | Pode editar: ${userPodeEditar}`);
 }
-
 function destacarMenuItem() {
   // Remover active de todos os itens do menu
   document.querySelectorAll('.menu-item, .sidebar-item').forEach(item => {
