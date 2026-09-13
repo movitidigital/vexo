@@ -1263,58 +1263,68 @@ async function inicializarModulo() {
 
   resetModuloGestao();
 
-  // 🔥 LÊ A SESSÃO
-  let sessao = {};
-  try { sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}'); } catch(e) {}
+  // 🔥 Busca o usuário autenticado no Supabase Auth
+  let userAuth = null;
+  try {
+    const { data } = await window.sb.auth.getUser();
+    userAuth = data?.user || null;
+  } catch(e) {
+    console.warn('⚠️ Erro ao pegar usuário do Auth:', e);
+  }
 
-  // 🔥 FALLBACK: BUSCA O ROLE REAL NO BANCO
-  let role = (sessao.role || "").toUpperCase().trim();
-  let nome = (sessao.nome || sessao.username || "").toUpperCase().trim();
+  // 🔥 Busca o perfil real na tabela profiles
+  let role = '';
+  let nome = '';
+  let sobrenome = '';
+  let tenantId = '';
+  let tipoAcesso = 'PROPRIO';
 
-  // Se o role for genérico ('AUTHENTICATED') ou vazio, consulta profiles
-  if (!role || role === 'AUTHENTICATED' || role === 'USER') {
+  if (userAuth) {
     try {
-      console.log('🔍 Buscando role real no Supabase...');
-      const { data: { user } } = await window.sb.auth.getUser();
-      if (user) {
-        const { data: prof, error } = await window.sb
-          .from('profiles')
-          .select('nome, sobrenome, role, tenant_id')
-          .eq('id', user.id)
-          .single();
+      const { data: prof, error } = await window.sb
+        .from('profiles')
+        .select('nome, sobrenome, role, tenant_id, tipo_acesso')
+        .eq('id', userAuth.id)
+        .single();
 
-        if (!error && prof) {
-          role = (prof.role || "").toUpperCase().trim();
-          nome = ((prof.nome || '') + ' ' + (prof.sobrenome || '')).trim().toUpperCase();
-          // Atualiza a sessão para as próximas chamadas
-          const novaSessao = { ...sessao, nome: prof.nome, sobrenome: prof.sobrenome, role: prof.role, tenant_id: prof.tenant_id };
-          sessionStorage.setItem('usuarioLogado', JSON.stringify(novaSessao));
-          console.log('✅ Role atualizado da profiles:', role);
-        }
+      if (!error && prof) {
+        role       = (prof.role || '').toUpperCase().trim();
+        nome       = prof.nome || '';
+        sobrenome  = prof.sobrenome || '';
+        tenantId   = prof.tenant_id || '';
+        tipoAcesso = (prof.tipo_acesso || 'PROPRIO').toUpperCase();
+        console.log('✅ Perfil carregado do banco:', { role, nome, tenantId });
+      } else {
+        console.warn('⚠️ Profile não encontrado ou erro:', error);
       }
     } catch(e) {
-      console.warn('⚠️ Não foi possível buscar role do banco:', e);
+      console.warn('⚠️ Erro ao buscar profile:', e);
     }
   }
 
-  userCargo = role;
-  userNome = nome;
-  const userTipoAcesso = (sessao.tipoAcesso || "PROPRIO").toUpperCase().trim();
-  userPodeEditar = (userCargo === "ADMINISTRADOR" || userCargo === "BACKOFFICE");
+  // Fallback para user_metadata se profiles falhar
+  if (!role && userAuth?.user_metadata) {
+    role = (userAuth.user_metadata.role || '').toUpperCase().trim();
+    nome = userAuth.user_metadata.nome || '';
+  }
 
-  window.userCargo = userCargo;
-  window.userNome = userNome;
-  window.userTipoAcesso = userTipoAcesso;
+  userCargo       = role;
+  userNome        = (nome + ' ' + sobrenome).trim().toUpperCase();
+  window.userTipoAcesso = tipoAcesso;
+  userPodeEditar  = (userCargo === "ADMINISTRADOR" || userCargo === "BACKOFFICE");
+
+  window.userCargo      = userCargo;
+  window.userNome       = userNome;
   window.userPodeEditar = userPodeEditar;
-  window.todosPedidos = [];
+  window.todosPedidos   = [];
   window.pedidosFiltrados = [];
-  window.paginaAtual = 1;
+  window.paginaAtual    = 1;
 
-  todosPedidos = window.todosPedidos;
+  todosPedidos     = window.todosPedidos;
   pedidosFiltrados = window.pedidosFiltrados;
-  paginaAtual = window.paginaAtual;
+  paginaAtual      = window.paginaAtual;
 
-  // 🔥 ATUALIZA O BADGE
+  // 🔥 Atualiza o badge
   const badge = document.getElementById('cargo-badge');
   if (badge) {
     badge.innerHTML = userPodeEditar
@@ -1326,7 +1336,6 @@ async function inicializarModulo() {
     badge.style.color      = userPodeEditar ? '#166534' : '#b45309';
   }
 
-  // Ocultar filtro de parceiro para não administradores
   if (userCargo !== "ADMINISTRADOR" && userCargo !== "BACKOFFICE") {
     const filtroParceiro = document.getElementById('filtro-parceiro-group');
     if (filtroParceiro) filtroParceiro.style.display = 'none';
@@ -1336,7 +1345,7 @@ async function inicializarModulo() {
 
   setTimeout(() => { carregarPedidos(); }, 150);
 
-  console.log('✅ Módulo pronto. Cargo:', userCargo, '| Pode editar:', userPodeEditar);
+  console.log(`✅ Módulo pronto. Cargo: "${userCargo}" | Pode editar: ${userPodeEditar}`);
 }
 
 function destacarMenuItem() {
