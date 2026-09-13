@@ -742,6 +742,48 @@
   <div id="toast-ofertas-container" class="toast-ofertas-container"></div>
 
   <script>
+    // ═══════════════════════════════════════════════════════════
+// PONTE SUPABASE — ofertas.html
+// ═══════════════════════════════════════════════════════════
+(function () {
+  if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
+  if (window.__vexoPonteOfertasInstalada) return;
+
+  const MAP = {
+    getOfertasTim:    { rpc: 'get_ofertas_tim',    args: ()             => ({}) },
+    salvarOfertaTim:  { rpc: 'salvar_oferta_tim',  args: (dados)        => ({ p_dados: dados || {} }) },
+    excluirOfertaTim: { rpc: 'excluir_oferta_tim', args: (id, cargo)   => ({ p_id: id, p_cargo: cargo || '' }) },
+  };
+
+  function makeRunner() {
+    let ok = null, fail = null;
+    const runner = {
+      withSuccessHandler(fn) { ok = fn; return runner; },
+      withFailureHandler(fn) { fail = fn; return runner; },
+    };
+    Object.keys(MAP).forEach(nome => {
+      runner[nome] = async function (...params) {
+        const cfg = MAP[nome];
+        try {
+          const args = cfg.args(...params);
+          const { data, error } = await window.sb.rpc(cfg.rpc, args);
+          if (error) throw error;
+          if (ok) ok(data);
+        } catch (err) {
+          console.error(`❌ RPC ${cfg.rpc}:`, err);
+          if (fail) fail(err.message || String(err));
+        }
+      };
+    });
+    return runner;
+  }
+
+  window.google = window.google || {};
+  window.google.script = window.google.script || {};
+  Object.defineProperty(window.google.script, 'run', { get: () => makeRunner(), configurable: true, enumerable: true });
+  window.__vexoPonteOfertasInstalada = true;
+  console.log('✅ Ponte Supabase ativa — ofertas.html');
+})();
     (function() {
       // ============================================
       // VARIÁVEIS GLOBAIS
@@ -796,16 +838,16 @@
       // PERMISSÕES (USANDO getPerfilUsuario existente)
       // ============================================
       
-      function carregarPermissoes() {
-        const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-        const cargo = (sessao.role || "").toUpperCase().trim();
-        
-        console.log('📌 Cargo do usuário:', cargo);
-        
-        // Mesma lógica do seu sistema
-        permissoes.podeEditar = (cargo === "ADMINISTRADOR" || cargo === "BACKOFFICE" || cargo === "PROPRIETÁRIO");
-        permissoes.podeVisualizar = (permissoes.podeEditar || cargo === "CONSULTOR DE VENDAS");
-        permissoes.cargo = cargo;
+    function carregarPermissoes() {
+  const sessaoStorage = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const meta = window.VEXO?.user?.user_metadata || {};
+  const cargo = (sessaoStorage.role || sessaoStorage.cargo || meta.role || meta.cargo || '').toUpperCase().trim();
+
+  console.log('📌 Cargo do usuário:', cargo);
+
+  permissoes.podeEditar = ['ADMINISTRADOR', 'BACKOFFICE', 'PROPRIETÁRIO', 'PROPRIETARIO'].includes(cargo);
+  permissoes.podeVisualizar = (permissoes.podeEditar || cargo === 'CONSULTOR DE VENDAS');
+  permissoes.cargo = cargo;
         
         const badge = document.getElementById('permissao-badge');
         const btnGroup = document.getElementById('btn-group-acoes');
