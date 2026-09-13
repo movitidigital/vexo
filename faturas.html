@@ -9,6 +9,24 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
 <style>
+    /* ============ KPI NOVOS (com ícone grande) ============ */
+  .kpi-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.3rem;
+  }
+  .kpi-icon {
+    width: 54px; height: 54px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+  }
+  .kpi-danger .kpi-icon  { background: #fef2f2; }
+  .kpi-warning .kpi-icon { background: #fffbeb; }
+  .kpi-success .kpi-icon { background: #ecfdf5; }
+  .kpi-body { flex: 1; min-width: 0; }
   :root {
     --bg-body: #f1f5f9;
     --bg-card: #ffffff;
@@ -236,41 +254,51 @@
   <!-- HEADER -->
   <div class="header">
     <h1>
-      <span>📄 Gestão de Faturas</span>
+      <span style="font-size:2rem; display:inline-block; margin-right:0.5rem;">📄</span>
+      <span>Gestão de Faturas</span>
     </h1>
     <button class="btn-refresh" onclick="carregarDados()">
-      <i data-lucide="refresh-cw" size="16"></i> Atualizar Dados
+      🔄 Atualizar Dados
     </button>
   </div>
 
   <!-- KPIs -->
-  <div class="kpi-grid">
+ <div class="kpi-grid">
     <div class="kpi-card kpi-danger">
-      <div class="kpi-title"><i data-lucide="alert-triangle" size="14"></i> Faturas Atrasadas</div>
-      <div class="kpi-value" id="kpi-atrasadas">--</div>
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-body">
+        <div class="kpi-title">Faturas Atrasadas</div>
+        <div class="kpi-value" id="kpi-atrasadas">--</div>
+      </div>
     </div>
     <div class="kpi-card kpi-warning">
-      <div class="kpi-title"><i data-lucide="clock" size="14"></i> Vencem em 7 Dias</div>
-      <div class="kpi-value" id="kpi-vence-breve">--</div>
+      <div class="kpi-icon">⏰</div>
+      <div class="kpi-body">
+        <div class="kpi-title">Vencem em 7 Dias</div>
+        <div class="kpi-value" id="kpi-vence-breve">--</div>
+      </div>
     </div>
     <div class="kpi-card kpi-success">
-      <div class="kpi-title"><i data-lucide="check-circle" size="14"></i> Recebidas no Mês</div>
-      <div class="kpi-value" id="kpi-recebidas">--</div>
+      <div class="kpi-icon">✅</div>
+      <div class="kpi-body">
+        <div class="kpi-title">Recebidas no Mês</div>
+        <div class="kpi-value" id="kpi-recebidas">--</div>
+      </div>
     </div>
   </div>
 
   <!-- TABELA -->
   <div class="table-container">
     <table id="tabela-clientes">
-      <thead>
+     <thead>
         <tr>
-          <th style="width:30px;"></th>
-          <th>Código do Cliente</th>
-          <th>Cliente</th>
-          <th>Linha(s) &amp; Plano(s)</th>
-          <th>Próximo Vencimento</th>
-          <th>Status</th>
-          <th>Ação Sugerida</th>
+          <th style="width:34px;"></th>
+          <th>🏷️ Código do Cliente</th>
+          <th>👤 Cliente</th>
+          <th>📱 Linha(s) &amp; Plano(s)</th>
+          <th>📅 Próximo Vencimento</th>
+          <th>🚦 Status</th>
+          <th>🎯 Ação Sugerida</th>
         </tr>
       </thead>
       <tbody id="tbody-clientes"></tbody>
@@ -513,7 +541,7 @@ function renderizarTabela(clientes) {
   var html = '';
 
   if (!clientes || clientes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i>📭</i> Nenhuma fatura pendente encontrada.</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">📭</div><div>Nenhuma fatura pendente encontrada.</div></div></td></tr>';
     document.getElementById('kpi-atrasadas').innerText = '0';
     document.getElementById('kpi-vence-breve').innerText = '0';
     document.getElementById('kpi-recebidas').innerText = '0';
@@ -534,12 +562,13 @@ function renderizarTabela(clientes) {
     var contatoRaw = cliente.contatoFinanceiro || '';
     var numeroContato = limparNumero(contatoRaw);
 
-    for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
+   for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
       var linhaTel = cliente.linhasTelefonicas[l];
-     htmlLinhas += '<div class="linha-item">' +
-                 '<span class="numero">' + linhaTel.numero + '</span>' +
-                 '<span class="plano">' + linhaTel.plano + '</span>' +
-               '</div>';
+      htmlLinhas += '<div class="linha-item">' +
+                       '<span style="font-size:0.75rem; margin-right:2px;">📱</span>' +
+                       '<span class="numero">' + linhaTel.numero + '</span>' +
+                       '<span class="plano">' + linhaTel.plano + '</span>' +
+                     '</div>';
 
       for (var f = 0; f < linhaTel.faturas.length; f++) {
         var fatura = linhaTel.faturas[f];
@@ -682,17 +711,17 @@ function renderizarTabela(clientes) {
 
     if (faturaMaisCritica) {
       var st = faturaMaisCritica.statusCalc;
-      if (st === 'PAGO') {
+     if (st === 'PAGO') {
         badgeClass = 'badge-pago';
-        statusTexto = 'Pago';
+        statusTexto = '✅ Pago';
         acao = { texto: 'Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
       } else if (st === 'ATRASADO') {
         badgeClass = 'badge-atrasado';
-        statusTexto = 'Atrasado';
+        statusTexto = '🔴 Atrasado';
         acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
-      } else {
+     } else {
         badgeClass = 'badge-pendente';
-        statusTexto = 'Pendente';
+        statusTexto = '⏳ Pendente';
         acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
       }
     }
@@ -713,30 +742,26 @@ if (faturaMaisCritica) {
 
 html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId + '">' +
       '<td>' +
-        '<button class="expand-btn" onclick="toggleDetail(\'' + detailId + '\')" id="btn-' + detailId + '">' +
-          '<i data-lucide="chevron-right" size="18"></i>' +
-        '</button>' +
+      '<button class="expand-btn" onclick="toggleDetail(\'' + detailId + '\')" id="btn-' + detailId + '">▶</button>' +
       '</td>' +
       '<td style="font-family:monospace;font-size:0.8rem;color:var(--text-muted);">' + codigoCliente + '</td>' +
-     '<td>' +
+    '<td>' +
   '<div class="client-name">' + nomeCliente + '</div>' +
-  '<div class="client-line">Resp: ' + resp + '</div>' +
-  '<div class="client-line">' +
-    '<i data-lucide="phone" size="11" style="vertical-align:text-bottom;margin-right:2px;"></i> ' + (contatoRaw || 'Sem número') +
-  '</div>' +
-  '<div class="client-line mono">' + cpfCnpj + '</div>' +
-  '<div class="client-line origin">' + origem + ' • ' + email + '</div>' +
+  '<div class="client-line">👤 Resp: <strong>' + resp + '</strong></div>' +
+  '<div class="client-line">📞 ' + (contatoRaw || 'Sem número') + '</div>' +
+  '<div class="client-line mono">🆔 ' + cpfCnpj + '</div>' +
+  '<div class="client-line origin">🏢 ' + origem + ' • ✉️ ' + email + '</div>' +
 '</td>' +
-     '<td class="linhas-cell">' + htmlLinhas + '</td>' +
-     '<td>' +
+  '<td class="linhas-cell">' + htmlLinhas + '</td>' +
+    '<td>' +
   alerta +
-  '<div style="font-weight:700; font-size:0.82rem; color:' + (faturaMaisCritica && faturaMaisCritica.statusCalc === 'ATRASADO' ? '#991b1b' : 'var(--text-primary)') + ';">' + dataFormatada + '</div>' +
-  '<div class="client-line" style="font-size:0.68rem;">Ref: ' + (faturaMaisCritica ? faturaMaisCritica.numLinha : '--') + ' (Mês ' + (faturaMaisCritica ? faturaMaisCritica.mes : '--') + ')</div>' +
+  '<div style="font-weight:700; font-size:0.82rem; color:' + (faturaMaisCritica && faturaMaisCritica.statusCalc === 'ATRASADO' ? '#991b1b' : 'var(--text-primary)') + ';">📅 ' + dataFormatada + '</div>' +
+  '<div class="client-line" style="font-size:0.68rem;">📱 Ref: ' + (faturaMaisCritica ? faturaMaisCritica.numLinha : '--') + ' (Mês ' + (faturaMaisCritica ? faturaMaisCritica.mes : '--') + ')</div>' +
 '</td>' +
       '<td><span class="badge ' + badgeClass + '">' + statusTexto + '</span></td>' +
       '<td>' +
-        '<button class="btn-action ' + acao.classe + '" onclick="toggleDetail(\'' + detailId + '\')">' +
-          '<i data-lucide="' + acao.icone + '" size="14"></i> ' + acao.texto +
+      '<button class="btn-action ' + acao.classe + '" onclick="toggleDetail(\'' + detailId + '\')">' +
+          acao.texto +
         '</button>' +
       '</td>' +
     '</tr>';
@@ -757,7 +782,7 @@ html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId +
       var numerosList = Array.from(grupo.numeros).join(', ');
       var estaPago = totalPendentes === 0;
       var badgeCls = estaPago ? 'pago' : '';
-      var statusLabel = estaPago ? '✅ Pago' : '⏳ ' + totalPendentes + ' pendente(s)';
+      var statusLabel = estaPago ? 'Pago' : totalPendentes + ' pendente(s)';
 
       var refFatura = grupo.faturas[0] || {};
       var linhaRef = refFatura.numeroLinha || '';
@@ -792,33 +817,34 @@ html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId +
         linkWhats = 'https://api.whatsapp.com/send?phone=55' + numeroContato + '&text=' + msgEncoded;
       }
 
-      detalheHtml += '<div class="grupo-card">' +
+     var statusEmoji = estaPago ? '✅' : '⏳';
+detalheHtml += '<div class="grupo-card">' +
         '<div class="grupo-header">' +
           '<div class="grupo-info">' +
             '<strong>📅 ' + dataKey + '</strong>' +
-            '<span class="qtd">' + grupo.faturas.length + ' linha(s)</span>' +
-            '<span class="numeros">📞 ' + numerosList + '</span>' +
-            '<span class="badge-grupo ' + badgeCls + '">' + statusLabel + '</span>' +
+            '<span class="qtd">📊 ' + grupo.faturas.length + ' linha(s)</span>' +
+            '<span class="numeros">📱 ' + numerosList + '</span>' +
+            '<span class="badge-grupo ' + badgeCls + '">' + statusEmoji + ' ' + (estaPago ? 'Pago' : totalPendentes + ' pendente(s)') + '</span>' +
           '</div>' +
           '<div class="grupo-actions">';
 
       // ----- BOTÃO MARCAR COMO PAGO / DESFAZER PAGO -----
       if (!estaPago) {
         detalheHtml += '<button class="btn-action btn-success-action" onclick="darBaixaGrupo(\'' + codigoCliente + '\', \'' + dataKey + '\')">' +
-          '<i data-lucide="check-circle" size="14"></i> Marcar como Pago' +
+          '✅ Marcar como Pago' +
         '</button>';
       } else {
         detalheHtml += '<button class="btn-action btn-warning-action" onclick="estornarGrupo(\'' + codigoCliente + '\', \'' + dataKey + '\')">' +
-          '<i data-lucide="undo" size="14"></i> Desfazer Pago' +
+          '↩️ Desfazer Pago' +
         '</button>';
       }
 
       // ----- BOTÃO WHATSAPP -----
       if (!botaoWhatsDisabled) {
-        detalheHtml += '<a href="' + linkWhats + '" target="_blank" class="btn-action btn-whatsapp" ' +
+       detalheHtml += '<a href="' + linkWhats + '" target="_blank" class="btn-action btn-whatsapp" ' +
           'onclick="registrarLogWhatsAppFrontend(\'' + codigoCliente + '\', \'' + dataKey + '\'); return true;" ' +
           'title="Enviar mensagem via WhatsApp">' +
-          '<i data-lucide="message-circle" size="14"></i> WhatsApp' +
+          '💬 WhatsApp' +
         '</a>';
       } else {
         detalheHtml += '<span class="btn-action btn-disabled" title="Número inválido">' +
@@ -829,7 +855,7 @@ html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId +
       // ----- BOTÃO LIGAÇÃO -----
       if (!botaoCallDisabled) {
         detalheHtml += '<a href="' + linkCall + '" class="btn-action btn-call" title="Ligar para o cliente">' +
-          '<i data-lucide="phone" size="14"></i> Ligar' +
+          '📞 Ligar' +
         '</a>';
       } else {
         detalheHtml += '<span class="btn-action btn-disabled" title="Número inválido">' +
@@ -850,9 +876,9 @@ html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId +
       }
     }
     if (totalPendentesCliente > 0) {
-      detalheHtml += '<div class="detail-actions">' +
+     detalheHtml += '<div class="detail-actions">' +
         '<button class="btn-action btn-success-action" onclick="baixarTodasPendentes(\'' + codigoCliente + '\')">' +
-          '<i data-lucide="check-square" size="16"></i> Baixar todas as ' + totalPendentesCliente + ' pendentes' +
+          '✅ Baixar todas as ' + totalPendentesCliente + ' pendentes' +
         '</button>' +
       '</div>';
     }
@@ -866,7 +892,7 @@ html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId +
 
   // Se nenhum cliente passou no filtro
   if (html === '') {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><i>✅</i> Todas as faturas estão em dia! Nenhum vencimento nos próximos 14 dias.</div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">🎉</div><div style="font-weight:700; color:#10b981;">Todas as faturas estão em dia!</div><div style="font-size:0.8rem; margin-top:0.25rem;">Nenhum vencimento nos próximos 14 dias.</div></div></td></tr>';
   } else {
     tbody.innerHTML = html;
   }
@@ -899,8 +925,8 @@ html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId +
   // =========================================================
   // ALGORITMO DE COBRANÇA (auxiliar)
   // =========================================================
-  function obterAcaoCobranca(dataVencObj, status) {
-    if (status === 'PAGO') return { texto: 'Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
+ function obterAcaoCobranca(dataVencObj, status) {
+    if (status === 'PAGO') return { texto: '✅ Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
 
     var hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -908,16 +934,16 @@ html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId +
     venc.setHours(0, 0, 0, 0);
     var diffDias = Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 3600 * 24));
 
-    if (diffDias < -5) return { texto: 'Processando baixa pagamento', classe: 'btn-disabled', icone: 'clock', exibirWarning: false };
-    if (diffDias >= -5 && diffDias <= -1) return { texto: 'Lembrete 5 Dias', classe: 'btn-info', icone: 'message-circle', exibirWarning: false };
-    if (diffDias === 0) return { texto: 'Msg Vencimento', classe: 'btn-warning-action', icone: 'bell', exibirWarning: false };
-    if (diffDias >= 1 && diffDias < 3) return { texto: 'Acompanhar Pagamento', classe: 'btn-warning-action', icone: 'eye', exibirWarning: false };
-    if (diffDias >= 3 && diffDias < 5) return { texto: 'Cobrança (3 Dias)', classe: 'btn-danger-action', icone: 'send', exibirWarning: false };
-    if (diffDias >= 5 && diffDias < 10) return { texto: 'Enviar Áudio Wpp', classe: 'btn-danger-action', icone: 'mic', exibirWarning: false };
-    if (diffDias >= 10 && diffDias < 20) return { texto: 'Ligar p/ Cliente', classe: 'btn-danger-action', icone: 'phone-call', exibirWarning: false };
-    if (diffDias >= 20 && diffDias < 30) return { texto: 'Risco Quebra Contrato', classe: 'btn-critical', icone: 'alert-triangle', exibirWarning: false };
-    if (diffDias >= 30) return { texto: 'Inadimplência Crítica', classe: 'btn-critical', icone: 'x-octagon', exibirWarning: true };
-    return { texto: 'Verificar', classe: 'btn-disabled', icone: 'help-circle', exibirWarning: false };
+    if (diffDias < -5) return { texto: '⏳ Processando baixa pagamento', classe: 'btn-disabled', icone: 'clock', exibirWarning: false };
+    if (diffDias >= -5 && diffDias <= -1) return { texto: '💬 Lembrete 5 Dias', classe: 'btn-info', icone: 'message-circle', exibirWarning: false };
+    if (diffDias === 0) return { texto: '🔔 Msg Vencimento', classe: 'btn-warning-action', icone: 'bell', exibirWarning: false };
+    if (diffDias >= 1 && diffDias < 3) return { texto: '👀 Acompanhar Pagamento', classe: 'btn-warning-action', icone: 'eye', exibirWarning: false };
+    if (diffDias >= 3 && diffDias < 5) return { texto: '📨 Cobrança (3 Dias)', classe: 'btn-danger-action', icone: 'send', exibirWarning: false };
+    if (diffDias >= 5 && diffDias < 10) return { texto: '🎙️ Enviar Áudio Wpp', classe: 'btn-danger-action', icone: 'mic', exibirWarning: false };
+    if (diffDias >= 10 && diffDias < 20) return { texto: '📞 Ligar p/ Cliente', classe: 'btn-danger-action', icone: 'phone-call', exibirWarning: false };
+    if (diffDias >= 20 && diffDias < 30) return { texto: '⚠️ Risco Quebra Contrato', classe: 'btn-critical', icone: 'alert-triangle', exibirWarning: false };
+    if (diffDias >= 30) return { texto: '🚨 Inadimplência Crítica', classe: 'btn-critical', icone: 'x-octagon', exibirWarning: true };
+    return { texto: '❓ Verificar', classe: 'btn-disabled', icone: 'help-circle', exibirWarning: false };
   }
 
   // =========================================================
