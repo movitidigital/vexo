@@ -170,6 +170,9 @@ window._vexoVendasLoaded = true;
     renderModalidades();
     await carregarPlanos();
 
+    // 🔥 NOVO: Carrega a lista de consultores do Supabase
+    await carregarConsultoresAtivos();
+
     // 🔥 NOVO: Verifica se veio um pedido do módulo Gestão
     await preCarregarPedidoParaInput();
 
