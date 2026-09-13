@@ -137,11 +137,15 @@
 (function () {
   'use strict';
 
-  if (window._vexoVendasLoaded) {
-    console.log('ℹ️ [VEXO] vendas.html já inicializado');
-    return;
-  }
-  window._vexoVendasLoaded = true;
+ if (window._vexoVendasLoaded) {
+  console.log('🔄 [VEXO] vendas.html reinjetado — limpando estado');
+  try {
+    const area = document.getElementById('area_campos_venda');
+    if (area) { area.innerHTML = ''; area.style.display = 'none'; }
+    document.querySelectorAll('.modalidade-box.checked').forEach(el => el.classList.remove('checked'));
+  } catch(e) {}
+}
+window._vexoVendasLoaded = true;
 
   // ===== ESTADO =====
   let PERFIL_USUARIO = null;
@@ -228,12 +232,6 @@ async function preCarregarPedidoParaInput() {
 
   if (!pedidoData) {
     console.log('ℹ️ [VENDAS] Nenhum pedido pré-carregado. Modo normal.');
-    return;
-  }
-
-  // Evita reprocessar em uma mesma sessão
-  if (sessionStorage.getItem('pedidoParaInputConsumido') === 'true') {
-    console.log('ℹ️ [VENDAS] Pedido já foi consumido nesta sessão.');
     return;
   }
 
