@@ -150,6 +150,12 @@ window._vexoVendasLoaded = true;
   // ===== ESTADO =====
   let PERFIL_USUARIO = null;
   const MODALIDADES_SELECIONADAS = new Set();
+  window._resetModalidadesSelecionadas = function() {
+  try {
+    MODALIDADES_SELECIONADAS.clear();
+    console.log('🔄 Modalidades selecionadas limpas');
+  } catch(e) {}
+};
   let PLANOS_MEMORIA = [];
 
   const MODALIDADES_DISPONIVEIS = [
@@ -403,8 +409,7 @@ async function preCarregarPedidoParaInput() {
     }, 200);
   }
 
-  // 12. Marca como consumido (mas mantém o pedidoData para caso o usuário queira)
-  sessionStorage.setItem('pedidoParaInputConsumido', 'true');
+  // 12. Concluído (a limpeza é feita pelo observador ao SAIR do módulo)
   console.log('✅ [VENDAS] Pré-carregamento concluído.');
 }
 
@@ -859,5 +864,93 @@ localStorage.removeItem('ultimoBancoDeDadosId');
   };
 
   console.log('✅ [VEXO] Módulo Vendas inicializado');
+})();
+  // ═══════════════════════════════════════════════════════════
+// 🔥 Limpa o pedido pré-carregado ao SAIR do módulo Vendas
+// ═══════════════════════════════════════════════════════════
+(function setupLimpezaAoSairDeVendas() {
+  let estavaVisivel = false;
+
+  function moduloVendasVisivel() {
+    // 1) Wrapper do módulo visível?
+    const wrappers = document.querySelectorAll('[id^="vexo-modulo-"]');
+    for (const w of wrappers) {
+      if (w && w.offsetParent !== null && /vendas/i.test(w.id)) return true;
+    }
+    // 2) Fallback: elementos-chave do módulo visíveis?
+    const cont = document.getElementById('container-modalidades');
+    if (cont && cont.offsetParent !== null) return true;
+    const area = document.getElementById('area_campos_venda');
+    if (area && area.offsetParent !== null) return true;
+    return false;
+  }
+
+  function limparTudo() {
+    console.log('🧹 [vendas] Saiu do módulo — limpando pedido pré-carregado');
+
+    // 1) Storage
+    ['pedidoParaInput', 'pedidoParaInputConsumido', 'bancoDeDadosIdAtual']
+      .forEach(k => { try { sessionStorage.removeItem(k); } catch(e) {} });
+    ['ultimoPedidoParaInput', 'ultimoBancoDeDadosId']
+      .forEach(k => { try { localStorage.removeItem(k); } catch(e) {} });
+
+    // 2) Desmarcar cards de modalidade
+    try {
+      document.querySelectorAll('.modalidade-box.checked').forEach(el => el.classList.remove('checked'));
+    } catch(e) {}
+
+    // 3) Limpar área de formulário
+    try {
+      const area = document.getElementById('area_campos_venda');
+      if (area) { area.innerHTML = ''; area.style.display = 'none'; }
+    } catch(e) {}
+
+    // 4) Voltar para a aba "Lançar Venda"
+    try {
+      if (typeof window.mudarAbaVendas === 'function') {
+        window.mudarAbaVendas('vendas');
+      }
+    } catch(e) {}
+
+    // 5) Fechar modal de sucesso se estiver aberto
+    try {
+      const modal = document.getElementById('v-modal-sucesso');
+      if (modal) modal.style.display = 'none';
+    } catch(e) {}
+
+    // 6) Resetar Set interno de modalidades (exposto no Patch 3)
+    try {
+      if (typeof window._resetModalidadesSelecionadas === 'function') {
+        window._resetModalidadesSelecionadas();
+      }
+    } catch(e) {}
+  }
+
+  function checar() {
+    const visivel = moduloVendasVisivel();
+    if (estavaVisivel && !visivel) limparTudo();
+    estavaVisivel = visivel;
+  }
+
+  // 1) Observa mudanças no DOM (troca de módulo muda style/display)
+  const observer = new MutationObserver(checar);
+  observer.observe(document.body, {
+    childList: true, subtree: true,
+    attributes: true, attributeFilter: ['style', 'class']
+  });
+
+  // 2) Atalho via clique no menu lateral
+  document.addEventListener('click', (e) => {
+    const menu = e.target.closest('.menu-item, .sidebar-item, [data-modulo], a[href*="page="]');
+    if (!menu) return;
+    const alvo = ((menu.innerText || '') + ' ' + (menu.getAttribute('href') || '')).toLowerCase();
+    // Se NÃO vai para vendas, checa daqui a pouco
+    if (!/vendas/.test(alvo)) setTimeout(checar, 250);
+  });
+
+  // 3) Fallback por intervalo
+  setInterval(checar, 1500);
+
+  console.log('✅ [vendas] Limpeza automática ao sair configurada');
 })();
 </script>
