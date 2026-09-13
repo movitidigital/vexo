@@ -459,7 +459,7 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
   // ============================================================
   // GERAR FORMULÁRIO
   // ============================================================
-  window.gerarFormularioVenda = function() {
+window.gerarFormularioVenda = function() {
     const areaVenda = document.getElementById('area_campos_venda');
     if (!areaVenda) return;
 
@@ -473,6 +473,11 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
     areaVenda.style.display = 'block';
     const titulo = selecionadas.join(' | ');
     const eConsultor = (PERFIL_USUARIO?.role === 'CONSULTOR DE VENDAS');
+
+    // 🔥 Só mostra atribuição de input para BACKOFFICE / ADMINISTRADOR
+    const mostrarAtribuicaoInput = ['BACKOFFICE', 'ADMINISTRADOR', 'ADMIN'].includes(
+      (PERFIL_USUARIO?.role || '').toUpperCase()
+    );
 
     let html = `
       <div style="background:#fff; border:2px solid #1e3c72; border-radius:15px; padding:25px;">
@@ -561,17 +566,33 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
           <div><label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">COMPL.</label><input type="text" id="v_compl" class="v-input"></div>
         </div>
 
+        ${mostrarAtribuicaoInput ? `
+        <div id="secao-consultor-input" style="margin-top:20px; padding:20px; background:#f8fafc; border:2px solid #cbd5e1; border-radius:15px; margin-bottom:20px;">
+          <h4 style="color:#0f172a; margin-top:0; margin-bottom:15px; display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800;">
+            <span>👤</span> ATRIBUIÇÃO DE INPUT (SISTEMA TIM)
+          </h4>
+          <select id="v_consultor_input" class="v-input" style="border:1px solid #64748b; font-weight:bold; width:100%; padding:12px; border-radius:8px; background:#ffffff;">
+            <option value="">Carregando consultores...</option>
+          </select>
+          <p style="font-size:10px; color:#64748b; margin-top:8px; font-weight:600;">
+            * Informe qual usuário/matrícula foi utilizado para lançar este pedido no sistema da operadora.
+          </p>
+        </div>
+        ` : ''}
+
         <button type="button" id="btn_finalizar"
                 style="margin-top:10px; width:100%; padding:18px; background:#1e3c72; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; font-size:16px;">
-          🚀 Finalizar e Gravar Venda
+          ${mostrarAtribuicaoInput ? '🚀 Finalizar Pedido' : '🚀 Finalizar e Gravar Venda'}
         </button>
       </div>
     `;
 
-      areaVenda.innerHTML = html;
+    areaVenda.innerHTML = html;
 
     // 🔥 Popula o select de consultores AGORA (o select acabou de ser criado)
-    popularSelectConsultores();
+    if (mostrarAtribuicaoInput) {
+      popularSelectConsultores();
+    }
 
     selecionadas.forEach(m => {
       const modID = m.replace(/[^a-zA-Z0-9]/g, '');
