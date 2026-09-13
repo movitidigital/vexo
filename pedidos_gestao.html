@@ -1995,11 +1995,9 @@ function executarAtualizacaoStatus(idUnico, origem, novoStatus, dataAtivacao, da
 
   // 🔥 BUSCA O PEDIDO NA LISTA GLOBAL POR id_unico
   let pedido = window.todosPedidos?.find(p => p.id_unico === idUnico);
-  let idUnico = '';
   let bancoDeDadosId = null;
   
   if (pedido) {
-    idUnico = pedido.id_unico || '';
     bancoDeDadosId = pedido.bancoDeDadosId || null;
     console.log(`✅ Pedido encontrado: ${pedido.cliente}`);
     console.log(`📌 bancoDeDadosId: ${bancoDeDadosId || 'NULL'}`);
@@ -3228,17 +3226,16 @@ function avancarPedidoParaInput(idUnico, origem) {
   }
   console.log("✅ 2. Pedido encontrado:", pedido.cliente);
   console.log("📌 Modalidade do pedido (primeira):", pedido.modalidade || 'NÃO INFORMADA');
-  
+
   // ============================================
   // 🔥 VERIFICAR SE O PEDIDO TEM MÚLTIPLAS MODALIDADES
   // ============================================
   const linhas = pedido.linhas_agrupadas || [];
   const modalidadesMap = new Map();
-  
+
   linhas.forEach(linha => {
     const mod = linha.modalidade || pedido.modalidade || 'PRIMEIRA ATIVAÇÃO';
     if (!modalidadesMap.has(mod)) modalidadesMap.set(mod, []);
-    // 🔥 Normaliza a linha para garantir que operadora seja uma propriedade consistente
     const linhaNormalizada = {
       ...linha,
       operadora: linha.operadora || linha.operadora_doadora || linha.operadoraDoadora || '',
@@ -3278,18 +3275,19 @@ function avancarPedidoParaInput(idUnico, origem) {
   // ============================================
   // 4. 🔥 CONSTRUIR ID ÚNICO E CAPTURAR bancoDeDadosId
   // ============================================
-  
+
   // 4.1 Garantir id_unico (apenas CNPJ + DATA, SEM MODALIDADE)
-  let idUnico = pedido.id_unico || '';
-  if (!idUnico && pedido.cnpj && pedido.data_key) {
-    idUnico = `${pedido.cnpj}|${pedido.data_key}`;
-    console.log("🔄 id_unico construído manualmente:", idUnico);
-  } else if (!idUnico && pedido.cnpj) {
-    idUnico = `${pedido.cnpj}|${new Date().toLocaleDateString('pt-BR')}`;
-    console.log("🔄 id_unico construído com data atual:", idUnico);
+  // 🔥 ALTERADO: usa idUnicoFinal para não conflitar com o parâmetro `idUnico`
+  let idUnicoFinal = idUnico || pedido.id_unico || '';
+  if (!idUnicoFinal && pedido.cnpj && pedido.data_key) {
+    idUnicoFinal = `${pedido.cnpj}|${pedido.data_key}`;
+    console.log("🔄 id_unico construído manualmente:", idUnicoFinal);
+  } else if (!idUnicoFinal && pedido.cnpj) {
+    idUnicoFinal = `${pedido.cnpj}|${new Date().toLocaleDateString('pt-BR')}`;
+    console.log("🔄 id_unico construído com data atual:", idUnicoFinal);
   }
-  
-  if (!idUnico) {
+
+  if (!idUnicoFinal) {
     console.error("❌ Não foi possível construir id_unico");
     showToast('Erro: ID único do pedido não encontrado.', 'error');
     return;
@@ -3297,12 +3295,12 @@ function avancarPedidoParaInput(idUnico, origem) {
 
   // 4.2 🔥 CAPTURAR O bancoDeDadosId COM VALIDAÇÃO
   let bancoDeDadosId = null;
-  
+
   // Prioridade 1: Do pedido
   if (pedido.bancoDeDadosId && pedido.bancoDeDadosId.trim() !== "" && pedido.bancoDeDadosId !== "null") {
     bancoDeDadosId = pedido.bancoDeDadosId.trim();
     console.log("🏦 bancoDeDadosId capturado do pedido:", bancoDeDadosId);
-  } 
+  }
   // Prioridade 2: Buscar na sessão do usuário (se for parceiro)
   else if (origem === "PARCEIRO") {
     try {
@@ -3315,14 +3313,14 @@ function avancarPedidoParaInput(idUnico, origem) {
       console.warn("⚠️ Erro ao buscar bancoDeDadosId da sessão:", e);
     }
   }
-  
+
   // Prioridade 3: Buscar na lista de parceiros (se for parceiro)
   if (!bancoDeDadosId && origem === "PARCEIRO") {
     try {
       const parceiros = JSON.parse(localStorage.getItem('parceirosComBanco') || '[]');
       const vendedor = pedido.vendedor || pedido.parceiro_nome || '';
-      const parceiroEncontrado = parceiros.find(p => 
-        p.matricula === vendedor || 
+      const parceiroEncontrado = parceiros.find(p =>
+        p.matricula === vendedor ||
         p.nome === vendedor ||
         p.nome === pedido.parceiro_nome
       );
@@ -3344,18 +3342,18 @@ function avancarPedidoParaInput(idUnico, origem) {
     // Dados de identificação
     linha: pedido.linha,
     origem: pedido.origem,
-    id_unico: idUnico,                // 🔥 SEM MODALIDADE
+    id_unico: idUnicoFinal,           // 🔥 ALTERADO: usa idUnicoFinal
     bancoDeDadosId: bancoDeDadosId,
-    
+
     // Dados da empresa (comuns a todo o pedido)
     cnpj: pedido.cnpj || '',
     cliente: pedido.cliente || '',
     ie: pedido.ie || "",
-    
+
     // Dados da venda (comuns)
     vencimento: pedido.vencimento || "",
     dataVenda: formatarDataISO(pedido.data_venda || pedido.data_criacao),
-    
+
     // Endereço (comum)
     cep: pedido.cep || "",
     endereco: pedido.endereco || "",
@@ -3364,27 +3362,27 @@ function avancarPedidoParaInput(idUnico, origem) {
     bairro: pedido.bairro || "",
     cidade: pedido.cidade || "",
     uf: pedido.uf || "",
-    
+
     // Responsável (comum)
     cpfAdmin: pedido.cpf_admin || "",
     nome_admin: pedido.nome_admin || "",
     email: pedido.email || "",
     contato_financeiro: pedido.contato_financeiro || "",
-    
+
     // Códigos (comum)
     codigoCliente: pedido.codigo_cliente || "",
     codigoAdmin: pedido.codigo_admin || "",
-    
+
     // 🔥 CONTROLE DE MÚLTIPLAS MODALIDADES
     modalidadesList: modalidadesList,
     modalidadeIndex: 0,
     linhasPorModalidade: linhasPorModalidade,
-    
+
     // 🔥 Campos de debug
     _origemDebug: origem,
     _linhaDebug: linha,
     _bancoDebug: bancoDeDadosId,
-    _idUnicoDebug: idUnico,
+    _idUnicoDebug: idUnicoFinal,      // 🔥 ALTERADO: usa idUnicoFinal
     _timestamp: new Date().toISOString()
   };
 
@@ -3394,24 +3392,24 @@ function avancarPedidoParaInput(idUnico, origem) {
   console.log(`   - origem: ${pedidoData.origem}`);
   console.log(`   - modalidades: ${modalidadesList.join(', ')}`);
   console.log(`   - total de linhas: ${linhas.length}`);
-  
+
   // --- 6. Salvar no sessionStorage ---
   try {
     sessionStorage.setItem('pedidoParaInput', JSON.stringify(pedidoData));
     console.log("✅ Dados salvos no sessionStorage");
-    
+
     if (bancoDeDadosId) {
       sessionStorage.setItem('bancoDeDadosIdAtual', bancoDeDadosId);
       console.log(`💾 bancoDeDadosId salvo separadamente: ${bancoDeDadosId}`);
     }
-    
+
     localStorage.setItem('ultimoPedidoParaInput', JSON.stringify(pedidoData));
     if (bancoDeDadosId) {
       localStorage.setItem('ultimoBancoDeDadosId', bancoDeDadosId);
     }
-    
+
     console.log("✅ Dados salvos no localStorage como fallback");
-    
+
   } catch(e) {
     console.error("❌ Erro ao salvar sessionStorage:", e);
     showToast('Erro ao preparar dados do pedido.', 'error');
@@ -3431,17 +3429,17 @@ function avancarPedidoParaInput(idUnico, origem) {
 
   // --- 8. Redirecionar para o formulário de vendas ---
   showLoading('Preparando lançamento...');
-  
+
   setTimeout(function() {
     hideLoading();
     console.log("🔁 Abrindo módulo de vendas dinamicamente...");
     console.log(`📌 Com ${modalidadesList.length} modalidade(s)`);
-    
+
     let urlDestino = '?page=vendas';
     if (bancoDeDadosId) {
       urlDestino += `&banco=${encodeURIComponent(bancoDeDadosId)}`;
     }
-    
+
     if (typeof window.abrirModulo === 'function') {
       console.log("📤 Usando window.abrirModulo('vendas')");
       window.abrirModulo('vendas');
