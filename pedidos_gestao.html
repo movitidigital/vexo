@@ -1081,6 +1081,134 @@
 
 <script>
 
+	// ═══════════════════════════════════════════════════════════
+// FIX: injeta estilos críticos no <head> para escapar do
+//      scoping de CSS do dashboard
+// ═══════════════════════════════════════════════════════════
+(function injetarEstilosCriticos() {
+  if (document.getElementById('vexo-pedidos-critical-styles')) return;
+
+  const style = document.createElement('style');
+  style.id = 'vexo-pedidos-critical-styles';
+  style.textContent = `
+    /* ═══ TOAST sempre no topo ═══ */
+    .vexo-toast {
+      position: fixed !important;
+      bottom: 30px !important;
+      right: 30px !important;
+      min-width: 320px !important;
+      max-width: 480px !important;
+      background: white !important;
+      border-radius: 16px !important;
+      padding: 16px 20px !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25) !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 14px !important;
+      z-index: 2147483647 !important;
+      animation: vexoToastIn 0.3s ease-out !important;
+      border-left: 4px solid #3b82f6 !important;
+      font-family: 'Inter', sans-serif !important;
+    }
+    .vexo-toast-success { border-left-color: #10b981 !important; background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%) !important; }
+    .vexo-toast-error   { border-left-color: #ef4444 !important; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%) !important; }
+    .vexo-toast-warning { border-left-color: #f59e0b !important; background: linear-gradient(135deg, #fff 0%, #fffbeb 100%) !important; }
+    .vexo-toast-info    { border-left-color: #3b82f6 !important; background: linear-gradient(135deg, #fff 0%, #eff6ff 100%) !important; }
+
+    .vexo-toast-icon { width: 40px !important; height: 40px !important; border-radius: 12px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 20px !important; flex-shrink: 0 !important; }
+    .vexo-toast-content { flex: 1 !important; }
+    .vexo-toast-title { font-weight: 700 !important; font-size: 14px !important; margin-bottom: 4px !important; color: #0f172a !important; }
+    .vexo-toast-message { font-size: 12px !important; color: #475569 !important; line-height: 1.45 !important; }
+    .vexo-toast-message b { color: #b45309 !important; }
+    .vexo-toast-close { width: 24px !important; height: 24px !important; border-radius: 8px !important; background: #f1f5f9 !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; font-size: 12px !important; color: #64748b !important; }
+
+    @keyframes vexoToastIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+
+    /* ═══ MODAL DETALHES centralizado ═══ */
+    #modal-detalhes.vexo-modal {
+      position: fixed !important;
+      top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+      width: 100vw !important; height: 100vh !important;
+      margin: 0 !important; padding: 20px !important;
+      background: rgba(15, 23, 42, 0.85) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      display: none !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 2147483646 !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    #modal-detalhes.vexo-modal.active { display: flex !important; }
+
+    #modal-detalhes .modal-container {
+      position: relative !important;
+      background: white !important;
+      width: 100% !important;
+      max-width: 920px !important;
+      max-height: 90vh !important;
+      margin: 0 !important;
+      border-radius: 24px !important;
+      overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+      animation: modalFadeIn 0.3s ease !important;
+    }
+
+    #modal-detalhes .modal-header {
+      flex-shrink: 0 !important;
+      padding: 18px 24px !important;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+      color: white !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+    }
+
+    #modal-detalhes .modal-body {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      padding: 24px !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+
+    #modal-detalhes .modal-footer {
+      flex-shrink: 0 !important;
+      padding: 14px 24px !important;
+      border-top: 1px solid #e2e8f0 !important;
+      background: #f8fafc !important;
+      display: flex !important;
+      justify-content: flex-end !important;
+      gap: 12px !important;
+    }
+
+    #modal-detalhes .modal-body::-webkit-scrollbar { width: 8px !important; }
+    #modal-detalhes .modal-body::-webkit-scrollbar-track { background: #f1f5f9 !important; }
+    #modal-detalhes .modal-body::-webkit-scrollbar-thumb { background: #cbd5e1 !important; border-radius: 4px !important; }
+    #modal-detalhes .modal-body::-webkit-scrollbar-thumb:hover { background: #94a3b8 !important; }
+
+    #modal-detalhes .info-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
+
+    body.modal-open { overflow: hidden !important; }
+
+    @media (max-width: 768px) {
+      #modal-detalhes.vexo-modal { padding: 10px !important; }
+      #modal-detalhes .modal-container { max-height: 95vh !important; border-radius: 16px !important; }
+      #modal-detalhes .modal-body { padding: 16px !important; }
+      #modal-detalhes .info-grid { grid-template-columns: 1fr !important; }
+    }
+  `;
+  document.head.appendChild(style);
+  console.log('✅ Estilos críticos injetados no <head>');
+})();
+
 // ═══════════════════════════════════════════════════════════
 // PONTE SUPABASE — substitui google.script.run
 // (idempotente: pode ser injetada várias vezes sem quebrar)
@@ -1206,28 +1334,46 @@ var STATUS_LIST = [
   // 🎨 SISTEMA DE TOAST NOTIFICATIONS
   // ============================================
   
- function showToast(message, type = 'info') {
-  document.querySelectorAll('.vexo-toast').forEach(toast => toast.remove());
+function showToast(message, type = 'info') {
+  document.querySelectorAll('.vexo-toast').forEach(t => t.remove());
 
   const toast = document.createElement('div');
   toast.className = `vexo-toast vexo-toast-${type}`;
-  // 🔥 z-index acima do modal
-  toast.style.zIndex = '2147483647';
+
+  // 🔥 Aplica estilos críticos INLINE (sobrevive a qualquer scoping)
+  toast.style.cssText = `
+    position: fixed !important;
+    bottom: 30px !important;
+    right: 30px !important;
+    min-width: 320px !important;
+    max-width: 480px !important;
+    background: white !important;
+    border-radius: 16px !important;
+    padding: 16px 20px !important;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.25) !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 14px !important;
+    z-index: 2147483647 !important;
+    border-left: 4px solid ${type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#3b82f6'} !important;
+    font-family: 'Inter', sans-serif !important;
+    animation: vexoToastIn 0.3s ease-out !important;
+  `;
 
   const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+  const titles = { success: 'Sucesso', error: 'Erro', warning: 'Atenção', info: 'Informação' };
 
   toast.innerHTML = `
-    <div class="vexo-toast-icon">${icons[type] || 'ℹ️'}</div>
-    <div class="vexo-toast-content">
-      <div class="vexo-toast-title">${type === 'success' ? 'Sucesso' : type === 'error' ? 'Erro' : type === 'warning' ? 'Atenção' : 'Informação'}</div>
-      <div class="vexo-toast-message">${message}</div>
+    <div style="width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">${icons[type] || 'ℹ️'}</div>
+    <div style="flex:1;min-width:0;">
+      <div style="font-weight:700;font-size:14px;margin-bottom:4px;color:#0f172a;">${titles[type] || 'Info'}</div>
+      <div style="font-size:12px;color:#475569;line-height:1.45;">${message}</div>
     </div>
-    <div class="vexo-toast-close" onclick="this.parentElement.remove()">✕</div>
+    <div onclick="this.parentElement.remove()" style="width:24px;height:24px;border-radius:8px;background:#f1f5f9;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:#64748b;flex-shrink:0;">✕</div>
   `;
 
   document.body.appendChild(toast);
 
-  // ⚠️ Avisos ficam mais tempo na tela (7s) — os outros 4s
   const duracao = (type === 'warning' || type === 'error') ? 7000 : 4000;
   setTimeout(() => { if (toast.parentElement) toast.remove(); }, duracao);
 }
@@ -2330,17 +2476,13 @@ function atualizarStatus(idUnico, direcao, origem) {
   const linha = idUnico; // compatibilidade com o resto da função
 
   console.log(`🔄 [atualizarStatus] idUnico=${idUnico}, direcao=${direcao}, origem=${origem}`);
-  console.log(`📌 bancoDeDadosId do pedido: ${pedido.bancoDeDadosId || 'NULL'}`);
-  console.log(`📌 idUnico do pedido: ${pedido.id_unico || 'N/A'}`);
-  console.log(`📌 data_radar do pedido: ${pedido.data_radar || 'NÃO PREENCHIDA'}`);
-  console.log(`📌 codigoCliente do pedido: ${pedido.codigoCliente || 'NÃO PREENCHIDO'}`);
 
   // 🔥 REGRA ESPECIAL: PENDENTE DE INPUT (UX DE TELETRANSPORTE)
   const isPendenteInput = (pedido.status_raw === "PENDENTE DE INPUT" || pedido.status_raw.includes("PENDENTE"));
-  
+
   if (direcao === 'avancar' && isPendenteInput) {
     console.log("🚀 Iniciando UX de Teletransporte para Lançamento...");
-    
+
     // Filtro de Segurança: Ignorar modalidades proibidas
     if (pedido.modalidade === "TROCA DE TECNOLOGIA E-SIM") {
       showToast('⚠️ Esta modalidade não permite transferência automática.', 'warning');
@@ -2359,19 +2501,19 @@ function atualizarStatus(idUnico, direcao, origem) {
       data_key: pedido.data_key,
       linhas: pedido.linhas_agrupadas || []
     };
-    
+
     console.log(`🏦 bancoDeDadosId sendo enviado: ${pedidoData.bancoDeDadosId || 'NULL'}`);
-    
+
     sessionStorage.setItem('pedidoParaInput', JSON.stringify(pedidoData));
-    
+
     showLoading('Preparando pedido para INPUT...');
-    
+
     const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
     const nomeUsuario = sessao.nome || sessao.username || 'Sistema';
-    
+
     const idUnico = pedido.id_unico || '';
     const bancoDeDadosId = pedido.bancoDeDadosId || null;
-    
+
     google.script.run
       .withSuccessHandler(function(res) {
         if (res && res.success) {
@@ -2400,7 +2542,7 @@ function atualizarStatus(idUnico, direcao, origem) {
         idUnico,
         bancoDeDadosId
       );
-    
+
     return;
   }
 
@@ -2410,16 +2552,18 @@ function atualizarStatus(idUnico, direcao, origem) {
   let novoIdx = pedido.status_etapa;
   if (direcao === 'avancar') novoIdx++;
   else novoIdx--;
-  
+
   if (novoIdx < 0 || novoIdx > 6) return;
-  
+
   const novoStatus = STATUS_LIST[novoIdx];
-  
+
   // 🔥 VALIDAÇÃO ESPECIAL PARA ATIVAÇÃO (etapa 6)
-  // Só permite avançar para "6. ATIVADO" se a Data de Ativação RADAR estiver preenchida
- if (novoStatus === "6. ATIVADO") {
-    const faltaRadar   = !pedido.data_radar   || String(pedido.data_radar).trim()   === "";
-    const faltaCodigo  = !pedido.codigoCliente || String(pedido.codigoCliente).trim() === "";
+  // Só permite avançar para "6. ATIVADO" se a Data de Ativação RADAR e o Código do Cliente estiverem preenchidos
+  if (novoStatus === "6. ATIVADO") {
+    console.log(`📌 [Validação etapa 6] data_radar: ${pedido.data_radar || 'VAZIO'} | codigoCliente: ${pedido.codigoCliente || 'VAZIO'}`);
+
+    const faltaRadar  = !pedido.data_radar     || String(pedido.data_radar).trim()     === "";
+    const faltaCodigo = !pedido.codigoCliente  || String(pedido.codigoCliente).trim()  === "";
 
     if (faltaRadar || faltaCodigo) {
       // 🔥 Toast único com TODAS as pendências (evita 2 toasts em sequência)
@@ -2438,10 +2582,10 @@ function atualizarStatus(idUnico, direcao, origem) {
       return;
     }
   }
-  
+
   const statusAtualLabel = STATUS_INFO[pedido.status_raw]?.label || pedido.status_raw;
   const novoStatusLabel = STATUS_INFO[novoStatus]?.label || novoStatus;
-  
+
   showConfirmModal(
     direcao === 'avancar' ? '<i class="fas fa-arrow-right"></i> Avançar Etapa' : '<i class="fas fa-arrow-left"></i> Voltar Etapa',
     `Deseja ${direcao === 'avancar' ? 'avançar' : 'voltar'} o pedido <strong>${pedido.cliente.substring(0, 40)}</strong> da etapa <strong>${statusAtualLabel}</strong> para <strong>${novoStatusLabel}</strong>?`,
@@ -2695,14 +2839,25 @@ function abrirDetalhes(idUnico, origem) {
   
   document.body.classList.add('modal-open');
   document.body.style.overflow = 'hidden';
-  document.body.style.position = 'fixed';
-  document.body.style.width = '100%';
-  document.body.style.height = '100%';
-  
+
   const scrollY = window.scrollY;
   modal.setAttribute('data-scroll', scrollY);
-  
-  modal.style.display = 'flex';
+
+  // 🔥 Reforça estilos inline (sobrevive ao CSS escopado)
+  modal.style.cssText = `
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    width: 100vw !important; height: 100vh !important;
+    margin: 0 !important; padding: 20px !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2147483646 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  `;
   modal.classList.add('active');
   modalBody.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>Carregando detalhes...</div>';
   
