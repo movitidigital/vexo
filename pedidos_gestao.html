@@ -985,11 +985,18 @@
 
 <script>
 
-  // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
 // PONTE SUPABASE — substitui google.script.run
+// (idempotente: pode ser injetada várias vezes sem quebrar)
 // ═══════════════════════════════════════════════════════════
 (function () {
   if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
+
+  // 🔥 Se a ponte já foi instalada nesta sessão, só loga e sai
+  if (window.__vexoPontePedidosInstalada) {
+    console.log('ℹ️ Ponte Supabase já instalada — reaproveitando');
+    return;
+  }
 
   const MAP = {
     p_listarPedidosGestao:            { rpc: 'p_listar_pedidos_gestao',            args: (f) => ({ p_filtros: f || {} }) },
@@ -1036,10 +1043,17 @@
 
   window.google = window.google || {};
   window.google.script = window.google.script || {};
-  Object.defineProperty(window.google.script, 'run', { get: () => makeRunner() });
+
+  // 🔥 Define como configurable para permitir reinstalação futura
+  Object.defineProperty(window.google.script, 'run', {
+    get: () => makeRunner(),
+    configurable: true,
+    enumerable: true
+  });
+
+  window.__vexoPontePedidosInstalada = true;
   console.log('✅ Ponte Supabase ativa — pedidos_gestao.html');
 })();
- 
 
 // ============================================
 // ESTADO GLOBAL (COM PROTEÇÃO CONTRA REDECLARAÇÃO)
