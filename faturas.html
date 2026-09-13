@@ -9,6 +9,41 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
 <style>
+    /* ============ CÓDIGO COPIÁVEL ============ */
+  .codigo-copiavel {
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 3px 8px;
+    border-radius: 6px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.15s ease;
+    user-select: none;
+    border: 1px dashed transparent;
+  }
+  .codigo-copiavel:hover {
+    background: var(--info-bg);
+    color: var(--info);
+    border-color: #bfdbfe;
+  }
+  .codigo-copiavel .copy-hint {
+    font-size: 0.7rem;
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+  .codigo-copiavel:hover .copy-hint { opacity: 1; }
+
+  /* estado copiado */
+  .codigo-copiavel.copiado {
+    background: var(--success-bg);
+    color: #065f46;
+    border-color: #6ee7b7;
+    border-style: solid;
+  }
+  .codigo-copiavel.copiado .copy-hint { opacity: 1; }
     /* ============ KPI NOVOS (com ícone grande) ============ */
   .kpi-card {
     display: flex;
@@ -759,7 +794,7 @@ html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId +
       '<td>' +
       '<button class="expand-btn" onclick="toggleDetail(\'' + detailId + '\')" id="btn-' + detailId + '">▶</button>' +
       '</td>' +
-      '<td style="font-family:monospace;font-size:0.8rem;color:var(--text-muted);">' + codigoCliente + '</td>' +
+      '<td>' +   '<span class="codigo-copiavel" onclick="copiarCodigoCliente(this, \'' + codigoCliente + '\')" title="Clique para copiar">' +     codigoCliente +     '<span class="copy-hint">📋</span>' +   '</span>' + '</td>' +
     '<td>' +
   '<div class="client-name">' + nomeCliente + '</div>' +
   '<div class="client-line">👤 Resp: <strong>' + resp + '</strong></div>' +
@@ -1178,6 +1213,45 @@ async function registrarLogWhatsAppFrontend(codigoCliente, dataVencimento) {
     })
     .registrarLogWhatsApp(celulas, nomeUsuario);
 }
+  function copiarCodigoCliente(el, codigo) {
+  if (!codigo) return;
+
+  const texto = String(codigo).trim();
+
+  // Fallback robusto (funciona em http:// também)
+  const _copy = (t) => {
+    if (navigator.clipboard && window.isSecureContext) {
+      return navigator.clipboard.writeText(t);
+    }
+    return new Promise((resolve, reject) => {
+      const ta = document.createElement('textarea');
+      ta.value = t;
+      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy') ? resolve() : reject();
+      } catch (e) { reject(e); }
+      finally { document.body.removeChild(ta); }
+    });
+  };
+
+  _copy(texto).then(() => {
+    // feedback visual
+    el.classList.add('copiado');
+    const hint = el.querySelector('.copy-hint');
+    if (hint) hint.textContent = '✅';
+    setTimeout(() => {
+      el.classList.remove('copiado');
+      if (hint) hint.textContent = '📋';
+    }, 1400);
+  }).catch(err => {
+    console.warn('Falha ao copiar:', err);
+    alert('Não foi possível copiar. Código: ' + texto);
+  });
+}
+window.copiarCodigoCliente = copiarCodigoCliente;
 </script>
 </body>
 </html>
