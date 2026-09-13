@@ -838,34 +838,72 @@
       // PERMISSÕES (USANDO getPerfilUsuario existente)
       // ============================================
       
-    function carregarPermissoes() {
-  const sessaoStorage = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const meta = window.VEXO?.user?.user_metadata || {};
-  const cargo = (sessaoStorage.role || sessaoStorage.cargo || meta.role || meta.cargo || '').toUpperCase().trim();
+  async function carregarPermissoes() {
+  // 1) Tenta várias fontes em ordem de confiabilidade
+  let cargo = '';
+  let nome  = '';
 
-  console.log('📌 Cargo do usuário:', cargo);
+  // Fonte A: window.VEXO (dashboard com Supabase Auth)
+  const meta = window.VEXO?.user?.user_metadata || {};
+  if (meta.role) cargo = meta.role;
+  if (meta.nome) nome  = meta.nome;
+
+  // Fonte B: sessionStorage (fallback)
+  if (!cargo) {
+    try {
+      const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+      cargo = sessao.role || sessao.cargo || '';
+      nome  = sessao.nome || nome;
+    } catch(e) {}
+  }
+
+  // Fonte C: consulta direta na tabela profiles (último recurso, sempre funciona)
+  if (!cargo && window.sb && window.VEXO?.user?.id) {
+    try {
+      const { data } = await window.sb
+        .from('profiles')
+        .select('nome, sobrenome, role')
+        .eq('id', window.VEXO.user.id)
+        .single();
+      if (data) {
+        cargo = data.role || '';
+        nome  = [data.nome, data.sobrenome].filter(Boolean).join(' ').trim() || nome;
+      }
+    } catch(e) {
+      console.warn('⚠️ Falha ao buscar profile:', e);
+    }
+  }
+
+  cargo = String(cargo).toUpperCase().trim();
+  console.log('📌 Cargo do usuário (ofertas):', cargo);
 
   permissoes.podeEditar = ['ADMINISTRADOR', 'BACKOFFICE', 'PROPRIETÁRIO', 'PROPRIETARIO'].includes(cargo);
-  permissoes.podeVisualizar = (permissoes.podeEditar || cargo === 'CONSULTOR DE VENDAS');
+  permissoes.podeVisualizar = permissoes.podeEditar || cargo === 'CONSULTOR DE VENDAS';
   permissoes.cargo = cargo;
-        
-        const badge = document.getElementById('permissao-badge');
-        const btnGroup = document.getElementById('btn-group-acoes');
-        
-        if (permissoes.podeEditar) {
-          badge.innerHTML = '<span>👑</span> Modo Administrador - Edição liberada';
-          btnNovaOferta.style.display = 'inline-flex';
-        } else if (permissoes.podeVisualizar) {
-          badge.innerHTML = '<span>🔒</span> Modo Leitura - Visualização apenas';
-          btnNovaOferta.style.display = 'none';
-        } else {
-          badge.innerHTML = '<span>⚠️</span> Acesso negado';
-          document.querySelector('.ofertas-container').innerHTML = '<div class="empty-state">❌ Você não tem permissão para acessar este módulo.</div>';
-          return;
-        }
-        
-        carregarOfertas();
-      }
+
+  const badge = document.getElementById('permissao-badge');
+  const btnGroup = document.getElementById('btn-group-acoes');
+
+  if (permissoes.podeEditar) {
+    badge.innerHTML = '<span>👑</span> Modo Administrador - Edição liberada';
+    btnNovaOferta.style.display = 'inline-flex';
+  } else if (permissoes.podeVisualizar) {
+    badge.innerHTML = '<span>🔒</span> Modo Leitura - Visualização apenas';
+    btnNovaOferta.style.display = 'none';
+  } else {
+    badge.innerHTML = '<span>⚠️</span> Acesso negado';
+    document.querySelector('.ofertas-container').innerHTML =
+      `<div class="empty-state">
+        ❌ Você não tem permissão para acessar este módulo.<br>
+        <small style="font-size:12px; color:#94a3b8; margin-top:8px; display:block;">
+          Cargo detectado: "${cargo || 'vazio'}"
+        </small>
+       </div>`;
+    return;
+  }
+
+  carregarOfertas();
+}
       
       // ============================================
       // CRUD - CARREGAR OFERTAS
