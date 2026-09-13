@@ -1110,6 +1110,48 @@
       border-left: 4px solid #3b82f6 !important;
       font-family: 'Inter', sans-serif !important;
     }
+	/* ═══ MODAL DE CONFIRMAÇÃO ═══ */
+    #vexo-confirm-modal.vexo-modal,
+    #vexo-date-modal.vexo-modal,
+    #modal-selecao-linhas.vexo-modal,
+    #modal-exclusao-pedido.vexo-modal {
+      position: fixed !important;
+      top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+      width: 100vw !important; height: 100vh !important;
+      margin: 0 !important; padding: 20px !important;
+      background: rgba(15, 23, 42, 0.85) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      display: none !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 2147483647 !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    #vexo-confirm-modal.vexo-modal.active,
+    #vexo-date-modal.vexo-modal.active,
+    #modal-selecao-linhas.vexo-modal.active,
+    #modal-exclusao-pedido.vexo-modal.active {
+      display: flex !important;
+    }
+
+    #vexo-confirm-modal .modal-container,
+    #vexo-date-modal .modal-container,
+    #modal-selecao-linhas .modal-container,
+    #modal-exclusao-pedido .modal-container {
+      position: relative !important;
+      background: white !important;
+      width: 100% !important;
+      max-height: 90vh !important;
+      margin: 0 !important;
+      border-radius: 24px !important;
+      overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+      animation: modalFadeIn 0.3s ease !important;
+    }
     .vexo-toast-success { border-left-color: #10b981 !important; background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%) !important; }
     .vexo-toast-error   { border-left-color: #ef4444 !important; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%) !important; }
     .vexo-toast-warning { border-left-color: #f59e0b !important; background: linear-gradient(135deg, #fff 0%, #fffbeb 100%) !important; }
@@ -1380,11 +1422,13 @@ function showToast(message, type = 'info') {
   
 
   
-  function fecharConfirmModal() {
-    const modal = document.getElementById('vexo-confirm-modal');
-    if (modal) modal.classList.remove('active');
+function fecharConfirmModal() {
+  const modal = document.getElementById('vexo-confirm-modal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
   }
-  
+}
   // ============================================
   // 🎨 MODAL DE SOLICITAÇÃO DE DATA
   // ============================================
@@ -1431,8 +1475,21 @@ function showToast(message, type = 'info') {
     
     document.getElementById('date-modal-input').value = '';
     
-    const modalEl = document.getElementById('vexo-date-modal');
-    modalEl.classList.add('active');
+   const modalEl = document.getElementById('vexo-date-modal');
+modalEl.style.cssText = `
+  position: fixed !important;
+  top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+  width: 100vw !important; height: 100vh !important;
+  margin: 0 !important; padding: 20px !important;
+  background: rgba(15, 23, 42, 0.85) !important;
+  backdrop-filter: blur(8px) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 2147483647 !important;
+  box-sizing: border-box !important;
+`;
+modalEl.classList.add('active');
     
     const onConfirmClick = () => {
       const input = document.getElementById('date-modal-input');
@@ -2386,9 +2443,22 @@ function showConfirmModal(title, message, onConfirm, onCancel, hasTwoOptions, on
   }
   
   const modalEl = document.getElementById('vexo-confirm-modal');
+  // 🔥 Reforça estilos inline (sobrevive ao CSS escopado)
+  modalEl.style.cssText = `
+    position: fixed !important;
+    top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+    width: 100vw !important; height: 100vh !important;
+    margin: 0 !important; padding: 20px !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2147483647 !important;
+    box-sizing: border-box !important;
+  `;
   modalEl.classList.add('active');
 }
-  
 
 function handleStatusClick(event) {
   const btn = event.currentTarget;
