@@ -1088,51 +1088,298 @@
 (function injetarEstilosCriticos() {
   if (document.getElementById('vexo-pedidos-critical-styles')) return;
 
-  var css = [
-    'body.modal-open { overflow: hidden !important; padding-right: 0 !important; width: 100% !important; }',
-
-    '.vexo-toast { position: fixed !important; bottom: 30px !important; right: 30px !important; min-width: 320px !important; max-width: 480px !important; background: white !important; border-radius: 16px !important; padding: 16px 20px !important; box-shadow: 0 10px 25px -5px rgba(0,0,0,0.25) !important; display: flex !important; align-items: center !important; gap: 14px !important; z-index: 2147483647 !important; animation: vexoToastIn 0.3s ease-out !important; border-left: 4px solid #3b82f6 !important; font-family: Inter, sans-serif !important; }',
-    '.vexo-toast-success { border-left-color: #10b981 !important; background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%) !important; }',
-    '.vexo-toast-error   { border-left-color: #ef4444 !important; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%) !important; }',
-    '.vexo-toast-warning { border-left-color: #f59e0b !important; background: linear-gradient(135deg, #fff 0%, #fffbeb 100%) !important; }',
-    '.vexo-toast-info    { border-left-color: #3b82f6 !important; background: linear-gradient(135deg, #fff 0%, #eff6ff 100%) !important; }',
-    '.vexo-toast-icon { width: 40px !important; height: 40px !important; border-radius: 12px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 20px !important; flex-shrink: 0 !important; }',
-    '.vexo-toast-content { flex: 1 !important; }',
-    '.vexo-toast-title { font-weight: 700 !important; font-size: 14px !important; margin-bottom: 4px !important; color: #0f172a !important; }',
-    '.vexo-toast-message { font-size: 12px !important; color: #475569 !important; line-height: 1.45 !important; }',
-    '.vexo-toast-message b { color: #b45309 !important; }',
-    '.vexo-toast-close { width: 24px !important; height: 24px !important; border-radius: 8px !important; background: #f1f5f9 !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; font-size: 12px !important; color: #64748b !important; }',
-
-    '@keyframes vexoToastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }',
-
-    '#vexo-confirm-modal.vexo-modal, #vexo-date-modal.vexo-modal, #modal-selecao-linhas.vexo-modal, #modal-exclusao-pedido.vexo-modal, #modal-detalhes.vexo-modal { position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; margin: 0 !important; padding: 20px !important; background: rgba(15,23,42,0.85) !important; backdrop-filter: blur(8px) !important; -webkit-backdrop-filter: blur(8px) !important; display: none !important; align-items: center !important; justify-content: center !important; z-index: 2147483647 !important; box-sizing: border-box !important; overflow: hidden !important; }',
-    '#vexo-confirm-modal.vexo-modal.active, #vexo-date-modal.vexo-modal.active, #modal-selecao-linhas.vexo-modal.active, #modal-exclusao-pedido.vexo-modal.active, #modal-detalhes.vexo-modal.active { display: flex !important; }',
-
-    '#vexo-confirm-modal .modal-container, #vexo-date-modal .modal-container, #modal-selecao-linhas .modal-container, #modal-exclusao-pedido .modal-container, #modal-detalhes .modal-container { position: relative !important; background: white !important; width: 100% !important; max-height: 90vh !important; margin: 0 !important; border-radius: 24px !important; overflow: hidden !important; display: flex !important; flex-direction: column !important; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important; animation: modalFadeIn 0.3s ease !important; }',
-    '#modal-detalhes .modal-container { max-width: 920px !important; }',
-    '#vexo-confirm-modal .modal-container, #vexo-date-modal .modal-container { max-width: 440px !important; }',
-
-    '#vexo-confirm-modal .modal-header, #vexo-date-modal .modal-header, #modal-detalhes .modal-header { flex-shrink: 0 !important; padding: 18px 24px !important; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important; color: white !important; display: flex !important; justify-content: space-between !important; align-items: center !important; gap: 12px !important; }',
-    '#vexo-confirm-modal .modal-header h3, #vexo-date-modal .modal-header h3, #modal-detalhes .modal-header h3 { color: white !important; font-size: 16px !important; font-weight: 700 !important; margin: 0 !important; display: flex !important; align-items: center !important; gap: 8px !important; line-height: 1.3 !important; }',
-    '#vexo-confirm-modal .modal-close, #vexo-date-modal .modal-close, #modal-detalhes .modal-close { background: rgba(255,255,255,0.15) !important; border: none !important; width: 32px !important; height: 32px !important; min-width: 32px !important; border-radius: 50% !important; color: white !important; font-size: 16px !important; line-height: 1 !important; cursor: pointer !important; display: inline-flex !important; align-items: center !important; justify-content: center !important; flex-shrink: 0 !important; padding: 0 !important; }',
-
-    '#vexo-confirm-modal .modal-body, #vexo-date-modal .modal-body, #modal-detalhes .modal-body { flex: 1 1 auto !important; min-height: 0 !important; overflow-y: auto !important; overflow-x: hidden !important; padding: 24px !important; -webkit-overflow-scrolling: touch !important; background: white !important; }',
-
-    '#vexo-confirm-modal #confirm-buttons { display: flex !important; gap: 12px !important; margin-top: 20px !important; }',
-    '#vexo-confirm-modal #confirm-buttons button { padding: 12px 20px !important; border-radius: 10px !important; font-weight: 600 !important; font-size: 13px !important; cursor: pointer !important; border: none !important; font-family: inherit !important; min-height: 42px !important; }',
-    '#vexo-confirm-modal #confirm-buttons .btn-secondary { background: #f1f5f9 !important; color: #64748b !important; }',
-    '#vexo-confirm-modal #confirm-buttons .btn-primary { background: #1e293b !important; color: white !important; }',
-    '#vexo-confirm-modal .modal-body p, #vexo-date-modal .modal-body p { color: #475569 !important; font-size: 14px !important; line-height: 1.5 !important; }',
-
-    '#modal-detalhes .modal-footer { flex-shrink: 0 !important; padding: 14px 24px !important; border-top: 1px solid #e2e8f0 !important; background: #f8fafc !important; display: flex !important; justify-content: flex-end !important; gap: 12px !important; }',
-    '#modal-detalhes .info-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 14px !important; }',
-
-    '@media (max-width: 768px) { #modal-detalhes.vexo-modal { padding: 10px !important; } #modal-detalhes .modal-container { max-height: 95vh !important; border-radius: 16px !important; } #modal-detalhes .modal-body { padding: 16px !important; } #modal-detalhes .info-grid { grid-template-columns: 1fr !important; } }'
-  ].join('\n');
-
-  var style = document.createElement('style');
+  const style = document.createElement('style');
   style.id = 'vexo-pedidos-critical-styles';
-  style.textContent = css;
+  style.textContent = `
+    /* ═══ TOAST sempre no topo ═══ */
+	    body.modal-open {
+      overflow: hidden !important;
+      padding-right: 0 !important;
+      width: 100% !important;
+    }
+    .vexo-toast {
+      position: fixed !important;
+      bottom: 30px !important;
+      right: 30px !important;
+      min-width: 320px !important;
+      max-width: 480px !important;
+      background: white !important;
+      border-radius: 16px !important;
+      padding: 16px 20px !important;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.25) !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 14px !important;
+      z-index: 2147483647 !important;
+      animation: vexoToastIn 0.3s ease-out !important;
+      border-left: 4px solid #3b82f6 !important;
+      font-family: 'Inter', sans-serif !important;
+    }
+	    /* ═══ HEADER DOS MODAIS DE CONFIRMAÇÃO/DATA ═══ */
+    #vexo-confirm-modal .modal-header,
+    #vexo-date-modal .modal-header {
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+      gap: 12px !important;
+      padding: 18px 24px !important;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+      color: white !important;
+      flex-shrink: 0 !important;
+      border-radius: 24px 24px 0 0 !important;
+    }
+
+    #vexo-confirm-modal .modal-header h3,
+    #vexo-date-modal .modal-header h3 {
+      color: white !important;
+      font-size: 16px !important;
+      font-weight: 700 !important;
+      margin: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      gap: 8px !important;
+      line-height: 1.3 !important;
+    }
+
+    #vexo-confirm-modal .modal-header h3 i,
+    #vexo-date-modal .modal-header h3 i {
+      color: white !important;
+    }
+
+    #vexo-confirm-modal .modal-close,
+    #vexo-date-modal .modal-close {
+      background: rgba(255,255,255,0.15) !important;
+      border: none !important;
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      border-radius: 50% !important;
+      color: white !important;
+      font-size: 16px !important;
+      line-height: 1 !important;
+      cursor: pointer !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      flex-shrink: 0 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      transition: background 0.2s !important;
+    }
+
+    #vexo-confirm-modal .modal-close:hover,
+    #vexo-date-modal .modal-close:hover {
+      background: rgba(255,255,255,0.3) !important;
+    }
+
+    /* ═══ BODY DOS MODAIS ═══ */
+    #vexo-confirm-modal .modal-body,
+    #vexo-date-modal .modal-body {
+      flex: 1 1 auto !important;
+      padding: 24px !important;
+      overflow-y: auto !important;
+      min-height: 0 !important;
+      background: white !important;
+    }
+
+    /* Botões internos */
+    #vexo-confirm-modal #confirm-buttons {
+      display: flex !important;
+      gap: 12px !important;
+      margin-top: 20px !important;
+    }
+
+    #vexo-confirm-modal #confirm-buttons button,
+    #vexo-date-modal .modal-body > div:last-child button {
+      padding: 12px 20px !important;
+      border-radius: 10px !important;
+      font-weight: 600 !important;
+      font-size: 13px !important;
+      cursor: pointer !important;
+      border: none !important;
+      font-family: inherit !important;
+      min-height: 42px !important;
+    }
+
+    #vexo-confirm-modal #confirm-buttons .btn-secondary,
+    #vexo-date-modal .modal-body .btn-secondary {
+      background: #f1f5f9 !important;
+      color: #64748b !important;
+    }
+
+    #vexo-confirm-modal #confirm-buttons .btn-secondary:hover,
+    #vexo-date-modal .modal-body .btn-secondary:hover {
+      background: #e2e8f0 !important;
+    }
+
+    #vexo-confirm-modal #confirm-buttons .btn-primary,
+    #vexo-date-modal .modal-body .btn-primary {
+      background: #1e293b !important;
+      color: white !important;
+    }
+
+    #vexo-confirm-modal #confirm-buttons .btn-primary:hover,
+    #vexo-date-modal .modal-body .btn-primary:hover {
+      background: #0f172a !important;
+    }
+
+    /* ═══ CONTAINER DOS MODAIS PEQUENOS ═══ */
+    #vexo-confirm-modal .modal-container,
+    #vexo-date-modal .modal-container {
+      max-width: 440px !important;
+      width: 100% !important;
+    }
+
+    /* Ícone de aviso e texto centralizado */
+    #vexo-confirm-modal .modal-body > div:first-child,
+    #vexo-date-modal .modal-body > div:first-child {
+      margin-bottom: 16px !important;
+    }
+
+    #vexo-confirm-modal .modal-body p,
+    #vexo-date-modal .modal-body p {
+      color: #475569 !important;
+      font-size: 14px !important;
+      line-height: 1.5 !important;
+      margin-bottom: 0 !important;
+    }
+	/* ═══ MODAL DE CONFIRMAÇÃO ═══ */
+    #vexo-confirm-modal.vexo-modal,
+    #vexo-date-modal.vexo-modal,
+    #modal-selecao-linhas.vexo-modal,
+    #modal-exclusao-pedido.vexo-modal {
+      position: fixed !important;
+      top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+      width: 100vw !important; height: 100vh !important;
+      margin: 0 !important; padding: 20px !important;
+      background: rgba(15, 23, 42, 0.85) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      display: none !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 2147483647 !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    #vexo-confirm-modal.vexo-modal.active,
+    #vexo-date-modal.vexo-modal.active,
+    #modal-selecao-linhas.vexo-modal.active,
+    #modal-exclusao-pedido.vexo-modal.active {
+      display: flex !important;
+    }
+
+    #vexo-confirm-modal .modal-container,
+    #vexo-date-modal .modal-container,
+    #modal-selecao-linhas .modal-container,
+    #modal-exclusao-pedido .modal-container {
+      position: relative !important;
+      background: white !important;
+      width: 100% !important;
+      max-height: 90vh !important;
+      margin: 0 !important;
+      border-radius: 24px !important;
+      overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+      animation: modalFadeIn 0.3s ease !important;
+    }
+    .vexo-toast-success { border-left-color: #10b981 !important; background: linear-gradient(135deg, #fff 0%, #f0fdf4 100%) !important; }
+    .vexo-toast-error   { border-left-color: #ef4444 !important; background: linear-gradient(135deg, #fff 0%, #fef2f2 100%) !important; }
+    .vexo-toast-warning { border-left-color: #f59e0b !important; background: linear-gradient(135deg, #fff 0%, #fffbeb 100%) !important; }
+    .vexo-toast-info    { border-left-color: #3b82f6 !important; background: linear-gradient(135deg, #fff 0%, #eff6ff 100%) !important; }
+
+    .vexo-toast-icon { width: 40px !important; height: 40px !important; border-radius: 12px !important; display: flex !important; align-items: center !important; justify-content: center !important; font-size: 20px !important; flex-shrink: 0 !important; }
+    .vexo-toast-content { flex: 1 !important; }
+    .vexo-toast-title { font-weight: 700 !important; font-size: 14px !important; margin-bottom: 4px !important; color: #0f172a !important; }
+    .vexo-toast-message { font-size: 12px !important; color: #475569 !important; line-height: 1.45 !important; }
+    .vexo-toast-message b { color: #b45309 !important; }
+    .vexo-toast-close { width: 24px !important; height: 24px !important; border-radius: 8px !important; background: #f1f5f9 !important; display: flex !important; align-items: center !important; justify-content: center !important; cursor: pointer !important; font-size: 12px !important; color: #64748b !important; }
+
+    @keyframes vexoToastIn {
+      from { transform: translateX(100%); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+
+    /* ═══ MODAL DETALHES centralizado ═══ */
+    #modal-detalhes.vexo-modal {
+      position: fixed !important;
+      top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important;
+      width: 100vw !important; height: 100vh !important;
+      margin: 0 !important; padding: 20px !important;
+      background: rgba(15, 23, 42, 0.85) !important;
+      backdrop-filter: blur(8px) !important;
+      -webkit-backdrop-filter: blur(8px) !important;
+      display: none !important;
+      align-items: center !important;
+      justify-content: center !important;
+      z-index: 2147483646 !important;
+      box-sizing: border-box !important;
+      overflow: hidden !important;
+    }
+    #modal-detalhes.vexo-modal.active { display: flex !important; }
+
+    #modal-detalhes .modal-container {
+      position: relative !important;
+      background: white !important;
+      width: 100% !important;
+      max-width: 920px !important;
+      max-height: 90vh !important;
+      margin: 0 !important;
+      border-radius: 24px !important;
+      overflow: hidden !important;
+      display: flex !important;
+      flex-direction: column !important;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+      animation: modalFadeIn 0.3s ease !important;
+    }
+
+    #modal-detalhes .modal-header {
+      flex-shrink: 0 !important;
+      padding: 18px 24px !important;
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+      color: white !important;
+      display: flex !important;
+      justify-content: space-between !important;
+      align-items: center !important;
+    }
+
+    #modal-detalhes .modal-body {
+      flex: 1 1 auto !important;
+      min-height: 0 !important;
+      overflow-y: auto !important;
+      overflow-x: hidden !important;
+      padding: 24px !important;
+      -webkit-overflow-scrolling: touch !important;
+    }
+
+    #modal-detalhes .modal-footer {
+      flex-shrink: 0 !important;
+      padding: 14px 24px !important;
+      border-top: 1px solid #e2e8f0 !important;
+      background: #f8fafc !important;
+      display: flex !important;
+      justify-content: flex-end !important;
+      gap: 12px !important;
+    }
+
+    #modal-detalhes .modal-body::-webkit-scrollbar { width: 8px !important; }
+    #modal-detalhes .modal-body::-webkit-scrollbar-track { background: #f1f5f9 !important; }
+    #modal-detalhes .modal-body::-webkit-scrollbar-thumb { background: #cbd5e1 !important; border-radius: 4px !important; }
+    #modal-detalhes .modal-body::-webkit-scrollbar-thumb:hover { background: #94a3b8 !important; }
+
+    #modal-detalhes .info-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
+
+    body.modal-open { overflow: hidden !important; }
+
+    @media (max-width: 768px) {
+      #modal-detalhes.vexo-modal { padding: 10px !important; }
+      #modal-detalhes .modal-container { max-height: 95vh !important; border-radius: 16px !important; }
+      #modal-detalhes .modal-body { padding: 16px !important; }
+      #modal-detalhes .info-grid { grid-template-columns: 1fr !important; }
+    }
+  `;
   document.head.appendChild(style);
   console.log('✅ Estilos críticos injetados no <head>');
 })();
