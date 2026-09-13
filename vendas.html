@@ -976,9 +976,10 @@ async function carregarConsultoresAtivos() {
     }
 
     const { data, error } = await window.sb
-      .from('profiles')
-      .select('*')
-      .in('role', ['CONSULTOR DE VENDAS', 'CONSULTOR', 'BACKOFFICE', 'ADMINISTRADOR', 'ADMIN']);
+  .from('profiles')
+  .select('*')
+  .eq('ativo', true)
+  .in('role', ['CONSULTOR DE VENDAS', 'CONSULTOR', 'BACKOFFICE', 'ADMINISTRADOR', 'ADMIN']);
 
     if (error) throw error;
 
