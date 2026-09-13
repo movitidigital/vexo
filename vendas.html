@@ -174,6 +174,9 @@
     renderModalidades();
     await carregarPlanos();
 
+    // 🔥 NOVO: Verifica se veio um pedido do módulo Gestão
+    await preCarregarPedidoParaInput();
+
     console.log('✅ [VENDAS] Módulo pronto');
   })();
 
@@ -192,6 +195,224 @@
     });
   };
 
+  // ============================================================
+// 🔥 INTEGRAÇÃO COM pedidos_gestao.html
+// Pré-carrega o formulário quando vem um pedido do Kanban
+// ============================================================
+async function preCarregarPedidoParaInput() {
+  let pedidoData = null;
+
+  // 1. Tenta sessionStorage primeiro
+  try {
+    const raw = sessionStorage.getItem('pedidoParaInput');
+    if (raw) {
+      pedidoData = JSON.parse(raw);
+      console.log('📋 [VENDAS] Pedido encontrado em sessionStorage:', pedidoData);
+    }
+  } catch(e) {
+    console.warn('⚠️ [VENDAS] Erro ao ler sessionStorage.pedidoParaInput:', e);
+  }
+
+  // 2. Fallback: localStorage
+  if (!pedidoData) {
+    try {
+      const raw = localStorage.getItem('ultimoPedidoParaInput');
+      if (raw) {
+        pedidoData = JSON.parse(raw);
+        console.log('📋 [VENDAS] Pedido encontrado em localStorage:', pedidoData);
+      }
+    } catch(e) {
+      console.warn('⚠️ [VENDAS] Erro ao ler localStorage:', e);
+    }
+  }
+
+  if (!pedidoData) {
+    console.log('ℹ️ [VENDAS] Nenhum pedido pré-carregado. Modo normal.');
+    return;
+  }
+
+  // Evita reprocessar em uma mesma sessão
+  if (sessionStorage.getItem('pedidoParaInputConsumido') === 'true') {
+    console.log('ℹ️ [VENDAS] Pedido já foi consumido nesta sessão.');
+    return;
+  }
+
+  console.log('🚀 [VENDAS] Pré-carregando pedido do módulo Gestão...');
+
+  // 3. Normaliza o nome da modalidade para bater com MODALIDADES_DISPONIVEIS
+  const normalizarModalidade = (m) => {
+    if (!m) return '';
+    let s = String(m).toUpperCase().trim()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, ''); // remove acentos
+    // Mapeamentos comuns
+    if (s === 'MIGRACAO') return 'MIGRAÇÃO';
+    if (s === 'PRIMEIRA ATIVACAO') return 'PRIMEIRA ATIVAÇÃO';
+    if (s === 'RENEG' || s === 'RENEGOCIACAO') return 'RENEG.';
+    if (s === 'ADITIVO') return 'ADITIVO';
+    if (s === 'PORTABILIDADE') return 'PORTABILIDADE';
+    if (s.startsWith('M2M')) return 'M2M (IoT)';
+    return m; // devolve original se não souber
+  };
+
+  // Descobre todas as modalidades (prioriza modalidadesList, senão usa linhasPorModalidade)
+  let modalidades = pedidoData.modalidadesList || [];
+  if ((!modalidades || modalidades.length === 0) && pedidoData.linhasPorModalidade) {
+    modalidades = Object.keys(pedidoData.linhasPorModalidade);
+  }
+  modalidades = modalidades.map(normalizarModalidade).filter(Boolean);
+
+  // Deduplica
+  modalidades = [...new Set(modalidades)];
+
+  if (modalidades.length === 0) {
+    console.warn('⚠️ [VENDAS] Pedido sem modalidades definidas.');
+    return;
+  }
+
+  console.log('📌 [VENDAS] Modalidades do pedido:', modalidades);
+
+  // 4. Ativa a aba "vendas" (por segurança)
+  if (typeof window.mudarAbaVendas === 'function') {
+    window.mudarAbaVendas('vendas');
+  }
+
+  // 5. Marca os cards das modalidades como checked
+  modalidades.forEach(m => {
+    MODALIDADES_SELECIONADAS.add(m);
+    const card = document.querySelector(`.modalidade-box[data-modalidade="${m}"]`);
+    if (card) card.classList.add('checked');
+  });
+
+  // 6. Gera o formulário (ele cria as estruturas + 1 linha vazia por modalidade)
+  window.gerarFormularioVenda();
+
+  // 7. Aguarda o DOM renderizar
+  await new Promise(r => setTimeout(r, 80));
+
+  // 8. Preenche campos comuns
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.value = (val === null || val === undefined) ? '' : val;
+  };
+
+  setVal('v_cnpj',            pedidoData.cnpj);
+  setVal('v_ie',              pedidoData.ie);
+  setVal('v_razao',           pedidoData.cliente);
+  setVal('v_cpf_admin',       pedidoData.cpfAdmin);
+  setVal('v_nome_admin',      pedidoData.nome_admin);
+  setVal('v_email',           pedidoData.email);
+  setVal('v_contato_fin',     pedidoData.contato_financeiro);
+  setVal('v_cep',             pedidoData.cep);
+  setVal('v_endereco',        pedidoData.endereco);
+  setVal('v_numero',          pedidoData.numero);
+  setVal('v_compl',           pedidoData.complemento);
+  setVal('v_bairro',          pedidoData.bairro);
+  setVal('v_cidade',          pedidoData.cidade);
+  setVal('v_uf',              pedidoData.uf);
+
+  // Data da venda (vem em ISO YYYY-MM-DD; se vier BR DD/MM/YYYY, converte)
+  if (pedidoData.dataVenda) {
+    let dataIso = pedidoData.dataVenda;
+    if (dataIso.includes('/')) {
+      const [d, m, a] = dataIso.split('/');
+      dataIso = `${a}-${m}-${d}`;
+    }
+    setVal('v_data', dataIso);
+  }
+
+  // Vencimento (select)
+  if (pedidoData.vencimento) {
+    const sel = document.getElementById('v_venc');
+    if (sel) {
+      const v = String(pedidoData.vencimento).replace(/\D/g, '');
+      const opt = Array.from(sel.options).find(o => o.value === v);
+      if (opt) sel.value = v;
+    }
+  }
+
+  // Pedido Radar / P2B (se vierem do pedido)
+  if (pedidoData.pedido_radar) setVal('v_radar', pedidoData.pedido_radar);
+  if (pedidoData.pedido_p2b)   setVal('v_p2b',   pedidoData.pedido_p2b);
+
+  // 9. Preenche as linhas de cada modalidade
+  const parseValorFlex = (v) => {
+    if (v === null || v === undefined || v === '') return 0;
+    if (typeof v === 'number') return v;
+    let s = String(v).replace('R$', '').trim();
+    if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+    const n = parseFloat(s.replace(/[^\d.-]/g, ''));
+    return isNaN(n) ? 0 : n;
+  };
+
+  modalidades.forEach(modalidade => {
+    const modID = modalidade.replace(/[^a-zA-Z0-9]/g, '');
+    const boxLinhas = document.getElementById(`box-linhas-${modID}`);
+    if (!boxLinhas) return;
+
+    // Limpa a linha vazia que gerarFormularioVenda() criou
+    boxLinhas.innerHTML = '';
+
+    // Descobre as linhas dessa modalidade
+    let linhasModalidade = [];
+    if (pedidoData.linhasPorModalidade) {
+      // Tenta pela chave original (sem normalização)
+      const chavesOriginais = Object.keys(pedidoData.linhasPorModalidade);
+      const chaveMatch = chavesOriginais.find(k => normalizarModalidade(k) === modalidade);
+      if (chaveMatch) {
+        linhasModalidade = pedidoData.linhasPorModalidade[chaveMatch] || [];
+      }
+    }
+
+    if (linhasModalidade.length === 0) {
+      // fallback: adiciona 1 linha vazia
+      window._adicionarLinha(modalidade, modID);
+      return;
+    }
+
+    linhasModalidade.forEach(info => {
+      window._adicionarLinha(modalidade, modID);
+
+      // Pega a última linha adicionada
+      const ultimaLinha = boxLinhas.lastElementChild;
+      if (!ultimaLinha) return;
+
+      // Preenche os campos da linha
+      const inputPlano   = ultimaLinha.querySelector('.input-plano');
+      const inputNumero  = ultimaLinha.querySelector('.input-numero');
+      const inputValor   = ultimaLinha.querySelector('.input-valor');
+      const inputOper    = ultimaLinha.querySelector('.input-operadora');
+
+      if (inputPlano)  inputPlano.value  = info.plano || info.oferta_nome || '';
+      if (inputNumero) inputNumero.value = info.numero || info.numero_da_linha || '';
+      if (inputValor)  inputValor.value  = Number(parseValorFlex(info.valor)).toFixed(2);
+      if (inputOper)   inputOper.value   = info.operadora || info.operadora_doadora || '';
+    });
+
+    window._atualizarContador(modID);
+  });
+
+  // 10. Feedback visual
+  if (typeof window._toast === 'function') {
+    window._toast('📋 Pedido pré-carregado! Confira os dados antes de gravar.', 'info');
+  }
+
+  // 11. Rola até o formulário
+  const areaVenda = document.getElementById('area_campos_venda');
+  if (areaVenda) {
+    setTimeout(() => {
+      areaVenda.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 200);
+  }
+
+  // 12. Marca como consumido (mas mantém o pedidoData para caso o usuário queira)
+  sessionStorage.setItem('pedidoParaInputConsumido', 'true');
+  console.log('✅ [VENDAS] Pré-carregamento concluído.');
+}
+
+// 🔥 Expõe globalmente para debug manual
+window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
+  
   // ============================================================
   // CARDS DE MODALIDADE
   // ============================================================
@@ -597,6 +818,13 @@
       window._toast(`✅ ${registros.length} linha(s) salva(s) com sucesso!`, 'success');
       document.getElementById('v-modal-sucesso').style.display = 'flex';
 
+      // 🔥 Limpa o pedido pré-carregado (já foi utilizado)
+sessionStorage.removeItem('pedidoParaInput');
+sessionStorage.removeItem('pedidoParaInputConsumido');
+sessionStorage.removeItem('bancoDeDadosIdAtual');
+localStorage.removeItem('ultimoPedidoParaInput');
+localStorage.removeItem('ultimoBancoDeDadosId');
+      
     } catch (e) {
       console.error('❌ Erro ao salvar:', e);
       alert('❌ Erro: ' + (e.message || e));
