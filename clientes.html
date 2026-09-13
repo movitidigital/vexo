@@ -16,6 +16,7 @@
     .btn-refresh:hover { background: #e2e8f0; transform: translateY(-1px); }
     .btn-refresh.primary { background: #10b981; color: white; }
     .btn-refresh.primary:hover { background: #059669; }
+    .btn-refresh:disabled { opacity: 0.6; cursor: not-allowed; }
 
     .tabs-container { display: flex; gap: 12px; margin-bottom: 24px; flex-wrap: wrap; }
     .tab-btn { background: white; border: 1px solid #e2e8f0; padding: 10px 24px; border-radius: 40px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.3s; display: flex; align-items: center; gap: 8px; color: #64748b; }
@@ -24,11 +25,24 @@
 
     .search-section { display: flex; gap: 16px; margin-bottom: 24px; flex-wrap: wrap; }
     .search-box { flex: 1; position: relative; min-width: 200px; }
-    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 2; pointer-events: none; }
     .search-input { width: 100%; padding: 14px 16px 14px 44px; border: 1px solid #e2e8f0; border-radius: 14px; font-size: 14px; font-family: 'Inter', sans-serif; background: white; transition: all 0.3s; }
     .search-input:focus { outline: none; border-color: #1e3c72; box-shadow: 0 0 0 3px rgba(30,60,114,0.1); }
+
+    /* 🔥 Anti-autofill Chrome */
+    .search-input:-webkit-autofill,
+    .search-input:-webkit-autofill:hover,
+    .search-input:-webkit-autofill:focus,
+    .search-input:-webkit-autofill:active {
+      -webkit-box-shadow: 0 0 0 30px white inset !important;
+      -webkit-text-fill-color: #1e293b !important;
+      transition: background-color 5000s ease-in-out 0s !important;
+    }
+    .search-input::-webkit-search-cancel-button,
+    .search-input::-webkit-search-decoration { -webkit-appearance: none; appearance: none; }
+
     .filter-box { position: relative; min-width: 200px; }
-    .filter-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+    .filter-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); color: #94a3b8; z-index: 2; pointer-events: none; }
     .filter-select { width: 100%; padding: 14px 16px 14px 40px; border: 1px solid #e2e8f0; border-radius: 14px; font-size: 14px; font-family: 'Inter', sans-serif; background: white; cursor: pointer; appearance: none; }
 
     .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
@@ -100,7 +114,7 @@
       .filter-box { width: 100%; }
     }
 
-    /* Modal (mantido igual ao original) */
+    /* Modal */
     .modal-premium { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 10000; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
     .modal-overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); }
     .modal-container { position: relative; background: white; width: 95%; max-width: 900px; max-height: 90vh; border-radius: 24px; overflow: hidden; animation: modalFadeIn 0.3s ease; display: flex; flex-direction: column; }
@@ -129,12 +143,6 @@
     .btn-cancel { background: #f1f5f9; border: none; color: #64748b; }
     .btn-save { background: #1e3c72; border: none; color: white; }
     .btn-save:hover { background: #162d54; transform: translateY(-1px); }
-    .search-input::-webkit-search-cancel-button,
-.search-input::-webkit-search-decoration {
-  -webkit-appearance: none;
-  appearance: none;
-}
-
   </style>
 </head>
 <body>
@@ -158,8 +166,40 @@
   </div>
 
   <div class="search-section">
-    <div class="search-box"> <i class="fas fa-search search-icon"></i> <input type="text" id="inputBusca" placeholder="Buscar por CNPJ, Razão Social ou Código..." class="search-input" autocomplete="new-password" autocorrect="off" autocapitalize="off" spellcheck="false" name="vexo_busca_xyz_nao_autofill_123" data-lpignore="true" data-form-type="other" data-1p-ignore="true" > </div>
-    <div class="filter-box"><i class="fas fa-map-marker-alt filter-icon"></i><select id="selectUF" class="filter-select"><option value="">Todos os Estados</option><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option></select></div>
+    <div class="search-box">
+      <i class="fas fa-search search-icon"></i>
+      <input
+        type="text"
+        id="inputBusca"
+        placeholder="Buscar por CNPJ, Razão Social ou Código..."
+        class="search-input"
+        autocomplete="new-password"
+        autocorrect="off"
+        autocapitalize="off"
+        spellcheck="false"
+        name="vexo_busca_clientes_nao_autofill_xyz"
+        data-lpignore="true"
+        data-1p-ignore="true"
+        data-form-type="other"
+        readonly
+        onfocus="this.removeAttribute('readonly')"
+      >
+    </div>
+    <div class="filter-box">
+      <i class="fas fa-map-marker-alt filter-icon"></i>
+      <select id="selectUF" class="filter-select" autocomplete="off" name="vexo_uf_nao_autofill_xyz">
+        <option value="">Todos os Estados</option>
+        <option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option>
+        <option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option>
+        <option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option>
+        <option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option>
+        <option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option>
+        <option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option>
+        <option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option>
+        <option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option>
+        <option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+      </select>
+    </div>
   </div>
 
   <div class="stats-grid">
@@ -181,7 +221,7 @@
   </div>
 </div>
 
-<!-- MODAL (mesmo do original) -->
+<!-- MODAL -->
 <div id="modalEdicao" class="modal-premium" style="display: none;">
   <div class="modal-overlay"></div>
   <div class="modal-container">
@@ -190,16 +230,16 @@
       <input type="hidden" id="editLinha">
       <div id="alertStatus" class="modal-alert" style="display: none;"></div>
       <div class="form-section"><div class="section-title"><i class="fas fa-building"></i> Identificação da Empresa</div><div class="form-row"><div class="form-group"><label>CNPJ / CPF</label><input type="text" id="editCnpj" class="form-control" readonly></div><div class="form-group"><label>Inscrição Estadual</label><input type="text" id="editIe" class="form-control edit-field" placeholder="Isento ou Nº"></div></div><div class="form-group full-width"><label>Razão Social / Nome Empresa</label><input type="text" id="editRazao" class="form-control edit-field"></div></div>
-      <div class="form-section"><div class="section-title"><i class="fas fa-key"></i> Códigos de Acesso</div><div class="form-row"><div class="form-group"><label>Código do Cliente (AF)</label><input type="text" id="editCodCliente" class="form-control edit-field"></div><div class="form-group"><label>Código do Administrador (AG)</label><input type="text" id="editCodAdmin" class="form-control edit-field"></div></div><div class="form-row"><div class="form-group"><label>Login Admin (MEU TIM)</label><input type="text" id="editLogin" class="form-control edit-field"></div><div class="form-group"><label>Senha (MEU TIM)</label><div class="password-wrapper"><input type="password" id="editSenha" class="form-control edit-field"><button type="button" class="password-toggle" onclick="toggleSenha('editSenha', this)">👁️</button></div></div></div></div>
-      <div class="form-section"><div class="section-title"><i class="fas fa-map-marker-alt"></i> Endereço de Faturamento</div><div class="form-row"><div class="form-group"><label>CEP</label><input type="text" id="editCep" class="form-control edit-field" maxlength="9" placeholder="00000-000"></div><div class="form-group"><label>Endereço</label><input type="text" id="editEndereco" class="form-control edit-field"></div></div><div class="form-row"><div class="form-group"><label>Número</label><input type="text" id="editNumero" class="form-control edit-field"></div><div class="form-group"><label>Bairro</label><input type="text" id="editBairro" class="form-control edit-field"></div><div class="form-group"><label>Complemento</label><input type="text" id="editComplemento" class="form-control edit-field"></div></div><div class="form-row"><div class="form-group"><label>Cidade</label><input type="text" id="editCidade" class="form-control edit-field"></div><div class="form-group"><label>UF</label><select id="editUf" class="form-control edit-field"><option value="">Selecione</option><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option></select></div></div></div>
-      <div class="form-section"><div class="section-title"><i class="fas fa-user-tie"></i> Dados do Administrador</div><div class="form-row"><div class="form-group"><label>Nome Completo</label><input type="text" id="editNomeAdmin" class="form-control edit-field"></div><div class="form-group"><label>CPF</label><input type="text" id="editCpf" class="form-control edit-field" maxlength="14" placeholder="000.000.000-00"></div></div><div class="form-row"><div class="form-group"><label>E-mail Corporativo</label><input type="email" id="editEmail" class="form-control edit-field"></div><div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="editTelefone" class="form-control edit-field" maxlength="15" placeholder="(00) 00000-0000"></div></div></div>
+      <div class="form-section"><div class="section-title"><i class="fas fa-key"></i> Códigos de Acesso</div><div class="form-row"><div class="form-group"><label>Código do Cliente (AF)</label><input type="text" id="editCodCliente" class="form-control edit-field"></div><div class="form-group"><label>Código do Administrador (AG)</label><input type="text" id="editCodAdmin" class="form-control edit-field"></div></div><div class="form-row"><div class="form-group"><label>Login Admin (MEU TIM)</label><input type="text" id="editLogin" class="form-control edit-field" autocomplete="off"></div><div class="form-group"><label>Senha (MEU TIM)</label><div class="password-wrapper"><input type="password" id="editSenha" class="form-control edit-field" autocomplete="new-password"><button type="button" class="password-toggle" onclick="toggleSenha('editSenha', this)">👁️</button></div></div></div></div>
+      <div class="form-section"><div class="section-title"><i class="fas fa-map-marker-alt"></i> Endereço de Faturamento</div><div class="form-row"><div class="form-group"><label>CEP</label><input type="text" id="editCep" class="form-control edit-field" maxlength="9" placeholder="00000-000" autocomplete="off"></div><div class="form-group"><label>Endereço</label><input type="text" id="editEndereco" class="form-control edit-field" autocomplete="off"></div></div><div class="form-row"><div class="form-group"><label>Número</label><input type="text" id="editNumero" class="form-control edit-field" autocomplete="off"></div><div class="form-group"><label>Bairro</label><input type="text" id="editBairro" class="form-control edit-field" autocomplete="off"></div><div class="form-group"><label>Complemento</label><input type="text" id="editComplemento" class="form-control edit-field" autocomplete="off"></div></div><div class="form-row"><div class="form-group"><label>Cidade</label><input type="text" id="editCidade" class="form-control edit-field" autocomplete="off"></div><div class="form-group"><label>UF</label><select id="editUf" class="form-control edit-field" autocomplete="off"><option value="">Selecione</option><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE">PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option></select></div></div></div>
+      <div class="form-section"><div class="section-title"><i class="fas fa-user-tie"></i> Dados do Administrador</div><div class="form-row"><div class="form-group"><label>Nome Completo</label><input type="text" id="editNomeAdmin" class="form-control edit-field" autocomplete="off"></div><div class="form-group"><label>CPF</label><input type="text" id="editCpf" class="form-control edit-field" maxlength="14" placeholder="000.000.000-00" autocomplete="off"></div></div><div class="form-row"><div class="form-group"><label>E-mail Corporativo</label><input type="email" id="editEmail" class="form-control edit-field" autocomplete="off"></div><div class="form-group"><label>Telefone / WhatsApp</label><input type="text" id="editTelefone" class="form-control edit-field" maxlength="15" placeholder="(00) 00000-0000" autocomplete="off"></div></div></div>
     </div>
     <div class="modal-footer"><button class="btn-cancel" id="btnCancelarModal">Cancelar</button><button class="btn-save" id="btnSalvarModal" style="display: none;">💾 Salvar Alterações</button></div>
   </div>
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
-     PONTE SUPABASE — substitui google.script.run
+     PONTE SUPABASE
      ═══════════════════════════════════════════════════════════ -->
 <script>
 (function () {
@@ -259,12 +299,18 @@
     const ITENS_POR_PAGINA = 15;
     let dadosFiltrados = [];
 
-    // Sessão do usuário — pega do window.VEXO (dashboard) ou sessionStorage
-    const sessao = window.VEXO?.user
-      ? { role: window.VEXO.user.user_metadata?.role || '', nome: window.VEXO.user.user_metadata?.nome || '' }
-      : JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    // ====================== SESSÃO (multi-fonte) ======================
+    const sessaoStorage = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const meta = window.VEXO?.user?.user_metadata || {};
 
-    const cargoUsuario = (sessao.role || "").toUpperCase().trim();
+    const sessao = {
+      role: (sessaoStorage.role || sessaoStorage.cargo || meta.role || meta.cargo || '').toString().trim(),
+      nome: (sessaoStorage.nome || meta.nome || window.VEXO?.user?.email || '').toString().trim()
+    };
+
+    console.log('👤 Sessão detectada:', sessao);
+
+    const cargoUsuario = sessao.role.toUpperCase();
     const podeEditar = (cargoUsuario === "ADMINISTRADOR" || cargoUsuario === "BACKOFFICE");
     const podeVerPendencias = (cargoUsuario === "ADMINISTRADOR" || cargoUsuario === "BACKOFFICE");
 
@@ -301,12 +347,34 @@
       setTimeout(() => toast.remove(), 4000);
     }
 
-    // Exibe ou esconde aba Pendentes conforme permissão
+    // ====================== ANTI-AUTOFILL ======================
+    // Limpa qualquer valor indesejado no campo de busca
+    function limparAutofillBusca() {
+      const v = inputBusca.value || '';
+      // Se veio com '@' (email) ou se a página não foi tocada pelo usuário ainda, limpa
+      if (v && (v.includes('@') || v.includes('.'))) {
+        // Só limpa se o usuário não digitou (heurística: se input está readonly ou se nunca recebeu focus real)
+        if (document.activeElement !== inputBusca) {
+          console.log('🧹 Limpando autofill:', v);
+          inputBusca.value = '';
+          return true;
+        }
+      }
+      return false;
+    }
+
+    // Roda ao carregar, 100ms depois, 500ms depois e 1s depois
+    [0, 100, 500, 1000].forEach(ms => setTimeout(() => {
+      if (limparAutofillBusca()) filtrarClientes();
+    }, ms));
+
+    // ====================== TABS ======================
     if (podeVerPendencias) {
       btnPendentes.style.display = 'flex';
-      abaAtual = 'pendentes';
-      btnPendentes.classList.add('active');
-      btnTodos.classList.remove('active');
+      // 🔥 Abre por padrão na aba "Base Completa" (todos)
+      abaAtual = 'todos';
+      btnTodos.classList.add('active');
+      btnPendentes.classList.remove('active');
     } else {
       btnPendentes.style.display = 'none';
       abaAtual = 'todos';
@@ -318,20 +386,16 @@
       tbody.innerHTML = '<tr><td colspan="5" class="loading-cell"><div class="loading-spinner"></div><span>Carregando clientes...</span></td></tr>';
 
       google.script.run
-       .withSuccessHandler(function(dados) {
-  // 🔥 garante array limpo (remove null/undefined)
-  clientesData = (Array.isArray(dados) ? dados : []).filter(Boolean);
+        .withSuccessHandler(function(dados) {
+          clientesData = (Array.isArray(dados) ? dados : []).filter(Boolean);
+          console.log(`✅ ${clientesData.length} clientes carregados`);
 
-  // 🔥 ANTI-AUTOFILL: se o navegador preencheu com e-mail, limpa
-  if (inputBusca.value && inputBusca.value.includes('@')) {
-    console.log('🧹 Removendo autofill do Chrome:', inputBusca.value);
-    inputBusca.value = '';
-  }
+          // 🔥 ANTI-AUTOFILL antes de filtrar
+          limparAutofillBusca();
 
-  console.log(`✅ ${clientesData.length} clientes carregados`);
-  atualizarStats();
-  filtrarClientes();
-})
+          atualizarStats();
+          filtrarClientes();
+        })
         .withFailureHandler(function(err) {
           console.error("❌ Erro ao buscar clientes:", err);
           tbody.innerHTML = '<tr><td colspan="5" class="loading-cell" style="color:#ef4444;">' +
@@ -342,7 +406,7 @@
         .buscarBaseClientes();
     }
 
-    // ====================== ATUALIZAR ESTATÍSTICAS ======================
+    // ====================== STATS ======================
     function atualizarStats() {
       const total = clientesData.length;
       const completos = clientesData.filter(c => !c.estaIncompleto).length;
@@ -354,10 +418,10 @@
       badgeTodos.innerText = total;
     }
 
-    // ====================== FILTRAR CLIENTES ======================
+    // ====================== FILTRAR ======================
     function filtrarClientes() {
       let filtrados = [...clientesData];
-      const termo = inputBusca.value.toLowerCase().trim();
+      const termo = (inputBusca.value || '').toLowerCase().trim();
       const uf = selectUF.value;
 
       if (abaAtual === 'pendentes') {
@@ -382,7 +446,7 @@
       renderizarTabela();
     }
 
-    // ====================== RENDERIZAR TABELA ======================
+    // ====================== RENDERIZAR ======================
     function renderizarTabela() {
       if (!dadosFiltrados || dadosFiltrados.length === 0) {
         tbody.innerHTML = '<tr><td colspan="5" class="loading-cell" style="color:#94a3b8;">' +
@@ -463,17 +527,10 @@
     // ====================== PAGINAÇÃO ======================
     function proximaPagina() {
       const totalPaginas = Math.ceil(dadosFiltrados.length / ITENS_POR_PAGINA);
-      if (paginaAtual < totalPaginas) {
-        paginaAtual++;
-        renderizarTabela();
-      }
+      if (paginaAtual < totalPaginas) { paginaAtual++; renderizarTabela(); }
     }
-
     function paginaAnterior() {
-      if (paginaAtual > 1) {
-        paginaAtual--;
-        renderizarTabela();
-      }
+      if (paginaAtual > 1) { paginaAtual--; renderizarTabela(); }
     }
 
     // ====================== MODAL ======================
@@ -546,7 +603,7 @@
       document.body.style.overflow = 'auto';
     }
 
-    // ====================== SALVAR CLIENTE ======================
+    // ====================== SALVAR ======================
     function salvarCliente() {
       if (!podeEditar) {
         showToast("Você não tem permissão para editar clientes.", 'error');
@@ -606,7 +663,6 @@
       else if (v.length > 2) v = v.replace(/^(\d{2})(\d{0,5})/, '($1) $2');
       input.value = v;
     }
-
     function mascaraCPF(input) {
       let v = input.value.replace(/\D/g, '');
       if (v.length > 9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
@@ -617,16 +673,11 @@
 
     window.toggleSenha = function(id, btn) {
       const input = document.getElementById(id);
-      if (input.type === "password") {
-        input.type = "text";
-        btn.innerHTML = "🙈";
-      } else {
-        input.type = "password";
-        btn.innerHTML = "👁️";
-      }
+      if (input.type === "password") { input.type = "text"; btn.innerHTML = "🙈"; }
+      else { input.type = "password"; btn.innerHTML = "👁️"; }
     };
 
-    // ====================== EVENT LISTENERS ======================
+    // ====================== LISTENERS ======================
     btnPrevPage.onclick = paginaAnterior;
     btnNextPage.onclick = proximaPagina;
 
@@ -656,7 +707,19 @@
       }
     };
 
-    inputBusca.onkeyup = filtrarClientes;
+    // 🔥 Input: só responde a eventos legítimos do usuário
+    inputBusca.addEventListener('input', function(e) {
+      // Se foi autofill (evento isTrusted=false ou sem inputType), ignora
+      if (e.inputType === undefined && !e.isTrusted) return;
+      filtrarClientes();
+    });
+    inputBusca.addEventListener('keyup', filtrarClientes);
+    inputBusca.addEventListener('paste', () => setTimeout(filtrarClientes, 10));
+    inputBusca.addEventListener('focus', function() {
+      // Se ao focar ainda tem lixo de autofill, limpa
+      limparAutofillBusca();
+    });
+
     selectUF.onchange = filtrarClientes;
 
     document.getElementById('closeModalBtn').onclick = fecharModal;
@@ -696,7 +759,7 @@
         .sincronizarClientesDaVendas();
     }
 
-    // ====================== AUTO-RELOAD (igual outros módulos) ======================
+    // ====================== AUTO-RELOAD ======================
     (function setupAutoReloadClientes() {
       let ultimaCarga = 0;
       const INTERVALO_MIN = 2000;
@@ -713,7 +776,6 @@
         return (
           html.includes('Carregando clientes') ||
           html.includes('Erro ao carregar') ||
-          html.includes('Nenhum cliente') ||
           tb.children.length === 0
         );
       }
