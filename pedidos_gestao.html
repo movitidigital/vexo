@@ -1903,62 +1903,124 @@ function excluirPedido(btn) {
 function mostrarModalSelecaoLinhas(linhas, origem, idUnico) {
   console.log('🎨 [mostrarModalSelecaoLinhas] iniciado com', linhas.length, 'linha(s)');
 
-  // Remove modal antigo se existir
   const modalAntigo = document.getElementById('modal-selecao-linhas');
   if (modalAntigo) modalAntigo.remove();
 
   const modal = document.createElement('div');
   modal.id = 'modal-selecao-linhas';
-  modal.className = 'vexo-modal';
+
+  // 🔥 FORÇA TODOS OS ESTILOS CRÍTICOS INLINE (contra CSS escopado do dashboard)
+  modal.style.cssText = `
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    z-index: 2147483647 !important;
+    font-family: 'Inter', sans-serif !important;
+  `;
 
   let linhasHtml = '';
   linhas.forEach((linha, idx) => {
     linhasHtml += `
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 8px; background: #f8fafc; border-radius: 8px;">
-        <input type="checkbox" class="linha-checkbox" data-linha="${linha.linha}" id="chk_${idx}" style="width: 18px; height: 18px;">
-        <label for="chk_${idx}" style="flex: 1; font-size: 14px; font-weight: 500;">
-          📱 Número: ${linha.numero || '—'} <span style="color:#94a3b8;">(${linha.plano || 'sem plano'})</span>
+      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 10px; padding: 10px 12px; background: #f8fafc; border-radius: 8px;">
+        <input type="checkbox" class="linha-checkbox" data-linha="${linha.linha}" id="chk_${idx}" style="width: 18px; height: 18px; cursor: pointer;">
+        <label for="chk_${idx}" style="flex: 1; font-size: 14px; font-weight: 500; cursor: pointer;">
+          📱 Número: ${linha.numero || '—'} <span style="color:#94a3b8; font-size:12px;">(${linha.plano || 'sem plano'})</span>
         </label>
       </div>
     `;
   });
 
+  // 🔥 Estrutura interna também com estilos inline (não depende de CSS externo)
   modal.innerHTML = `
-    <div class="modal-container" style="max-width: 500px;">
-      <div class="modal-header" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);">
-        <h3><i class="fas fa-trash-alt"></i> Excluir Linhas</h3>
-        <button class="modal-close" onclick="fecharModalSelecaoLinhas()">✕</button>
+    <div style="
+      background: white;
+      width: 90%;
+      max-width: 500px;
+      border-radius: 24px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      animation: modalFadeIn 0.3s ease;
+    ">
+      <div style="
+        padding: 20px 24px;
+        background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      ">
+        <h3 style="font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 10px; margin: 0; color: white;">
+          <i class="fas fa-trash-alt"></i> Excluir Linhas
+        </h3>
+        <button onclick="fecharModalSelecaoLinhas()" style="
+          background: rgba(255,255,255,0.1);
+          border: none;
+          width: 32px;
+          height: 32px;
+          border-radius: 50%;
+          cursor: pointer;
+          color: white;
+          font-size: 18px;
+        ">✕</button>
       </div>
-      <div class="modal-body">
-        <p style="margin-bottom: 15px;">Selecione as linhas que deseja excluir:</p>
-        <div style="margin-bottom: 15px;">
-          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
-            <input type="checkbox" id="selecionar-todas" style="width: 18px; height: 18px;">
+      <div style="padding: 24px; max-height: 60vh; overflow-y: auto;">
+        <p style="margin-bottom: 15px; color: #475569; font-size: 14px;">Selecione as linhas que deseja excluir:</p>
+        <div style="margin-bottom: 15px; padding: 8px 12px; background: #f1f5f9; border-radius: 8px;">
+          <label style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 14px;">
+            <input type="checkbox" id="selecionar-todas" style="width: 18px; height: 18px; cursor: pointer;">
             <strong>Selecionar todas</strong>
           </label>
         </div>
-        <div id="lista-linhas-container" style="max-height: 300px; overflow-y: auto;">
+        <div id="lista-linhas-container">
           ${linhasHtml}
         </div>
       </div>
-      <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end;">
-        <button class="btn-secondary" onclick="fecharModalSelecaoLinhas()">Cancelar</button>
-        <button class="btn-primary" id="btn-confirmar-exclusao">Excluir Selecionadas</button>
+      <div style="padding: 16px 24px; border-top: 1px solid #e2e8f0; background: #f8fafc; display: flex; justify-content: flex-end; gap: 12px;">
+        <button onclick="fecharModalSelecaoLinhas()" style="
+          background: #f1f5f9;
+          color: #64748b;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 12px;
+          font-weight: 600;
+          font-size: 13px;
+          cursor: pointer;
+          font-family: inherit;
+        ">Cancelar</button>
+        <button id="btn-confirmar-exclusao" style="
+          background: #ef4444;
+          color: white;
+          border: none;
+          padding: 10px 24px;
+          border-radius: 12px;
+          font-weight: 600;
+          font-size: 13px;
+          cursor: pointer;
+          font-family: inherit;
+        ">Excluir Selecionadas</button>
       </div>
     </div>
   `;
 
   document.body.appendChild(modal);
-
-  // 🔥 Força visibilidade por AMBOS os caminhos: inline + classe .active (com !important no CSS)
-  modal.style.display = 'flex';
-  modal.classList.add('active');
+  document.body.style.overflow = 'hidden';   // trava scroll
 
   console.log('   ✔️ Modal anexado ao DOM');
-  console.log('   computed display:', getComputedStyle(modal).display);
-  console.log('   computed z-index:', getComputedStyle(modal).zIndex);
+  console.log('   computed display :', getComputedStyle(modal).display);
+  console.log('   computed z-index :', getComputedStyle(modal).zIndex);
+  console.log('   computed position:', getComputedStyle(modal).position);
 
-  // Evento "Selecionar todas"
+  // Checkbox "Selecionar todas"
   const chkAll = document.getElementById('selecionar-todas');
   const checkboxes = modal.querySelectorAll('.linha-checkbox');
 
@@ -1970,7 +2032,7 @@ function mostrarModalSelecaoLinhas(linhas, origem, idUnico) {
   document.getElementById('btn-confirmar-exclusao').addEventListener('click', () => {
     const selecionadas = Array.from(checkboxes)
       .filter(cb => cb.checked)
-      .map(cb => cb.getAttribute('data-linha'));   // 🔥 mantém UUID como string, não parseInt
+      .map(cb => cb.getAttribute('data-linha'));   // UUID como string
 
     console.log('   🗑️ Linhas selecionadas:', selecionadas);
 
