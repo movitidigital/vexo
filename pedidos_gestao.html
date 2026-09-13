@@ -3548,6 +3548,79 @@ function obterUsuarioLogado() {
     return { nome: 'Sistema', id: '', role: '' };
   }
 }
+
+	// ═══════════════════════════════════════════════════════════
+// 🔥 AUTO-RECARGA: reinicia o módulo quando ele volta a ficar visível
+// (o dashboard cacheia o HTML, então o init não roda de novo)
+// ═══════════════════════════════════════════════════════════
+(function setupAutoReloadPedidos() {
+  let ultimaCarga = 0;
+  const INTERVALO_MIN = 2000; // 2s de carência entre recargas
+
+  function moduloVisivel() {
+    // Tenta achar o wrapper do módulo no DOM
+    const wrappers = document.querySelectorAll('[id^="vexo-modulo-"]');
+    for (const w of wrappers) {
+      if (w && w.offsetParent !== null && /pedidos/i.test(w.id)) return w;
+    }
+    // Fallback: se achar a tabela visível, considera ativo
+    const tb = document.getElementById('pedidos-tbody');
+    if (tb && tb.offsetParent !== null) return tb.closest('.vexo-pedidos-module') || tb;
+    return null;
+  }
+
+  function tabelaVazia() {
+    const tbody = document.getElementById('pedidos-tbody');
+    if (!tbody) return false;
+    const html = tbody.innerHTML || '';
+    return (
+      html.includes('Nenhum pedido') ||
+      html.includes('Carregando pedidos') ||
+      html.includes('Falha ao carregar') ||
+      tbody.children.length === 0
+    );
+  }
+
+  function tentarRecarregar(origem) {
+    const agora = Date.now();
+    if (agora - ultimaCarga < INTERVALO_MIN) return;
+    if (!moduloVisivel()) return;
+    if (!tabelaVazia()) return;
+
+    console.log(`🔄 [pedidos_gestao] Auto-recarga (${origem})`);
+    ultimaCarga = agora;
+
+    // Reaplica o init
+    try {
+      if (typeof resetModuloGestao === 'function') resetModuloGestao();
+      if (typeof inicializarModulo === 'function') inicializarModulo();
+    } catch (e) {
+      console.warn('⚠️ Erro no auto-recarga:', e);
+      if (typeof carregarPedidos === 'function') carregarPedidos();
+    }
+  }
+
+  // 1) Observa mudanças no DOM (módulo sendo mostrado/escondido)
+  const observer = new MutationObserver(() => tentarRecarregar('mutation'));
+  observer.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['style', 'class']
+  });
+
+  // 2) Escuta cliques no menu lateral (útil quando o módulo já está no DOM
+  //    e só o style.display muda — o observer pega, mas o clique chega antes)
+  document.addEventListener('click', (e) => {
+    const menu = e.target.closest('.menu-item, .sidebar-item, [data-modulo], a[href*="pedidos"]');
+    if (menu) setTimeout(() => tentarRecarregar('clique-menu'), 350);
+  });
+
+  // 3) Checagem inicial (garante caso o módulo já esteja visível ao injetar)
+  setTimeout(() => tentarRecarregar('init'), 500);
+
+  console.log('✅ [pedidos_gestao] Auto-recarga configurada');
+})();
 </script>
 
 </body>
