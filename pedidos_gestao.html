@@ -768,7 +768,7 @@
       bottom: 30px;
       right: 30px;
       min-width: 320px;
-      max-width: 450px;
+      max-width: 480px;
       background: white;
       border-radius: 16px;
       padding: 16px 20px;
@@ -776,8 +776,8 @@
       display: flex;
       align-items: center;
       gap: 14px;
-      z-index: 10002;
-      animation: slideInRight 0.3s ease-out;
+ 	  z-index: 2147483647;
+	  animation: slideInRight 0.3s ease-out;
       border-left: 4px solid;
     }
     
@@ -811,7 +811,8 @@
       color: #475569;
       line-height: 1.4;
     }
-    
+    .vexo-toast-message b { color: #b45309; }
+
     .vexo-toast-close {
       width: 24px;
       height: 24px;
@@ -824,7 +825,102 @@
       font-size: 12px;
       color: #64748b;
     }
-    
+
+ /* ═══════════════════════════════════════════════════════
+     FIX: modal-detalhes travado no centro da tela
+     (força os estilos que o dashboard escopa)
+  ═══════════════════════════════════════════════════════ */
+  #modal-detalhes.vexo-modal {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    margin: 0 !important;
+    padding: 20px !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    display: none;
+    align-items: center !important;
+    justify-content: center !important;
+    z-index: 2147483646 !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+  #modal-detalhes.vexo-modal.active {
+    display: flex !important;
+  }
+
+  #modal-detalhes .modal-container {
+    position: relative !important;
+    background: white !important;
+    width: 100% !important;
+    max-width: 920px !important;
+    max-height: 90vh !important;
+    margin: 0 !important;
+    border-radius: 24px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5) !important;
+    animation: modalFadeIn 0.3s ease !important;
+  }
+
+  #modal-detalhes .modal-header {
+    flex-shrink: 0 !important;
+    padding: 18px 24px !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    color: white !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  #modal-detalhes .modal-body {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    padding: 24px !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  #modal-detalhes .modal-footer {
+    flex-shrink: 0 !important;
+    padding: 14px 24px !important;
+    border-top: 1px solid #e2e8f0 !important;
+    background: #f8fafc !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+    gap: 12px !important;
+  }
+
+  /* Scrollbar bonitinha dentro do modal */
+  #modal-detalhes .modal-body::-webkit-scrollbar { width: 8px; }
+  #modal-detalhes .modal-body::-webkit-scrollbar-track { background: #f1f5f9; }
+  #modal-detalhes .modal-body::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  #modal-detalhes .modal-body::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+  /* Corrige timeline e blocos dentro do modal */
+  #modal-detalhes .timeline-detalhes { overflow-x: auto !important; }
+  #modal-detalhes .info-grid { display: grid !important; grid-template-columns: 1fr 1fr !important; gap: 14px !important; }
+  #modal-detalhes .detail-card { overflow: hidden !important; }
+  #modal-detalhes .detail-card-body { padding: 18px !important; }
+
+  /* Trava scroll do body quando modal abre */
+  body.modal-open { overflow: hidden !important; }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    #modal-detalhes.vexo-modal { padding: 10px !important; }
+    #modal-detalhes .modal-container { max-height: 95vh !important; border-radius: 16px !important; }
+    #modal-detalhes .modal-body { padding: 16px !important; }
+    #modal-detalhes .info-grid { grid-template-columns: 1fr !important; }
+  }
+	
     @keyframes slideInRight {
       from { transform: translateX(100%); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
@@ -1110,36 +1206,31 @@ var STATUS_LIST = [
   // 🎨 SISTEMA DE TOAST NOTIFICATIONS
   // ============================================
   
-  function showToast(message, type = 'info') {
-    // Remover toasts antigos
-    const oldToasts = document.querySelectorAll('.vexo-toast');
-    oldToasts.forEach(toast => toast.remove());
-    
-    const toast = document.createElement('div');
-    toast.className = `vexo-toast vexo-toast-${type}`;
-    
-    const icons = {
-      success: '✅',
-      error: '❌',
-      warning: '⚠️',
-      info: 'ℹ️'
-    };
-    
-    toast.innerHTML = `
-      <div class="vexo-toast-icon">${icons[type] || 'ℹ️'}</div>
-      <div class="vexo-toast-content">
-        <div class="vexo-toast-title">${type === 'success' ? 'Sucesso' : type === 'error' ? 'Erro' : type === 'warning' ? 'Atenção' : 'Informação'}</div>
-        <div class="vexo-toast-message">${message}</div>
-      </div>
-      <div class="vexo-toast-close" onclick="this.parentElement.remove()">✕</div>
-    `;
-    
-    document.body.appendChild(toast);
-    
-    setTimeout(() => {
-      if (toast.parentElement) toast.remove();
-    }, 4000);
-  }
+ function showToast(message, type = 'info') {
+  document.querySelectorAll('.vexo-toast').forEach(toast => toast.remove());
+
+  const toast = document.createElement('div');
+  toast.className = `vexo-toast vexo-toast-${type}`;
+  // 🔥 z-index acima do modal
+  toast.style.zIndex = '2147483647';
+
+  const icons = { success: '✅', error: '❌', warning: '⚠️', info: 'ℹ️' };
+
+  toast.innerHTML = `
+    <div class="vexo-toast-icon">${icons[type] || 'ℹ️'}</div>
+    <div class="vexo-toast-content">
+      <div class="vexo-toast-title">${type === 'success' ? 'Sucesso' : type === 'error' ? 'Erro' : type === 'warning' ? 'Atenção' : 'Informação'}</div>
+      <div class="vexo-toast-message">${message}</div>
+    </div>
+    <div class="vexo-toast-close" onclick="this.parentElement.remove()">✕</div>
+  `;
+
+  document.body.appendChild(toast);
+
+  // ⚠️ Avisos ficam mais tempo na tela (7s) — os outros 4s
+  const duracao = (type === 'warning' || type === 'error') ? 7000 : 4000;
+  setTimeout(() => { if (toast.parentElement) toast.remove(); }, duracao);
+}
   
 
   
@@ -2326,17 +2417,24 @@ function atualizarStatus(idUnico, direcao, origem) {
   
   // 🔥 VALIDAÇÃO ESPECIAL PARA ATIVAÇÃO (etapa 6)
   // Só permite avançar para "6. ATIVADO" se a Data de Ativação RADAR estiver preenchida
-  if (novoStatus === "6. ATIVADO") {
-    // Verifica se a data RADAR está preenchida no pedido
-    if (!pedido.data_radar || pedido.data_radar.trim() === "") {
-      showToast('⚠️ Para ativar o pedido, é obrigatório preencher a Data de Ativação RADAR no detalhe do pedido.', 'warning');
-      abrirDetalhes(linha, origem);
-      return;
-    }
-    // 🔥 NOVA VERIFICAÇÃO: Código do Cliente (coluna AF)
-    if (!pedido.codigoCliente || pedido.codigoCliente.trim() === "") {
-      showToast('⚠️ Para ativar o pedido, é obrigatório preencher o CÓDIGO DO CLIENTE em detalhe do pedido.', 'warning');
-      abrirDetalhes(linha, origem);
+ if (novoStatus === "6. ATIVADO") {
+    const faltaRadar   = !pedido.data_radar   || String(pedido.data_radar).trim()   === "";
+    const faltaCodigo  = !pedido.codigoCliente || String(pedido.codigoCliente).trim() === "";
+
+    if (faltaRadar || faltaCodigo) {
+      // 🔥 Toast único com TODAS as pendências (evita 2 toasts em sequência)
+      const pendencias = [];
+      if (faltaRadar)  pendencias.push("📅 Data de Ativação RADAR");
+      if (faltaCodigo) pendencias.push("🆔 Código do Cliente");
+
+      showToast(
+        `⚠️ Para ativar o pedido, preencha: <b>${pendencias.join(" e ")}</b>.<br>
+         <span style="font-size:11px; color:#64748b;">Abrindo o detalhe do pedido para você completar…</span>`,
+        'warning'
+      );
+
+      // 🔥 Abre o detalhe DEPOIS que o toast apareceu (usuário vê o aviso primeiro)
+      setTimeout(() => abrirDetalhes(linha, origem), 700);
       return;
     }
   }
@@ -3473,23 +3571,20 @@ function salvarCodigoCliente() {
 }
 function fecharModal() {
   const modal = document.getElementById('modal-detalhes');
-  if (modal) {
-    modal.classList.remove('active');
-    modal.style.display = 'none';
-    
-    // DESTRAVAR A ROLAGEM DO BODY
-    document.body.classList.remove('modal-open');
-    document.body.style.overflow = '';
-    document.body.style.position = '';
-    document.body.style.width = '';
-    document.body.style.height = '';
-    
-    // Restaurar a posição do scroll
-    const scrollY = modal.getAttribute('data-scroll');
-    if (scrollY) {
-      window.scrollTo(0, parseInt(scrollY));
-      modal.removeAttribute('data-scroll');
-    }
+  if (!modal) return;
+  modal.classList.remove('active');
+  modal.style.display = 'none';
+
+  document.body.classList.remove('modal-open');
+  document.body.style.overflow = '';
+  document.body.style.position = '';
+  document.body.style.width = '';
+  document.body.style.height = '';
+
+  const scrollY = modal.getAttribute('data-scroll');
+  if (scrollY) {
+    window.scrollTo(0, parseInt(scrollY, 10));
+    modal.removeAttribute('data-scroll');
   }
 }
   
