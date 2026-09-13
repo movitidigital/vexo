@@ -942,4 +942,79 @@ localStorage.removeItem('ultimoBancoDeDadosId');
 
   console.log('✅ [vendas] Limpeza automática ao sair configurada');
 })();
+  // ═══════════════════════════════════════════════════════════
+// CARREGA CONSULTORES ATIVOS (Supabase)
+// ═══════════════════════════════════════════════════════════
+async function carregarConsultoresAtivos() {
+  try {
+    if (!window.sb) {
+      console.warn('⚠️ [vendas] window.sb não disponível');
+      return;
+    }
+
+    const { data, error } = await window.sb
+      .from('profiles')
+      .select('*')
+      .in('role', ['CONSULTOR DE VENDAS', 'CONSULTOR', 'BACKOFFICE', 'ADMINISTRADOR', 'ADMIN']);
+
+    if (error) throw error;
+
+    consultoresAtivos = (data || []).map(p => {
+      const nomeCompleto = [p.nome, p.sobrenome].filter(Boolean).join(' ').trim();
+      return {
+        id:        p.id,
+        // Fallback em cascata pelo primeiro campo disponível
+        matricula: p.matricula || p.codigo || p.username || p.email || p.id,
+        nome:      nomeCompleto || p.email || 'Sem nome',
+        email:     p.email || '',
+        role:      (p.role || '').toUpperCase()
+      };
+    });
+
+    console.log(`✅ [vendas] ${consultoresAtivos.length} consultores carregados do Supabase`);
+    popularSelectConsultores();
+
+  } catch (e) {
+    console.error('❌ [vendas] Erro ao carregar consultores:', e);
+    consultoresAtivos = [];
+  }
+}
+  function popularSelectConsultores() {
+  const select = document.getElementById('v_consultor_input');
+  if (!select) return;
+
+  const sessaoStorage = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const meta = window.VEXO?.user?.user_metadata || {};
+  const userMatricula = String(
+    sessaoStorage.matricula || sessaoStorage.username || sessaoStorage.email ||
+    meta.matricula || meta.email || window.VEXO?.user?.email || ''
+  ).toUpperCase();
+
+  let options = '<option value="">Selecione o consultor usado no Input...</option>';
+
+  if (!consultoresAtivos || consultoresAtivos.length === 0) {
+    options += '<option value="" disabled>⚠️ Nenhum consultor cadastrado</option>';
+    select.innerHTML = options;
+    console.warn('⚠️ [vendas] Nenhum consultor para popular o select');
+    return;
+  }
+
+  consultoresAtivos
+    .sort((a, b) => (a.nome || '').localeCompare(b.nome || '', 'pt-BR'))
+    .forEach(c => {
+      const matricula = String(c.matricula || '').toUpperCase();
+      const selected = (matricula === userMatricula) ? 'selected' : '';
+      const label = c.nome + (c.matricula ? ` (${c.matricula})` : '');
+      options += `<option value="${c.matricula}" ${selected}>${label}</option>`;
+    });
+
+  select.innerHTML = options;
+
+  // Se havia valor preservado (pedido pré-carregado), reaplica
+  const valorPreservado = select.dataset.valorPreservado;
+  if (valorPreservado) {
+    select.value = valorPreservado;
+    delete select.dataset.valorPreservado;
+  }
+}
 </script>
