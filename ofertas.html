@@ -1140,11 +1140,9 @@ function salvarOferta() {
     return;
   }
   
-  // 🔥 CAPTURA O CARGO DO USUÁRIO LOGADO
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const cargoUsuario = (sessao.role || "").toUpperCase().trim();
-  
-  console.log('👤 Cargo do usuário:', cargoUsuario);
+  // 🔥 Usa o cargo já validado pelo carregarPermissoes()
+  const cargoUsuario = permissoes.cargo || '';
+  console.log('👤 Cargo do usuário (salvar):', cargoUsuario);
   
   // Calcula franquia total
   const franquiaPlano = document.getElementById('franquia-plano').value.trim();
