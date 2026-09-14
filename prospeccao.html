@@ -2332,7 +2332,16 @@ function salvarNovoLead() {
   const status_ini = document.getElementById('p_status_ini').value;
   const origem_lead = document.getElementById('p_origem').value;
   const tipoCliente = document.getElementById('p_tipo_cliente').value;
-  const dataAbertura = document.getElementById('p_data_abertura').value;
+  
+  // Tratamento da data de abertura para o padrão ISO (YYYY-MM-DD) exigido pelo Supabase/PostgreSQL
+  let dataAbertura = document.getElementById('p_data_abertura').value;
+  if (dataAbertura && dataAbertura.includes('/')) {
+    const partes = dataAbertura.split('/');
+    if (partes.length === 3) {
+      dataAbertura = `${partes[2]}-${partes[1]}-${partes[0]}`;
+    }
+  }
+
   const naturezaJuridica = document.getElementById('p_natureza_juridica').value;
 
   const dados = {
