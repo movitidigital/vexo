@@ -281,11 +281,226 @@
     .kpi-grid { grid-template-columns: 1fr; }
     .header { flex-direction: column; align-items: stretch; }
   }
+  
+    /* ═══════════════════════════════════════════════════
+     BUSCA GLOBAL
+  ═══════════════════════════════════════════════════ */
+  .busca-global {
+    position: relative;
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1rem;
+    background: white;
+    border-radius: 14px;
+    padding: 6px 6px 6px 44px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.2s;
+  }
+  .busca-global:focus-within {
+    border-color: var(--info);
+    box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
+  .busca-global-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+    font-size: 14px;
+    pointer-events: none;
+  }
+  .busca-global-input {
+    flex: 1;
+    border: none;
+    outline: none;
+    padding: 10px 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    background: transparent;
+    color: var(--text-primary);
+  }
+  .busca-global-btn {
+    background: var(--primary-gradient);
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+  .busca-global-btn:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
+
+  /* ═══════════════════════════════════════════════════
+     ABAS
+  ═══════════════════════════════════════════════════ */
+  .tabs-faturas {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+  .tab-fatura {
+    background: white;
+    border: 1px solid var(--border-color);
+    padding: 10px 18px;
+    border-radius: 30px;
+    font-size: 0.82rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .tab-fatura:hover { background: #f8fafc; }
+  .tab-fatura.active {
+    background: var(--primary-gradient);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 4px 12px rgba(30,60,114,0.25);
+  }
+  .tab-badge {
+    background: rgba(0,0,0,0.08);
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.7rem;
+    font-weight: 700;
+  }
+  .tab-fatura.active .tab-badge { background: rgba(255,255,255,0.25); }
+
+  /* ═══════════════════════════════════════════════════
+     FILTROS DAS ABAS
+  ═══════════════════════════════════════════════════ */
+  .filtros-tabela {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .filtros-tabela select,
+  .filtros-tabela input {
+    padding: 10px 14px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-family: inherit;
+    background: white;
+    min-width: 200px;
+  }
+  .info-total {
+    margin-left: auto;
+    font-size: 0.78rem;
+    color: var(--text-muted);
+    font-weight: 600;
+  }
+
+  /* ═══════════════════════════════════════════════════
+     KPIs (reaproveitados)
+  ═══════════════════════════════════════════════════ */
+  .kpi-card {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.1rem 1.3rem;
+  }
+  .kpi-icon {
+    width: 54px; height: 54px;
+    border-radius: 14px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.75rem;
+    flex-shrink: 0;
+  }
+  .kpi-danger .kpi-icon  { background: #fef2f2; }
+  .kpi-warning .kpi-icon { background: #fffbeb; }
+  .kpi-success .kpi-icon { background: #ecfdf5; }
+  .kpi-body { flex: 1; min-width: 0; }
+
+  /* ═══════════════════════════════════════════════════
+     ABA POR CLIENTE
+  ═══════════════════════════════════════════════════ */
+  .empty-consulta {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+    background: white;
+    border-radius: 16px;
+    border: 1px solid var(--border-color);
+  }
+  .empty-consulta i { font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.4; }
+  .empty-consulta h3 { font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.4rem; font-weight: 700; }
+  .empty-consulta p { font-size: 0.82rem; }
+
+  .cliente-card-faturas {
+    background: white;
+    border-radius: 16px;
+    padding: 1.5rem;
+    border: 1px solid var(--border-color);
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-sm);
+  }
+  .cliente-card-faturas h3 {
+    color: #1e3c72;
+    font-size: 1.1rem;
+    font-weight: 800;
+    margin-bottom: 0.5rem;
+  }
+  .cliente-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+  }
+  .cliente-info-grid span {
+    display: block;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 2px;
+  }
+  .cliente-info-grid b { color: var(--text-primary); font-weight: 600; }
+
+  .kpis-cliente {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 1rem 0;
+  }
+  .kpi-cliente {
+    background: #f8fafc;
+    border-radius: 10px;
+    padding: 12px;
+    border-left: 3px solid #3b82f6;
+  }
+  .kpi-cliente .label {
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+  .kpi-cliente .valor {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: var(--text-primary);
+  }
+  .kpi-cliente.vermelho { border-left-color: #ef4444; }
+  .kpi-cliente.verde    { border-left-color: #10b981; }
+  .kpi-cliente.amarelo  { border-left-color: #f59e0b; }
 </style>
 </head>
 <body>
 
 <div class="faturas-wrapper">
+
   <!-- HEADER -->
   <div class="header">
     <h1>
@@ -297,8 +512,41 @@
     </button>
   </div>
 
-  <!-- KPIs -->
- <div class="kpi-grid">
+  <!-- 🔍 BUSCA GLOBAL (sempre visível) -->
+  <div class="busca-global">
+    <i class="fas fa-search busca-global-icon"></i>
+    <input
+      type="text"
+      id="busca-global"
+      class="busca-global-input"
+      placeholder="Buscar cliente por CNPJ, razão, código ou número de telefone..."
+      autocomplete="new-password"
+      onkeydown="if (event.key === 'Enter') executarBuscaGlobal()"
+    >
+    <button class="busca-global-btn" onclick="executarBuscaGlobal()">Pesquisar</button>
+  </div>
+
+  <!-- ABAS -->
+  <div class="tabs-faturas">
+    <button class="tab-fatura active" data-tab="risco" onclick="mudarAbaFaturas('risco')">
+      🔴 Em risco <span class="tab-badge" id="badge-risco">0</span>
+    </button>
+    <button class="tab-fatura" data-tab="hoje" onclick="mudarAbaFaturas('hoje')">
+      ⏰ Hoje <span class="tab-badge" id="badge-hoje">0</span>
+    </button>
+    <button class="tab-fatura" data-tab="todas" onclick="mudarAbaFaturas('todas')">
+      📊 Todas <span class="tab-badge" id="badge-todas">0</span>
+    </button>
+    <button class="tab-fatura" data-tab="recentes" onclick="mudarAbaFaturas('recentes')">
+      ✅ Recentes
+    </button>
+    <button class="tab-fatura" data-tab="cliente" onclick="mudarAbaFaturas('cliente')">
+      🔎 Por cliente
+    </button>
+  </div>
+
+  <!-- KPIs (só na aba risco) -->
+  <div class="kpi-grid" id="kpi-grid-risco">
     <div class="kpi-card kpi-danger">
       <div class="kpi-icon">⚠️</div>
       <div class="kpi-body">
@@ -322,24 +570,117 @@
     </div>
   </div>
 
-  <!-- TABELA -->
-  <div class="table-container">
-    <table id="tabela-clientes">
-     <thead>
-        <tr>
-          <th style="width:34px;"></th>
-          <th>🏷️ Código do Cliente</th>
-          <th>👤 Cliente</th>
-          <th>📱 Linha(s) &amp; Plano(s)</th>
-          <th>📅 Próximo Vencimento</th>
-          <th>🚦 Status</th>
-          <th>🎯 Ação Sugerida</th>
-        </tr>
-      </thead>
-      <tbody id="tbody-clientes"></tbody>
-    </table>
-    <div id="loading">⏳ Sincronizando com o banco de dados...</div>
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- CONTEÚDO DAS ABAS                                   -->
+  <!-- ═══════════════════════════════════════════════════ -->
+
+  <!-- ABA: EM RISCO -->
+  <div class="aba-content" id="tab-content-risco">
+    <div class="table-container">
+      <table id="tabela-clientes">
+        <thead>
+          <tr>
+            <th style="width:30px;"></th>
+            <th>🏷️ Código do Cliente</th>
+            <th>👤 Cliente</th>
+            <th>📱 Linha(s) &amp; Plano(s)</th>
+            <th>📅 Próximo Vencimento</th>
+            <th>🚦 Status</th>
+            <th>🎯 Ação Sugerida</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-clientes"></tbody>
+      </table>
+      <div id="loading">⏳ Sincronizando com o banco de dados...</div>
+    </div>
   </div>
+
+  <!-- ABA: VENCEM HOJE -->
+  <div class="aba-content" id="tab-content-hoje" style="display:none;">
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>🏷️ Cliente</th>
+            <th>📱 Linha</th>
+            <th>📋 Plano</th>
+            <th>📅 Vencimento</th>
+            <th>🚦 Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-hoje">
+          <tr><td colspan="5" class="empty-state">
+            <div class="loading-spinner"></div>
+            Carregando...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ABA: TODAS -->
+  <div class="aba-content" id="tab-content-todas" style="display:none;">
+    <div class="filtros-tabela">
+      <select id="filtro-status-todas" onchange="carregarAbaTodas()">
+        <option value="">Todos os status</option>
+        <option value="PENDENTE">⏳ Pendente</option>
+        <option value="PAGO">✅ Pago</option>
+      </select>
+      <input type="text" id="filtro-busca-todas" placeholder="Filtrar por cliente/CNPJ/telefone..." onkeyup="carregarAbaTodas()">
+      <span id="info-total-todas" class="info-total"></span>
+    </div>
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>🏷️ Cliente</th>
+            <th>📱 Linha</th>
+            <th>📋 Plano</th>
+            <th>📅 Vencimento</th>
+            <th>🚦 Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-todas">
+          <tr><td colspan="5" class="empty-state">Use os filtros acima para carregar</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ABA: RECENTES -->
+  <div class="aba-content" id="tab-content-recentes" style="display:none;">
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>🏷️ Cliente</th>
+            <th>📱 Linha</th>
+            <th>📋 Plano</th>
+            <th>💰 Pago em</th>
+            <th>🚦 Status</th>
+          </tr>
+        </thead>
+        <tbody id="tbody-recentes">
+          <tr><td colspan="5" class="empty-state">
+            <div class="loading-spinner"></div>
+            Carregando...
+          </td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ABA: POR CLIENTE -->
+  <div class="aba-content" id="tab-content-cliente" style="display:none;">
+    <div id="resultado-cliente">
+      <div class="empty-consulta">
+        <i class="fas fa-user-search"></i>
+        <h3>Busque por um cliente</h3>
+        <p>Digite CNPJ, razão social, código ou telefone na barra acima.</p>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -1252,6 +1593,307 @@ async function registrarLogWhatsAppFrontend(codigoCliente, dataVencimento) {
   });
 }
 window.copiarCodigoCliente = copiarCodigoCliente;
+// ═══════════════════════════════════════════════════════════
+// NAVEGAÇÃO DE ABAS
+// ═══════════════════════════════════════════════════════════
+let abaAtivaFaturas = 'risco';
+
+window.mudarAbaFaturas = function(novaAba) {
+  abaAtivaFaturas = novaAba;
+
+  // Botões
+  document.querySelectorAll('.tab-fatura').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === novaAba);
+  });
+
+  // Conteúdo
+  ['risco', 'hoje', 'todas', 'recentes', 'cliente'].forEach(id => {
+    const el = document.getElementById('tab-content-' + id);
+    if (el) el.style.display = (id === novaAba) ? 'block' : 'none';
+  });
+
+  // KPIs só aparecem na aba risco
+  const kpiGrid = document.getElementById('kpi-grid-risco');
+  if (kpiGrid) kpiGrid.style.display = (novaAba === 'risco') ? 'grid' : 'none';
+
+  // Carrega os dados da aba
+  if (novaAba === 'hoje')      carregarAbaHoje();
+  if (novaAba === 'todas')     carregarAbaTodas();
+  if (novaAba === 'recentes')  carregarAbaRecentes();
+  if (novaAba === 'cliente')   carregarAbaCliente();
+};
+
+// ═══════════════════════════════════════════════════════════
+// BUSCA GLOBAL
+// ═══════════════════════════════════════════════════════════
+window.executarBuscaGlobal = function() {
+  const termo = (document.getElementById('busca-global').value || '').trim();
+  if (!termo) {
+    showToast('Digite algo para buscar', 'warning');
+    return;
+  }
+
+  // Vai pra aba "Por cliente" com o termo aplicado
+  mudarAbaFaturas('cliente');
+
+  // Aguarda a aba montar e executa a busca
+  setTimeout(() => {
+    const input = document.getElementById('busca-cliente-input');
+    if (input) {
+      input.value = termo;
+      executarBuscaCliente();
+    }
+  }, 150);
+};
+
+// ═══════════════════════════════════════════════════════════
+// ABA: VENCEM HOJE
+// ═══════════════════════════════════════════════════════════
+async function carregarAbaHoje() {
+  const tbody = document.getElementById('tbody-hoje');
+  tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div>Carregando...</td></tr>';
+
+  try {
+    const todas = await window.sb.rpc('faturas_todas', { p_status: 'PENDENTE', p_busca: null, p_limite: 500 });
+    if (todas.error) throw todas.error;
+
+    const hoje = new Date().toISOString().split('T')[0];
+    const doDia = (todas.data || []).filter(f => f.vencimento === hoje);
+
+    if (doDia.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div style="font-size:2rem; margin-bottom:0.5rem;">🎉</div>Nenhuma fatura vence hoje.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = doDia.map(f => `
+      <tr>
+        <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
+            <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(f.cpf_cnpj || '')}</div></td>
+        <td>📱 ${escapeHtml(f.linha || '—')}</td>
+        <td>${escapeHtml(f.plano || '—')}</td>
+        <td style="color:#b45309; font-weight:700;">${formatarData(f.vencimento)}</td>
+        <td><span class="badge badge-pendente">⏳ Pendente</span></td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ABA: TODAS
+// ═══════════════════════════════════════════════════════════
+async function carregarAbaTodas() {
+  const tbody = document.getElementById('tbody-todas');
+  const info  = document.getElementById('info-total-todas');
+  const status = document.getElementById('filtro-status-todas')?.value || null;
+  const busca  = document.getElementById('filtro-busca-todas')?.value || null;
+
+  tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div>Carregando...</td></tr>';
+
+  try {
+    const { data, error } = await window.sb.rpc('faturas_todas', {
+      p_status: status,
+      p_busca: busca,
+      p_limite: 500
+    });
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhuma fatura encontrada com esses filtros.</td></tr>';
+      info.textContent = '';
+      return;
+    }
+
+    info.textContent = `${data.length} fatura(s) encontrada(s)`;
+    tbody.innerHTML = data.map(f => `
+      <tr>
+        <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
+            <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(f.cpf_cnpj || '')}</div></td>
+        <td>📱 ${escapeHtml(f.linha || '—')}</td>
+        <td>${escapeHtml(f.plano || '—')}</td>
+        <td style="font-weight:700; color:${f.status === 'PAGO' ? '#065f46' : f.vencimento < new Date().toISOString().split('T')[0] ? '#991b1b' : '#b45309'};">${formatarData(f.vencimento)}</td>
+        <td>${f.status === 'PAGO' ? '<span class="badge badge-pago">✅ Pago</span>' : '<span class="badge badge-pendente">⏳ Pendente</span>'}</td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ABA: RECENTES
+// ═══════════════════════════════════════════════════════════
+async function carregarAbaRecentes() {
+  const tbody = document.getElementById('tbody-recentes');
+  tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div>Carregando...</td></tr>';
+
+  try {
+    const { data, error } = await window.sb.rpc('faturas_recentes', { p_limite: 100 });
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhuma fatura paga recentemente.</td></tr>';
+      return;
+    }
+
+    tbody.innerHTML = data.map(f => `
+      <tr>
+        <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
+            <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(f.cpf_cnpj || '')}</div></td>
+        <td>📱 ${escapeHtml(f.linha || '—')}</td>
+        <td>${escapeHtml(f.plano || '—')}</td>
+        <td style="color:#065f46; font-weight:700;">${f.data_pagamento ? formatarDataHora(f.data_pagamento) : '—'}</td>
+        <td><span class="badge badge-pago">✅ Pago</span></td>
+      </tr>
+    `).join('');
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// ABA: POR CLIENTE
+// ═══════════════════════════════════════════════════════════
+function carregarAbaCliente() {
+  const container = document.getElementById('resultado-cliente');
+  container.innerHTML = `
+    <div style="background: white; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+      <div style="display: flex; gap: 8px;">
+        <input type="text" id="busca-cliente-input"
+               placeholder="Digite CNPJ, razão social, código ou telefone..."
+               style="flex: 1; padding: 12px 16px; border: 2px solid var(--border-color); border-radius: 10px; font-size: 0.9rem; font-family: inherit; outline: none;"
+               onkeydown="if (event.key === 'Enter') executarBuscaCliente()">
+        <button onclick="executarBuscaCliente()"
+                style="padding: 0 28px; background: var(--primary-gradient); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit;">
+          🔎 Pesquisar
+        </button>
+      </div>
+    </div>
+    <div id="resultado-cliente-dados">
+      <div class="empty-consulta">
+        <i class="fas fa-user-search"></i>
+        <h3>Busque por um cliente</h3>
+        <p>Digite CNPJ, razão social, código ou telefone para ver todas as faturas.</p>
+      </div>
+    </div>
+  `;
+}
+
+window.executarBuscaCliente = async function() {
+  const input = document.getElementById('busca-cliente-input');
+  const termo = (input?.value || '').trim();
+  if (!termo) { showToast('Digite algo para buscar', 'warning'); return; }
+
+  const container = document.getElementById('resultado-cliente-dados');
+  container.innerHTML = '<div class="empty-consulta"><div class="loading-spinner" style="margin: 0 auto 1rem;"></div><h3>Consultando...</h3></div>';
+
+  try {
+    const { data, error } = await window.sb.rpc('faturas_por_cliente', { p_termo: termo });
+    if (error) throw error;
+
+    if (!data || !data.success) {
+      container.innerHTML = `<div class="empty-consulta" style="color:#ef4444;"><h3>Erro ao buscar</h3><p>${escapeHtml(data?.message || 'Erro desconhecido')}</p></div>`;
+      return;
+    }
+
+    if (!data.encontrado) {
+      container.innerHTML = `<div class="empty-consulta"><i class="fas fa-search-minus"></i><h3>Cliente não encontrado</h3><p>Nenhuma fatura para "${escapeHtml(termo)}"</p></div>`;
+      return;
+    }
+
+    const c = data.cliente;
+    const kpis = data.kpis;
+    const faturas = data.faturas || [];
+
+    let html = `
+      <div class="cliente-card-faturas">
+        <h3>🏢 ${escapeHtml(c.nome_cliente || '—')}</h3>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          <b>CNPJ:</b> ${escapeHtml(c.cpf_cnpj || '—')}
+          ${c.codigo_cliente ? `&nbsp;•&nbsp; <b>Código:</b> ${escapeHtml(c.codigo_cliente)}` : ''}
+        </div>
+
+        <div class="cliente-info-grid">
+          <div><span>Responsável</span><b>${escapeHtml(c.responsavel || '—')}</b></div>
+          <div><span>Contato</span><b>${escapeHtml(c.contato_final || '—')}</b></div>
+          <div><span>E-mail</span><b>${escapeHtml(c.email || '—')}</b></div>
+        </div>
+
+        <div class="kpis-cliente">
+          <div class="kpi-cliente"><div class="label">Total faturas</div><div class="valor">${kpis.total_faturas}</div></div>
+          <div class="kpi-cliente vermelho"><div class="label">Em atraso</div><div class="valor">${kpis.em_atraso}</div></div>
+          <div class="kpi-cliente amarelo"><div class="label">Pendentes</div><div class="valor">${kpis.pendentes}</div></div>
+          <div class="kpi-cliente verde"><div class="label">Pagas</div><div class="valor">${kpis.pagas}</div></div>
+        </div>
+
+        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+          📱 ${kpis.total_linhas} linha(s) cadastrada(s)
+        </div>
+      </div>
+
+      <div class="cliente-card-faturas">
+        <h3 style="font-size: 0.95rem;">📋 Histórico de Faturas (${faturas.length})</h3>
+        <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.75rem;">
+          <thead>
+            <tr style="border-bottom: 2px solid var(--border-color);">
+              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">#</th>
+              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">📱 Linha</th>
+              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">📋 Plano</th>
+              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">📅 Vencimento</th>
+              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">🚦 Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${faturas.map(f => {
+              const venc = new Date(f.vencimento + 'T00:00:00');
+              const hoje = new Date(); hoje.setHours(0,0,0,0);
+              const atrasada = f.status === 'PENDENTE' && venc < hoje;
+              const corVenc = f.status === 'PAGO' ? '#065f46' : atrasada ? '#991b1b' : '#b45309';
+              const badge = f.status === 'PAGO'
+                ? '<span class="badge badge-pago">✅ Pago</span>'
+                : atrasada
+                  ? '<span class="badge badge-atrasado">🔴 Atrasado</span>'
+                  : '<span class="badge badge-pendente">⏳ Pendente</span>';
+              return `
+                <tr style="border-bottom: 1px solid #f1f5f9;">
+                  <td style="padding: 8px; font-weight: 700; color: var(--text-muted);">${f.numero_sequencial || '—'}</td>
+                  <td style="padding: 8px;">📱 ${escapeHtml(f.linha || '—')}</td>
+                  <td style="padding: 8px;">${escapeHtml(f.plano || '—')}</td>
+                  <td style="padding: 8px; font-weight: 700; color: ${corVenc};">${formatarData(f.vencimento)}</td>
+                  <td style="padding: 8px;">${badge}</td>
+                </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    `;
+
+    container.innerHTML = html;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-consulta" style="color:#ef4444;"><h3>Erro</h3><p>${escapeHtml(e.message)}</p></div>`;
+  }
+};
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function formatarData(iso) {
+  if (!iso) return '—';
+  if (iso.includes('/')) return iso;
+  const [a, m, d] = iso.split('T')[0].split('-');
+  return `${d}/${m}/${a}`;
+}
+function formatarDataHora(iso) {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+}
+function escapeHtml(t) {
+  if (!t) return '';
+  return String(t).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+}
 </script>
 </body>
 </html>
