@@ -1046,7 +1046,6 @@ async function _inserirVendaNova() {
 // FINALIZAR PEDIDO EXISTENTE (DELETE + INSERT por modalidade)
 // ============================================================
 async function _finalizarPedidoExistente(pedido) {
-  // Guarda contra duplo clique
   if (window._finalizandoPedido) {
     window._toast('⏳ Já está finalizando este pedido...', 'warning');
     return;
@@ -1057,17 +1056,26 @@ async function _finalizarPedidoExistente(pedido) {
     const linhas = _coletarLinhasDoFormulario();
     if (linhas.length === 0) {
       alert('⚠️ Adicione pelo menos uma linha com plano!');
+      window._finalizandoPedido = false;
       return;
     }
 
-    // 🔥 REGRA: BACKOFFICE deve preencher número em PRIMEIRA ATIVAÇÃO, M2M, ADITIVO
-    const MODALIDADES_EXIGEM_NUMERO_BACKOFFICE = ['PRIMEIRA ATIVAÇÃO', 'M2M (IoT)', 'ADITIVO'];
-    const semNumero = linhas.filter(l =>
-      MODALIDADES_EXIGEM_NUMERO_BACKOFFICE.includes(l.modalidade) && !l.numero
-    );
-    if (semNumero.length > 0) {
-      const mods = [...new Set(semNumero.map(l => l.modalidade))];
-      window._toast(`⚠️ Preencha o número de telefone nas linhas de: ${mods.join(', ')}`, 'warning');
+    // 🔥 NOVA REGRA: TODOS os campos devem estar preenchidos
+    const faltando = _validarInputBackofficeCompleto(linhas);
+    if (faltando.length > 0) {
+      // Mostra os 3 primeiros pra não estourar o toast
+      const resumo = faltando.slice(0, 3).join(' • ') + (faltando.length > 3 ? ` • +${faltando.length - 3}` : '');
+      window._toast(`⚠️ Preencha todos os campos. Faltam: ${resumo}`, 'warning');
+
+      // Rola até o primeiro campo vazio
+      const primeiroVazio = document.querySelector(
+        'input[style*="ef4444"], select[style*="ef4444"], textarea[style*="ef4444"]'
+      );
+      if (primeiroVazio) {
+        primeiroVazio.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        primeiroVazio.focus();
+      }
+
       window._finalizandoPedido = false;
       return;
     }
@@ -1075,10 +1083,10 @@ async function _finalizarPedidoExistente(pedido) {
     const campos = _coletarCamposComuns();
     const TENANT = 'f9cca67a-41f8-4ad7-a119-74bc58018dee';
 
-    // 🔥 Descobre a data original do pedido (formato BR) — usada pra localizar linhas antigas
+    // ... resto igual (data original, modalidades, loop de DELETE+INSERT)
+    
     let dataOriginal = '';
     if (pedido.id_unico && pedido.id_unico.includes('|')) {
-      // id_unico = "cnpj|data_key" → pega a segunda parte
       dataOriginal = pedido.id_unico.split('|')[1] || '';
     }
     if (!dataOriginal && pedido.dataVenda) {
@@ -1094,7 +1102,6 @@ async function _finalizarPedidoExistente(pedido) {
 
     const cnpj = pedido.cnpj || campos.cnpj;
 
-    // 🔥 Modalidades a tratar (original + formulário)
     const modsOriginais = [];
     if (pedido.linhasPorModalidade && typeof pedido.linhasPorModalidade === 'object') {
       modsOriginais.push(...Object.keys(pedido.linhasPorModalidade));
@@ -1120,7 +1127,6 @@ async function _finalizarPedidoExistente(pedido) {
     let totalLinhasGravadas = 0;
 
     for (const modalidade of todasModalidades) {
-      // 1) DELETE — só apaga o que ainda está em "PENDENTE DE INPUT" (segurança)
       const { error: errDel } = await sb
         .from('VENDAS')
         .delete()
@@ -1136,7 +1142,6 @@ async function _finalizarPedidoExistente(pedido) {
         console.log(`   🗑️ Deletadas linhas antigas de "${modalidade}"`);
       }
 
-      // 2) INSERT — só insere se ainda tem linhas dessa modalidade no formulário
       const linhasMod = linhas.filter(l => l.modalidade === modalidade);
       if (linhasMod.length === 0) continue;
 
@@ -1148,7 +1153,7 @@ async function _finalizarPedidoExistente(pedido) {
         valor_contratado:          formatarValorBR(l.valor),
         operadora_doadora:         l.operadora || null,
         consultor_que_vendeu:      nomeConsultor,
-        status_do_pedido:          '1. INPUT REALIZADO',  // 🔥 NOVO STATUS
+        status_do_pedido:          '1. INPUT REALIZADO',
         ativacao_em_sistema_tim:   null,
         tenant_id:                 TENANT
       }));
@@ -1160,7 +1165,6 @@ async function _finalizarPedidoExistente(pedido) {
       console.log(`   ✅ ${registros.length} linha(s) gravada(s) em "${modalidade}"`);
     }
 
-    // 🔥 Limpa o sessionStorage (pedido consumido)
     _limparPedidoPendente();
 
     window._toast(`✅ Pedido finalizado! ${totalLinhasGravadas} linha(s) atualizada(s).`, 'success');
@@ -1375,5 +1379,72 @@ popularSelectConsultores();
     select.value = valorPreservado;
     delete select.dataset.valorPreservado;
   }
+}
+  // ============================================================
+// VALIDAÇÃO COMPLETA — BACKOFFICE INPUT
+// Bloqueia finalização se qualquer campo estiver vazio
+// ============================================================
+function _validarInputBackofficeCompleto(linhas) {
+  const faltando = [];
+
+  // ─── 1) CAMPOS COMUNS (topo do formulário) ───
+  const camposObrigatorios = [
+    { id: 'v_venc',           label: 'Dia de Vencimento' },
+    { id: 'v_data',           label: 'Data da Venda' },
+    { id: 'v_cnpj',           label: 'CNPJ' },
+    { id: 'v_razao',          label: 'Razão Social' },
+    { id: 'v_ie',             label: 'Inscrição Estadual' },
+    { id: 'v_cep',            label: 'CEP' },
+    { id: 'v_endereco',       label: 'Endereço' },
+    { id: 'v_numero',         label: 'Número do Endereço' },
+    { id: 'v_bairro',         label: 'Bairro' },
+    { id: 'v_cidade',         label: 'Cidade' },
+    { id: 'v_uf',             label: 'UF' },
+    { id: 'v_cpf_admin',      label: 'CPF do Administrador' },
+    { id: 'v_nome_admin',     label: 'Nome do Administrador' },
+    { id: 'v_email',          label: 'E-mail' },
+    { id: 'v_contato_fin',    label: 'Contato Financeiro' },
+  ];
+
+  camposObrigatorios.forEach(({ id, label }) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    const valor = (el.value || '').trim();
+    if (!valor) {
+      faltando.push(label);
+      el.style.border = '2px solid #ef4444';
+      el.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.1)';
+    } else {
+      el.style.border = '';
+      el.style.boxShadow = '';
+    }
+  });
+
+  // ─── 2) CAMPOS DAS LINHAS (plano, número, valor) ───
+  linhas.forEach((l, idx) => {
+    const numLinha = idx + 1;
+    if (!l.plano)   faltando.push(`Linha ${numLinha}: Plano`);
+    if (!l.numero)  faltando.push(`Linha ${numLinha}: Número`);
+    if (!l.valor || l.valor <= 0) faltando.push(`Linha ${numLinha}: Valor`);
+    // Operadora só é obrigatória em PORTABILIDADE
+    if (l.modalidade === 'PORTABILIDADE' && !l.operadora) {
+      faltando.push(`Linha ${numLinha}: Operadora (Portabilidade)`);
+    }
+  });
+
+  // ─── 3) VALIDA OPERADORA DOMÉSTICA VISUALMENTE ───
+  document.querySelectorAll('.linha-plano-item').forEach((div, idx) => {
+    const inputOper = div.querySelector('.input-operadora');
+    if (!inputOper) return;
+    if (!inputOper.value || inputOper.value === '') {
+      inputOper.style.border = '2px solid #ef4444';
+      inputOper.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.1)';
+    } else {
+      inputOper.style.border = '';
+      inputOper.style.boxShadow = '';
+    }
+  });
+
+  return faltando;
 }
 </script>
