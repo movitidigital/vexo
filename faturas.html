@@ -684,6 +684,26 @@
 </div>
 
 <script>
+  // 🔥 Converte string ISO ou data BR em Date SEM shift de timezone
+function parseDataSemTimezone(valor) {
+  if (!valor) return null;
+
+  // Se já for Date, devolve
+  if (valor instanceof Date) return valor;
+
+  const str = String(valor).trim();
+
+  // Formato BR: 20/10/2026
+  if (str.includes('/')) {
+    const [d, m, a] = str.split('/');
+    return new Date(Number(a), Number(m) - 1, Number(d), 0, 0, 0, 0);
+  }
+
+  // Formato ISO: 2026-10-20 (com ou sem T)
+  const dataLimpa = str.split('T')[0];
+  const [a, m, d] = dataLimpa.split('-').map(Number);
+  return new Date(a, m - 1, d, 0, 0, 0, 0);
+}
   // ═══════════════════════════════════════════════════════════
 // PONTE SUPABASE — substitui google.script.run
 // ═══════════════════════════════════════════════════════════
@@ -963,7 +983,7 @@ function renderizarTabela(clientes) {
 
       for (var f = 0; f < linhaTel.faturas.length; f++) {
         var fatura = linhaTel.faturas[f];
-        var dataVenc = new Date(fatura.vencimento);
+        var dataVenc = parseDataSemTimezone(fatura.vencimento);
         var status = fatura.status.toUpperCase();
         if (status === 'PENDENTE' && dataVenc < hoje) status = 'ATRASADO';
 
@@ -1915,9 +1935,31 @@ window.executarBuscaCliente = async function() {
 // ═══════════════════════════════════════════════════════════
 function formatarData(iso) {
   if (!iso) return '—';
-  if (iso.includes('/')) return iso;
-  const [a, m, d] = iso.split('T')[0].split('-');
-  return `${d}/${m}/${a}`;
+
+  // Se já vier no formato BR (dd/mm/yyyy), devolve como está
+  if (typeof iso === 'string' && iso.includes('/')) return iso;
+
+  // Se for string ISO (2026-10-20 ou 2026-10-20T00:00:00Z), extrai só a data
+  // SEM passar pelo construtor Date — evita o shift de timezone
+  if (typeof iso === 'string') {
+    const dataLimpa = iso.split('T')[0];
+    const partes = dataLimpa.split('-');
+    if (partes.length === 3) {
+      const [a, m, d] = partes;
+      return `${d}/${m}/${a}`;
+    }
+    return iso;
+  }
+
+  // Fallback pra Date object — usa UTC (não local)
+  if (iso instanceof Date) {
+    const d = String(iso.getUTCDate()).padStart(2, '0');
+    const m = String(iso.getUTCMonth() + 1).padStart(2, '0');
+    const a = iso.getUTCFullYear();
+    return `${d}/${m}/${a}`;
+  }
+
+  return String(iso);
 }
 function formatarDataHora(iso) {
   if (!iso) return '—';
