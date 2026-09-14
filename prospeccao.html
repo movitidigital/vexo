@@ -2179,20 +2179,23 @@ function carregarMural() {
     return tel;
   };
 
- google.script.run.withSuccessHandler(leadsRaw => {
-  // 🔄 Adapta snake_case do banco → camelCase do HTML
-  const leads = (leadsRaw || []).map(l => ({
-    id: l.id,
-    razao: l.razao_social,
-    cnpj: l.cnpj,
-    admin: l.nome_administrador,
-    contato: l.contato,
-    contato_alt: l.contato_alt,
-    cidade: l.cidade,
-    uf: l.uf
-  }));
+  google.script.run.withSuccessHandler(leadsRaw => {
+    // 🔥 Garante a extração correta do array independentemente do formato retornado
+    const arrayLeads = Array.isArray(leadsRaw) ? leadsRaw : (leadsRaw?.data || leadsRaw?.dados || []);
 
-  mural.innerHTML = "";
+    // 🔄 Adapta snake_case do banco → camelCase do HTML com fallbacks seguros
+    const leads = arrayLeads.map(l => ({
+      id: l.id,
+      razao: l.razao_social || l.razao || "Empresa sem nome",
+      cnpj: l.cnpj,
+      admin: l.nome_administrador || l.admin || "Não informado",
+      contato: l.contato,
+      contato_alt: l.contato_alt,
+      cidade: l.cidade,
+      uf: l.uf
+    }));
+
+    mural.innerHTML = "";
 
     if (!leads || leads.length === 0) {
       mural.innerHTML = '<div style="grid-column: 1/-1; text-align:center; padding: 40px; background: #f8fafc; border-radius: 15px; border: 2px dashed #e2e8f0;"><p style="color:#94a3b8; font-size: 14px; font-weight: 700;">🌐 O MURAL ESTÁ VAZIO<br><small style="font-weight:400; font-size:12px;">Novos leads aparecerão aqui em breve.</small></p></div>';
@@ -2213,8 +2216,9 @@ function carregarMural() {
       const contato1 = l.contato && l.contato !== "undefined" ? l.contato : "";
       const contato2 = l.contato_alt && l.contato_alt !== "undefined" ? l.contato_alt : "";
 
+      const razaoSafe = (l.razao || "").replace(/'/g, "\\'");
       const botaoLixeira = podeExcluir 
-        ? `<div onclick="event.stopPropagation(); abrirModalExcluirLead('${l.id}', '${l.razao}')" 
+        ? `<div onclick="event.stopPropagation(); abrirModalExcluirLead('${l.id}', '${razaoSafe}')" 
                 style="color:#ef4444; font-size:15px; cursor:pointer; padding:6px; border-radius:8px; transition:0.2s;" 
                 title="Remover Lead" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">🗑️</div>` 
         : "";
@@ -2366,11 +2370,15 @@ function salvarNovoLead() {
   }
 
   const naturezaJuridica = document.getElementById('p_natureza_juridica').value;
+  const razaoVal = document.getElementById('p_razao').value;
+  const adminVal = document.getElementById('p_admin').value;
 
   const dados = {
     cnpj: document.getElementById('p_cnpj').value,
-    razao: document.getElementById('p_razao').value,
-    admin: document.getElementById('p_admin').value,
+    razao: razaoVal,
+    razao_social: razaoVal, // Mapeamento compatível com o Supabase para o Mural
+    admin: adminVal,
+    nome_administrador: adminVal, // Mapeamento compatível com o Supabase para o Mural
     contato: document.getElementById('p_contato').value,
     contato_alt: document.getElementById('p_contato_alt').value, 
     fidelidade: document.getElementById('p_fidelidade').value,
