@@ -1209,7 +1209,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// PONTE SUPABASE — substitui google.script.run
+// PONTE SUPABASE — substitui google.script.run (com Normalizador)
 // ═══════════════════════════════════════════════════════════
 (function () {
   if (!window.sb) {
@@ -1249,7 +1249,17 @@ function moverCardParaColuna(idLead, novaEtapa) {
           const args = cfg.args(...params);
           const { data, error } = await window.sb.rpc(cfg.rpc, args);
           if (error) throw error;
-          if (ok) ok(data);
+
+          // 🔥 NORMALIZADOR: Se o Supabase retornar dados sem a propriedade .success,
+          // encapsulamos em um objeto compatível para evitar o falso erro no front.
+          let respostaFinal = data;
+          if (data === true || (data && typeof data === 'object' && data.success === undefined)) {
+            respostaFinal = { success: true, dados: data };
+          } else if (data === null || data === undefined) {
+            respostaFinal = { success: true };
+          }
+
+          if (ok) ok(respostaFinal);
         } catch (err) {
           console.error(`❌ RPC ${cfg.rpc}:`, err);
           if (fail) fail(err.message || String(err));
@@ -1263,9 +1273,8 @@ function moverCardParaColuna(idLead, novaEtapa) {
   window.google.script = window.google.script || {};
   Object.defineProperty(window.google.script, 'run', { get: () => makeRunner() });
 
-  console.log('✅ Ponte Supabase ativa — prospeccao.html');
+  console.log('✅ Ponte Supabase ativa — prospeccao.html (com normalizador)');
 })();
-  
 // ==========================================
 // NAVEGAÇÃO ENTRE ABAS
 // ==========================================
