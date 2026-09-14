@@ -1293,6 +1293,19 @@ detalheHtml += '<div class="grupo-card">' +
   document.getElementById('kpi-recebidas').innerText = kpiRecebidas;
   document.getElementById('loading').style.display = 'none';
 
+  // 🔥 Badge "Em risco" = só clientes com pelo menos 1 fatura ATRASADA
+  const totalEmRisco = clientes.filter(c => {
+    return (c.linhasTelefonicas || []).some(lt =>
+      (lt.faturas || []).some(f => {
+        const venc = new Date(f.vencimento);
+        const hoje = new Date(); hoje.setHours(0,0,0,0);
+        venc.setHours(0,0,0,0);
+        return f.status.toUpperCase() !== 'PAGO' && venc < hoje;
+      })
+    );
+  }).length;
+  const badgeRisco = document.getElementById('badge-risco');
+  if (badgeRisco) badgeRisco.textContent = totalEmRisco;
   if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
@@ -1660,6 +1673,10 @@ async function carregarAbaHoje() {
     const hoje = new Date().toISOString().split('T')[0];
     const doDia = (todas.data || []).filter(f => f.vencimento === hoje);
 
+    // 🔥 Atualiza o badge "Hoje" (com ou sem resultados)
+    const badgeHoje = document.getElementById('badge-hoje');
+    if (badgeHoje) badgeHoje.textContent = doDia.length;
+
     if (doDia.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div style="font-size:2rem; margin-bottom:0.5rem;">🎉</div>Nenhuma fatura vence hoje.</td></tr>';
       return;
@@ -1677,9 +1694,12 @@ async function carregarAbaHoje() {
     `).join('');
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
+
+    // 🔥 Em caso de erro, zera o badge
+    const badgeHoje = document.getElementById('badge-hoje');
+    if (badgeHoje) badgeHoje.textContent = '0';
   }
 }
-
 // ═══════════════════════════════════════════════════════════
 // ABA: TODAS
 // ═══════════════════════════════════════════════════════════
@@ -1699,13 +1719,23 @@ async function carregarAbaTodas() {
     });
     if (error) throw error;
 
+    const total = (data || []).length;
+
+    // 🔥 Atualiza o badge "Todas" só quando NÃO há filtros ativos
+    // (senão o badge muda a cada filtro, o que não faz sentido)
+    const semFiltros = !status && !busca;
+    if (semFiltros) {
+      const badgeTodas = document.getElementById('badge-todas');
+      if (badgeTodas) badgeTodas.textContent = total;
+    }
+
     if (!data || data.length === 0) {
       tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhuma fatura encontrada com esses filtros.</td></tr>';
       info.textContent = '';
       return;
     }
 
-    info.textContent = `${data.length} fatura(s) encontrada(s)`;
+    info.textContent = `${total} fatura(s) encontrada(s)`;
     tbody.innerHTML = data.map(f => `
       <tr>
         <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
@@ -1718,6 +1748,10 @@ async function carregarAbaTodas() {
     `).join('');
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
+
+    // 🔥 Em caso de erro, zera o badge
+    const badgeTodas = document.getElementById('badge-todas');
+    if (badgeTodas) badgeTodas.textContent = '0';
   }
 }
 
