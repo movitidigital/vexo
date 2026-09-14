@@ -202,9 +202,10 @@
           </div>
           <div style="grid-column: span 2;">
             <label class="label-lead">STATUS INICIAL</label>
-            <select id="p_status_ini" class="input-lead" style="height: 42px;">
-              <option value="DISPONÍVEL">Disponível (Para Mural)</option>
-              <option value="ABORDAGEM">Iniciar Comigo (Abordagem)</option>
+           <select id="p_status_ini" class="input-lead" style="height: 42px;">
+  <option value="DISPONIVEL">Disponível (Para Mural)</option>
+  <option value="ABORDAGEM">Iniciar Comigo (Abordagem)</option>
+</select>
             </select>
           </div>
           <div style="grid-column: span 2;">
@@ -1191,6 +1192,40 @@
 </style>
 
 <script>
+  // ============================================================
+// HELPERS DE USUÁRIO (lê do Supabase Auth + tabela profiles)
+// ============================================================
+let _usuarioVexoCache = null;
+
+async function obterUsuarioVexo() {
+  if (_usuarioVexoCache) return _usuarioVexoCache;
+  try {
+    const { data: { user } } = await window.sb.auth.getUser();
+    if (!user) return null;
+
+    const { data: prof } = await window.sb
+      .from('profiles')
+      .select('id, nome, sobrenome, matricula, email, role')
+      .eq('id', user.id)
+      .single();
+
+    const nomeCompleto = [prof?.nome, prof?.sobrenome].filter(Boolean).join(' ').trim().toUpperCase();
+    _usuarioVexoCache = {
+      id: prof?.id || user.id,
+      nome: prof?.nome || '',
+      sobrenome: prof?.sobrenome || '',
+      nomeCompleto: nomeCompleto,
+      matricula: prof?.matricula || '',
+      email: prof?.email || user.email || '',
+      role: (prof?.role || '').toUpperCase(),
+      username: prof?.matricula || prof?.email || user.email || ''
+    };
+    return _usuarioVexoCache;
+  } catch (e) {
+    console.error('❌ obterUsuarioVexo:', e);
+    return null;
+  }
+}
   // SOLUÇÃO PARA O ERRO: Cria uma função vazia para evitar o crash
 window.notificacaoVexo = function(msg, tipo) {
   console.log("Notificação Vexo (simulada):", msg);
@@ -1859,11 +1894,11 @@ function recarregarDragAndDrop() {
     card.addEventListener('dragend', handleDragEnd);
   });
 }
-function carregarMeuFunil() {
+async function carregarMeuFunil() {
   // 🔥 VERIFICA SE OS CONTÊINERES DO KANBAN EXISTEM
   const colunasIds = ['oportunidade', 'contato', 'apresentacao', 'negociacao', 'fechado'];
   let todasExistem = true;
-  
+
   colunasIds.forEach(c => {
     const el = document.getElementById('k_' + c);
     if (!el) {
@@ -1871,32 +1906,29 @@ function carregarMeuFunil() {
       todasExistem = false;
     }
   });
-  
+
   if (!todasExistem) {
     console.error('❌ Elementos do Kanban não encontrados. Recarregue a página.');
     notificar('Erro: estrutura do Kanban não carregada. Recarregue a página.', 'erro');
     return;
   }
 
-  // 🔥 OBTÉM USUÁRIO LOGADO COM TRATAMENTO DE ERRO
-  let usuarioLogado;
-  try {
-    usuarioLogado = JSON.parse(sessionStorage.getItem('usuarioLogado'));
-  } catch (e) {
-    console.error('❌ Erro ao ler sessionStorage:', e);
-    notificar('Erro: sessão do usuário inválida. Faça login novamente.', 'erro');
+  // 🔥 BUSCA O PERFIL DO SUPABASE (sessionStorage mudou de formato)
+  const usuarioVexo = await obterUsuarioVexo();
+  if (!usuarioVexo) {
+    notificar('Erro: não foi possível identificar o usuário. Faça login novamente.', 'erro');
     return;
   }
-  
-  if (!usuarioLogado) {
-    notificar('Erro: usuário não logado.', 'erro');
+
+  // 🔥 Chave que a RPC usa no filtro: NOME COMPLETO em uppercase
+  const userBusca = usuarioVexo.nomeCompleto || usuarioVexo.username || usuarioVexo.email;
+  console.log('👤 [Kanban] Usuário:', usuarioVexo.nomeCompleto, '| role:', usuarioVexo.role, '| userBusca:', userBusca);
+
+  if (!userBusca) {
+    console.error('❌ userBusca vazio — não é possível filtrar leads');
+    notificar('Erro: usuário sem nome/matrícula. Contate o suporte.', 'erro');
     return;
   }
-  
-  const nome = usuarioLogado.nome || "";
-  const sobrenome = usuarioLogado.sobrenome || "";
-  const nomeCompleto = (nome + " " + sobrenome).trim().toUpperCase();
-  const userBusca = nomeCompleto || (usuarioLogado.username || "").toUpperCase();
 
   // Limpa as colunas e mostra loading
   colunasIds.forEach(c => {
@@ -1908,28 +1940,42 @@ function carregarMeuFunil() {
 
   google.script.run
     .withFailureHandler(function(erro) {
-       console.error("Erro no Backend: ", erro);
-       notificar("Erro ao buscar leads no banco de dados.", "erro");
+      console.error("Erro no Backend: ", erro);
+      notificar("Erro ao buscar leads no banco de dados.", "erro");
     })
     .withSuccessHandler(function(leadsRaw) {
-  // 🔄 Adapta snake_case do banco → camelCase do HTML
-  const leads = (leadsRaw || []).map(l => ({
-    id: l.id,
-    codigo: l.codigo,
-    razao: l.razao_social,
-    cnpj: l.cnpj,
-    contato: l.contato,
-    contato_alt: l.contato_alt,
-    bairro: l.bairro,
-    status: l.status,
-    captador: l.captacao_do_lead,
-    diasParado: l.dias_parado,
-    diasNoFunil: l.dias_no_funil,
-    podeExcluir: l.pode_excluir
-  }));
+      // 🔥 DEBUG: mostra o que chegou
+      console.log('📥 [Kanban] Resposta crua:', leadsRaw);
+      console.log('   Tipo:', typeof leadsRaw, '| É array?', Array.isArray(leadsRaw));
 
-  // Limpa as colunas
-  colunasIds.forEach(c => {
+      // 🔥 Extrai array de qualquer formato possível
+      let arrayKanban = [];
+      if (Array.isArray(leadsRaw)) {
+        arrayKanban = leadsRaw;
+      } else if (leadsRaw && typeof leadsRaw === 'object') {
+        arrayKanban = leadsRaw.data || leadsRaw.dados || leadsRaw.leads || leadsRaw.rows || [];
+      }
+
+      console.log('✅ [Kanban] Leads extraídos:', arrayKanban.length);
+
+      // 🔄 Adapta snake_case do banco → camelCase do HTML
+      const leads = arrayKanban.map(l => ({
+        id: l.id,
+        codigo: l.codigo,
+        razao: l.razao_social,
+        cnpj: l.cnpj,
+        contato: l.contato,
+        contato_alt: l.contato_alt,
+        bairro: l.bairro,
+        status: l.status,
+        captador: l.captacao_do_lead,
+        diasParado: l.dias_parado,
+        diasNoFunil: l.dias_no_funil,
+        podeExcluir: l.pode_excluir
+      }));
+
+      // Limpa as colunas
+      colunasIds.forEach(c => {
         const el = document.getElementById('k_' + c);
         if (el) el.innerHTML = "";
       });
@@ -1939,8 +1985,8 @@ function carregarMeuFunil() {
           const el = document.getElementById('k_' + c);
           if (el) el.innerHTML = '<div class="kanban-empty">Sem leads nesta etapa</div>';
         });
-        setTimeout(() => { 
-          configurarDragDrop(); 
+        setTimeout(() => {
+          configurarDragDrop();
           atualizarContadoresSimples();
         }, 100);
         return;
@@ -1959,9 +2005,9 @@ function carregarMeuFunil() {
         try {
           // 🔥 GARANTE QUE O ID É UMA STRING LIMPA
           const leadId = String(lead.id).trim();
-          
+
           const statusOriginal = String(lead.status || "").toUpperCase().trim();
-          
+
           // Mapeamento de compatibilidade para leads antigos
           let etapaCorreta = statusOriginal;
           if (statusOriginal === "ABORDAGEM") etapaCorreta = "CONTATO";
@@ -1973,19 +2019,19 @@ function carregarMeuFunil() {
           else if (statusOriginal === "NEGOCIACAO") etapaCorreta = "NEGOCIACAO";
           else if (statusOriginal === "FECHADO") etapaCorreta = "FECHADO";
           else etapaCorreta = "OPORTUNIDADE";
-          
+
           const etapaLower = etapaCorreta.toLowerCase();
           const targetDiv = document.getElementById('k_' + etapaLower);
-          
+
           if (targetDiv) {
             // Incrementa contador
             if (contadores[etapaLower] !== undefined) {
               contadores[etapaLower]++;
             }
-            
+
             const dias = Number(lead.diasParado) || 0;
             const totalNoFunil = Number(lead.diasNoFunil) || 0;
-            
+
             // Regras de negligenciado por etapa
             let eNegligenciado = false;
             if (etapaLower === 'oportunidade' && dias >= 7) eNegligenciado = true;
@@ -1994,8 +2040,8 @@ function carregarMeuFunil() {
             if (etapaLower === 'negociacao' && dias >= 7) eNegligenciado = true;
             if (etapaLower === 'fechado' && dias >= 30) eNegligenciado = true;
 
-            let corT = "t-quente"; 
-            if (dias >= 7) corT = "t-frio"; 
+            let corT = "t-quente";
+            if (dias >= 7) corT = "t-frio";
             else if (dias >= 3) corT = "t-morno";
 
             const fone1Limpo = lead.contato ? String(lead.contato).replace(/\D/g, '') : '';
@@ -2004,12 +2050,12 @@ function carregarMeuFunil() {
             const card = document.createElement('div');
             card.className = "card-lead-min " + (eNegligenciado ? "card-negligenciado" : "");
             card.id = "card-" + leadId;
-            
-            // 🔥 ARMAZENA O ID COMO ATRIBUTO DATA PARA FALBACK
+
+            // 🔥 ARMAZENA O ID COMO ATRIBUTO DATA PARA FALLBACK
             card.setAttribute('data-lead-id', leadId);
-            
+
             // Configuração Drag & Drop
-            card.setAttribute('draggable', 'true'); 
+            card.setAttribute('draggable', 'true');
             card.addEventListener('dragstart', (e) => {
               e.stopPropagation();
               card.classList.add('dragging');
@@ -2024,20 +2070,19 @@ function carregarMeuFunil() {
               });
             });
             card.style.position = 'relative';
-            
+
             // 🔥 CLIQUE DO CARD - COM VALIDAÇÃO DO ID
             card.addEventListener('click', (e) => {
               e.stopPropagation();
               const idParaAbrir = card.getAttribute('data-lead-id') || leadId;
               console.log(`🖱️ Card clicado - ID: ${idParaAbrir}, Etapa: ${etapaCorreta}`);
-              
+
               if (!idParaAbrir || idParaAbrir === "undefined" || idParaAbrir === "null") {
                 console.error("❌ ID inválido ao clicar no card");
                 notificar("Erro: ID do lead inválido", "erro");
                 return;
               }
-              
-              // 🔥 TENTA ABRIR O MODAL
+
               try {
                 abrirModalUnificado(idParaAbrir);
               } catch (erroModal) {
@@ -2045,34 +2090,31 @@ function carregarMeuFunil() {
                 notificar("Erro ao abrir detalhes do lead", "erro");
               }
             });
-            
+
             let alertaHTML = eNegligenciado ? "<span class='badge-alerta'>⚠️ REATIVAR</span>" : "";
             let deleteBtnHTML = lead.podeExcluir ? "<button class='btn-delete-card' style='background:none; border:none; cursor:pointer; font-size:14px; padding:0 5px; color:#94a3b8;'>🗑️</button>" : "";
             let cnpjHTML = lead.cnpj ? "<div><i class='fas fa-fingerprint'></i> " + lead.cnpj + "</div>" : "";
-            
-            let historicoHTML = eNegligenciado ? 
-              "<div style='color:#ef4444; font-weight:bold;'><i class='fas fa-history'></i> Parado há " + dias + " dias</div>" : 
+
+            let historicoHTML = eNegligenciado ?
+              "<div style='color:#ef4444; font-weight:bold;'><i class='fas fa-history'></i> Parado há " + dias + " dias</div>" :
               "<div><i class='fas fa-history'></i> Parado há " + dias + " dias</div>";
 
             let zap1HTML = fone1Limpo ? "<a href='https://wa.me/55" + fone1Limpo + "' target='_blank' class='btn-whatsapp-small' style='background:#25d366; color:white; padding:2px 6px; border-radius:4px; font-size:9px; text-decoration:none; font-weight:800;'>WhatsApp 1</a>" : "";
             let zap2HTML = fone2Limpo ? "<a href='https://wa.me/55" + fone2Limpo + "' target='_blank' class='btn-whatsapp-small' style='background:#128c7e; color:white; padding:2px 6px; border-radius:4px; font-size:9px; text-decoration:none; font-weight:800;'>WhatsApp 2</a>" : "";
 
-            let contatoAltHTML = lead.contato_alt ? 
+            let contatoAltHTML = lead.contato_alt ?
               "<div style='display:flex; justify-content:space-between; align-items:center;'>" +
                 "<span style='font-size:10px; font-weight:bold; color:#475569;'>📞 " + lead.contato_alt + "</span>" + zap2HTML +
               "</div>" : "";
 
-            // Select com as 5 novas opções
+            // Select com as 5 opções
             let selOportunidade = (etapaCorreta === 'OPORTUNIDADE') ? 'selected' : '';
             let selContato = (etapaCorreta === 'CONTATO') ? 'selected' : '';
             let selApresentacao = (etapaCorreta === 'APRESENTACAO') ? 'selected' : '';
             let selNegociacao = (etapaCorreta === 'NEGOCIACAO') ? 'selected' : '';
             let selFechado = (etapaCorreta === 'FECHADO') ? 'selected' : '';
 
-            // ============================================================
-            // 🟢 CARD COM BOTÃO "VOLTAR AO MURAL" (APENAS ADMIN/BACKOFFICE)
-            // ============================================================
-            card.innerHTML = 
+            card.innerHTML =
               "<div class='temp-bar " + corT + "' style='position: absolute; left: 0; top: 0; bottom: 0; width: 5px; border-radius: 8px 0 0 8px;'></div>" +
               "<div class='card-header' style='padding-left: 10px; display:flex; justify-content:space-between; align-items:center;'>" +
                 "<div style='display:flex; align-items:center; gap:5px;'>" +
@@ -2113,13 +2155,13 @@ function carregarMeuFunil() {
                   "</select>" +
                 "</div>" +
               "</div>";
-            
+
             const btnDel = card.querySelector('.btn-delete-card');
             if (btnDel) {
-                btnDel.addEventListener('click', (ev) => {
-                    ev.stopPropagation(); 
-                    abrirModalExcluirLead(leadId, lead.razao);
-                });
+              btnDel.addEventListener('click', (ev) => {
+                ev.stopPropagation();
+                abrirModalExcluirLead(leadId, lead.razao);
+              });
             }
 
             const zaps = card.querySelectorAll('.btn-whatsapp-small');
@@ -2127,13 +2169,13 @@ function carregarMeuFunil() {
 
             const selectEl = card.querySelector('.kanban-select');
             if (selectEl) {
-                selectEl.addEventListener('click', ev => ev.stopPropagation());
-                selectEl.addEventListener('change', (ev) => {
-                    ev.stopPropagation();
-                    const novoStatus = ev.target.value;
-                    console.log(`🔄 Select change: ${leadId} -> ${novoStatus}`);
-                    atualizarStatusLeadSemRefresh(leadId, novoStatus, card);
-                });
+              selectEl.addEventListener('click', ev => ev.stopPropagation());
+              selectEl.addEventListener('change', (ev) => {
+                ev.stopPropagation();
+                const novoStatus = ev.target.value;
+                console.log(`🔄 Select change: ${leadId} -> ${novoStatus}`);
+                atualizarStatusLeadSemRefresh(leadId, novoStatus, card);
+              });
             }
 
             targetDiv.appendChild(card);
@@ -2142,19 +2184,19 @@ function carregarMeuFunil() {
           console.error("Falha ao montar o card ID: " + lead.id, e);
         }
       });
-      
+
       // Atualiza os contadores visuais
       for (let [etapa, quantidade] of Object.entries(contadores)) {
         const countEl = document.getElementById('count-' + etapa);
         if (countEl) countEl.innerText = quantidade;
       }
-      
+
       // Reconecta o Drag & Drop e atualiza contadores
-      setTimeout(() => { 
+      setTimeout(() => {
         configurarDragDrop();
         atualizarContadoresSimples();
       }, 300);
-      
+
     }).getMeusLeadsKanban(userBusca);
 }
 
@@ -2162,14 +2204,17 @@ function carregarMeuFunil() {
 // FUNÇÕES DO MURAL
 // ==========================================
 
-function carregarMural() {
+async function carregarMural() {
   const mural = document.getElementById('mural-lista');
   
   mural.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px;"><p style="color:#64748b;">🚀 Carregando Novos Leads...</p></div>`;
   
-  const usuarioLogado = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const cargo = (usuarioLogado.role || "").toUpperCase().trim();
+  // 🔥 BUSCA O PERFIL DO SUPABASE (sessionStorage mudou de formato)
+  const usuarioVexo = await obterUsuarioVexo();
+  const cargo = usuarioVexo?.role || "";
   const podeExcluir = (cargo === "ADMINISTRADOR" || cargo === "BACKOFFICE");
+
+  console.log('👤 [Mural] Usuário:', usuarioVexo?.nomeCompleto, '| role:', cargo, '| podeExcluir:', podeExcluir);
 
   const formatarTelefone = (tel) => {
     if (!tel || tel === "---" || tel === "Não informado") return "<span style='color:#94a3b8;'>Não informado</span>";
@@ -2180,8 +2225,19 @@ function carregarMural() {
   };
 
   google.script.run.withSuccessHandler(leadsRaw => {
-    // 🔥 Garante a extração correta do array independentemente do formato retornado
-    const arrayLeads = Array.isArray(leadsRaw) ? leadsRaw : (leadsRaw?.data || leadsRaw?.dados || []);
+    // 🔥 DEBUG: mostra o que chegou
+    console.log('📥 [Mural] Resposta crua:', leadsRaw);
+    console.log('   Tipo:', typeof leadsRaw, '| É array?', Array.isArray(leadsRaw));
+
+    // 🔥 Extrai array de qualquer formato possível
+    let arrayLeads = [];
+    if (Array.isArray(leadsRaw)) {
+      arrayLeads = leadsRaw;
+    } else if (leadsRaw && typeof leadsRaw === 'object') {
+      arrayLeads = leadsRaw.data || leadsRaw.dados || leadsRaw.leads || leadsRaw.rows || [];
+    }
+
+    console.log('✅ [Mural] Leads extraídos:', arrayLeads.length);
 
     // 🔄 Adapta snake_case do banco → camelCase do HTML com fallbacks seguros
     const leads = arrayLeads.map(l => ({
@@ -2275,8 +2331,10 @@ function carregarMural() {
   }).getLeadsDisponiveis();
 }
 
-function captarLead(id) {
-  const user = JSON.parse(sessionStorage.getItem('usuarioLogado')).username;
+async function captarLead(id) {
+  const usuarioVexo = await obterUsuarioVexo();
+  if (!usuarioVexo) { notificar("Erro: sessão expirada", "erro"); return; }
+  const user = usuarioVexo.nomeCompleto || usuarioVexo.username;
   const btn = event && event.currentTarget ? event.currentTarget : null;
   
   if(btn) { 
@@ -2346,21 +2404,22 @@ function fecharModalNovoLead() {
   }, 300);
 }
 
-function salvarNovoLead() {
+async function salvarNovoLead() {
   const btn = document.getElementById('btnSalvarP');
-  const logado = sessionStorage.getItem('usuarioLogado');
-  
-  if (!logado) {
+
+  // 🔥 Busca o perfil do Supabase (sessionStorage mudou de formato)
+  const usuarioVexo = await obterUsuarioVexo();
+  if (!usuarioVexo) {
     notificar("Erro: Sessão expirada. Refaça o login.", "erro");
     return;
   }
 
-  const user = JSON.parse(logado).username;
+  const user = usuarioVexo.nomeCompleto || usuarioVexo.username;
   const status_ini = document.getElementById('p_status_ini').value;
   const origem_lead = document.getElementById('p_origem').value;
   const tipoCliente = document.getElementById('p_tipo_cliente').value;
-  
-  // Tratamento da data de abertura para o padrão ISO (YYYY-MM-DD) exigido pelo Supabase/PostgreSQL
+
+  // Tratamento da data de abertura para o padrão ISO (YYYY-MM-DD)
   let dataAbertura = document.getElementById('p_data_abertura').value;
   if (dataAbertura && dataAbertura.includes('/')) {
     const partes = dataAbertura.split('/');
@@ -2376,11 +2435,11 @@ function salvarNovoLead() {
   const dados = {
     cnpj: document.getElementById('p_cnpj').value,
     razao: razaoVal,
-    razao_social: razaoVal, // Mapeamento compatível com o Supabase para o Mural
+    razao_social: razaoVal,
     admin: adminVal,
-    nome_administrador: adminVal, // Mapeamento compatível com o Supabase para o Mural
+    nome_administrador: adminVal,
     contato: document.getElementById('p_contato').value,
-    contato_alt: document.getElementById('p_contato_alt').value, 
+    contato_alt: document.getElementById('p_contato_alt').value,
     fidelidade: document.getElementById('p_fidelidade').value,
     cep: document.getElementById('p_cep').value,
     logradouro: document.getElementById('p_endereco').value,
@@ -2398,21 +2457,31 @@ function salvarNovoLead() {
   };
 
   if (!dados.origem) {
-    notificar("A Origem do Lead é obrigatória!", "erro"); 
-    return; 
+    notificar("A Origem do Lead é obrigatória!", "erro");
+    return;
   }
-  if (!dados.razao || !dados.cnpj) { 
-    notificar("CNPJ e Razão Social são obrigatórios!", "erro"); 
-    return; 
+  if (!dados.razao || !dados.cnpj) {
+    notificar("CNPJ e Razão Social são obrigatórios!", "erro");
+    return;
   }
 
   btn.disabled = true;
   btn.innerHTML = '⏳ Gravando...';
 
+  console.log('📤 [Novo Lead] Enviando:', dados);
+
   google.script.run
     .withSuccessHandler(res => {
-      if (res && res.success) {
+      console.log('✅ [Novo Lead] Resposta:', res);
+
+      // 🔥 A RPC registrar_prospeccao retorna o registro direto (não { success: true })
+      // O normalizador da ponte envelopa em { success: true } se for objeto. Vamos aceitar ambos.
+      const sucesso = res && (res.success === true || res.id || res.razao_social);
+
+      if (sucesso) {
         notificar(`Lead registrado com sucesso!`);
+
+        // Limpa o form
         document.querySelectorAll('#modal-novo-lead .input-lead').forEach(el => {
           if (el.tagName === 'SELECT') {
             el.selectedIndex = 0;
@@ -2420,21 +2489,23 @@ function salvarNovoLead() {
             el.value = "";
           }
         });
+
         btn.disabled = false;
         btn.innerHTML = '📍 Registrar Lead';
         fecharModalNovoLead();
-        
-        setTimeout(() => {
-          if (status_ini === "DISPONÍVEL") {
+
+        // 🔥 Muda de aba e recarrega (usa o status_ini para decidir)
+        setTimeout(async () => {
+          if (status_ini === "DISPONIVEL") {
             mudarAbaLeads('mural');
-            if (typeof carregarMural === 'function') carregarMural();
+            if (typeof carregarMural === 'function') await carregarMural();
           } else {
             mudarAbaLeads('kanban');
-            if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
+            if (typeof carregarMeuFunil === 'function') await carregarMeuFunil();
           }
         }, 600);
       } else {
-        notificar("Erro ao salvar: " + (res.message || "Falha desconhecida"), "erro");
+        notificar("Erro ao salvar: " + (res?.message || "Falha desconhecida"), "erro");
         btn.disabled = false;
         btn.innerHTML = '📍 Tentar Novamente';
       }
@@ -2445,7 +2516,7 @@ function salvarNovoLead() {
       btn.disabled = false;
       btn.innerHTML = '📍 Erro de Comunicação';
     })
-    .registrarProspeccao(dados); 
+    .registrarProspeccao(dados);
 }
 
 function notificar(mensagem, tipo = 'sucesso') {
@@ -2846,13 +2917,12 @@ function processarExclusao(id) {
 // INICIALIZAÇÃO
 // ==========================================
 
-setTimeout(() => {
-  const logado = sessionStorage.getItem('usuarioLogado');
-  if (logado) {
-    const userObj = JSON.parse(logado);
-    console.log("Iniciando Funil para:", userObj.username, "Cargo:", userObj.role);
-    carregarMeuFunil();
-        controlarVisibilidadeBotaoDevolver(); // ← adicione esta linha
+setTimeout(async () => {
+  const usuarioVexo = await obterUsuarioVexo();
+  if (usuarioVexo) {
+    console.log("Iniciando Funil para:", usuarioVexo.nomeCompleto, "Cargo:", usuarioVexo.role);
+    await carregarMeuFunil();
+    await controlarVisibilidadeBotaoDevolver();
   }
 }, 350);
 
@@ -6134,9 +6204,9 @@ function mostrarConfirmacaoVexo(mensagem, titulo, callback) {
 /**
  * Controla a visibilidade do botão "Devolver Parados" baseado no cargo
  */
-function controlarVisibilidadeBotaoDevolver() {
-  const usuarioLogado = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const cargo = (usuarioLogado.role || "").toUpperCase().trim();
+async function controlarVisibilidadeBotaoDevolver() {
+  const usuarioVexo = await obterUsuarioVexo();
+  const cargo = usuarioVexo?.role || "";
   
   const btnDevolver = document.getElementById('btn-devolver-parados');
   if (!btnDevolver) return;
