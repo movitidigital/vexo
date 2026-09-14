@@ -1209,7 +1209,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// PONTE SUPABASE — substitui google.script.run (com Normalizador)
+// PONTE SUPABASE — substitui google.script.run
 // ═══════════════════════════════════════════════════════════
 (function () {
   if (!window.sb) {
@@ -1245,25 +1245,39 @@ function moverCardParaColuna(idLead, novaEtapa) {
     Object.keys(MAP).forEach(nome => {
       runner[nome] = async function (...params) {
         const cfg = MAP[nome];
+        let respostaFinal;
+        
         try {
           const args = cfg.args(...params);
           const { data, error } = await window.sb.rpc(cfg.rpc, args);
           if (error) throw error;
-
-          // 🔥 NORMALIZADOR: Se o Supabase retornar dados sem a propriedade .success,
-          // encapsulamos em um objeto compatível para evitar o falso erro no front.
-          let respostaFinal = data;
-          if (data === true || (data && typeof data === 'object' && data.success === undefined)) {
-            respostaFinal = { success: true, dados: data };
-          } else if (data === null || data === undefined) {
+          
+          // 🔥 NORMALIZADOR INTELIGENTE
+          respostaFinal = data;
+          
+          if (Array.isArray(data)) {
+            // 1. Se for Array (Mural, Kanban, Ofertas), devolve do jeito exato que veio.
+            respostaFinal = data;
+          } else if (data && typeof data === 'object') {
+            // 2. Se for Objeto, mantém os dados originais e apenas injeta 'success: true' se faltar.
+            if (data.success === undefined) data.success = true;
+            respostaFinal = data;
+          } else if (data === true || data === null || data === undefined) {
+            // 3. Se for booleano nulo, envelopa num objeto de sucesso básico.
             respostaFinal = { success: true };
           }
 
-          if (ok) ok(respostaFinal);
         } catch (err) {
           console.error(`❌ RPC ${cfg.rpc}:`, err);
-          if (fail) fail(err.message || String(err));
+          if (fail) {
+            fail(err.message || String(err));
+          }
+          return; // Bloqueia a continuação em caso de falha real do banco
         }
+        
+        // 🔥 EXECUTA O CALLBACK FORA DO TRY/CATCH
+        // Evita que um erro visual na tela ative o "withFailureHandler" fingindo ser erro do banco
+        if (ok) ok(respostaFinal);
       };
     });
     return runner;
@@ -1273,7 +1287,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
   window.google.script = window.google.script || {};
   Object.defineProperty(window.google.script, 'run', { get: () => makeRunner() });
 
-  console.log('✅ Ponte Supabase ativa — prospeccao.html (com normalizador)');
+  console.log('✅ Ponte Supabase ativa — prospeccao.html (com normalizador inteligente)');
 })();
 // ==========================================
 // NAVEGAÇÃO ENTRE ABAS
