@@ -456,8 +456,50 @@
         photoUrl = urlData.publicUrl;
       }
 
-      // ---- EDITAR EXISTENTE ----
+          // ---- EDITAR EXISTENTE ----
       if (editing && editId) {
+        // 🔥 1) Busca o email atual pra comparar
+        const { data: perfilAtual } = await sb
+          .from('profiles')
+          .select('email')
+          .eq('id', editId)
+          .single();
+
+        const emailMudou = perfilAtual && perfilAtual.email !== email;
+
+        // 🔥 2) Se mudou o email, chama a Edge Function (atualiza Auth + profiles)
+        if (emailMudou) {
+          console.log('📧 Email mudou, chamando Edge Function...');
+
+          const { data: fnData, error: fnErr } = await sb.functions.invoke('alterar-email-usuario', {
+            body: {
+              user_id: editId,
+              novo_email: email,
+              quem_alterou: PROFILE_ATUAL?.email || 'admin'
+            }
+          });
+
+          if (fnErr) {
+            // Tenta extrair a mensagem real do erro
+            let msg = fnErr.message;
+            try {
+              const body = await fnErr.context?.text();
+              if (body) {
+                const parsed = JSON.parse(body);
+                if (parsed.message) msg = parsed.message;
+              }
+            } catch (_) {}
+            throw new Error('Falha ao alterar email: ' + msg);
+          }
+
+          if (!fnData?.success) {
+            throw new Error(fnData?.message || 'Erro desconhecido ao alterar email');
+          }
+
+          console.log('✅ Auth atualizado:', fnData);
+        }
+
+        // 🔥 3) Atualiza o resto dos campos em profiles
         const { error: upProfErr } = await sb
           .from('profiles')
           .update({
@@ -469,13 +511,14 @@
 
         if (upProfErr) throw upProfErr;
 
-        alert('✅ Colaborador atualizado com sucesso!');
+        alert(emailMudou
+          ? '✅ Colaborador atualizado! O usuário já pode logar com o novo email.'
+          : '✅ Colaborador atualizado com sucesso!');
+
         limparForm();
         carregarUsuarios();
         return;
-      }
-
-      // ---- CRIAR NOVO ----
+      }      // ---- CRIAR NOVO ----
       const tenant_id = PROFILE_ATUAL.tenant_id;
 
       // 1) Cria no auth (signUp)
