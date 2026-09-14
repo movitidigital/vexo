@@ -1388,7 +1388,7 @@ function _validarInputBackofficeCompleto(linhas) {
   const faltando = [];
 
   // ─── 1) CAMPOS COMUNS (topo do formulário) ───
-  const camposObrigatorios = [
+    const camposObrigatorios = [
     { id: 'v_venc',           label: 'Dia de Vencimento' },
     { id: 'v_data',           label: 'Data da Venda' },
     { id: 'v_cnpj',           label: 'CNPJ' },
@@ -1404,6 +1404,7 @@ function _validarInputBackofficeCompleto(linhas) {
     { id: 'v_nome_admin',     label: 'Nome do Administrador' },
     { id: 'v_email',          label: 'E-mail' },
     { id: 'v_contato_fin',    label: 'Contato Financeiro' },
+    { id: 'v_consultor_input', label: 'Atribuição de Input (Sistema TIM)' },   // 🔥 NOVO
   ];
 
   camposObrigatorios.forEach(({ id, label }) => {
