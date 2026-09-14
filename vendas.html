@@ -630,12 +630,18 @@ window.gerarFormularioVenda = function() {
   // ============================================================
   // ADICIONAR LINHA
   // ============================================================
- window._adicionarLinha = function(modalidade, modID) {
+window._adicionarLinha = function(modalidade, modID) {
     const container = document.getElementById(`box-linhas-${modID}`);
     if (!container) return;
 
     const isPrimeiraAtivacao = (modalidade === 'PRIMEIRA ATIVAÇÃO');
     const mostrarDoadora = (modalidade === 'PORTABILIDADE');
+
+    // 🔥 NOVA REGRA: número liberado/bloqueado por role
+    const roleUsuario = (PERFIL_USUARIO?.role || '').toUpperCase();
+    const eBackofficeOuAdmin = ['BACKOFFICE', 'ADMINISTRADOR', 'ADMIN'].includes(roleUsuario);
+    const MODALIDADES_CONSULTOR_PREENCHE = ['MIGRAÇÃO', 'PORTABILIDADE', 'RENEG.'];
+    const numeroLiberado = eBackofficeOuAdmin || MODALIDADES_CONSULTOR_PREENCHE.includes(modalidade);
 
     const gridTemplate = mostrarDoadora
       ? 'grid-template-columns: 2fr 2fr 1fr 1fr 40px;'
@@ -646,8 +652,9 @@ window.gerarFormularioVenda = function() {
     div.dataset.modalidade = modalidade;
     div.style.cssText = `display:grid; ${gridTemplate} gap:10px; align-items:center;`;
 
-    const numBloqueado = isPrimeiraAtivacao ? 'disabled' : '';
-    const estiloBloqueio = isPrimeiraAtivacao ? 'background:#f1f5f9; cursor:not-allowed;' : '';
+    const numBloqueado = numeroLiberado ? '' : 'disabled';
+    const estiloBloqueio = numeroLiberado ? '' : 'background:#f1f5f9; cursor:not-allowed;';
+    const placeholderNum = numeroLiberado ? 'Número' : 'Preenchido pelo backoffice';
 
     const selectOperadora = `
       <select class="input-operadora v-input">
@@ -659,13 +666,12 @@ window.gerarFormularioVenda = function() {
       </select>
     `;
 
-    // 🔥 Input Plano agora é um wrapper com dropdown customizado
     div.innerHTML = `
       <div class="plano-wrapper">
         <input type="text" placeholder="Digite parte do plano..." class="input-plano v-input" autocomplete="off">
         <div class="plano-dropdown"></div>
       </div>
-      <input type="text" placeholder="Número" class="input-numero v-input" ${numBloqueado} style="${estiloBloqueio}">
+      <input type="text" placeholder="${placeholderNum}" class="input-numero v-input" ${numBloqueado} style="${estiloBloqueio}">
       <input type="number" step="0.01" placeholder="Valor R$" class="input-valor v-input">
       ${mostrarDoadora ? selectOperadora : ''}
       <button type="button" onclick="this.parentElement.remove(); window._atualizarContador('${modID}')"
@@ -996,6 +1002,17 @@ async function _inserirVendaNova() {
     return;
   }
 
+  // 🔥 REGRA: VENDEDOR deve preencher número em MIGRAÇÃO, PORTABILIDADE, RENEG.
+  const MODALIDADES_EXIGEM_NUMERO = ['MIGRAÇÃO', 'PORTABILIDADE', 'RENEG.'];
+  const semNumero = linhas.filter(l =>
+    MODALIDADES_EXIGEM_NUMERO.includes(l.modalidade) && !l.numero
+  );
+  if (semNumero.length > 0) {
+    const mods = [...new Set(semNumero.map(l => l.modalidade))];
+    window._toast(`⚠️ Preencha o número de telefone nas linhas de: ${mods.join(', ')}`, 'warning');
+    return;
+  }
+
   const campos = _coletarCamposComuns();
   const TENANT = 'f9cca67a-41f8-4ad7-a119-74bc58018dee';
 
@@ -1025,7 +1042,6 @@ async function _inserirVendaNova() {
   // Limpa qualquer resíduo de pedido pré-carregado
   _limparPedidoPendente();
 }
-
 // ============================================================
 // FINALIZAR PEDIDO EXISTENTE (DELETE + INSERT por modalidade)
 // ============================================================
@@ -1041,6 +1057,18 @@ async function _finalizarPedidoExistente(pedido) {
     const linhas = _coletarLinhasDoFormulario();
     if (linhas.length === 0) {
       alert('⚠️ Adicione pelo menos uma linha com plano!');
+      return;
+    }
+
+    // 🔥 REGRA: BACKOFFICE deve preencher número em PRIMEIRA ATIVAÇÃO, M2M, ADITIVO
+    const MODALIDADES_EXIGEM_NUMERO_BACKOFFICE = ['PRIMEIRA ATIVAÇÃO', 'M2M (IoT)', 'ADITIVO'];
+    const semNumero = linhas.filter(l =>
+      MODALIDADES_EXIGEM_NUMERO_BACKOFFICE.includes(l.modalidade) && !l.numero
+    );
+    if (semNumero.length > 0) {
+      const mods = [...new Set(semNumero.map(l => l.modalidade))];
+      window._toast(`⚠️ Preencha o número de telefone nas linhas de: ${mods.join(', ')}`, 'warning');
+      window._finalizandoPedido = false;
       return;
     }
 
