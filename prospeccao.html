@@ -2241,15 +2241,16 @@ async function carregarMural() {
 
     // 🔄 Adapta snake_case do banco → camelCase do HTML com fallbacks seguros
     const leads = arrayLeads.map(l => ({
-      id: l.id,
-      razao: l.razao_social || l.razao || "Empresa sem nome",
-      cnpj: l.cnpj,
-      admin: l.nome_administrador || l.admin || "Não informado",
-      contato: l.contato,
-      contato_alt: l.contato_alt,
-      cidade: l.cidade,
-      uf: l.uf
-    }));
+  id: l.id,
+  codigo: l.codigo,                                    // ← ADICIONA ESSA LINHA
+  razao: l.razao_social || l.razao || "Empresa sem nome",
+  cnpj: l.cnpj,
+  admin: l.nome_administrador || l.admin || "Não informado",
+  contato: l.contato,
+  contato_alt: l.contato_alt,
+  cidade: l.cidade,
+  uf: l.uf
+}));
 
     mural.innerHTML = "";
 
@@ -2286,7 +2287,7 @@ async function carregarMural() {
           <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #f97316, #fb923c);"></div>
 
           <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px; margin-top: 4px;">
-             <span style="font-size: 10px; font-weight: 800; color: #ea580c; background: #ffedd5; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;">${l.id || "NOVO"}</span>
+             <span style="font-size: 10px; font-weight: 800; color: #ea580c; background: #ffedd5; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;">${l.codigo || "NOVO"}</span>
              ${botaoLixeira}
           </div>
 
