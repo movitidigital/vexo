@@ -904,7 +904,7 @@
         <button class="btn-cofre ghost" onclick="carregarCofreMock()">
           <i class="fas fa-sync-alt"></i> Atualizar
         </button>
-        <button class="btn-cofre novo" onclick="abrirModalCofre()">
+        <button class="btn-cofre novo" onclick="abrirModalCofre(null)">
           <i class="fas fa-plus"></i> Nova Retomada
         </button>
       </div>
@@ -1097,7 +1097,7 @@
 
       <div class="cofre-modal-foot">
         <button class="cancel" onclick="fecharModalCofre()">Cancelar</button>
-        <button class="save" onclick="salvarRetomadaMock()">
+        <button class="save" onclick="salvarRetomadaReal()">
           <i class="fas fa-save"></i> Salvar no Cofre
         </button>
       </div>
@@ -1134,6 +1134,10 @@
     atualizarCadastroCliente:    { rpc: 'atualizar_cadastro_cliente',     args: (dados) => ({ p_dados: dados || {} }) },
     sincronizarClientesDaVendas: { rpc: 'sincronizar_clientes_da_vendas', args: ()      => ({}) },
     buscarHistoricoCliente:      { rpc: 'buscar_historico_cliente',       args: (t)     => ({ p_termo: t || '' }) },
+    cofreListar:                 { rpc: 'cofre_listar',         args: (f)            => ({ p_filtros: f || {} }) },
+    cofreSalvar:                 { rpc: 'cofre_salvar',         args: (payload)      => ({ p_payload: payload }) },
+    cofreMudarStatus:            { rpc: 'cofre_mudar_status',   args: (id, st, nota) => ({ p_id: id, p_novo_status: st, p_nota: nota || null }) },
+    cofreExcluir:                { rpc: 'cofre_excluir',        args: (id)           => ({ p_id: id }) },
   };
 
   function makeRunner() {
@@ -1743,18 +1747,19 @@
     carregarClientes();
   })();
 
-   // ═══════════════════════════════════════════════════════════
-// COFRE DE OPORTUNIDADES (MOCKUP — autossuficiente)
+// ═══════════════════════════════════════════════════════════
+// COFRE DE OPORTUNIDADES — INTEGRAÇÃO REAL (Supabase)
 // ═══════════════════════════════════════════════════════════
 (function () {
   'use strict';
 
-  // ---------- Detecta role e nome de forma independente ----------
+  // ---------- Sessão / Role ----------
   const sessaoStorage = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
   const meta = (window.VEXO && window.VEXO.user && window.VEXO.user.user_metadata) || {};
   const roleRaw = (sessaoStorage.role || sessaoStorage.cargo || meta.role || meta.cargo || '').toString().trim();
   const cargoUsuario = roleRaw.toUpperCase();
   const nomeUsuario = (sessaoStorage.nome || meta.nome || (window.VEXO && window.VEXO.user && window.VEXO.user.email) || 'Você').toString().trim();
+  const userIdCofre = (window.VEXO && window.VEXO.user && window.VEXO.user.id) || sessaoStorage.id || null;
   const isGestorCofre = (cargoUsuario === 'ADMINISTRADOR' || cargoUsuario === 'BACKOFFICE' || cargoUsuario === 'ADMIN');
 
   // ---------- Estado ----------
@@ -1764,26 +1769,53 @@
     filtroTipo: '',
     filtroPrioridade: '',
     filtroConsultor: '',
-    busca: ''
+    busca: '',
+    carregando: false
   };
 
   // ---------- Helpers ----------
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
-  function showToast(msg, type) {
-    if (typeof window.showToast === 'function' && window.showToast !== showToast) {
-      // usa o toast do sistema principal se existir
+  function showToastCofre(msg, type) {
+    if (typeof window.showToast === 'function' && window.showToast !== showToastCofre) {
       try { window.showToast(msg, type || 'info'); return; } catch (e) {}
     }
     const t = document.createElement('div');
     t.style.cssText = 'position:fixed;bottom:24px;right:24px;background:white;border-left:4px solid ' +
       (type === 'error' ? '#ef4444' : type === 'warning' ? '#f59e0b' : '#10b981') +
-      ';padding:14px 20px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);z-index:99999;font-family:Inter,sans-serif;font-size:13px;font-weight:600;color:#1e293b;';
+      ';padding:14px 20px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);z-index:99999;font-family:Inter,sans-serif;font-size:13px;font-weight:600;color:#1e293b;max-width:340px;';
     t.textContent = msg;
     document.body.appendChild(t);
     setTimeout(() => t.remove(), 3500);
   }
 
+  // ---------- Mapeamento banco → UI ----------
+  function cofreRowParaUI(row) {
+    return {
+      id: row.id,
+      cnpj: row.cnpj || '',
+      razao: row.razao_social || '',
+      contato: row.contato || '',
+      contato_alt: row.contato_alt || '',
+      codigo: row.codigo_cliente || '',
+      tipo: row.tipo || 'OUTRO',
+      prioridade: row.prioridade || 'MEDIA',
+      motivo: row.motivo || '',
+      data: row.data_retomada || '',
+      status: row.status || 'AGENDADO',
+      valor: parseFloat(row.valor_potencial) || 0,
+      linhas: parseInt(row.qtd_linhas_estimada) || 0,
+      consultor: row.consultor_nome || '—',
+      consultor_id: row.consultor_id,
+      dias_restantes: row.dias_restantes,
+      tentativas: row.tentativas || 0,
+      ultimo_contato: row.ultimo_contato,
+      nota_encerramento: row.nota_encerramento,
+      historico_contatos: row.historico_contatos || []
+    };
+  }
+
+  // ---------- Helpers visuais ----------
   function cofreTipoInfo(tipo) {
     return {
       RENOVACAO:         { label: 'Renovação',         ico: '♻️', cls: 'tipo-renovacao' },
@@ -1801,6 +1833,7 @@
     }[p] || { label: 'Média', ico: '🟠', cls: 'prio-media' };
   }
   function cofreDiasRestantes(iso) {
+    if (!iso) return 0;
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
     const d = new Date(iso + 'T00:00:00');
     return Math.round((d - hoje) / 86400000);
@@ -1808,6 +1841,8 @@
   function cofreUrgenciaClass(dias, status) {
     if (status === 'PAUSADO')    return { cls: 'pausado',    label: '⏸️ Pausado' };
     if (status === 'CONVERTIDO') return { cls: 'convertido', label: '✅ Convertido' };
+    if (status === 'PERDIDO')    return { cls: 'pausado',    label: '❌ Perdido' };
+    if (status === 'EM_CONTATO') return { cls: 'hoje',       label: '📞 Em contato', urgCls: 'hoje' };
     if (dias < 0)   return { cls: 'vencida', label: `🚨 ${Math.abs(dias)}d atrasado`, urgCls: 'atrasado' };
     if (dias === 0) return { cls: 'hoje',    label: '⏰ Hoje',                        urgCls: 'hoje' };
     if (dias <= 7)  return { cls: 'semana',  label: `🔥 em ${dias}d` };
@@ -1824,58 +1859,67 @@
     return n.length >= 10 ? n : '';
   }
 
-  // ---------- MOCK ----------
-  function carregarCofreMock() {
-    const hoje = new Date();
-    const add = (d) => { const x = new Date(hoje); x.setDate(x.getDate() + d); return x.toISOString().slice(0, 10); };
+  // ═══════════════════════════════════════════════════════════
+  // CARREGAR (RPC)
+  // ═══════════════════════════════════════════════════════════
+  function carregarCofre() {
+    COFRE_ESTADO.carregando = true;
+    const grid = document.getElementById('cofreGrid');
+    if (grid) {
+      grid.innerHTML = `
+        <div class="cofre-vazio">
+          <span class="ico" style="animation:spin 1s linear infinite;">⏳</span>
+          <h3>Carregando o Cofre...</h3>
+          <p>Buscando oportunidades no banco de dados.</p>
+        </div>`;
+    }
 
-    COFRE_ESTADO.dados = [
-      { id:'1', cnpj:'52.345.579/0001-28', razao:'RONALD FERREIRA DE ALMEIDA', contato:'87981144422', codigo:'7.2236705',
-        tipo:'RENOVACAO', prioridade:'ALTA', status:'AGENDADO', data:add(-3),
-        motivo:'Renegociar contrato após fidelidade de 24 meses. Cliente sinalizou interesse em aumentar de 2 para 4 linhas.',
-        consultor:'Severina Cordeiro', valor:275.96, linhas:4 },
-      { id:'2', cnpj:'12.345.678/0001-90', razao:'OTICA MARANATA LTDA', contato:'87981043938', codigo:'4.5512020',
-        tipo:'POS_FIDELIDADE', prioridade:'MEDIA', status:'AGENDADO', data:add(0),
-        motivo:'Fidelidade vence hoje. Cliente já usa TIM há 2 anos e quer ver upgrade de plano.',
-        consultor:'Maria Eduarda', valor:159.80, linhas:2 },
-      { id:'3', cnpj:'45.678.901/0001-23', razao:'DANILO DOS SANTOS CINTRA & CIA LTDA', contato:'87996560030', codigo:'8.1154321',
-        tipo:'MIGRACAO_PF_PJ', prioridade:'ALTA', status:'AGENDADO', data:add(5),
-        motivo:'Dono tem 3 linhas PF. Vai abrir CNPJ para expandir para 8 linhas PJ. É prioridade máxima — falar antes que concorrência pegue.',
-        consultor:'Caio Henrique', valor:479.84, linhas:8 },
-      { id:'4', cnpj:'78.901.234/0001-56', razao:'BOLICHE CLUB ENTRETENIMENTO LTDA', contato:'87996229659', codigo:'9.2266875',
-        tipo:'NEGOCIACAO_FUTURA', prioridade:'BAIXA', status:'AGENDADO', data:add(7),
-        motivo:'Cliente com fidelidade Vivo até dezembro. Pediu para retomar conversa quando faltar 30 dias para fim.',
-        consultor:'Michele de Souza', valor:299.94, linhas:6 },
-      { id:'5', cnpj:'23.456.789/0001-01', razao:'A J DOS SANTOS BARRA NOVA CONSTRUÇÕES', contato:'87991122884', codigo:'4.8081002',
-        tipo:'RENOVACAO', prioridade:'MEDIA', status:'AGENDADO', data:add(15),
-        motivo:'Contrato maduro há 22 meses. Manter relacionamento e oferecer renovação com bônus.',
-        consultor:'Severina Cordeiro', valor:219.92, linhas:3 },
-      { id:'6', cnpj:'34.567.890/0001-12', razao:'OTICA PREMIUM GARANHUNS LTDA', contato:'87999260108', codigo:'5.1224021',
-        tipo:'OUTRO', prioridade:'BAIXA', status:'AGENDADO', data:add(28),
-        motivo:'Cliente pediu para retomar em 1 mês. Está avaliando proposta da concorrência.',
-        consultor:'Maria Eduarda', valor:0, linhas:0 },
-      { id:'7', cnpj:'56.789.012/0001-34', razao:'HOTEL VIVO GARANHUNS LTDA', contato:'87999560054', codigo:'6.3148201',
-        tipo:'RENOVACAO', prioridade:'MEDIA', status:'PAUSADO', data:add(-15),
-        motivo:'Cliente pediu para pausar por 60 dias — está reestruturando financeiro.',
-        consultor:'Caio Henrique', valor:0, linhas:0 },
-      { id:'8', cnpj:'89.012.345/0001-45', razao:'FARMÁCIA MONTEIRO LTDA', contato:'8737610688', codigo:'2.9182401',
-        tipo:'POS_FIDELIDADE', prioridade:'ALTA', status:'CONVERTIDO', data:add(-40),
-        motivo:'Convertido! Cliente assinou 5 linhas TIM Empresas após 24 meses de fidelidade.',
-        consultor:'Severina Cordeiro', valor:264.95, linhas:5 }
-    ];
+    const filtros = {};
+    if (COFRE_ESTADO.filtroTipo) filtros.tipo = COFRE_ESTADO.filtroTipo;
+    if (COFRE_ESTADO.filtroPrioridade) filtros.prioridade = COFRE_ESTADO.filtroPrioridade;
+    if (COFRE_ESTADO.filtroConsultor) filtros.consultor_id = COFRE_ESTADO.filtroConsultor;
 
-    renderizarKPIsCofre();
-    renderizarRankingCofre();
-    renderizarChipsCofre();
-    renderizarCardsCofre();
-    atualizarBadgeAba();
+    google.script.run
+      .withSuccessHandler(function (res) {
+        COFRE_ESTADO.carregando = false;
+        let arr = [];
+        if (Array.isArray(res)) arr = res;
+        else if (res && Array.isArray(res.dados)) arr = res.dados;
+        else if (typeof res === 'string') { try { arr = JSON.parse(res); } catch (e) { arr = []; } }
+
+        COFRE_ESTADO.dados = (arr || []).map(cofreRowParaUI);
+        console.log(`✅ Cofre: ${COFRE_ESTADO.dados.length} oportunidade(s) carregada(s)`);
+
+        renderizarKPIsCofre();
+        renderizarRankingCofre();
+        renderizarChipsCofre();
+        renderizarCardsCofre();
+        atualizarBadgeAba();
+        popularSelectConsultoresCofre();
+      })
+      .withFailureHandler(function (err) {
+        COFRE_ESTADO.carregando = false;
+        console.error('❌ Erro ao carregar Cofre:', err);
+        if (grid) {
+          grid.innerHTML = `
+            <div class="cofre-vazio">
+              <span class="ico">❌</span>
+              <h3>Erro ao carregar</h3>
+              <p>${esc(String(err))}</p>
+            </div>`;
+        }
+        showToastCofre('Falha ao carregar o Cofre. Tente novamente.', 'error');
+      })
+      .cofreListar(filtros);
   }
 
-  // ---------- KPIs ----------
+  // ═══════════════════════════════════════════════════════════
+  // KPIs
+  // ═══════════════════════════════════════════════════════════
   function renderizarKPIsCofre() {
     const el = document.getElementById('cofreKpis');
     if (!el) return;
-    const ativos = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO');
+    const ativos = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO' || c.status === 'EM_CONTATO');
     const vencidas = ativos.filter(c => cofreDiasRestantes(c.data) < 0).length;
     const hojeQtd  = ativos.filter(c => cofreDiasRestantes(c.data) === 0).length;
     const semana   = ativos.filter(c => { const d = cofreDiasRestantes(c.data); return d > 0 && d <= 7; }).length;
@@ -1885,12 +1929,14 @@
       <div class="cofre-kpi danger"><div class="cofre-kpi-icon"><i class="fas fa-exclamation-triangle"></i></div><div class="cofre-kpi-body"><div class="cofre-kpi-label">Vencidas</div><div class="cofre-kpi-value">${vencidas}</div></div></div>
       <div class="cofre-kpi warn"><div class="cofre-kpi-icon"><i class="fas fa-clock"></i></div><div class="cofre-kpi-body"><div class="cofre-kpi-label">Hoje</div><div class="cofre-kpi-value">${hojeQtd}</div></div></div>
       <div class="cofre-kpi gold"><div class="cofre-kpi-icon"><i class="fas fa-fire"></i></div><div class="cofre-kpi-body"><div class="cofre-kpi-label">Próx. 7 dias</div><div class="cofre-kpi-value">${semana}</div></div></div>
-      <div class="cofre-kpi success"><div class="cofre-kpi-icon"><i class="fas fa-check-circle"></i></div><div class="cofre-kpi-body"><div class="cofre-kpi-label">Convertidas</div><div class="cofre-kpi-value">${convertidos}<small>este mês</small></div></div></div>`;
+      <div class="cofre-kpi success"><div class="cofre-kpi-icon"><i class="fas fa-check-circle"></i></div><div class="cofre-kpi-body"><div class="cofre-kpi-label">Convertidas</div><div class="cofre-kpi-value">${convertidos}<small>total</small></div></div></div>`;
 
     if (isGestorCofre) {
       const total = COFRE_ESTADO.dados.length;
       const pct = total > 0 ? Math.round((convertidos / total) * 100) : 0;
-      const valorConv = COFRE_ESTADO.dados.filter(c => c.status === 'CONVERTIDO').reduce((s, c) => s + (c.valor || 0), 0);
+      const valorConv = COFRE_ESTADO.dados
+        .filter(c => c.status === 'CONVERTIDO')
+        .reduce((s, c) => s + (c.valor || 0), 0);
       html += `
         <div class="cofre-kpi info"><div class="cofre-kpi-icon"><i class="fas fa-percentage"></i></div><div class="cofre-kpi-body"><div class="cofre-kpi-label">Taxa Conversão</div><div class="cofre-kpi-value">${pct}<small>%</small></div></div></div>
         <div class="cofre-kpi purple"><div class="cofre-kpi-icon"><i class="fas fa-dollar-sign"></i></div><div class="cofre-kpi-body"><div class="cofre-kpi-label">Valor Convertido</div><div class="cofre-kpi-value" style="font-size:18px;">R$ ${valorConv.toFixed(2).replace('.', ',')}</div></div></div>`;
@@ -1899,13 +1945,17 @@
     el.innerHTML = html;
   }
 
-  // ---------- Ranking ----------
+  // ═══════════════════════════════════════════════════════════
+  // Ranking
+  // ═══════════════════════════════════════════════════════════
   function renderizarRankingCofre() {
     const el = document.getElementById('cofreRanking');
     if (!el) return;
     if (!isGestorCofre) { el.style.display = 'none'; return; }
     const mapa = {};
-    COFRE_ESTADO.dados.filter(c => c.status === 'CONVERTIDO').forEach(c => { mapa[c.consultor] = (mapa[c.consultor] || 0) + 1; });
+    COFRE_ESTADO.dados.filter(c => c.status === 'CONVERTIDO').forEach(c => {
+      mapa[c.consultor] = (mapa[c.consultor] || 0) + 1;
+    });
     const ranking = Object.entries(mapa).sort((a, b) => b[1] - a[1]).slice(0, 5);
     if (!ranking.length) { el.style.display = 'none'; return; }
     const medalhas = ['🥇', '🥈', '🥉', '4º', '5º'];
@@ -1922,9 +1972,11 @@
     el.style.display = 'block';
   }
 
-  // ---------- Chips ----------
+  // ═══════════════════════════════════════════════════════════
+  // Chips
+  // ═══════════════════════════════════════════════════════════
   function renderizarChipsCofre() {
-    const ativos = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO');
+    const ativos = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO' || c.status === 'EM_CONTATO');
     const set = (id, v) => { const e = document.getElementById(id); if (e) e.innerText = v; };
     set('chipTodos',       COFRE_ESTADO.dados.length);
     set('chipVencidas',    ativos.filter(c => cofreDiasRestantes(c.data) < 0).length);
@@ -1938,10 +1990,12 @@
   function atualizarBadgeAba() {
     const badge = document.getElementById('badgeCofre');
     if (!badge) return;
-    badge.innerText = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO').length;
+    badge.innerText = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO' || c.status === 'EM_CONTATO').length;
   }
 
-  // ---------- Cards ----------
+  // ═══════════════════════════════════════════════════════════
+  // Cards
+  // ═══════════════════════════════════════════════════════════
   function renderizarCardsCofre() {
     const grid = document.getElementById('cofreGrid');
     if (!grid) return;
@@ -1956,23 +2010,16 @@
     }
     if (COFRE_ESTADO.filtroTipo) filtrados = filtrados.filter(c => c.tipo === COFRE_ESTADO.filtroTipo);
     if (COFRE_ESTADO.filtroPrioridade) filtrados = filtrados.filter(c => c.prioridade === COFRE_ESTADO.filtroPrioridade);
-    if (COFRE_ESTADO.filtroConsultor) filtrados = filtrados.filter(c => c.consultor === COFRE_ESTADO.filtroConsultor);
+    if (COFRE_ESTADO.filtroConsultor) filtrados = filtrados.filter(c => c.consultor_id === COFRE_ESTADO.filtroConsultor);
 
     switch (COFRE_ESTADO.filtroChip) {
-      case 'vencidas':    filtrados = filtrados.filter(c => c.status === 'AGENDADO' && cofreDiasRestantes(c.data) < 0); break;
-      case 'hoje':        filtrados = filtrados.filter(c => c.status === 'AGENDADO' && cofreDiasRestantes(c.data) === 0); break;
-      case 'semana':      filtrados = filtrados.filter(c => { const d = cofreDiasRestantes(c.data); return c.status === 'AGENDADO' && d > 0 && d <= 7; }); break;
-      case 'mes':         filtrados = filtrados.filter(c => { const d = cofreDiasRestantes(c.data); return c.status === 'AGENDADO' && d > 7 && d <= 30; }); break;
+      case 'vencidas':    filtrados = filtrados.filter(c => (c.status === 'AGENDADO' || c.status === 'EM_CONTATO') && cofreDiasRestantes(c.data) < 0); break;
+      case 'hoje':        filtrados = filtrados.filter(c => (c.status === 'AGENDADO' || c.status === 'EM_CONTATO') && cofreDiasRestantes(c.data) === 0); break;
+      case 'semana':      filtrados = filtrados.filter(c => { const d = cofreDiasRestantes(c.data); return (c.status === 'AGENDADO' || c.status === 'EM_CONTATO') && d > 0 && d <= 7; }); break;
+      case 'mes':         filtrados = filtrados.filter(c => { const d = cofreDiasRestantes(c.data); return (c.status === 'AGENDADO' || c.status === 'EM_CONTATO') && d > 7 && d <= 30; }); break;
       case 'pausados':    filtrados = filtrados.filter(c => c.status === 'PAUSADO'); break;
       case 'convertidos': filtrados = filtrados.filter(c => c.status === 'CONVERTIDO'); break;
     }
-
-    filtrados.sort((a, b) => {
-      const ordem = { AGENDADO: 0, PAUSADO: 1, CONVERTIDO: 2 };
-      const oa = ordem[a.status] ?? 9, ob = ordem[b.status] ?? 9;
-      if (oa !== ob) return oa - ob;
-      return new Date(a.data) - new Date(b.data);
-    });
 
     if (!filtrados.length) {
       grid.innerHTML = `
@@ -1993,7 +2040,7 @@
       const telWhats = cofreFmtWhats(c.contato);
 
       return `
-        <div class="cofre-card ${urg.cls} ${isPj ? 'pj-futuro' : ''}" style="animation-delay: ${i * 0.04}s">
+        <div class="cofre-card ${urg.cls} ${isPj ? 'pj-futuro' : ''}" style="animation-delay:${i * 0.04}s" data-id="${esc(c.id)}">
           <div class="cofre-card-top">
             <div class="cofre-card-badges">
               <span class="cofre-badge ${tipo.cls}">${tipo.ico} ${tipo.label}</span>
@@ -2014,17 +2061,19 @@
             ${telWhats ? `<div>📞 <b>${esc(c.contato)}</b></div>` : ''}
           </div>
           <div class="cofre-card-actions">
-            ${telWhats ? `<a href="tel:${telWhats}" class="cofre-act ligar"><i class="fas fa-phone"></i> Ligar</a>` : ''}
-            ${telWhats ? `<a href="https://wa.me/55${telWhats}" target="_blank" class="cofre-act whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
-            <button class="cofre-act vendas" onclick="window.abrirNoVendasMock()"><i class="fas fa-rocket"></i> Vendas</button>
-            <button class="cofre-act mais" onclick="window.cofreMenuMais()"><i class="fas fa-ellipsis-v"></i></button>
+            ${telWhats ? `<a href="tel:${telWhats}" class="cofre-act ligar" onclick="event.stopPropagation()"><i class="fas fa-phone"></i> Ligar</a>` : ''}
+            ${telWhats ? `<a href="https://wa.me/55${telWhats}" target="_blank" class="cofre-act whatsapp" onclick="event.stopPropagation()"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
+            <button class="cofre-act vendas" onclick="event.stopPropagation(); window.cofreAbrirNoVendas('${esc(c.id)}')"><i class="fas fa-rocket"></i> Vendas</button>
+            <button class="cofre-act mais" onclick="event.stopPropagation(); window.cofreMenuMais('${esc(c.id)}', event)"><i class="fas fa-ellipsis-v"></i></button>
           </div>
         </div>`;
     }).join('');
   }
 
-  // ---------- Modal ----------
-  window.abrirModalCofre = function () {
+  // ═══════════════════════════════════════════════════════════
+  // Modal — Abrir/Salvar
+  // ═══════════════════════════════════════════════════════════
+  window.abrirModalCofre = function (dadosExistentes) {
     const modal = document.getElementById('modalCofre');
     if (!modal) return;
     document.getElementById('cofreEditId').value = '';
@@ -2040,6 +2089,25 @@
     document.querySelector('input[name="cofreTipo"][value="RENOVACAO"]').checked = true;
     document.querySelector('input[name="cofrePrioridade"][value="MEDIA"]').checked = true;
     document.getElementById('cofreModalTitulo').innerText = 'Nova Retomada';
+
+    if (dadosExistentes) {
+      document.getElementById('cofreEditId').value = dadosExistentes.id || '';
+      document.getElementById('cofreCnpj').value = dadosExistentes.cnpj || '';
+      document.getElementById('cofreRazao').value = dadosExistentes.razao || '';
+      document.getElementById('cofreContato').value = dadosExistentes.contato || '';
+      document.getElementById('cofreContatoAlt').value = dadosExistentes.contato_alt || '';
+      document.getElementById('cofreCodigo').value = dadosExistentes.codigo || '';
+      document.getElementById('cofreData').value = dadosExistentes.data || '';
+      document.getElementById('cofreValor').value = dadosExistentes.valor || '';
+      document.getElementById('cofreLinhas').value = dadosExistentes.linhas || '';
+      document.getElementById('cofreMotivo').value = dadosExistentes.motivo || '';
+      const rt = document.querySelector(`input[name="cofreTipo"][value="${dadosExistentes.tipo}"]`);
+      if (rt) rt.checked = true;
+      const rp = document.querySelector(`input[name="cofrePrioridade"][value="${dadosExistentes.prioridade}"]`);
+      if (rp) rp.checked = true;
+      document.getElementById('cofreModalTitulo').innerText = 'Editar Retomada';
+    }
+
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
   };
@@ -2051,46 +2119,211 @@
     document.body.style.overflow = '';
   };
 
-  window.salvarRetomadaMock = function () {
+  window.salvarRetomadaReal = function () {
     const cnpj = document.getElementById('cofreCnpj').value.trim();
     const razao = document.getElementById('cofreRazao').value.trim();
     const data = document.getElementById('cofreData').value;
     const motivo = document.getElementById('cofreMotivo').value.trim();
     if (!cnpj || !razao || !data || !motivo) {
-      showToast('Preencha CNPJ, Razão Social, Data e Motivo.', 'warning');
+      showToastCofre('Preencha CNPJ, Razão Social, Data e Motivo.', 'warning');
       return;
     }
-    const tipo = document.querySelector('input[name="cofreTipo"]:checked').value;
-    const prio = document.querySelector('input[name="cofrePrioridade"]:checked').value;
-    COFRE_ESTADO.dados.unshift({
-      id: String(Date.now()),
-      cnpj, razao,
+
+    const btn = document.querySelector('#modalCofre .cofre-modal-foot .save');
+    const txt = btn ? btn.innerHTML : '';
+    if (btn) { btn.disabled = true; btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...'; }
+
+    const payload = {
+      id: document.getElementById('cofreEditId').value || null,
+      cnpj, razao_social: razao,
       contato: document.getElementById('cofreContato').value.trim(),
       contato_alt: document.getElementById('cofreContatoAlt').value.trim(),
-      codigo: document.getElementById('cofreCodigo').value.trim(),
-      tipo, prioridade: prio, status: 'AGENDADO', data, motivo,
-      consultor: nomeUsuario || 'Você',
-      valor: parseFloat(document.getElementById('cofreValor').value) || 0,
-      linhas: parseInt(document.getElementById('cofreLinhas').value) || 0
+      codigo_cliente: document.getElementById('cofreCodigo').value.trim(),
+      tipo: document.querySelector('input[name="cofreTipo"]:checked').value,
+      prioridade: document.querySelector('input[name="cofrePrioridade"]:checked').value,
+      data_retomada: data,
+      motivo,
+      valor_potencial: document.getElementById('cofreValor').value || null,
+      qtd_linhas_estimada: document.getElementById('cofreLinhas').value || null
+    };
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        if (btn) { btn.disabled = false; btn.innerHTML = txt; }
+        if (res && res.success) {
+          showToastCofre('Retomada salva com sucesso!', 'success');
+          fecharModalCofre();
+          carregarCofre();
+        } else {
+          showToastCofre('Erro: ' + (res && res.message || 'Falha desconhecida'), 'error');
+        }
+      })
+      .withFailureHandler(function (err) {
+        if (btn) { btn.disabled = false; btn.innerHTML = txt; }
+        showToastCofre('Erro: ' + err, 'error');
+      })
+      .cofreSalvar(payload);
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // Menu "⋯" de ações
+  // ═══════════════════════════════════════════════════════════
+  window.cofreMenuMais = function (id, ev) {
+    const item = COFRE_ESTADO.dados.find(x => x.id === id);
+    if (!item) return;
+
+    // Remove menus anteriores
+    document.querySelectorAll('.cofre-menu-pop').forEach(m => m.remove());
+
+    const pop = document.createElement('div');
+    pop.className = 'cofre-menu-pop';
+    pop.style.cssText = `
+      position:fixed; z-index:100001; background:white; border-radius:12px;
+      box-shadow:0 12px 32px rgba(0,0,0,0.18); padding:6px; min-width:190px;
+      font-family:Inter,sans-serif; font-size:13px; animation:cofreIn 0.15s ease;
+      border:1px solid #eef2f6;
+    `;
+
+    // Ações conforme status atual
+    let acoes = '';
+    if (item.status === 'AGENDADO') {
+      acoes += `<div class="cofre-menu-item" data-acao="EM_CONTATO">📞 Iniciar contato</div>`;
+      acoes += `<div class="cofre-menu-item" data-acao="CONVERTIDO">✅ Marcar como convertido</div>`;
+      acoes += `<div class="cofre-menu-item" data-acao="PAUSADO">⏸️ Pausar</div>`;
+      acoes += `<div class="cofre-menu-item" data-acao="PERDIDO">❌ Marcar como perdido</div>`;
+    } else if (item.status === 'EM_CONTATO') {
+      acoes += `<div class="cofre-menu-item" data-acao="CONVERTIDO">✅ Marcar como convertido</div>`;
+      acoes += `<div class="cofre-menu-item" data-acao="PAUSADO">⏸️ Pausar</div>`;
+      acoes += `<div class="cofre-menu-item" data-acao="PERDIDO">❌ Marcar como perdido</div>`;
+    } else if (item.status === 'PAUSADO') {
+      acoes += `<div class="cofre-menu-item" data-acao="AGENDADO">▶️ Reativar</div>`;
+      acoes += `<div class="cofre-menu-item" data-acao="PERDIDO">❌ Marcar como perdido</div>`;
+    }
+
+    acoes += `<div class="cofre-menu-sep"></div>`;
+    acoes += `<div class="cofre-menu-item" data-acao="EDITAR">✏️ Editar</div>`;
+    acoes += `<div class="cofre-menu-item perigo" data-acao="EXCLUIR">🗑️ Excluir</div>`;
+
+    pop.innerHTML = `
+      <style>
+        .cofre-menu-item { padding:9px 14px; border-radius:8px; cursor:pointer; color:#334155; font-weight:600; display:flex; align-items:center; gap:8px; }
+        .cofre-menu-item:hover { background:#f1f5f9; }
+        .cofre-menu-item.perigo { color:#991b1b; }
+        .cofre-menu-item.perigo:hover { background:#fef2f2; }
+        .cofre-menu-sep { height:1px; background:#eef2f6; margin:4px 8px; }
+      </style>
+      ${acoes}`;
+
+    const rect = ev && ev.target ? ev.target.getBoundingClientRect() : { right: 200, top: 200 };
+    pop.style.top = (rect.bottom + 6) + 'px';
+    pop.style.left = Math.max(10, rect.right - 190) + 'px';
+    document.body.appendChild(pop);
+
+    pop.addEventListener('click', function (e) {
+      const it = e.target.closest('.cofre-menu-item');
+      if (!it) return;
+      const acao = it.getAttribute('data-acao');
+      pop.remove();
+      if (acao === 'EDITAR') return window.abrirModalCofre(item);
+      if (acao === 'EXCLUIR') return window.cofreExcluirItem(id, item.razao);
+      return window.cofreMudarStatus(id, acao);
     });
-    renderizarKPIsCofre();
-    renderizarChipsCofre();
-    renderizarRankingCofre();
-    renderizarCardsCofre();
-    atualizarBadgeAba();
-    fecharModalCofre();
-    showToast('Retomada agendada! (mock)', 'success');
+
+    setTimeout(() => {
+      document.addEventListener('click', function fechar(evt) {
+        if (!pop.contains(evt.target)) { pop.remove(); document.removeEventListener('click', fechar); }
+      });
+    }, 10);
   };
 
-  window.abrirNoVendasMock = function () {
-    showToast('Na versão final, abrirá o Vendas já preenchido.', 'info');
-  };
-  window.cofreMenuMais = function () {
-    showToast('Menu de ações (editar, pausar, converter...) em breve.', 'info');
+  window.cofreMudarStatus = function (id, novoStatus) {
+    let nota = null;
+    if (novoStatus === 'CONVERTIDO') nota = prompt('Observação sobre a conversão (opcional):') || null;
+    if (novoStatus === 'PERDIDO')    nota = prompt('Motivo da perda (opcional):') || null;
+    if (novoStatus === 'PAUSADO')    nota = prompt('Motivo da pausa (opcional):') || null;
+
+    showToastCofre('Atualizando status...', 'info');
+
+    google.script.run
+      .withSuccessHandler(function (res) {
+        if (res && res.success) {
+          showToastCofre('Status atualizado para ' + novoStatus, 'success');
+          carregarCofre();
+        } else {
+          showToastCofre('Erro: ' + (res && res.message || '?'), 'error');
+        }
+      })
+      .withFailureHandler(function (err) { showToastCofre('Erro: ' + err, 'error'); })
+      .cofreMudarStatus(id, novoStatus, nota);
   };
 
-  // ---------- Listeners dos filtros ----------
-  function bindFiltros() {
+  window.cofreExcluirItem = function (id, razao) {
+    if (!confirm(`Excluir a retomada de "${razao}"?\n\nEssa ação não pode ser desfeita.`)) return;
+
+    showToastCofre('Excluindo...', 'info');
+    google.script.run
+      .withSuccessHandler(function (res) {
+        if (res && res.success) {
+          showToastCofre('Retomada excluída.', 'success');
+          carregarCofre();
+        } else {
+          showToastCofre('Erro: ' + (res && res.message || '?'), 'error');
+        }
+      })
+      .withFailureHandler(function (err) { showToastCofre('Erro: ' + err, 'error'); })
+      .cofreExcluir(id);
+  };
+
+  window.cofreAbrirNoVendas = function (id) {
+    const item = COFRE_ESTADO.dados.find(x => x.id === id);
+    if (!item) return;
+    // Salva pra o Vendas pegar (mesmo padrão do pedidoParaInput)
+    try {
+      sessionStorage.setItem('cofreParaVendas', JSON.stringify({
+        cnpj: item.cnpj,
+        razao: item.razao,
+        contato: item.contato,
+        codigo: item.codigo,
+        tipo_retomada: item.tipo,
+        cofre_id: item.id
+      }));
+    } catch (e) {}
+
+    // Marca como EM_CONTATO (sinal de que iniciou)
+    if (item.status === 'AGENDADO') {
+      google.script.run
+        .withSuccessHandler(() => {})
+        .withFailureHandler(() => {})
+        .cofreMudarStatus(item.id, 'EM_CONTATO', 'Aberto no módulo Vendas');
+    }
+
+    if (typeof window.abrirModulo === 'function') {
+      window.abrirModulo('vendas');
+    } else if (typeof abrirModulo === 'function') {
+      abrirModulo('vendas');
+    } else {
+      window.location.href = '?page=vendas';
+    }
+    showToastCofre('Abrindo Vendas com os dados pré-preenchidos...', 'info');
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // Filtros / Listeners
+  // ═══════════════════════════════════════════════════════════
+  function popularSelectConsultoresCofre() {
+    if (!isGestorCofre) return;
+    const cons = document.getElementById('cofreFiltroConsultor');
+    if (!cons) return;
+    cons.style.display = '';
+    // Agrupa por consultor_id + nome
+    const mapa = {};
+    COFRE_ESTADO.dados.forEach(c => { if (c.consultor_id) mapa[c.consultor_id] = c.consultor; });
+    const opcoes = Object.entries(mapa).sort((a, b) => a[1].localeCompare(b[1]));
+    cons.innerHTML = '<option value="">Todos os consultores</option>' +
+      opcoes.map(([id, nome]) => `<option value="${esc(id)}">${esc(nome)}</option>`).join('');
+  }
+
+  function bindFiltrosCofre() {
     const busca = document.getElementById('cofreBusca');
     const tipo = document.getElementById('cofreFiltroTipo');
     const prio = document.getElementById('cofreFiltroPrioridade');
@@ -2109,40 +2342,29 @@
       });
     });
 
-    if (isGestorCofre && cons) {
-      cons.style.display = '';
-      const nomes = [...new Set(COFRE_ESTADO.dados.map(c => c.consultor))].sort();
-      cons.innerHTML = '<option value="">Todos os consultores</option>' +
-        nomes.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
-    }
-
     const modal = document.getElementById('modalCofre');
-    if (modal) {
-      modal.addEventListener('click', e => { if (e.target === modal) fecharModalCofre(); });
-    }
+    if (modal) modal.addEventListener('click', e => { if (e.target === modal) fecharModalCofre(); });
   }
 
-  // ---------- Hook na navegação de abas ----------
-  function hookAbas() {
+  // ═══════════════════════════════════════════════════════════
+  // Hook abas
+  // ═══════════════════════════════════════════════════════════
+  function hookAbasCofre() {
     const btnCofre = document.getElementById('btnCofre');
     const tabCofre = document.getElementById('tab-cofre');
     const tabListagem = document.getElementById('tab-listagem');
     const tabConsultar = document.getElementById('tab-consultar');
     if (!btnCofre || !tabCofre) return;
 
-    // Intercepta cliques nos botões de aba manualmente (sem depender de mudarAba global)
     btnCofre.addEventListener('click', function () {
-      // desativa outros
       document.querySelectorAll('.tabs-container .tab-btn').forEach(b => b.classList.remove('active'));
       btnCofre.classList.add('active');
-      // esconde todas as abas
       if (tabListagem) tabListagem.style.display = 'none';
       if (tabConsultar) tabConsultar.style.display = 'none';
       tabCofre.style.display = 'block';
-      if (!COFRE_ESTADO.dados.length) carregarCofreMock();
+      carregarCofre();
     });
 
-    // Quando o usuário clicar em qualquer OUTRA aba, esconde a do cofre
     document.querySelectorAll('.tabs-container .tab-btn').forEach(b => {
       if (b.id === 'btnCofre') return;
       b.addEventListener('click', () => {
@@ -2158,23 +2380,18 @@
     });
   }
 
-  // ---------- Boot ----------
+  // ═══════════════════════════════════════════════════════════
+  // Boot
+  // ═══════════════════════════════════════════════════════════
   function boot() {
-    if (!document.getElementById('btnCofre')) {
-      // DOM ainda não pronto, tenta de novo em 200ms
-      return setTimeout(boot, 200);
-    }
-    bindFiltros();
-    hookAbas();
-    carregarCofreMock();
-    console.log('✅ Cofre de Oportunidades (mockup) inicializado');
+    if (!document.getElementById('btnCofre')) return setTimeout(boot, 200);
+    bindFiltrosCofre();
+    hookAbasCofre();
+    console.log('✅ Cofre de Oportunidades conectado ao Supabase');
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', boot);
-  } else {
-    boot();
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
 })();
 </script>
 </body>
