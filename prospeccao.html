@@ -1319,7 +1319,19 @@ function moverCardParaColuna(idLead, novaEtapa) {
 
   window.google = window.google || {};
   window.google.script = window.google.script || {};
-  Object.defineProperty(window.google.script, 'run', { get: () => makeRunner() });
+  // 🔥 Guard: se já foi definido, não redefine (evita erro ao trocar de módulo)
+const descritorAtual = Object.getOwnPropertyDescriptor(window.google.script, 'run');
+if (!descritorAtual || descritorAtual.configurable === false) {
+  try {
+    Object.defineProperty(window.google.script, 'run', {
+      get: () => makeRunner(),
+      configurable: true   // ← permite redefinir em recarregamentos futuros
+    });
+  } catch (e) {
+    // Se ainda assim falhar, cai num fallback simples
+    window.google.script.run = makeRunner();
+  }
+}
 
   console.log('✅ Ponte Supabase ativa — prospeccao.html (com normalizador inteligente)');
 })();
