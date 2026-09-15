@@ -183,6 +183,613 @@
     .btn-cancel { background: #f1f5f9; border: none; color: #64748b; }
     .btn-save { background: #1e3c72; border: none; color: white; }
     .btn-save:hover { background: #162d54; transform: translateY(-1px); }
+        /* ═══════════════════════════════════════════════════════
+       ABA COFRE DE OPORTUNIDADES
+    ═══════════════════════════════════════════════════════ */
+
+    /* ---------- Header do Cofre ---------- */
+    .cofre-header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 55%, #4338ca 100%);
+      border-radius: 20px;
+      padding: 28px 32px;
+      margin-bottom: 24px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 32px rgba(30,60,114,0.22);
+    }
+    .cofre-header::before {
+      content: '🎯';
+      position: absolute;
+      font-size: 220px;
+      opacity: 0.06;
+      right: -40px;
+      top: -60px;
+      transform: rotate(-15deg);
+      pointer-events: none;
+    }
+    .cofre-header::after {
+      content: '';
+      position: absolute;
+      top: -50%; right: -10%;
+      width: 400px; height: 400px;
+      background: radial-gradient(circle, rgba(139,92,246,0.4) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cofre-header-text { position: relative; z-index: 2; }
+    .cofre-header h2 {
+      font-size: 26px; font-weight: 800;
+      margin: 0 0 6px 0; letter-spacing: -0.6px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .cofre-header h2 span.tag {
+      font-size: 10px; font-weight: 700;
+      background: rgba(255,255,255,0.18);
+      border: 1px solid rgba(255,255,255,0.25);
+      padding: 4px 10px; border-radius: 20px;
+      letter-spacing: 1px;
+    }
+    .cofre-header p {
+      font-size: 13px; opacity: 0.88; margin: 0;
+      max-width: 520px; line-height: 1.5;
+    }
+    .cofre-header-actions {
+      display: flex; gap: 12px; position: relative; z-index: 2;
+    }
+    .btn-cofre {
+      border: none; border-radius: 12px;
+      padding: 12px 22px; font-weight: 700; font-size: 13px;
+      cursor: pointer; display: inline-flex;
+      align-items: center; gap: 8px;
+      transition: all 0.25s ease;
+      font-family: inherit;
+    }
+    .btn-cofre.novo {
+      background: white; color: #1e3c72;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.18);
+    }
+    .btn-cofre.novo:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(0,0,0,0.25);
+    }
+    .btn-cofre.ghost {
+      background: rgba(255,255,255,0.13);
+      color: white; border: 1px solid rgba(255,255,255,0.22);
+      backdrop-filter: blur(10px);
+    }
+    .btn-cofre.ghost:hover {
+      background: rgba(255,255,255,0.22);
+      transform: translateY(-2px);
+    }
+
+    /* ---------- KPIs do Cofre ---------- */
+    .cofre-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 16px; margin-bottom: 22px;
+    }
+    .cofre-kpi {
+      background: white; border-radius: 18px;
+      padding: 20px 22px; display: flex;
+      align-items: center; gap: 16px;
+      border: 1px solid #eef2f6;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      transition: all 0.25s ease;
+      position: relative; overflow: hidden;
+    }
+    .cofre-kpi::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; height: 3px; width: 100%;
+      background: var(--kpi-accent, #1e3c72);
+      opacity: 0.9;
+    }
+    .cofre-kpi:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 24px rgba(0,0,0,0.07);
+    }
+    .cofre-kpi.danger  { --kpi-accent: #ef4444; }
+    .cofre-kpi.warn    { --kpi-accent: #f59e0b; }
+    .cofre-kpi.gold    { --kpi-accent: #eab308; }
+    .cofre-kpi.success { --kpi-accent: #10b981; }
+    .cofre-kpi.info    { --kpi-accent: #3b82f6; }
+    .cofre-kpi.purple  { --kpi-accent: #8b5cf6; }
+    .cofre-kpi-icon {
+      width: 52px; height: 52px; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 24px; flex-shrink: 0;
+    }
+    .cofre-kpi.danger  .cofre-kpi-icon { background: #fef2f2; color: #dc2626; }
+    .cofre-kpi.warn    .cofre-kpi-icon { background: #fffbeb; color: #d97706; }
+    .cofre-kpi.gold    .cofre-kpi-icon { background: #fefce8; color: #ca8a04; }
+    .cofre-kpi.success .cofre-kpi-icon { background: #ecfdf5; color: #059669; }
+    .cofre-kpi.info    .cofre-kpi-icon { background: #eff6ff; color: #2563eb; }
+    .cofre-kpi.purple  .cofre-kpi-icon { background: #f5f3ff; color: #7c3aed; }
+    .cofre-kpi-body { flex: 1; min-width: 0; }
+    .cofre-kpi-label {
+      font-size: 11px; color: #64748b; font-weight: 600;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      margin-bottom: 3px;
+    }
+    .cofre-kpi-value {
+      font-size: 26px; font-weight: 800; color: #1e293b;
+      line-height: 1; letter-spacing: -0.6px;
+    }
+    .cofre-kpi-value small {
+      font-size: 12px; font-weight: 600;
+      color: #94a3b8; margin-left: 4px;
+    }
+
+    /* ---------- Ranking (só ADMIN/BACKOFFICE) ---------- */
+    .cofre-ranking {
+      background: white; border-radius: 18px;
+      border: 1px solid #eef2f6; padding: 18px 22px;
+      margin-bottom: 22px;
+    }
+    .cofre-ranking-title {
+      font-size: 13px; font-weight: 800; color: #1e3c72;
+      display: flex; align-items: center; gap: 8px;
+      margin-bottom: 14px; text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .cofre-ranking-list {
+      display: flex; gap: 14px; flex-wrap: wrap;
+    }
+    .cofre-rank-item {
+      background: #f8fafc; border: 1px solid #e2e8f0;
+      border-radius: 12px; padding: 10px 14px;
+      display: flex; align-items: center; gap: 10px;
+      font-size: 13px; transition: all 0.2s;
+    }
+    .cofre-rank-item:hover {
+      background: #eff6ff; border-color: #bfdbfe;
+    }
+    .cofre-rank-pos { font-size: 18px; }
+    .cofre-rank-nome { font-weight: 700; color: #1e293b; }
+    .cofre-rank-qtd {
+      background: #1e3c72; color: white;
+      padding: 2px 8px; border-radius: 20px;
+      font-size: 11px; font-weight: 800;
+    }
+
+    /* ---------- Filtros ---------- */
+    .cofre-filtros {
+      background: white; border-radius: 18px;
+      padding: 18px 22px; margin-bottom: 22px;
+      border: 1px solid #eef2f6;
+      display: flex; flex-direction: column; gap: 14px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+    }
+    .cofre-filtros-row {
+      display: flex; gap: 12px; flex-wrap: wrap; align-items: center;
+    }
+    .cofre-search {
+      flex: 1; min-width: 240px; position: relative;
+    }
+    .cofre-search i {
+      position: absolute; left: 16px; top: 50%;
+      transform: translateY(-50%); color: #94a3b8;
+    }
+    .cofre-search input {
+      width: 100%; padding: 12px 16px 12px 42px;
+      border: 1px solid #e2e8f0; border-radius: 12px;
+      font-family: inherit; font-size: 13px; transition: all 0.2s;
+    }
+    .cofre-search input:focus {
+      outline: none; border-color: #1e3c72;
+      box-shadow: 0 0 0 3px rgba(30,60,114,0.08);
+    }
+    .cofre-select {
+      padding: 12px 16px; border: 1px solid #e2e8f0;
+      border-radius: 12px; font-family: inherit;
+      font-size: 13px; background: white; cursor: pointer;
+      font-weight: 600; color: #475569;
+    }
+    .cofre-select:focus {
+      outline: none; border-color: #1e3c72;
+      box-shadow: 0 0 0 3px rgba(30,60,114,0.08);
+    }
+    .cofre-chips {
+      display: flex; gap: 8px; flex-wrap: wrap;
+    }
+    .cofre-chip {
+      background: #f1f5f9; border: 1px solid transparent;
+      padding: 8px 16px; border-radius: 20px;
+      font-size: 12px; font-weight: 700;
+      color: #475569; cursor: pointer;
+      transition: all 0.2s; font-family: inherit;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .cofre-chip:hover { background: #e2e8f0; }
+    .cofre-chip.active {
+      background: #1e3c72; color: white;
+      box-shadow: 0 4px 10px rgba(30,60,114,0.25);
+    }
+    .cofre-chip.active:hover { background: #162d54; }
+    .cofre-chip .badge {
+      background: rgba(0,0,0,0.1);
+      padding: 1px 7px; border-radius: 10px;
+      font-size: 10px; font-weight: 800;
+    }
+    .cofre-chip.active .badge { background: rgba(255,255,255,0.25); }
+
+    /* ---------- Grid de cards ---------- */
+    .cofre-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 18px; margin-bottom: 30px;
+    }
+
+    .cofre-card {
+      background: white; border-radius: 18px;
+      padding: 20px 20px 18px 26px;
+      position: relative; overflow: hidden;
+      border: 1px solid #eef2f6;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+      transition: all 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+      cursor: pointer;
+      animation: cofreIn 0.4s ease-out backwards;
+    }
+    @keyframes cofreIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    .cofre-card::before {
+      content: ''; position: absolute;
+      top: 0; left: 0; bottom: 0; width: 6px;
+      background: var(--card-urgency, #94a3b8);
+      border-radius: 18px 0 0 18px;
+    }
+    .cofre-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 14px 32px rgba(30,60,114,0.12);
+      border-color: #dbeafe;
+    }
+    .cofre-card.vencida   { --card-urgency: linear-gradient(180deg, #ef4444, #dc2626); }
+    .cofre-card.hoje      { --card-urgency: linear-gradient(180deg, #f59e0b, #d97706); }
+    .cofre-card.semana    { --card-urgency: linear-gradient(180deg, #eab308, #ca8a04); }
+    .cofre-card.mes       { --card-urgency: linear-gradient(180deg, #10b981, #059669); }
+    .cofre-card.pausado   { --card-urgency: linear-gradient(180deg, #94a3b8, #64748b); }
+    .cofre-card.convertido { --card-urgency: linear-gradient(180deg, #10b981, #047857); }
+
+    /* Variante especial para PF→PJ */
+    .cofre-card.pj-futuro {
+      background: linear-gradient(135deg, #ffffff 0%, #faf5ff 100%);
+      border: 1.5px solid #ddd6fe;
+      box-shadow: 0 6px 20px rgba(139,92,246,0.12);
+    }
+    .cofre-card.pj-futuro:hover {
+      box-shadow: 0 16px 36px rgba(139,92,246,0.22);
+      border-color: #c4b5fd;
+    }
+    .cofre-card.pj-futuro::before {
+      background: linear-gradient(180deg, #8b5cf6, #6d28d9);
+    }
+
+    /* Header do card */
+    .cofre-card-top {
+      display: flex; align-items: center;
+      justify-content: space-between; gap: 8px;
+      margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .cofre-card-badges {
+      display: flex; gap: 6px; align-items: center;
+      flex-wrap: wrap;
+    }
+    .cofre-badge {
+      font-size: 10px; font-weight: 800;
+      padding: 4px 10px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .cofre-badge.tipo-renovacao     { background: #ecfdf5; color: #065f46; }
+    .cofre-badge.tipo-pos-fidelidade { background: #eff6ff; color: #1e40af; }
+    .cofre-badge.tipo-pf-pj          { background: #f5f3ff; color: #5b21b6; }
+    .cofre-badge.tipo-negociacao     { background: #fffbeb; color: #92400e; }
+    .cofre-badge.tipo-outro          { background: #f1f5f9; color: #475569; }
+
+    .cofre-badge.prio-alta  { background: #fef2f2; color: #991b1b; }
+    .cofre-badge.prio-media { background: #fffbeb; color: #92400e; }
+    .cofre-badge.prio-baixa { background: #f0fdf4; color: #166534; }
+
+    .cofre-badge.pj-futuro-tag {
+      background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+      color: white;
+      box-shadow: 0 4px 10px rgba(139,92,246,0.3);
+      animation: pulsePj 2.4s ease-in-out infinite;
+    }
+    @keyframes pulsePj {
+      0%, 100% { box-shadow: 0 4px 10px rgba(139,92,246,0.3); }
+      50%      { box-shadow: 0 4px 16px rgba(139,92,246,0.55); }
+    }
+
+    .cofre-card-urgencia {
+      font-size: 10px; font-weight: 800;
+      color: #64748b; letter-spacing: 0.3px;
+      white-space: nowrap;
+    }
+    .cofre-card-urgencia.atrasado { color: #dc2626; }
+    .cofre-card-urgencia.hoje     { color: #d97706; }
+
+    /* Corpo do card */
+    .cofre-card-empresa {
+      font-size: 15px; font-weight: 800;
+      color: #0f172a; line-height: 1.3;
+      margin: 0 0 6px 0;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .cofre-card-meta {
+      font-size: 11px; color: #64748b;
+      font-family: ui-monospace, 'SF Mono', monospace;
+      display: flex; gap: 8px; flex-wrap: wrap;
+      margin-bottom: 12px;
+    }
+    .cofre-card-meta span { display: inline-flex; align-items: center; gap: 4px; }
+
+    .cofre-card-motivo {
+      background: #f8fafc; border-left: 3px solid #cbd5e1;
+      padding: 10px 12px; border-radius: 8px;
+      font-size: 12px; color: #475569;
+      line-height: 1.5; margin-bottom: 12px;
+      display: -webkit-box;
+      -webkit-line-clamp: 3;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+    .cofre-card.pj-futuro .cofre-card-motivo {
+      background: #faf5ff; border-left-color: #a78bfa;
+      color: #5b21b6;
+    }
+
+    .cofre-card-info {
+      display: flex; gap: 14px; flex-wrap: wrap;
+      font-size: 11px; color: #64748b; margin-bottom: 14px;
+    }
+    .cofre-card-info div {
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .cofre-card-info b { color: #334155; font-weight: 700; }
+
+    /* Ações do card */
+    .cofre-card-actions {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      padding-top: 12px; border-top: 1px dashed #e2e8f0;
+    }
+    .cofre-act {
+      flex: 1; min-width: 0; padding: 9px 10px;
+      border: 1px solid transparent; border-radius: 10px;
+      font-size: 11px; font-weight: 700;
+      cursor: pointer; font-family: inherit;
+      display: inline-flex; align-items: center;
+      justify-content: center; gap: 5px;
+      transition: all 0.18s;
+      background: #f1f5f9; color: #475569;
+    }
+    .cofre-act:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    }
+    .cofre-act.whatsapp { background: #ecfdf5; color: #047857; }
+    .cofre-act.whatsapp:hover { background: #25d366; color: white; }
+    .cofre-act.ligar    { background: #eff6ff; color: #1d4ed8; }
+    .cofre-act.ligar:hover { background: #3b82f6; color: white; }
+    .cofre-act.vendas   { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; }
+    .cofre-act.vendas:hover { box-shadow: 0 6px 14px rgba(30,60,114,0.3); }
+    .cofre-act.mais     { flex: 0 0 auto; min-width: 38px; background: white; border-color: #e2e8f0; color: #64748b; }
+    .cofre-act.mais:hover { background: #f8fafc; }
+
+    /* Estado vazio */
+    .cofre-vazio {
+      text-align: center; padding: 80px 30px;
+      background: white; border-radius: 20px;
+      border: 2px dashed #e2e8f0;
+      grid-column: 1 / -1;
+    }
+    .cofre-vazio .ico {
+      font-size: 64px; margin-bottom: 16px;
+      opacity: 0.35; display: block;
+    }
+    .cofre-vazio h3 {
+      color: #475569; font-size: 17px;
+      margin: 0 0 8px 0; font-weight: 800;
+    }
+    .cofre-vazio p { color: #94a3b8; font-size: 13px; margin: 0; }
+
+    /* ---------- Modal do Cofre ---------- */
+    .cofre-modal {
+      position: fixed; inset: 0; z-index: 10000;
+      display: none; align-items: center; justify-content: center;
+      backdrop-filter: blur(6px);
+      background: rgba(15, 23, 42, 0.55);
+      animation: cofreModalIn 0.25s ease-out;
+    }
+    .cofre-modal.open { display: flex; }
+    @keyframes cofreModalIn {
+      from { opacity: 0; backdrop-filter: blur(0); }
+      to   { opacity: 1; backdrop-filter: blur(6px); }
+    }
+    .cofre-modal-box {
+      background: white; width: 95%; max-width: 780px;
+      max-height: 92vh; border-radius: 24px;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.4);
+      animation: cofreBoxIn 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    @keyframes cofreBoxIn {
+      from { transform: scale(0.94) translateY(10px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .cofre-modal-head {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 55%, #4338ca 100%);
+      padding: 22px 28px; color: white;
+      display: flex; align-items: center; gap: 16px;
+      position: relative; overflow: hidden;
+    }
+    .cofre-modal-head::after {
+      content: '🎯'; position: absolute;
+      font-size: 120px; opacity: 0.08;
+      right: -10px; top: -30px;
+      transform: rotate(-15deg);
+    }
+    .cofre-modal-head .ico {
+      width: 46px; height: 46px;
+      background: rgba(255,255,255,0.18);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 22px; position: relative; z-index: 2;
+    }
+    .cofre-modal-head h3 {
+      margin: 0; font-size: 18px; font-weight: 800;
+      position: relative; z-index: 2;
+    }
+    .cofre-modal-head p {
+      margin: 2px 0 0 0; font-size: 12px;
+      opacity: 0.85; position: relative; z-index: 2;
+    }
+    .cofre-modal-head .close {
+      margin-left: auto; width: 36px; height: 36px;
+      border: none; background: rgba(255,255,255,0.15);
+      border-radius: 50%; color: white; font-size: 20px;
+      cursor: pointer; position: relative; z-index: 2;
+      transition: all 0.2s;
+    }
+    .cofre-modal-head .close:hover {
+      background: rgba(255,255,255,0.3);
+      transform: rotate(90deg);
+    }
+    .cofre-modal-body {
+      padding: 24px 28px; overflow-y: auto;
+      flex: 1; background: #f8fafc;
+    }
+    .cofre-fieldset {
+      background: white; border-radius: 16px;
+      border: 1px solid #eef2f6;
+      padding: 20px 22px; margin-bottom: 16px;
+    }
+    .cofre-fieldset-title {
+      font-size: 12px; font-weight: 800;
+      color: #1e3c72; text-transform: uppercase;
+      letter-spacing: 0.6px; margin: 0 0 16px 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .cofre-fieldset-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, #e2e8f0, transparent);
+    }
+    .cofre-form-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 14px; margin-bottom: 14px;
+    }
+    .cofre-form-row:last-child { margin-bottom: 0; }
+    .cofre-form-group { display: flex; flex-direction: column; gap: 6px; }
+    .cofre-form-group.full { grid-column: 1 / -1; }
+    .cofre-form-group label {
+      font-size: 11px; font-weight: 700; color: #475569;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .cofre-input {
+      padding: 11px 14px; border: 1.5px solid #e2e8f0;
+      border-radius: 10px; font-family: inherit;
+      font-size: 13px; transition: all 0.2s;
+      background: white;
+    }
+    .cofre-input:focus {
+      outline: none; border-color: #1e3c72;
+      box-shadow: 0 0 0 3px rgba(30,60,114,0.08);
+    }
+    .cofre-input.is-cnpj { font-family: ui-monospace, monospace; }
+
+    /* Radio-cards (Tipo) */
+    .cofre-radio-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .cofre-radio {
+      display: block; cursor: pointer; position: relative;
+    }
+    .cofre-radio input { position: absolute; opacity: 0; pointer-events: none; }
+    .cofre-radio-box {
+      border: 2px solid #e2e8f0; border-radius: 12px;
+      padding: 12px 10px; text-align: center;
+      transition: all 0.2s; background: white;
+    }
+    .cofre-radio-box .ico { font-size: 22px; display: block; margin-bottom: 4px; }
+    .cofre-radio-box .txt { font-size: 11px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.3px; }
+    .cofre-radio input:checked + .cofre-radio-box {
+      border-color: #1e3c72; background: #eff6ff;
+      color: #1e3c72;
+      box-shadow: 0 4px 12px rgba(30,60,114,0.12);
+    }
+    .cofre-radio input:checked + .cofre-radio-box .txt { color: #1e3c72; }
+
+    /* Radio-pills (Prioridade) */
+    .cofre-prio-row {
+      display: flex; gap: 10px; flex-wrap: wrap;
+    }
+    .cofre-prio {
+      display: inline-flex; cursor: pointer;
+    }
+    .cofre-prio input { position: absolute; opacity: 0; pointer-events: none; }
+    .cofre-prio-pill {
+      padding: 10px 18px; border-radius: 24px;
+      border: 2px solid #e2e8f0; background: white;
+      font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      transition: all 0.2s;
+    }
+    .cofre-prio input:checked + .cofre-prio-pill.alta {
+      border-color: #dc2626; background: #fef2f2; color: #991b1b;
+    }
+    .cofre-prio input:checked + .cofre-prio-pill.media {
+      border-color: #d97706; background: #fffbeb; color: #92400e;
+    }
+    .cofre-prio input:checked + .cofre-prio-pill.baixa {
+      border-color: #16a34a; background: #f0fdf4; color: #166534;
+    }
+
+    .cofre-modal-foot {
+      padding: 16px 28px; border-top: 1px solid #eef2f6;
+      background: white; display: flex; gap: 12px;
+      justify-content: flex-end;
+    }
+    .cofre-modal-foot button {
+      padding: 13px 26px; border-radius: 12px;
+      font-weight: 700; font-size: 13px;
+      cursor: pointer; font-family: inherit;
+      display: inline-flex; align-items: center; gap: 8px;
+      transition: all 0.2s;
+    }
+    .cofre-modal-foot .cancel {
+      background: #f1f5f9; color: #64748b; border: none;
+    }
+    .cofre-modal-foot .cancel:hover { background: #e2e8f0; }
+    .cofre-modal-foot .save {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white; border: none;
+      box-shadow: 0 6px 16px rgba(30,60,114,0.25);
+    }
+    .cofre-modal-foot .save:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 22px rgba(30,60,114,0.35);
+    }
+
+    @media (max-width: 640px) {
+      .cofre-header { padding: 22px 20px; }
+      .cofre-header h2 { font-size: 20px; }
+      .cofre-grid { grid-template-columns: 1fr; }
+      .cofre-modal-body { padding: 18px; }
+      .cofre-fieldset { padding: 16px; }
+    }
   </style>
 </head>
 <body>
@@ -205,6 +812,7 @@
     <button id="btnTodos" class="tab-btn active" data-tab="todos"><i class="fas fa-database"></i> Base Completa <span id="badgeTodos" class="tab-badge">0</span></button>
     <button id="btnPendentes" class="tab-btn" data-tab="pendentes" style="display: none;"><i class="fas fa-exclamation-triangle"></i> Pendências <span id="badgePendentes" class="tab-badge">0</span></button>
     <button id="btnConsultar" class="tab-btn" data-tab="consultar"><i class="fas fa-search"></i> Consultar Histórico do Cliente</button>
+    <button id="btnCofre" class="tab-btn" data-tab="cofre"> <i class="fas fa-bullseye"></i> Cofre de Oportunidades <span id="badgeCofre" class="tab-badge">0</span> </button>
   </div>
 
   <!-- ═══════════════ ABA: BASE COMPLETA / PENDÊNCIAS ═══════════════ -->
@@ -276,6 +884,222 @@
         <i class="fas fa-building"></i>
         <h3>Digite acima para começar</h3>
         <p>O histórico de contratos e linhas aparecerá aqui.</p>
+      </div>
+    </div>
+  </div>
+
+    <!-- ═══════════════ ABA: COFRE DE OPORTUNIDADES ═══════════════ -->
+  <div id="tab-cofre" style="display: none;">
+
+    <!-- Header com CTA -->
+    <div class="cofre-header">
+      <div class="cofre-header-text">
+        <h2>
+          🎯 Cofre de Oportunidades
+          <span class="tag">RADAR COMERCIAL</span>
+        </h2>
+        <p>Retomadas agendadas, contratos madurando e clientes prontos para voltar ao radar. <strong>Você decide quando chamar. O Cofre lembra pra você.</strong></p>
+      </div>
+      <div class="cofre-header-actions">
+        <button class="btn-cofre ghost" onclick="carregarCofreMock()">
+          <i class="fas fa-sync-alt"></i> Atualizar
+        </button>
+        <button class="btn-cofre novo" onclick="abrirModalCofre()">
+          <i class="fas fa-plus"></i> Nova Retomada
+        </button>
+      </div>
+    </div>
+
+    <!-- KPIs -->
+    <div class="cofre-kpis" id="cofreKpis"></div>
+
+    <!-- Ranking (só ADMIN/BACKOFFICE) -->
+    <div class="cofre-ranking" id="cofreRanking" style="display:none;"></div>
+
+    <!-- Filtros -->
+    <div class="cofre-filtros">
+      <div class="cofre-filtros-row">
+        <div class="cofre-search">
+          <i class="fas fa-search"></i>
+          <input type="text" id="cofreBusca" placeholder="Buscar por CNPJ, razão social ou código..." autocomplete="off">
+        </div>
+        <select class="cofre-select" id="cofreFiltroTipo">
+          <option value="">Todos os tipos</option>
+          <option value="RENOVACAO">♻️ Renovação</option>
+          <option value="POS_FIDELIDADE">⏳ Pós-fidelidade</option>
+          <option value="MIGRACAO_PF_PJ">🔄 Migração PF→PJ</option>
+          <option value="NEGOCIACAO_FUTURA">💼 Negociação Futura</option>
+          <option value="OUTRO">📌 Outro</option>
+        </select>
+        <select class="cofre-select" id="cofreFiltroPrioridade">
+          <option value="">Todas as prioridades</option>
+          <option value="ALTA">🔴 Alta</option>
+          <option value="MEDIA">🟠 Média</option>
+          <option value="BAIXA">🟢 Baixa</option>
+        </select>
+        <select class="cofre-select" id="cofreFiltroConsultor" style="display:none;">
+          <option value="">Todos os consultores</option>
+        </select>
+      </div>
+      <div class="cofre-chips" id="cofreChips">
+        <button class="cofre-chip active" data-filtro="todos">
+          Todos <span class="badge" id="chipTodos">0</span>
+        </button>
+        <button class="cofre-chip" data-filtro="vencidas">
+          🚨 Vencidas <span class="badge" id="chipVencidas">0</span>
+        </button>
+        <button class="cofre-chip" data-filtro="hoje">
+          ⏰ Hoje <span class="badge" id="chipHoje">0</span>
+        </button>
+        <button class="cofre-chip" data-filtro="semana">
+          🔥 7 dias <span class="badge" id="chipSemana">0</span>
+        </button>
+        <button class="cofre-chip" data-filtro="mes">
+          📅 30 dias <span class="badge" id="chipMes">0</span>
+        </button>
+        <button class="cofre-chip" data-filtro="pausados">
+          ⏸️ Pausados <span class="badge" id="chipPausados">0</span>
+        </button>
+        <button class="cofre-chip" data-filtro="convertidos">
+          ✅ Convertidos <span class="badge" id="chipConvertidos">0</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Grid de cards -->
+    <div class="cofre-grid" id="cofreGrid">
+      <div class="cofre-vazio">
+        <span class="ico">🎯</span>
+        <h3>Carregando o Cofre...</h3>
+        <p>Preparando oportunidades para você.</p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════ MODAL: NOVA RETOMADA ═══════════════ -->
+  <div class="cofre-modal" id="modalCofre">
+    <div class="cofre-modal-box">
+      <div class="cofre-modal-head">
+        <div class="ico">🎯</div>
+        <div>
+          <h3 id="cofreModalTitulo">Nova Retomada</h3>
+          <p>Agende uma oportunidade para voltar ao radar na data certa</p>
+        </div>
+        <button class="close" onclick="fecharModalCofre()">&times;</button>
+      </div>
+
+      <div class="cofre-modal-body">
+        <input type="hidden" id="cofreEditId">
+
+        <div class="cofre-fieldset">
+          <div class="cofre-fieldset-title">🏢 Cliente</div>
+          <div class="cofre-form-row">
+            <div class="cofre-form-group">
+              <label>CNPJ *</label>
+              <input type="text" id="cofreCnpj" class="cofre-input is-cnpj" placeholder="00.000.000/0000-00">
+            </div>
+            <div class="cofre-form-group" style="grid-column: span 2;">
+              <label>Razão Social *</label>
+              <input type="text" id="cofreRazao" class="cofre-input" placeholder="Nome da empresa">
+            </div>
+          </div>
+          <div class="cofre-form-row">
+            <div class="cofre-form-group">
+              <label>Contato (WhatsApp)</label>
+              <input type="text" id="cofreContato" class="cofre-input" placeholder="(00) 00000-0000">
+            </div>
+            <div class="cofre-form-group">
+              <label>Contato Alternativo</label>
+              <input type="text" id="cofreContatoAlt" class="cofre-input" placeholder="Opcional">
+            </div>
+            <div class="cofre-form-group">
+              <label>Código do Cliente</label>
+              <input type="text" id="cofreCodigo" class="cofre-input" placeholder="Ex: 7.2236705">
+            </div>
+          </div>
+        </div>
+
+        <div class="cofre-fieldset">
+          <div class="cofre-fieldset-title">🎯 Classificação</div>
+          <div class="cofre-form-row">
+            <div class="cofre-form-group full">
+              <label>Tipo de Retomada *</label>
+              <div class="cofre-radio-grid">
+                <label class="cofre-radio">
+                  <input type="radio" name="cofreTipo" value="RENOVACAO" checked>
+                  <div class="cofre-radio-box"><span class="ico">♻️</span><span class="txt">Renovação</span></div>
+                </label>
+                <label class="cofre-radio">
+                  <input type="radio" name="cofreTipo" value="POS_FIDELIDADE">
+                  <div class="cofre-radio-box"><span class="ico">⏳</span><span class="txt">Pós-Fidelidade</span></div>
+                </label>
+                <label class="cofre-radio">
+                  <input type="radio" name="cofreTipo" value="MIGRACAO_PF_PJ">
+                  <div class="cofre-radio-box"><span class="ico">🔄</span><span class="txt">Migração PF→PJ</span></div>
+                </label>
+                <label class="cofre-radio">
+                  <input type="radio" name="cofreTipo" value="NEGOCIACAO_FUTURA">
+                  <div class="cofre-radio-box"><span class="ico">💼</span><span class="txt">Negociação Futura</span></div>
+                </label>
+                <label class="cofre-radio">
+                  <input type="radio" name="cofreTipo" value="OUTRO">
+                  <div class="cofre-radio-box"><span class="ico">📌</span><span class="txt">Outro</span></div>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="cofre-form-row">
+            <div class="cofre-form-group full">
+              <label>Prioridade *</label>
+              <div class="cofre-prio-row">
+                <label class="cofre-prio">
+                  <input type="radio" name="cofrePrioridade" value="ALTA">
+                  <span class="cofre-prio-pill alta">🔴 Alta</span>
+                </label>
+                <label class="cofre-prio">
+                  <input type="radio" name="cofrePrioridade" value="MEDIA" checked>
+                  <span class="cofre-prio-pill media">🟠 Média</span>
+                </label>
+                <label class="cofre-prio">
+                  <input type="radio" name="cofrePrioridade" value="BAIXA">
+                  <span class="cofre-prio-pill baixa">🟢 Baixa</span>
+                </label>
+              </div>
+            </div>
+          </div>
+          <div class="cofre-form-row">
+            <div class="cofre-form-group">
+              <label>Data da Retomada *</label>
+              <input type="date" id="cofreData" class="cofre-input">
+            </div>
+            <div class="cofre-form-group">
+              <label>Valor Potencial (R$)</label>
+              <input type="number" step="0.01" id="cofreValor" class="cofre-input" placeholder="0,00">
+            </div>
+            <div class="cofre-form-group">
+              <label>Linhas Estimadas</label>
+              <input type="number" id="cofreLinhas" class="cofre-input" placeholder="Ex: 4">
+            </div>
+          </div>
+        </div>
+
+        <div class="cofre-fieldset">
+          <div class="cofre-fieldset-title">📝 Contexto</div>
+          <div class="cofre-form-row">
+            <div class="cofre-form-group full">
+              <label>Motivo / Anotações *</label>
+              <textarea id="cofreMotivo" class="cofre-input" rows="4" placeholder="Ex: Renegociar contrato após fidelidade de 24 meses. Cliente sinalizou interesse em aumentar de 2 para 4 linhas."></textarea>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="cofre-modal-foot">
+        <button class="cancel" onclick="fecharModalCofre()">Cancelar</button>
+        <button class="save" onclick="salvarRetomadaMock()">
+          <i class="fas fa-save"></i> Salvar no Cofre
+        </button>
       </div>
     </div>
   </div>
@@ -918,6 +1742,471 @@
     console.log('👤 Sessão:', sessao);
     carregarClientes();
   })();
+
+      // ═══════════════════════════════════════════════════════════
+    // COFRE DE OPORTUNIDADES (MOCKUP - Fase visual)
+    // ═══════════════════════════════════════════════════════════
+
+    const COFRE_ESTADO = {
+      dados: [],
+      filtroChip: 'todos',
+      filtroTipo: '',
+      filtroPrioridade: '',
+      filtroConsultor: '',
+      busca: ''
+    };
+
+    // Detecção de role para KPIs extras
+    const isGestorCofre = (cargoUsuario === 'ADMINISTRADOR' || cargoUsuario === 'BACKOFFICE' || cargoUsuario === 'ADMIN');
+
+    // ---------- Helpers visuais ----------
+    function cofreTipoInfo(tipo) {
+      return {
+        RENOVACAO:         { label: 'Renovação',         ico: '♻️', cls: 'tipo-renovacao' },
+        POS_FIDELIDADE:    { label: 'Pós-fidelidade',    ico: '⏳', cls: 'tipo-pos-fidelidade' },
+        MIGRACAO_PF_PJ:    { label: 'PF → PJ',           ico: '🔄', cls: 'tipo-pf-pj' },
+        NEGOCIACAO_FUTURA: { label: 'Negociação Futura', ico: '💼', cls: 'tipo-negociacao' },
+        OUTRO:             { label: 'Outro',              ico: '📌', cls: 'tipo-outro' }
+      }[tipo] || { label: 'Outro', ico: '📌', cls: 'tipo-outro' };
+    }
+    function cofrePrioInfo(p) {
+      return {
+        ALTA:  { label: 'Alta',  ico: '🔴', cls: 'prio-alta'  },
+        MEDIA: { label: 'Média', ico: '🟠', cls: 'prio-media' },
+        BAIXA: { label: 'Baixa', ico: '🟢', cls: 'prio-baixa' }
+      }[p] || { label: 'Média', ico: '🟠', cls: 'prio-media' };
+    }
+    function cofreDiasRestantes(dataRetomadaISO) {
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      const d = new Date(dataRetomadaISO + 'T00:00:00');
+      return Math.round((d - hoje) / (1000*60*60*24));
+    }
+    function cofreUrgenciaClass(dias, status) {
+      if (status === 'PAUSADO')     return { cls: 'pausado',    label: '⏸️ Pausado' };
+      if (status === 'CONVERTIDO')  return { cls: 'convertido', label: '✅ Convertido' };
+      if (dias < 0)  return { cls: 'vencida', label: `🚨 ${Math.abs(dias)}d atrasado`, urgCls: 'atrasado' };
+      if (dias === 0) return { cls: 'hoje',   label: '⏰ Hoje',                        urgCls: 'hoje' };
+      if (dias <= 7)  return { cls: 'semana', label: `🔥 em ${dias}d` };
+      if (dias <= 30) return { cls: 'mes',    label: `📅 em ${dias}d` };
+      return { cls: 'mes', label: `📅 em ${dias}d` };
+    }
+    function cofreFmtData(iso) {
+      if (!iso) return '—';
+      const [a,m,d] = iso.split('-');
+      return `${d}/${m}/${a}`;
+    }
+    function cofreFmtWhats(tel) {
+      if (!tel) return '';
+      const n = String(tel).replace(/\D/g,'');
+      return n.length >= 10 ? n : '';
+    }
+
+    // ---------- MOCK de dados ----------
+    function carregarCofreMock() {
+      const hoje = new Date();
+      const add = (d) => { const x = new Date(hoje); x.setDate(x.getDate() + d); return x.toISOString().slice(0,10); };
+
+      COFRE_ESTADO.dados = [
+        {
+          id: '1', cnpj: '52.345.579/0001-28', razao: 'RONALD FERREIRA DE ALMEIDA',
+          contato: '87981144422', codigo: '7.2236705',
+          tipo: 'RENOVACAO', prioridade: 'ALTA', status: 'AGENDADO',
+          data: add(-3), motivo: 'Renegociar contrato após fidelidade de 24 meses. Cliente sinalizou interesse em aumentar de 2 para 4 linhas.',
+          consultor: 'Severina Cordeiro', valor: 275.96, linhas: 4
+        },
+        {
+          id: '2', cnpj: '12.345.678/0001-90', razao: 'OTICA MARANATA LTDA',
+          contato: '87981043938', codigo: '4.5512020',
+          tipo: 'POS_FIDELIDADE', prioridade: 'MEDIA', status: 'AGENDADO',
+          data: add(0), motivo: 'Fidelidade vence hoje. Cliente já usa TIM há 2 anos e quer ver upgrade de plano.',
+          consultor: 'Maria Eduarda', valor: 159.80, linhas: 2
+        },
+        {
+          id: '3', cnpj: '45.678.901/0001-23', razao: 'DANILO DOS SANTOS CINTRA & CIA LTDA',
+          contato: '87996560030', codigo: '8.1154321',
+          tipo: 'MIGRACAO_PF_PJ', prioridade: 'ALTA', status: 'AGENDADO',
+          data: add(5), motivo: 'Dono tem 3 linhas PF. Vai abrir CNPJ para expandir para 8 linhas PJ. É prioridade máxima — falar antes que concorrência pegue.',
+          consultor: 'Caio Henrique', valor: 479.84, linhas: 8
+        },
+        {
+          id: '4', cnpj: '78.901.234/0001-56', razao: 'BOLICHE CLUB ENTRETENIMENTO LTDA',
+          contato: '87996229659', codigo: '9.2266875',
+          tipo: 'NEGOCIACAO_FUTURA', prioridade: 'BAIXA', status: 'AGENDADO',
+          data: add(7), motivo: 'Cliente com fidelidade Vivo até dezembro. Pediu para retomar conversa quando faltar 30 dias para fim.',
+          consultor: 'Michele de Souza', valor: 299.94, linhas: 6
+        },
+        {
+          id: '5', cnpj: '23.456.789/0001-01', razao: 'A J DOS SANTOS BARRA NOVA CONSTRUÇÕES',
+          contato: '87991122884', codigo: '4.8081002',
+          tipo: 'RENOVACAO', prioridade: 'MEDIA', status: 'AGENDADO',
+          data: add(15), motivo: 'Contrato maduro há 22 meses. Manter relacionamento e oferecer renovação com bônus.',
+          consultor: 'Severina Cordeiro', valor: 219.92, linhas: 3
+        },
+        {
+          id: '6', cnpj: '34.567.890/0001-12', razao: 'OTICA PREMIUM GARANHUNS LTDA',
+          contato: '87999260108', codigo: '5.1224021',
+          tipo: 'OUTRO', prioridade: 'BAIXA', status: 'AGENDADO',
+          data: add(28), motivo: 'Cliente pediu para retomar em 1 mês. Está avaliando proposta da concorrência.',
+          consultor: 'Maria Eduarda', valor: 0, linhas: 0
+        },
+        {
+          id: '7', cnpj: '56.789.012/0001-34', razao: 'HOTEL VIVO GARANHUNS LTDA',
+          contato: '87999560054', codigo: '6.3148201',
+          tipo: 'RENOVACAO', prioridade: 'MEDIA', status: 'PAUSADO',
+          data: add(-15), motivo: 'Cliente pediu para pausar por 60 dias — está reestruturando financeiro.',
+          consultor: 'Caio Henrique', valor: 0, linhas: 0
+        },
+        {
+          id: '8', cnpj: '89.012.345/0001-45', razao: 'FARMÁCIA MONTEIRO LTDA',
+          contato: '8737610688', codigo: '2.9182401',
+          tipo: 'POS_FIDELIDADE', prioridade: 'ALTA', status: 'CONVERTIDO',
+          data: add(-40), motivo: 'Convertido! Cliente assinou 5 linhas TIM Empresas após 24 meses de fidelidade.',
+          consultor: 'Severina Cordeiro', valor: 264.95, linhas: 5
+        }
+      ];
+
+      renderizarKPIsCofre();
+      renderizarRankingCofre();
+      renderizarChipsCofre();
+      renderizarCardsCofre();
+      atualizarBadgeAba();
+    }
+
+    // ---------- KPIs ----------
+    function renderizarKPIsCofre() {
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      const em7 = new Date(hoje); em7.setDate(em7.getDate() + 7);
+
+      const ativos = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO');
+      const vencidas = ativos.filter(c => cofreDiasRestantes(c.data) < 0).length;
+      const hojeQtd  = ativos.filter(c => cofreDiasRestantes(c.data) === 0).length;
+      const semana   = ativos.filter(c => { const d = cofreDiasRestantes(c.data); return d > 0 && d <= 7; }).length;
+      const convertidos = COFRE_ESTADO.dados.filter(c => c.status === 'CONVERTIDO').length;
+
+      let html = `
+        <div class="cofre-kpi danger">
+          <div class="cofre-kpi-icon"><i class="fas fa-exclamation-triangle"></i></div>
+          <div class="cofre-kpi-body">
+            <div class="cofre-kpi-label">Vencidas</div>
+            <div class="cofre-kpi-value">${vencidas}</div>
+          </div>
+        </div>
+        <div class="cofre-kpi warn">
+          <div class="cofre-kpi-icon"><i class="fas fa-clock"></i></div>
+          <div class="cofre-kpi-body">
+            <div class="cofre-kpi-label">Hoje</div>
+            <div class="cofre-kpi-value">${hojeQtd}</div>
+          </div>
+        </div>
+        <div class="cofre-kpi gold">
+          <div class="cofre-kpi-icon"><i class="fas fa-fire"></i></div>
+          <div class="cofre-kpi-body">
+            <div class="cofre-kpi-label">Próx. 7 dias</div>
+            <div class="cofre-kpi-value">${semana}</div>
+          </div>
+        </div>
+        <div class="cofre-kpi success">
+          <div class="cofre-kpi-icon"><i class="fas fa-check-circle"></i></div>
+          <div class="cofre-kpi-body">
+            <div class="cofre-kpi-label">Convertidas</div>
+            <div class="cofre-kpi-value">${convertidos}<small>este mês</small></div>
+          </div>
+        </div>`;
+
+      if (isGestorCofre) {
+        const total = COFRE_ESTADO.dados.length;
+        const pct = total > 0 ? Math.round((convertidos / total) * 100) : 0;
+        const valorConv = COFRE_ESTADO.dados
+          .filter(c => c.status === 'CONVERTIDO')
+          .reduce((s, c) => s + (c.valor || 0), 0);
+        html += `
+        <div class="cofre-kpi info">
+          <div class="cofre-kpi-icon"><i class="fas fa-percentage"></i></div>
+          <div class="cofre-kpi-body">
+            <div class="cofre-kpi-label">Taxa Conversão</div>
+            <div class="cofre-kpi-value">${pct}<small>%</small></div>
+          </div>
+        </div>
+        <div class="cofre-kpi purple">
+          <div class="cofre-kpi-icon"><i class="fas fa-dollar-sign"></i></div>
+          <div class="cofre-kpi-body">
+            <div class="cofre-kpi-label">Valor Convertido</div>
+            <div class="cofre-kpi-value" style="font-size:18px;">R$ ${valorConv.toFixed(2).replace('.', ',')}</div>
+          </div>
+        </div>`;
+      }
+
+      document.getElementById('cofreKpis').innerHTML = html;
+    }
+
+    // ---------- Ranking ----------
+    function renderizarRankingCofre() {
+      const el = document.getElementById('cofreRanking');
+      if (!isGestorCofre) { el.style.display = 'none'; return; }
+      const mapa = {};
+      COFRE_ESTADO.dados.filter(c => c.status === 'CONVERTIDO').forEach(c => {
+        mapa[c.consultor] = (mapa[c.consultor] || 0) + 1;
+      });
+      const ranking = Object.entries(mapa).sort((a,b) => b[1] - a[1]).slice(0, 5);
+      if (!ranking.length) { el.style.display = 'none'; return; }
+
+      const medalhas = ['🥇', '🥈', '🥉', '4º', '5º'];
+      el.innerHTML = `
+        <div class="cofre-ranking-title"><i class="fas fa-trophy"></i> Ranking do Time · Conversões</div>
+        <div class="cofre-ranking-list">
+          ${ranking.map(([nome, qtd], i) => `
+            <div class="cofre-rank-item">
+              <span class="cofre-rank-pos">${medalhas[i]}</span>
+              <span class="cofre-rank-nome">${esc(nome)}</span>
+              <span class="cofre-rank-qtd">${qtd}</span>
+            </div>
+          `).join('')}
+        </div>`;
+      el.style.display = 'block';
+    }
+
+    // ---------- Chips com contadores ----------
+    function renderizarChipsCofre() {
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      const ativos = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO');
+      const set = (id, v) => { const el = document.getElementById(id); if (el) el.innerText = v; };
+      set('chipTodos',       COFRE_ESTADO.dados.length);
+      set('chipVencidas',    ativos.filter(c => cofreDiasRestantes(c.data) < 0).length);
+      set('chipHoje',        ativos.filter(c => cofreDiasRestantes(c.data) === 0).length);
+      set('chipSemana',      ativos.filter(c => { const d = cofreDiasRestantes(c.data); return d > 0 && d <= 7; }).length);
+      set('chipMes',         ativos.filter(c => { const d = cofreDiasRestantes(c.data); return d > 7 && d <= 30; }).length);
+      set('chipPausados',    COFRE_ESTADO.dados.filter(c => c.status === 'PAUSADO').length);
+      set('chipConvertidos', COFRE_ESTADO.dados.filter(c => c.status === 'CONVERTIDO').length);
+    }
+
+    function atualizarBadgeAba() {
+      const badge = document.getElementById('badgeCofre');
+      if (!badge) return;
+      const total = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO').length;
+      badge.innerText = total;
+    }
+
+    // ---------- Render dos cards ----------
+    function renderizarCardsCofre() {
+      const grid = document.getElementById('cofreGrid');
+      const dados = COFRE_ESTADO.dados;
+
+      // Aplica filtros
+      let filtrados = [...dados];
+      const busca = COFRE_ESTADO.busca.toLowerCase();
+      if (busca) {
+        filtrados = filtrados.filter(c =>
+          (c.razao || '').toLowerCase().includes(busca) ||
+          (c.cnpj || '').toLowerCase().includes(busca) ||
+          (c.codigo || '').toLowerCase().includes(busca)
+        );
+      }
+      if (COFRE_ESTADO.filtroTipo) filtrados = filtrados.filter(c => c.tipo === COFRE_ESTADO.filtroTipo);
+      if (COFRE_ESTADO.filtroPrioridade) filtrados = filtrados.filter(c => c.prioridade === COFRE_ESTADO.filtroPrioridade);
+      if (COFRE_ESTADO.filtroConsultor) filtrados = filtrados.filter(c => c.consultor === COFRE_ESTADO.filtroConsultor);
+
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      switch (COFRE_ESTADO.filtroChip) {
+        case 'vencidas':    filtrados = filtrados.filter(c => c.status === 'AGENDADO' && cofreDiasRestantes(c.data) < 0); break;
+        case 'hoje':        filtrados = filtrados.filter(c => c.status === 'AGENDADO' && cofreDiasRestantes(c.data) === 0); break;
+        case 'semana':      filtrados = filtrados.filter(c => { const d = cofreDiasRestantes(c.data); return c.status === 'AGENDADO' && d > 0 && d <= 7; }); break;
+        case 'mes':         filtrados = filtrados.filter(c => { const d = cofreDiasRestantes(c.data); return c.status === 'AGENDADO' && d > 7 && d <= 30; }); break;
+        case 'pausados':    filtrados = filtrados.filter(c => c.status === 'PAUSADO'); break;
+        case 'convertidos': filtrados = filtrados.filter(c => c.status === 'CONVERTIDO'); break;
+      }
+
+      // Ordena: vencidas → hoje → proximas → pausadas → convertidas
+      filtrados.sort((a, b) => {
+        const ordem = { AGENDADO: 0, PAUSADO: 1, CONVERTIDO: 2 };
+        const oa = ordem[a.status] ?? 9, ob = ordem[b.status] ?? 9;
+        if (oa !== ob) return oa - ob;
+        return new Date(a.data) - new Date(b.data);
+      });
+
+      if (!filtrados.length) {
+        grid.innerHTML = `
+          <div class="cofre-vazio">
+            <span class="ico">🎯</span>
+            <h3>Nenhuma retomada encontrada</h3>
+            <p>Ajuste os filtros ou crie uma nova oportunidade no Cofre.</p>
+          </div>`;
+        return;
+      }
+
+      grid.innerHTML = filtrados.map((c, i) => {
+        const tipo = cofreTipoInfo(c.tipo);
+        const prio = cofrePrioInfo(c.prioridade);
+        const dias = cofreDiasRestantes(c.data);
+        const urg = cofreUrgenciaClass(dias, c.status);
+        const isPj = c.tipo === 'MIGRACAO_PF_PJ';
+        const telWhats = cofreFmtWhats(c.contato);
+        const telLigar = telWhats;
+
+        return `
+          <div class="cofre-card ${urg.cls} ${isPj ? 'pj-futuro' : ''}" style="animation-delay: ${i * 0.04}s" onclick="console.log('Card clicado:', ${c.id})">
+            <div class="cofre-card-top">
+              <div class="cofre-card-badges">
+                <span class="cofre-badge ${tipo.cls}">${tipo.ico} ${tipo.label}</span>
+                <span class="cofre-badge ${prio.cls}">${prio.ico} ${prio.label}</span>
+                ${isPj ? `<span class="cofre-badge pj-futuro-tag">⭐ PJ Futuro</span>` : ''}
+              </div>
+              <span class="cofre-card-urgencia ${urg.urgCls || ''}">${urg.label}</span>
+            </div>
+
+            <h4 class="cofre-card-empresa">${esc(c.razao)}</h4>
+            <div class="cofre-card-meta">
+              <span>📄 ${esc(c.cnpj)}</span>
+              ${c.codigo ? `<span>🆔 ${esc(c.codigo)}</span>` : ''}
+            </div>
+
+            <div class="cofre-card-motivo">${esc(c.motivo)}</div>
+
+            <div class="cofre-card-info">
+              <div>📅 <b>${cofreFmtData(c.data)}</b></div>
+              <div>👤 <b>${esc(c.consultor)}</b></div>
+              ${telWhats ? `<div>📞 <b>${esc(c.contato)}</b></div>` : ''}
+            </div>
+
+            <div class="cofre-card-actions" onclick="event.stopPropagation()">
+              ${telWhats ? `<a href="tel:${telLigar}" class="cofre-act ligar"><i class="fas fa-phone"></i> Ligar</a>` : ''}
+              ${telWhats ? `<a href="https://wa.me/55${telWhats}" target="_blank" class="cofre-act whatsapp"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
+              <button class="cofre-act vendas" onclick="event.stopPropagation(); abrirNoVendasMock()"><i class="fas fa-rocket"></i> Vendas</button>
+              <button class="cofre-act mais" onclick="event.stopPropagation(); console.log('Menu 3 pontos')"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+          </div>`;
+      }).join('');
+    }
+
+    // ---------- Filtros / Listeners ----------
+    document.getElementById('cofreBusca').addEventListener('input', function (e) {
+      COFRE_ESTADO.busca = e.target.value.trim();
+      renderizarCardsCofre();
+    });
+    document.getElementById('cofreFiltroTipo').addEventListener('change', function (e) {
+      COFRE_ESTADO.filtroTipo = e.target.value;
+      renderizarCardsCofre();
+    });
+    document.getElementById('cofreFiltroPrioridade').addEventListener('change', function (e) {
+      COFRE_ESTADO.filtroPrioridade = e.target.value;
+      renderizarCardsCofre();
+    });
+    document.getElementById('cofreFiltroConsultor').addEventListener('change', function (e) {
+      COFRE_ESTADO.filtroConsultor = e.target.value;
+      renderizarCardsCofre();
+    });
+
+    // Chips
+    document.querySelectorAll('#cofreChips .cofre-chip').forEach(chip => {
+      chip.addEventListener('click', () => {
+        document.querySelectorAll('#cofreChips .cofre-chip').forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        COFRE_ESTADO.filtroChip = chip.getAttribute('data-filtro');
+        renderizarCardsCofre();
+      });
+    });
+
+    // Se gestor, popula select de consultor
+    if (isGestorCofre) {
+      const selCons = document.getElementById('cofreFiltroConsultor');
+      selCons.style.display = '';
+      const nomes = [...new Set(COFRE_ESTADO.dados.map(c => c.consultor))].sort();
+      selCons.innerHTML = '<option value="">Todos os consultores</option>' +
+        nomes.map(n => `<option value="${esc(n)}">${esc(n)}</option>`).join('');
+    }
+
+    // ---------- Modal ----------
+    window.abrirModalCofre = function() {
+      document.getElementById('cofreEditId').value = '';
+      document.getElementById('cofreCnpj').value = '';
+      document.getElementById('cofreRazao').value = '';
+      document.getElementById('cofreContato').value = '';
+      document.getElementById('cofreContatoAlt').value = '';
+      document.getElementById('cofreCodigo').value = '';
+      document.getElementById('cofreData').value = new Date().toISOString().slice(0,10);
+      document.getElementById('cofreValor').value = '';
+      document.getElementById('cofreLinhas').value = '';
+      document.getElementById('cofreMotivo').value = '';
+      document.querySelector('input[name="cofreTipo"][value="RENOVACAO"]').checked = true;
+      document.querySelector('input[name="cofrePrioridade"][value="MEDIA"]').checked = true;
+      document.getElementById('cofreModalTitulo').innerText = 'Nova Retomada';
+      document.getElementById('modalCofre').classList.add('open');
+      document.body.style.overflow = 'hidden';
+    };
+
+    window.fecharModalCofre = function() {
+      document.getElementById('modalCofre').classList.remove('open');
+      document.body.style.overflow = '';
+    };
+
+    // Fecha clicando fora
+    document.getElementById('modalCofre').addEventListener('click', function(e) {
+      if (e.target === this) fecharModalCofre();
+    });
+
+    window.salvarRetomadaMock = function() {
+      // Validação mínima
+      const cnpj = document.getElementById('cofreCnpj').value.trim();
+      const razao = document.getElementById('cofreRazao').value.trim();
+      const data = document.getElementById('cofreData').value;
+      const motivo = document.getElementById('cofreMotivo').value.trim();
+      if (!cnpj || !razao || !data || !motivo) {
+        showToast('Preencha CNPJ, Razão Social, Data e Motivo.', 'warning');
+        return;
+      }
+
+      const tipo = document.querySelector('input[name="cofreTipo"]:checked').value;
+      const prio = document.querySelector('input[name="cofrePrioridade"]:checked').value;
+
+      const novo = {
+        id: String(Date.now()),
+        cnpj, razao,
+        contato: document.getElementById('cofreContato').value.trim(),
+        contato_alt: document.getElementById('cofreContatoAlt').value.trim(),
+        codigo: document.getElementById('cofreCodigo').value.trim(),
+        tipo, prioridade: prio,
+        status: 'AGENDADO',
+        data,
+        motivo,
+        consultor: sessao.nome || 'Você',
+        valor: parseFloat(document.getElementById('cofreValor').value) || 0,
+        linhas: parseInt(document.getElementById('cofreLinhas').value) || 0
+      };
+
+      COFRE_ESTADO.dados.unshift(novo);
+      renderizarKPIsCofre();
+      renderizarChipsCofre();
+      renderizarRankingCofre();
+      renderizarCardsCofre();
+      atualizarBadgeAba();
+      fecharModalCofre();
+      showToast('Retomada agendada! (mock)', 'success');
+    };
+
+    window.abrirNoVendasMock = function() {
+      showToast('Na versão final, abrirá o Vendas já preenchido.', 'info');
+    };
+
+    // ---------- Hook na troca de abas ----------
+    const _mudarAbaOriginal = mudarAba;
+    window.mudarAba = mudarAba = function(novaAba) {
+      abaAtual = novaAba;
+      [btnTodos, btnPendentes, btnConsultar, document.getElementById('btnCofre')].forEach(btn => {
+        if (!btn) return;
+        btn.classList.toggle('active', btn.dataset.tab === novaAba);
+      });
+      $('tab-listagem').style.display = (novaAba === 'consultar' || novaAba === 'cofre') ? 'none' : 'block';
+      $('tab-consultar').style.display = (novaAba === 'consultar') ? 'block' : 'none';
+      $('tab-cofre').style.display = (novaAba === 'cofre') ? 'block' : 'none';
+
+      if (novaAba !== 'consultar' && novaAba !== 'cofre') filtrarClientes();
+      else if (novaAba === 'consultar') setTimeout(() => inputConsulta?.focus(), 150);
+      else if (novaAba === 'cofre' && !COFRE_ESTADO.dados.length) carregarCofreMock();
+    };
+
+    document.getElementById('btnCofre').onclick = () => mudarAba('cofre');
+
+    // Primeira carga (para ter contadores prontos quando o usuário entrar)
+    carregarCofreMock();
 </script>
 </body>
 </html>
