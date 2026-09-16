@@ -1134,10 +1134,11 @@
     atualizarCadastroCliente:    { rpc: 'atualizar_cadastro_cliente',     args: (dados) => ({ p_dados: dados || {} }) },
     sincronizarClientesDaVendas: { rpc: 'sincronizar_clientes_da_vendas', args: ()      => ({}) },
     buscarHistoricoCliente:      { rpc: 'buscar_historico_cliente',       args: (t)     => ({ p_termo: t || '' }) },
-    cofreListar:                 { rpc: 'cofre_listar',         args: (f)            => ({ p_filtros: f || {} }) },
-    cofreSalvar:                 { rpc: 'cofre_salvar',         args: (payload)      => ({ p_payload: payload }) },
-    cofreMudarStatus:            { rpc: 'cofre_mudar_status',   args: (id, st, nota) => ({ p_id: id, p_novo_status: st, p_nota: nota || null }) },
-    cofreExcluir:                { rpc: 'cofre_excluir',        args: (id)           => ({ p_id: id }) },
+    cofreListar:                 { rpc: 'cofre_listar',                   args: (f)            => ({ p_filtros: f || {} }) },
+    cofreSalvar:                 { rpc: 'cofre_salvar',                   args: (payload)      => ({ p_payload: payload }) },
+    cofreMudarStatus:            { rpc: 'cofre_mudar_status',             args: (id, st, nota) => ({ p_id: id, p_novo_status: st, p_nota: nota || null }) },
+    cofreExcluir:                { rpc: 'cofre_excluir',                  args: (id)           => ({ p_id: id }) },
+    cofreAlertasPendentes:       { rpc: 'cofre_alertas_pendentes',        args: ()             => ({}) },
   };
 
   function makeRunner() {
@@ -1862,7 +1863,7 @@
   // ═══════════════════════════════════════════════════════════
   // CARREGAR (RPC)
   // ═══════════════════════════════════════════════════════════
-  function carregarCofre() {
+    function carregarCofre() {
     COFRE_ESTADO.carregando = true;
     const grid = document.getElementById('cofreGrid');
     if (grid) {
@@ -1896,6 +1897,7 @@
         renderizarCardsCofre();
         atualizarBadgeAba();
         popularSelectConsultoresCofre();
+        carregarAlertasCofre();   // ← ADICIONA ESSA LINHA
       })
       .withFailureHandler(function (err) {
         COFRE_ESTADO.carregando = false;
@@ -2383,16 +2385,133 @@
   // ═══════════════════════════════════════════════════════════
   // Boot
   // ═══════════════════════════════════════════════════════════
-  function boot() {
+   function boot() {
     if (!document.getElementById('btnCofre')) return setTimeout(boot, 200);
     bindFiltrosCofre();
     hookAbasCofre();
+    carregarAlertasCofre(); 
     console.log('✅ Cofre de Oportunidades conectado ao Supabase');
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();
+
+    // ═══════════════════════════════════════════════════════════
+  // BANNER DE ALERTA (notificação in-app)
+  // ═══════════════════════════════════════════════════════════
+  function renderizarBannerAlerta(alertas) {
+    // Remove banner antigo se existir
+    const antigo = document.getElementById('cofre-banner-alerta');
+    if (antigo) antigo.remove();
+
+    if (!alertas || (alertas.vencidas === 0 && alertas.hoje === 0 && alertas.proximas === 0)) {
+      return; // nada pra mostrar
+    }
+
+    const { vencidas, hoje, proximas, lista_urgentes } = alertas;
+    const temUrgencia = (vencidas > 0 || hoje > 0);
+
+    // Define estilo
+    const corPrincipal = temUrgencia ? '#dc2626' : '#f59e0b';
+    const corFundo     = temUrgencia ? 'linear-gradient(135deg, #fef2f2, #fee2e2)' : 'linear-gradient(135deg, #fffbeb, #fef3c7)';
+    const corBorda     = temUrgencia ? '#fecaca' : '#fde68a';
+    const corTexto     = temUrgencia ? '#991b1b' : '#92400e';
+    const icone        = temUrgencia ? '🚨' : '⏰';
+
+    // Monta as mensagens
+    let partes = [];
+    if (vencidas > 0) partes.push(`<strong>${vencidas}</strong> vencida${vencidas > 1 ? 's' : ''}`);
+    if (hoje > 0)     partes.push(`<strong>${hoje}</strong> para hoje`);
+    if (proximas > 0) partes.push(`<strong>${proximas}</strong> nos próximos 3 dias`);
+
+    // Monta os top 3 urgentes
+    const topUrgentes = (lista_urgentes || []).slice(0, 3);
+    const listaHtml = topUrgentes.map(o => {
+      const dias = o.dias_restantes;
+      const tagDia = dias < 0
+        ? `<span style="background:#dc2626;color:white;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;">${Math.abs(dias)}d atrasado</span>`
+        : `<span style="background:#f59e0b;color:white;padding:2px 8px;border-radius:10px;font-size:10px;font-weight:800;">HOJE</span>`;
+      return `
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 12px;background:white;border-radius:8px;border:1px solid ${corBorda};margin-top:6px;">
+          <div style="flex:1;min-width:0;">
+            <div style="font-weight:700;color:#0f172a;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(o.razao_social)}</div>
+            <div style="font-size:11px;color:#64748b;">👤 ${esc(o.consultor_nome || '—')}</div>
+          </div>
+          ${tagDia}
+        </div>`;
+    }).join('');
+
+    // Cria o banner
+    const banner = document.createElement('div');
+    banner.id = 'cofre-banner-alerta';
+    banner.style.cssText = `
+      background: ${corFundo};
+      border: 1.5px solid ${corBorda};
+      border-left: 5px solid ${corPrincipal};
+      border-radius: 14px;
+      padding: 16px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      animation: cofreIn 0.4s ease-out;
+    `;
+
+    banner.innerHTML = `
+      <div style="font-size: 28px; line-height: 1; flex-shrink: 0;">${icone}</div>
+      <div style="flex: 1; min-width: 0;">
+        <div style="font-weight: 800; color: ${corTexto}; font-size: 15px; margin-bottom: 4px;">
+          ${temUrgencia ? 'Atenção! Você tem retomadas críticas' : 'Você tem retomadas se aproximando'}
+        </div>
+        <div style="font-size: 13px; color: ${corTexto}; opacity: 0.9;">
+          ${partes.join(' · ')}
+        </div>
+        ${topUrgentes.length ? `
+          <div style="margin-top: 12px;">
+            <div style="font-size: 10px; font-weight: 800; color: ${corTexto}; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">
+              Mais urgentes
+            </div>
+            ${listaHtml}
+          </div>` : ''}
+        <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+          <button onclick="window.cofreFiltrarUrgentes()" style="background: ${corPrincipal}; color: white; border: none; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; font-family: inherit;">
+            🎯 Ver urgentes
+          </button>
+          <button onclick="document.getElementById('cofre-banner-alerta').remove()" style="background: transparent; color: ${corTexto}; border: 1px solid ${corBorda}; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; font-family: inherit;">
+            Depois
+          </button>
+        </div>
+      </div>
+    `;
+
+    // Insere no topo do tab-cofre
+    const tabCofre = document.getElementById('tab-cofre');
+    if (tabCofre) {
+      tabCofre.insertBefore(banner, tabCofre.firstChild);
+    }
+  }
+
+  // Filtra pra ver só os urgentes ao clicar no banner
+  window.cofreFiltrarUrgentes = function () {
+    const chipVencidas = document.querySelector('#cofreChips .cofre-chip[data-filtro="vencidas"]');
+    if (chipVencidas) chipVencidas.click();
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // Busca os alertas ao carregar o Cofre
+  // ═══════════════════════════════════════════════════════════
+  function carregarAlertasCofre() {
+    google.script.run
+      .withSuccessHandler(function (res) {
+        const alertas = (typeof res === 'string') ? JSON.parse(res) : res;
+        renderizarBannerAlerta(alertas);
+      })
+      .withFailureHandler(function (err) {
+        console.warn('⚠️ Erro ao carregar alertas do Cofre:', err);
+      })
+      .cofreAlertasPendentes();
+  }
 </script>
 </body>
 </html>
