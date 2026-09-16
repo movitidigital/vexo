@@ -582,17 +582,19 @@
     .cofre-act.ligar:hover { background: #3b82f6; color: white; }
     .cofre-act.vendas   { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; }
     .cofre-act.vendas:hover { box-shadow: 0 6px 14px rgba(30,60,114,0.3); }
-    .cofre-act.mais {
+   .cofre-act.mais {
       flex: 0 0 auto;
       min-width: 44px;
       background: #f1f5f9;
       border-color: #cbd5e1;
       color: #1e293b;
-      font-size: 15px;
+      font-size: 22px;
       font-weight: 900;
-      letter-spacing: 1px;
+      line-height: 1;
+      padding: 0 10px;
+      letter-spacing: 0;
     }
-    .cofre-act.mais:hover {
+  .cofre-act.mais:hover {
       background: #1e3c72;
       color: #ffffff;
       border-color: #1e3c72;
@@ -2227,7 +2229,7 @@
             ${telWhats && !modoSel ? `<a href="tel:${telWhats}" class="cofre-act ligar" onclick="event.stopPropagation()"><i class="fas fa-phone"></i> Ligar</a>` : ''}
             ${telWhats && !modoSel ? `<a href="https://wa.me/55${telWhats}" target="_blank" class="cofre-act whatsapp" onclick="event.stopPropagation()"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
             ${!modoSel ? `<button class="cofre-act vendas" onclick="event.stopPropagation(); window.cofreAbrirNoVendas('${esc(c.id)}')"><i class="fas fa-rocket"></i> Vendas</button>` : ''}
-            ${!modoSel ? `<button class="cofre-act mais" onclick="event.stopPropagation(); window.cofreMenuMais('${esc(c.id)}', event)"><i class="fas fa-ellipsis-v"></i></button>` : ''}
+            ${!modoSel ? `<button class="cofre-act mais" title="Mais ações" onclick="event.stopPropagation(); window.cofreMenuMais('${esc(c.id)}', event)">⋮</button>` : ''}
           </div>
         </div>`;
     }).join('');
