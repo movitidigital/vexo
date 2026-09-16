@@ -2401,31 +2401,30 @@
   // BANNER DE ALERTA (notificação in-app)
   // ═══════════════════════════════════════════════════════════
   function renderizarBannerAlerta(alertas) {
-    // Remove banner antigo se existir
+    // Helper local — não depende de esc externo
+    const _esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+
     const antigo = document.getElementById('cofre-banner-alerta');
     if (antigo) antigo.remove();
 
     if (!alertas || (alertas.vencidas === 0 && alertas.hoje === 0 && alertas.proximas === 0)) {
-      return; // nada pra mostrar
+      return;
     }
 
     const { vencidas, hoje, proximas, lista_urgentes } = alertas;
     const temUrgencia = (vencidas > 0 || hoje > 0);
 
-    // Define estilo
     const corPrincipal = temUrgencia ? '#dc2626' : '#f59e0b';
     const corFundo     = temUrgencia ? 'linear-gradient(135deg, #fef2f2, #fee2e2)' : 'linear-gradient(135deg, #fffbeb, #fef3c7)';
     const corBorda     = temUrgencia ? '#fecaca' : '#fde68a';
     const corTexto     = temUrgencia ? '#991b1b' : '#92400e';
     const icone        = temUrgencia ? '🚨' : '⏰';
 
-    // Monta as mensagens
     let partes = [];
     if (vencidas > 0) partes.push(`<strong>${vencidas}</strong> vencida${vencidas > 1 ? 's' : ''}`);
     if (hoje > 0)     partes.push(`<strong>${hoje}</strong> para hoje`);
     if (proximas > 0) partes.push(`<strong>${proximas}</strong> nos próximos 3 dias`);
 
-    // Monta os top 3 urgentes
     const topUrgentes = (lista_urgentes || []).slice(0, 3);
     const listaHtml = topUrgentes.map(o => {
       const dias = o.dias_restantes;
@@ -2435,14 +2434,13 @@
       return `
         <div style="display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px 12px;background:white;border-radius:8px;border:1px solid ${corBorda};margin-top:6px;">
           <div style="flex:1;min-width:0;">
-            <div style="font-weight:700;color:#0f172a;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${esc(o.razao_social)}</div>
-            <div style="font-size:11px;color:#64748b;">👤 ${esc(o.consultor_nome || '—')}</div>
+            <div style="font-weight:700;color:#0f172a;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${_esc(o.razao_social)}</div>
+            <div style="font-size:11px;color:#64748b;">👤 ${_esc(o.consultor_nome || '—')}</div>
           </div>
           ${tagDia}
         </div>`;
     }).join('');
 
-    // Cria o banner
     const banner = document.createElement('div');
     banner.id = 'cofre-banner-alerta';
     banner.style.cssText = `
@@ -2485,7 +2483,6 @@
       </div>
     `;
 
-    // Insere no topo do tab-cofre
     const tabCofre = document.getElementById('tab-cofre');
     if (tabCofre) {
       tabCofre.insertBefore(banner, tabCofre.firstChild);
