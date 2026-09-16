@@ -582,8 +582,26 @@
     .cofre-act.ligar:hover { background: #3b82f6; color: white; }
     .cofre-act.vendas   { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; }
     .cofre-act.vendas:hover { box-shadow: 0 6px 14px rgba(30,60,114,0.3); }
-    .cofre-act.mais     { flex: 0 0 auto; min-width: 38px; background: white; border-color: #e2e8f0; color: #64748b; }
-    .cofre-act.mais:hover { background: #f8fafc; }
+    .cofre-act.mais {
+      flex: 0 0 auto;
+      min-width: 44px;
+      background: #f1f5f9;
+      border-color: #cbd5e1;
+      color: #1e293b;
+      font-size: 15px;
+      font-weight: 900;
+      letter-spacing: 1px;
+    }
+    .cofre-act.mais:hover {
+      background: #1e3c72;
+      color: #ffffff;
+      border-color: #1e3c72;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 10px rgba(30,60,114,0.25);
+    }
+    .cofre-act.mais i {
+      font-size: 14px;
+    }
 
     /* Estado vazio */
     .cofre-vazio {
