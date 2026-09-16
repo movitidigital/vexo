@@ -2492,10 +2492,21 @@
       </style>
       ${acoes}`;
 
-    const rect = ev && ev.target ? ev.target.getBoundingClientRect() : { right: 200, top: 200 };
-    pop.style.top = (rect.bottom + 6) + 'px';
+      const rect = ev && ev.target ? ev.target.getBoundingClientRect() : { right: 200, top: 200, bottom: 200 };
+    pop.style.top  = (rect.bottom + 6) + 'px';
     pop.style.left = Math.max(10, rect.right - 190) + 'px';
     document.body.appendChild(pop);
+
+    // ⚙️ Ajuste anti-corte: se o menu não couber abaixo, abre acima
+    const popRect = pop.getBoundingClientRect();
+    if (rect.bottom + popRect.height + 8 > window.innerHeight) {
+      const acima = rect.top - popRect.height - 6;
+      pop.style.top = Math.max(8, acima) + 'px';
+    }
+    // Ajuste horizontal: se passar da direita, encosta
+    if (rect.right > window.innerWidth - 10) {
+      pop.style.left = Math.max(10, window.innerWidth - popRect.width - 12) + 'px';
+    }
 
     pop.addEventListener('click', function (e) {
       const it = e.target.closest('.cofre-menu-item');
