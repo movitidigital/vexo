@@ -535,6 +535,23 @@
   background: linear-gradient(90deg, rgba(59, 130, 246, 0.1), transparent);
   z-index: 1;
 }
+
+    /* ═══════════════════════════════════════════════════════
+       BANNER COFRE — fixo no topo do conteúdo
+    ═══════════════════════════════════════════════════════ */
+    #banner-alerta-cofre {
+      position: sticky !important;
+      top: 62px !important;
+      z-index: 99 !important;
+      animation: slideDownFade 0.5s ease-out;
+    }
+    #banner-alerta-cofre.alerta-critico {
+      background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%) !important;
+    }
+    #banner-alerta-cofre.alerta-critico .badge-live {
+      background: #fef2f2;
+      color: #991b1b;
+    }
   </style>
 </head>
 <body>
@@ -650,32 +667,30 @@
 
   </div>
 </div>
-
-<div id="banner-alerta-cofre" class="banner-premium-vexo" onclick="this.style.display='none'">
+<div id="banner-alerta-cofre" class="banner-premium-vexo" style="display:none;">
   <div class="banner-content">
     <div class="banner-icon">
-      <div class="icon-ring"></div>
-      <span>🔔</span>
+      <div class="icon-ring" id="cofre-banner-ring"></div>
+      <span id="cofre-banner-emoji">🔔</span>
     </div>
     
     <div class="banner-text">
       <div class="banner-header">
-        <span class="badge-live">LIVE</span>
-        <h3>Retomada de Vendas Estratégicas</h3>
+        <span class="badge-live" id="cofre-banner-badge">ATENÇÃO</span>
+        <h3 id="cofre-banner-titulo">Retomadas Estratégicas</h3>
       </div>
       <div class="lista-wrapper">
-         <p id="lista-clientes-pendentes"></p>
+         <p id="cofre-banner-resumo"></p>
       </div>
     </div>
 
     <div class="banner-actions">
-<button class="btn-banner-action" onclick="direcionarAtendimentoCofre()">Ver Cofre 🎯</button>
-      <span class="click-info">Clique para fechar</span>
+      <button class="btn-banner-action" onclick="event.stopPropagation(); direcionarAtendimentoCofre()">Ver Cofre 🎯</button>
+      <span class="click-info" onclick="event.stopPropagation(); fecharBannerCofre()" style="cursor:pointer;">Fechar ✕</span>
     </div>
   </div>
   <div class="banner-light-effect"></div>
-</div>
-    
+</div> 
 
     <div id="btn-voltar-container" style="display: none; padding: 15px 30px 0;">
       <button onclick="voltarAoMenu()" style="padding: 8px 18px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 700;">⬅ VOLTAR AO DASHBOARD</button>
@@ -1616,36 +1631,25 @@ function irParaAbaFuturos() {
 }
 
 function direcionarAtendimentoCofre() {
-  console.log("🚀 Iniciando transição para Clientes Futuros...");
-  
-  // 1. Esconde o banner
-  document.getElementById('banner-alerta-cofre').style.display = 'none';
+  console.log('🚀 Redirecionando para o Cofre de Oportunidades...');
 
-  // 2. Aciona a abertura do módulo de vendas (usando a função oficial do seu sistema)
+  // 1. Sinal pra o clientes.html abrir automaticamente na aba Cofre
+  try {
+    sessionStorage.setItem('vexoAbrirCofreAuto', 'true');
+  } catch (e) {}
+
+  // 2. Fecha o banner
+  const banner = document.getElementById('banner-alerta-cofre');
+  if (banner) banner.style.display = 'none';
+
+  // 3. Abre o módulo Clientes (o próprio clientes.html vai ler o flag)
   if (typeof abrirModulo === 'function') {
-    abrirModulo('vendas');
+    abrirModulo('clientes');
+  } else if (typeof carregarModulo === 'function') {
+    carregarModulo('clientes');
   } else {
-    // Fallback caso a função tenha outro nome
-    carregarModulo('vendas');
+    window.location.href = 'clientes.html';
   }
-
-  // 3. O SEGREDO: Esperamos o HTML das vendas carregar e injetamos o comando de aba
-  let tentativas = 0;
-  const verificarEAtivarAba = setInterval(() => {
-    const btnFuturos = document.getElementById('btn-tab-futuros');
-    tentativas++;
-
-    if (btnFuturos) {
-      console.log("🎯 Módulo carregado! Ativando aba de Clientes Futuros.");
-      clearInterval(verificarEAtivarAba);
-      mudarAba('futuros'); // Chama a função que criamos no vendas.html
-    }
-
-    if (tentativas > 20) { // Desiste após 4 segundos se não carregar
-      clearInterval(verificarEAtivarAba);
-      console.warn("⚠️ Tempo limite excedido ao tentar abrir a aba.");
-    }
-  }, 200); // Checa a cada 200ms
 }
 
 // Abre/Fecha o menu de notificações
@@ -2094,8 +2098,8 @@ window.onload = function () {
       inicializarDados();
     }, 200);
 
-    // 5. Alertas (quando migrarmos cada módulo, descomentamos)
-    // setTimeout(verificarAlertasCofre, 2000);
+       // 5. Alertas globais do sistema
+    setTimeout(verificarAlertasCofre, 800);
     // setTimeout(dispararAlertasFinanceiros, 3500);
   }
 
@@ -2655,6 +2659,93 @@ function definirMesAnoAtual() {
 
   if (selectMes) selectMes.value = mesAtual;
   if (selectAno) selectAno.value = anoAtual;
+}
+// ═══════════════════════════════════════════════════════════
+// 🎯 BANNER DE ALERTAS DO COFRE — Dashboard global
+// ═══════════════════════════════════════════════════════════
+
+const COFRE_BANNER_KEY = 'vexoBannerCofreFechadoAte';
+
+function bannerCofreEstaFechado() {
+  try {
+    const ate = sessionStorage.getItem(COFRE_BANNER_KEY);
+    if (!ate) return false;
+    return Date.now() < parseInt(ate, 10);
+  } catch (e) { return false; }
+}
+
+function fecharBannerCofre() {
+  const banner = document.getElementById('banner-alerta-cofre');
+  if (banner) banner.style.display = 'none';
+  // Fica oculto por 4 horas
+  try {
+    sessionStorage.setItem(COFRE_BANNER_KEY, String(Date.now() + (4 * 60 * 60 * 1000)));
+  } catch (e) {}
+}
+
+async function verificarAlertasCofre() {
+  if (bannerCofreEstaFechado()) {
+    console.log('ℹ️ Banner do Cofre está oculto por decisão do usuário.');
+    return;
+  }
+
+  try {
+    const { data, error } = await window.sb.rpc('cofre_alertas_pendentes');
+    if (error) {
+      console.warn('⚠️ Erro ao buscar alertas do Cofre:', error.message);
+      return;
+    }
+
+    const alertas = typeof data === 'string' ? JSON.parse(data) : (data || {});
+    const vencidas = alertas.vencidas || 0;
+    const hoje = alertas.hoje || 0;
+    const proximas = alertas.proximas || 0;
+
+    if (vencidas === 0 && hoje === 0 && proximas === 0) {
+      console.log('ℹ️ Sem alertas do Cofre para exibir.');
+      return;
+    }
+
+    const temUrgencia = (vencidas > 0 || hoje > 0);
+    const banner = document.getElementById('banner-alerta-cofre');
+    if (!banner) return;
+
+    // ── Cores e conteúdo dinâmico ──
+    const emoji   = temUrgencia ? '🚨' : '⏰';
+    const badge   = temUrgencia ? 'CRÍTICO' : 'ATENÇÃO';
+    const titulo  = temUrgencia
+      ? 'Retomadas críticas no Cofre'
+      : 'Retomadas se aproximando';
+
+    let partes = [];
+    if (vencidas > 0) partes.push(`${vencidas} vencida${vencidas > 1 ? 's' : ''}`);
+    if (hoje > 0)     partes.push(`${hoje} para hoje`);
+    if (proximas > 0) partes.push(`${proximas} nos próximos 3 dias`);
+
+    // Monta resumo com nomes dos 3 mais urgentes
+    const urgentes = (alertas.lista_urgentes || []).slice(0, 3);
+    let resumo = partes.join(' · ');
+    if (urgentes.length > 0) {
+      const nomes = urgentes.map(o => o.razao_social).filter(Boolean);
+      resumo += ' — ' + nomes.join(' • ');
+    }
+
+    // Aplica nos elementos
+    document.getElementById('cofre-banner-emoji').innerText = emoji;
+    document.getElementById('cofre-banner-badge').innerText = badge;
+    document.getElementById('cofre-banner-titulo').innerText = titulo;
+    document.getElementById('cofre-banner-resumo').innerText = resumo;
+
+    // Aplica classe de urgência
+    banner.classList.toggle('alerta-critico', temUrgencia);
+
+    // Mostra o banner
+    banner.style.display = 'block';
+
+    console.log(`✅ Banner do Cofre exibido: ${partes.join(' · ')}`);
+  } catch (e) {
+    console.warn('⚠️ verificarAlertasCofre:', e.message);
+  }
 }
 </script>
 </body>
