@@ -2389,8 +2389,19 @@
     if (!document.getElementById('btnCofre')) return setTimeout(boot, 200);
     bindFiltrosCofre();
     hookAbasCofre();
-    carregarAlertasCofre(); 
+    carregarAlertasCofre();
     console.log('✅ Cofre de Oportunidades conectado ao Supabase');
+
+    // 🔥 Auto-abre a aba Cofre se veio do banner do dashboard
+    try {
+      if (sessionStorage.getItem('vexoAbrirCofreAuto') === 'true') {
+        sessionStorage.removeItem('vexoAbrirCofreAuto');
+        setTimeout(() => {
+          const btnCofre = document.getElementById('btnCofre');
+          if (btnCofre) btnCofre.click();
+        }, 300);
+      }
+    } catch (e) {}
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
