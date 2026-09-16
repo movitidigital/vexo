@@ -539,19 +539,211 @@
     /* ═══════════════════════════════════════════════════════
        BANNER COFRE — fixo no topo do conteúdo
     ═══════════════════════════════════════════════════════ */
-    #banner-alerta-cofre {
-      position: sticky !important;
-      top: 62px !important;
-      z-index: 99 !important;
-      animation: slideDownFade 0.5s ease-out;
-    }
-    #banner-alerta-cofre.alerta-critico {
-      background: linear-gradient(135deg, #7f1d1d 0%, #991b1b 100%) !important;
-    }
-    #banner-alerta-cofre.alerta-critico .badge-live {
-      background: #fef2f2;
-      color: #991b1b;
-    }
+    /* ═══════════════════════════════════════════════════════
+   BANNER DO COFRE — versão clean e moderna
+═══════════════════════════════════════════════════════ */
+
+/* Reset dos estilos antigos do banner */
+.banner-premium-vexo,
+#banner-alerta-cofre {
+  all: unset;
+  display: none;
+  box-sizing: border-box;
+}
+
+#banner-alerta-cofre {
+  position: sticky;
+  top: 62px;
+  z-index: 99;
+  margin: 16px 25px 8px 25px;
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08),
+              0 2px 6px rgba(15, 23, 42, 0.04);
+  border: 1px solid #eef2f6;
+  animation: slideDownFade 0.45s ease-out;
+  cursor: default;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Faixa colorida lateral */
+#banner-alerta-cofre::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  width: 5px;
+  background: linear-gradient(180deg, #f59e0b, #d97706);
+  border-radius: 16px 0 0 16px;
+}
+
+#banner-alerta-cofre.alerta-critico::before {
+  background: linear-gradient(180deg, #ef4444, #dc2626);
+}
+
+/* Container interno */
+#banner-alerta-cofre .cofre-banner-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 20px 16px 24px;
+}
+
+/* Ícone em quadrado colorido */
+#banner-alerta-cofre .cofre-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  flex-shrink: 0;
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+  color: #b45309;
+}
+
+#banner-alerta-cofre.alerta-critico .cofre-icon {
+  background: linear-gradient(135deg, #fee2e2, #fecaca);
+  color: #b91c1c;
+}
+
+/* Texto */
+#banner-alerta-cofre .cofre-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+#banner-alerta-cofre .cofre-linha-topo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+  flex-wrap: wrap;
+}
+
+#banner-alerta-cofre .cofre-tag {
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: #fef3c7;
+  color: #92400e;
+  text-transform: uppercase;
+}
+
+#banner-alerta-cofre.alerta-critico .cofre-tag {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+#banner-alerta-cofre .cofre-titulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  margin: 0;
+}
+
+#banner-alerta-cofre .cofre-resumo {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  font-weight: 500;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+#banner-alerta-cofre .cofre-resumo b {
+  color: #334155;
+  font-weight: 700;
+}
+
+/* Ações */
+#banner-alerta-cofre .cofre-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+#banner-alerta-cofre .cofre-btn-primario {
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: white;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(30, 60, 114, 0.2);
+}
+
+#banner-alerta-cofre .cofre-btn-primario:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 60, 114, 0.3);
+}
+
+#banner-alerta-cofre.alerta-critico .cofre-btn-primario {
+  background: linear-gradient(135deg, #dc2626, #b91c1c);
+  box-shadow: 0 2px 8px rgba(220, 38, 38, 0.25);
+}
+
+#banner-alerta-cofre.alerta-critico .cofre-btn-primario:hover {
+  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.35);
+}
+
+#banner-alerta-cofre .cofre-btn-fechar {
+  background: transparent;
+  border: 1px solid #e2e8f0;
+  color: #94a3b8;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  font-family: inherit;
+  padding: 0;
+}
+
+#banner-alerta-cofre .cofre-btn-fechar:hover {
+  background: #f8fafc;
+  color: #475569;
+  border-color: #cbd5e1;
+}
+
+/* Responsivo */
+@media (max-width: 768px) {
+  #banner-alerta-cofre {
+    margin: 12px 16px;
+  }
+  #banner-alerta-cofre .cofre-banner-inner {
+    flex-wrap: wrap;
+    padding: 14px 16px 14px 20px;
+  }
+  #banner-alerta-cofre .cofre-acoes {
+    width: 100%;
+    justify-content: flex-end;
+  }
+  #banner-alerta-cofre .cofre-resumo {
+    -webkit-line-clamp: 2;
+  }
+}
   </style>
 </head>
 <body>
@@ -667,30 +859,28 @@
 
   </div>
 </div>
-<div id="banner-alerta-cofre" class="banner-premium-vexo" style="display:none;">
-  <div class="banner-content">
-    <div class="banner-icon">
-      <div class="icon-ring" id="cofre-banner-ring"></div>
-      <span id="cofre-banner-emoji">🔔</span>
-    </div>
-    
-    <div class="banner-text">
-      <div class="banner-header">
-        <span class="badge-live" id="cofre-banner-badge">ATENÇÃO</span>
-        <h3 id="cofre-banner-titulo">Retomadas Estratégicas</h3>
+<div id="banner-alerta-cofre" style="display:none;">
+  <div class="cofre-banner-inner">
+    <div class="cofre-icon" id="cofre-banner-emoji">🔔</div>
+
+    <div class="cofre-texto">
+      <div class="cofre-linha-topo">
+        <span class="cofre-tag" id="cofre-banner-badge">ATENÇÃO</span>
+        <h3 class="cofre-titulo" id="cofre-banner-titulo">Retomadas Estratégicas</h3>
       </div>
-      <div class="lista-wrapper">
-         <p id="cofre-banner-resumo"></p>
-      </div>
+      <p class="cofre-resumo" id="cofre-banner-resumo"></p>
     </div>
 
-    <div class="banner-actions">
-      <button class="btn-banner-action" onclick="event.stopPropagation(); direcionarAtendimentoCofre()">Ver Cofre 🎯</button>
-      <span class="click-info" onclick="event.stopPropagation(); fecharBannerCofre()" style="cursor:pointer;">Fechar ✕</span>
+    <div class="cofre-acoes">
+      <button class="cofre-btn-primario" onclick="direcionarAtendimentoCofre()">
+        Ver Cofre <span style="font-size:13px;">🎯</span>
+      </button>
+      <button class="cofre-btn-fechar" onclick="fecharBannerCofre()" title="Fechar por 4 horas">
+        ✕
+      </button>
     </div>
   </div>
-  <div class="banner-light-effect"></div>
-</div> 
+</div>
 
     <div id="btn-voltar-container" style="display: none; padding: 15px 30px 0;">
       <button onclick="voltarAoMenu()" style="padding: 8px 18px; background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; border-radius: 10px; cursor: pointer; font-size: 11px; font-weight: 700;">⬅ VOLTAR AO DASHBOARD</button>
@@ -2730,11 +2920,25 @@ async function verificarAlertasCofre() {
       resumo += ' — ' + nomes.join(' • ');
     }
 
+       // Monta texto com destaques
+    const linhas = [];
+    if (vencidas > 0) linhas.push(`<b>${vencidas}</b> vencida${vencidas > 1 ? 's' : ''}`);
+    if (hoje > 0)     linhas.push(`<b>${hoje}</b> para hoje`);
+    if (proximas > 0) linhas.push(`<b>${proximas}</b> nos próximos 3 dias`);
+
+    let resumoHtml = linhas.join(' · ');
+
+    if (urgentes.length > 0) {
+      const nomes = urgentes.map(o => o.razao_social).filter(Boolean);
+      resumoHtml += '<br><span style="font-size:11px; color:#94a3b8;">Mais urgentes: </span><b>' +
+                    nomes.join(' • ') + '</b>';
+    }
+
     // Aplica nos elementos
     document.getElementById('cofre-banner-emoji').innerText = emoji;
     document.getElementById('cofre-banner-badge').innerText = badge;
     document.getElementById('cofre-banner-titulo').innerText = titulo;
-    document.getElementById('cofre-banner-resumo').innerText = resumo;
+    document.getElementById('cofre-banner-resumo').innerHTML = resumoHtml;
 
     // Aplica classe de urgência
     banner.classList.toggle('alerta-critico', temUrgencia);
