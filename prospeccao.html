@@ -1253,7 +1253,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
 
   const MAP = {
     getLeadsDisponiveis:         { rpc: 'leads_disponiveis',         args: () => ({}) },
-    getMeusLeadsKanban:          { rpc: 'meus_leads_kanban',         args: (u) => ({ p_usuario: u }) },
+    getMeusLeadsKanban:          { rpc: 'meus_leads_kanban',         args: (u) => ({ p_usuario: u }), paginate: true },
     atribuirLead:                { rpc: 'atribuir_lead',             args: (id, _u, st) => ({ p_id: id, p_novo_status: st || 'OPORTUNIDADE' }) },
     atualizarStatusLeadPlanilha: { rpc: 'atualizar_status_lead',     args: (id, st) => ({ p_id: id, p_novo_status: st }) },
     registrarProspeccao:         { rpc: 'registrar_prospeccao',      args: (d) => ({ p_dados: d }) },
@@ -1280,23 +1280,47 @@ function moverCardParaColuna(idLead, novaEtapa) {
       runner[nome] = async function (...params) {
         const cfg = MAP[nome];
         let respostaFinal;
-        
+
         try {
           const args = cfg.args(...params);
-          const { data, error } = await window.sb.rpc(cfg.rpc, args);
-          if (error) throw error;
-          
+
+          // 🔥 PAGINAÇÃO AUTOMÁTICA (evita corte de 1000 do PostgREST)
+          if (cfg.paginate) {
+            const step = 1000;
+            let offset = 0;
+            let acumulado = [];
+            let seguranca = 0;              // trava anti-loop infinito
+
+            while (seguranca < 50) {        // máx 50 páginas = 50k linhas
+              const { data, error } = await window.sb
+                .rpc(cfg.rpc, args)
+                .range(offset, offset + step - 1);
+
+              if (error) throw error;
+              if (!data || data.length === 0) break;
+
+              acumulado = acumulado.concat(data);
+              if (data.length < step) break; // última página
+
+              offset += step;
+              seguranca++;
+            }
+
+            respostaFinal = acumulado;
+          } else {
+            const { data, error } = await window.sb.rpc(cfg.rpc, args);
+            if (error) throw error;
+            respostaFinal = data;
+          }
+
           // 🔥 NORMALIZADOR INTELIGENTE
-          respostaFinal = data;
-          
-          if (Array.isArray(data)) {
+          if (Array.isArray(respostaFinal)) {
             // 1. Se for Array (Mural, Kanban, Ofertas), devolve do jeito exato que veio.
-            respostaFinal = data;
-          } else if (data && typeof data === 'object') {
+            // (nada a fazer — mantém como array)
+          } else if (respostaFinal && typeof respostaFinal === 'object') {
             // 2. Se for Objeto, mantém os dados originais e apenas injeta 'success: true' se faltar.
-            if (data.success === undefined) data.success = true;
-            respostaFinal = data;
-          } else if (data === true || data === null || data === undefined) {
+            if (respostaFinal.success === undefined) respostaFinal.success = true;
+          } else if (respostaFinal === true || respostaFinal === null || respostaFinal === undefined) {
             // 3. Se for booleano nulo, envelopa num objeto de sucesso básico.
             respostaFinal = { success: true };
           }
@@ -1308,7 +1332,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
           }
           return; // Bloqueia a continuação em caso de falha real do banco
         }
-        
+
         // 🔥 EXECUTA O CALLBACK FORA DO TRY/CATCH
         // Evita que um erro visual na tela ative o "withFailureHandler" fingindo ser erro do banco
         if (ok) ok(respostaFinal);
