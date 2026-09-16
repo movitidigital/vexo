@@ -1892,6 +1892,13 @@
     carregando: false
   };
 
+    // ═══════════════════════════════════════════════════════════
+  // ESTADO DO MODO SELEÇÃO (exclusão em lote)
+  // ═══════════════════════════════════════════════════════════
+  const podeExcluirCofre = isGestorCofre;
+  let cofreModoSelecao = false;
+  const cofreSelecionados = new Set();
+
   // ---------- Helpers ----------
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
