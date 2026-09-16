@@ -2215,6 +2215,138 @@
     }).join('');
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // MODO SELEÇÃO + EXCLUSÃO EM LOTE
+  // ═══════════════════════════════════════════════════════════
+  (function mostrarBtnSelecao() {
+    if (!podeExcluirCofre) return;
+    const btn = document.getElementById('btnCofreModoSelecao');
+    if (btn) btn.style.display = 'inline-flex';
+  })();
+
+  window.toggleModoSelecao = function() {
+    cofreModoSelecao = !cofreModoSelecao;
+    cofreSelecionados.clear();
+
+    document.body.classList.toggle('cofre-selecao-ativa', cofreModoSelecao);
+
+    const btn = document.getElementById('btnCofreModoSelecao');
+    if (btn) {
+      btn.classList.toggle('novo', cofreModoSelecao);
+      btn.classList.toggle('ghost', !cofreModoSelecao);
+      btn.innerHTML = cofreModoSelecao
+        ? '<i class="fas fa-times"></i> Sair da seleção'
+        : '<i class="fas fa-check-square"></i> Selecionar';
+    }
+
+    renderizarCardsCofre();
+    atualizarBarraLote();
+  };
+
+  window.cofreToggleCheck = function(id, event) {
+    if (event) event.stopPropagation();
+    if (cofreSelecionados.has(id)) cofreSelecionados.delete(id);
+    else cofreSelecionados.add(id);
+
+    const checkEl = event ? event.currentTarget : null;
+    if (checkEl) {
+      checkEl.classList.toggle('selecionado', cofreSelecionados.has(id));
+      checkEl.innerHTML = cofreSelecionados.has(id) ? '✓' : '';
+    }
+    atualizarBarraLote();
+  };
+
+  window.cofreToggleCardClick = function(id, event) {
+    if (!cofreModoSelecao) return;
+    if (event && event.target.closest('a, button')) return;
+
+    if (cofreSelecionados.has(id)) cofreSelecionados.delete(id);
+    else cofreSelecionados.add(id);
+
+    const card = document.querySelector('.cofre-card[data-id="' + id + '"]');
+    if (card) {
+      const check = card.querySelector('.cofre-card-check');
+      if (check) {
+        check.classList.toggle('selecionado', cofreSelecionados.has(id));
+        check.innerHTML = cofreSelecionados.has(id) ? '✓' : '';
+      }
+    }
+    atualizarBarraLote();
+  };
+
+  function atualizarBarraLote() {
+    let barra = document.getElementById('cofreBarraLote');
+    if (!barra) {
+      barra = document.createElement('div');
+      barra.id = 'cofreBarraLote';
+      barra.className = 'cofre-barra-lote';
+      barra.innerHTML =
+        '<div class="cofre-barra-info"><b id="cofreQtdSelecionados">0</b> selecionado(s)</div>' +
+        '<div class="cofre-barra-acoes">' +
+          '<button class="cofre-barra-btn cancelar" onclick="toggleModoSelecao()">' +
+            '<i class="fas fa-times"></i> Cancelar</button>' +
+          '<button class="cofre-barra-btn excluir" id="cofreBtnExcluirLote" onclick="excluirSelecionados()">' +
+            '<i class="fas fa-trash"></i> Excluir</button>' +
+        '</div>';
+      document.body.appendChild(barra);
+    }
+
+    const qtd = cofreSelecionados.size;
+    const qtdEl = document.getElementById('cofreQtdSelecionados');
+    if (qtdEl) qtdEl.innerText = qtd;
+
+    const btnExcluir = document.getElementById('cofreBtnExcluirLote');
+    if (btnExcluir) btnExcluir.disabled = (qtd === 0);
+
+    barra.classList.toggle('ativa', cofreModoSelecao && qtd > 0);
+  }
+
+  window.excluirSelecionados = function() {
+    const ids = Array.from(cofreSelecionados);
+    if (!ids.length) return;
+
+    if (!confirm('⚠️ ATENÇÃO: Excluir ' + ids.length + ' retomada(s) do Cofre?\n\nEssa ação é permanente e NÃO pode ser desfeita.')) return;
+
+    const btnExcluir = document.getElementById('cofreBtnExcluirLote');
+    if (btnExcluir) {
+      btnExcluir.disabled = true;
+      btnExcluir.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) {
+          showToastCofre('✅ ' + (res.linhas_afetadas || ids.length) + ' retomada(s) excluída(s)', 'success');
+          cofreSelecionados.clear();
+          cofreModoSelecao = false;
+          document.body.classList.remove('cofre-selecao-ativa');
+          const btn = document.getElementById('btnCofreModoSelecao');
+          if (btn) {
+            btn.classList.remove('novo');
+            btn.classList.add('ghost');
+            btn.innerHTML = '<i class="fas fa-check-square"></i> Selecionar';
+          }
+          const barra = document.getElementById('cofreBarraLote');
+          if (barra) barra.classList.remove('ativa');
+          carregarCofre();
+        } else {
+          showToastCofre('❌ Erro: ' + ((res && res.message) || 'Desconhecido'), 'error');
+          if (btnExcluir) {
+            btnExcluir.disabled = false;
+            btnExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+          }
+        }
+      })
+      .withFailureHandler(function(err) {
+        showToastCofre('❌ Erro: ' + err, 'error');
+        if (btnExcluir) {
+          btnExcluir.disabled = false;
+          btnExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+        }
+      })
+      .cofreExcluirLote(ids);
+  };
+
 
   // ═══════════════════════════════════════════════════════════
   // Modal — Abrir/Salvar
