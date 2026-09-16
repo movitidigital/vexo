@@ -790,6 +790,120 @@
       .cofre-modal-body { padding: 18px; }
       .cofre-fieldset { padding: 16px; }
     }
+        /* ═══════════════════════════════════════════════════════
+       MODO SELEÇÃO + EXCLUSÃO EM LOTE
+    ═══════════════════════════════════════════════════════ */
+
+    /* Checkbox nos cards */
+    .cofre-card-check {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      width: 22px;
+      height: 22px;
+      border-radius: 6px;
+      border: 2px solid #cbd5e1;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.18s;
+      z-index: 10;
+      color: transparent;
+      font-size: 13px;
+      font-weight: 900;
+    }
+    .cofre-card-check:hover {
+      border-color: #94a3b8;
+    }
+    .cofre-card-check.selecionado {
+      background: #1e3c72;
+      border-color: #1e3c72;
+      color: white;
+    }
+
+    /* Quando o modo seleção está ativo, cards ganham padding-left extra */
+    body.cofre-selecao-ativa .cofre-card {
+      padding-left: 52px;
+    }
+
+    /* Barra flutuante inferior */
+    .cofre-barra-lote {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120%);
+      background: #0f172a;
+      color: white;
+      padding: 14px 20px;
+      border-radius: 16px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      z-index: 9000;
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      font-family: 'Inter', sans-serif;
+      min-width: 340px;
+    }
+    .cofre-barra-lote.ativa {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .cofre-barra-info {
+      font-size: 13px;
+      font-weight: 700;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .cofre-barra-info b {
+      color: #60a5fa;
+      font-size: 16px;
+    }
+
+    .cofre-barra-acoes {
+      margin-left: auto;
+      display: flex;
+      gap: 8px;
+    }
+
+    .cofre-barra-btn {
+      padding: 8px 14px;
+      border-radius: 10px;
+      border: none;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 12px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .cofre-barra-btn.cancelar {
+      background: rgba(255,255,255,0.08);
+      color: #cbd5e1;
+    }
+    .cofre-barra-btn.cancelar:hover {
+      background: rgba(255,255,255,0.15);
+    }
+    .cofre-barra-btn.excluir {
+      background: linear-gradient(135deg, #dc2626, #b91c1c);
+      color: white;
+      box-shadow: 0 4px 12px rgba(220,38,38,0.35);
+    }
+    .cofre-barra-btn.excluir:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(220,38,38,0.5);
+    }
+    .cofre-barra-btn.excluir:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
   </style>
 </head>
 <body>
@@ -900,9 +1014,12 @@
         </h2>
         <p>Retomadas agendadas, contratos madurando e clientes prontos para voltar ao radar. <strong>Você decide quando chamar. O Cofre lembra pra você.</strong></p>
       </div>
-      <div class="cofre-header-actions">
-        <button class="btn-cofre ghost" onclick="carregarCofreMock()">
+            <div class="cofre-header-actions">
+        <button class="btn-cofre ghost" onclick="carregarCofre()">
           <i class="fas fa-sync-alt"></i> Atualizar
+        </button>
+        <button id="btnCofreModoSelecao" class="btn-cofre ghost" style="display:none;" onclick="toggleModoSelecao()">
+          <i class="fas fa-check-square"></i> Selecionar
         </button>
         <button class="btn-cofre novo" onclick="abrirModalCofre(null)">
           <i class="fas fa-plus"></i> Nova Retomada
@@ -1139,6 +1256,7 @@
     cofreMudarStatus:            { rpc: 'cofre_mudar_status',             args: (id, st, nota) => ({ p_id: id, p_novo_status: st, p_nota: nota || null }) },
     cofreExcluir:                { rpc: 'cofre_excluir',                  args: (id)           => ({ p_id: id }) },
     cofreAlertasPendentes:       { rpc: 'cofre_alertas_pendentes',        args: ()             => ({}) },
+    cofreExcluirLote:            { rpc: 'cofre_excluir_lote',  args: (ids) => ({ p_ids: ids || [] }) },
   };
 
   function makeRunner() {
@@ -2040,9 +2158,25 @@
       const urg = cofreUrgenciaClass(dias, c.status);
       const isPj = c.tipo === 'MIGRACAO_PF_PJ';
       const telWhats = cofreFmtWhats(c.contato);
+      const selecionado = cofreSelecionados.has(c.id);
+      const modoSel = cofreModoSelecao;
+
+      // Clique no card: no modo seleção, marca/desmarca. Fora dele, não faz nada.
+      const cardClick = modoSel
+        ? `onclick="window.cofreToggleCardClick('${esc(c.id)}', event)"`
+        : '';
 
       return `
-        <div class="cofre-card ${urg.cls} ${isPj ? 'pj-futuro' : ''}" style="animation-delay:${i * 0.04}s" data-id="${esc(c.id)}">
+        <div class="cofre-card ${urg.cls} ${isPj ? 'pj-futuro' : ''} ${selecionado ? 'card-selecionado' : ''}"
+             style="animation-delay:${i * 0.04}s"
+             data-id="${esc(c.id)}"
+             ${cardClick}>
+          ${modoSel ? `
+            <div class="cofre-card-check ${selecionado ? 'selecionado' : ''}"
+                 onclick="window.cofreToggleCheck('${esc(c.id)}', event)">
+              ${selecionado ? '✓' : ''}
+            </div>` : ''}
+
           <div class="cofre-card-top">
             <div class="cofre-card-badges">
               <span class="cofre-badge ${tipo.cls}">${tipo.ico} ${tipo.label}</span>
@@ -2051,6 +2185,7 @@
             </div>
             <span class="cofre-card-urgencia ${urg.urgCls || ''}">${urg.label}</span>
           </div>
+
           <h4 class="cofre-card-empresa">${esc(c.razao)}</h4>
           <div class="cofre-card-meta">
             <span>📄 ${esc(c.cnpj)}</span>
@@ -2062,16 +2197,142 @@
             <div>👤 <b>${esc(c.consultor)}</b></div>
             ${telWhats ? `<div>📞 <b>${esc(c.contato)}</b></div>` : ''}
           </div>
+
           <div class="cofre-card-actions">
-            ${telWhats ? `<a href="tel:${telWhats}" class="cofre-act ligar" onclick="event.stopPropagation()"><i class="fas fa-phone"></i> Ligar</a>` : ''}
-            ${telWhats ? `<a href="https://wa.me/55${telWhats}" target="_blank" class="cofre-act whatsapp" onclick="event.stopPropagation()"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
-            <button class="cofre-act vendas" onclick="event.stopPropagation(); window.cofreAbrirNoVendas('${esc(c.id)}')"><i class="fas fa-rocket"></i> Vendas</button>
-            <button class="cofre-act mais" onclick="event.stopPropagation(); window.cofreMenuMais('${esc(c.id)}', event)"><i class="fas fa-ellipsis-v"></i></button>
+            ${telWhats && !modoSel ? `<a href="tel:${telWhats}" class="cofre-act ligar" onclick="event.stopPropagation()"><i class="fas fa-phone"></i> Ligar</a>` : ''}
+            ${telWhats && !modoSel ? `<a href="https://wa.me/55${telWhats}" target="_blank" class="cofre-act whatsapp" onclick="event.stopPropagation()"><i class="fab fa-whatsapp"></i> WhatsApp</a>` : ''}
+            ${!modoSel ? `<button class="cofre-act vendas" onclick="event.stopPropagation(); window.cofreAbrirNoVendas('${esc(c.id)}')"><i class="fas fa-rocket"></i> Vendas</button>` : ''}
+            ${!modoSel ? `<button class="cofre-act mais" onclick="event.stopPropagation(); window.cofreMenuMais('${esc(c.id)}', event)"><i class="fas fa-ellipsis-v"></i></button>` : ''}
           </div>
         </div>`;
     }).join('');
   }
 
+    // ═══════════════════════════════════════════════════════
+  // MODO SELEÇÃO + EXCLUSÃO EM LOTE
+  // ═══════════════════════════════════════════════════════
+  const podeExcluirCofre = isGestorCofre; // ADMIN/BACKOFFICE/GERENTE
+  let cofreModoSelecao = false;
+  const cofreSelecionados = new Set();
+
+  // Mostra o botão só pra quem tem permissão
+  (function mostrarBtnSelecao() {
+    if (!podeExcluirCofre) return;
+    const btn = document.getElementById('btnCofreModoSelecao');
+    if (btn) btn.style.display = 'inline-flex';
+  })();
+
+  window.toggleModoSelecao = function() {
+    cofreModoSelecao = !cofreModoSelecao;
+    cofreSelecionados.clear();
+
+    document.body.classList.toggle('cofre-selecao-ativa', cofreModoSelecao);
+
+    const btn = document.getElementById('btnCofreModoSelecao');
+    if (btn) {
+      btn.classList.toggle('novo', cofreModoSelecao);
+      btn.classList.toggle('ghost', !cofreModoSelecao);
+      btn.innerHTML = cofreModoSelecao
+        ? '<i class="fas fa-times"></i> Sair da seleção'
+        : '<i class="fas fa-check-square"></i> Selecionar';
+    }
+
+    // Re-renderiza os cards pra mostrar/esconder as checkboxes
+    renderizarCardsCofre();
+    atualizarBarraLote();
+  };
+
+  window.toggleCheckCofre = function(id, event) {
+    event.stopPropagation();
+    if (cofreSelecionados.has(id)) {
+      cofreSelecionados.delete(id);
+    } else {
+      cofreSelecionados.add(id);
+    }
+    // Atualiza apenas o check clicado (sem re-render)
+    const checkEl = event.currentTarget;
+    checkEl.classList.toggle('selecionado', cofreSelecionados.has(id));
+    checkEl.innerHTML = cofreSelecionados.has(id) ? '✓' : '';
+    atualizarBarraLote();
+  };
+
+  function atualizarBarraLote() {
+    let barra = document.getElementById('cofreBarraLote');
+    if (!barra) {
+      barra = document.createElement('div');
+      barra.id = 'cofreBarraLote';
+      barra.className = 'cofre-barra-lote';
+      barra.innerHTML = `
+        <div class="cofre-barra-info">
+          <b id="cofreQtdSelecionados">0</b> selecionado(s)
+        </div>
+        <div class="cofre-barra-acoes">
+          <button class="cofre-barra-btn cancelar" onclick="toggleModoSelecao()">
+            <i class="fas fa-times"></i> Cancelar
+          </button>
+          <button class="cofre-barra-btn excluir" id="cofreBtnExcluirLote" onclick="excluirSelecionados()">
+            <i class="fas fa-trash"></i> Excluir
+          </button>
+        </div>`;
+      document.body.appendChild(barra);
+    }
+
+    const qtd = cofreSelecionados.size;
+    document.getElementById('cofreQtdSelecionados').innerText = qtd;
+    const btnExcluir = document.getElementById('cofreBtnExcluirLote');
+    if (btnExcluir) btnExcluir.disabled = (qtd === 0);
+
+    barra.classList.toggle('ativa', cofreModoSelecao && qtd > 0);
+  }
+
+  window.excluirSelecionados = function() {
+    const ids = Array.from(cofreSelecionados);
+    if (!ids.length) return;
+
+    if (!confirm(
+      `⚠️ ATENÇÃO: Excluir ${ids.length} retomada(s) do Cofre?\n\n` +
+      `Essa ação é permanente e NÃO pode ser desfeita.`
+    )) return;
+
+    const btnExcluir = document.getElementById('cofreBtnExcluirLote');
+    if (btnExcluir) {
+      btnExcluir.disabled = true;
+      btnExcluir.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Excluindo...';
+    }
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res && res.success) {
+          showToastCofre(`✅ ${res.linhas_afetadas || ids.length} retomada(s) excluída(s)`, 'success');
+          cofreSelecionados.clear();
+          cofreModoSelecao = false;
+          document.body.classList.remove('cofre-selecao-ativa');
+          const btn = document.getElementById('btnCofreModoSelecao');
+          if (btn) {
+            btn.classList.remove('novo');
+            btn.classList.add('ghost');
+            btn.innerHTML = '<i class="fas fa-check-square"></i> Selecionar';
+          }
+          const barra = document.getElementById('cofreBarraLote');
+          if (barra) barra.classList.remove('ativa');
+          carregarCofre();
+        } else {
+          showToastCofre('❌ Erro: ' + (res && res.message || 'Desconhecido'), 'error');
+          if (btnExcluir) {
+            btnExcluir.disabled = false;
+            btnExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+          }
+        }
+      })
+      .withFailureHandler(function(err) {
+        showToastCofre('❌ Erro: ' + err, 'error');
+        if (btnExcluir) {
+          btnExcluir.disabled = false;
+          btnExcluir.innerHTML = '<i class="fas fa-trash"></i> Excluir';
+        }
+      })
+      .cofreExcluirLote(ids);
+  };
   // ═══════════════════════════════════════════════════════════
   // Modal — Abrir/Salvar
   // ═══════════════════════════════════════════════════════════
