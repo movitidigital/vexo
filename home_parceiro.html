@@ -659,16 +659,39 @@
     } catch (err) {
       console.error('❌ parceiro_dashboard:', err);
 
-      // Zera tudo
+      const msgErro = err?.message || String(err);
+
+      // Zera os KPIs
       ['val-faturamento','val-ativos','val-comissao-total','val-comissao-ativa'].forEach(id => {
         const el = $(id); if (el) el.innerText = 'R$ 0,00';
       });
 
-      if (container) {
-        container.innerHTML = `<div class="empty-box">
-          <i class="fa-solid fa-exclamation-triangle" style="color:#ef4444; opacity:1;"></i>
-          Erro ao carregar dados. Tente novamente.
-        </div>`;
+      // Renderiza os cards com os percentuais configurados (fallback visual)
+      renderizarComissaoCards({
+        comissao_config: (() => {
+          try {
+            return JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}').comissao_config || {};
+          } catch { return {}; }
+        })(),
+        por_modalidade:  {},
+        comissao_total:  0,
+        comissao_ativa:  0,
+        faturamento_mes: 0
+      });
+
+      // Mostra o erro real na seção de status
+      const statusEl = $('status-comissoes');
+      if (statusEl) {
+        statusEl.innerHTML = `
+          <div style="text-align:center; padding:20px; background:#fef2f2; border-radius:10px; border:1px solid #fecaca;">
+            <i class="fa-solid fa-exclamation-triangle" style="color:#ef4444; font-size:24px; display:block; margin-bottom:10px;"></i>
+            <strong style="color:#991b1b; font-size:12px; display:block; margin-bottom:6px;">
+              Erro ao carregar do banco
+            </strong>
+            <p style="font-size:11px; color:#7f1d1d; margin:0; word-break:break-word; line-height:1.5;">
+              ${msgErro}
+            </p>
+          </div>`;
       }
     }
   }
