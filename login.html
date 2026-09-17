@@ -269,79 +269,92 @@ function onParceiroClick() { setTipoAcesso('PARCEIRO', true); }
 // INTEGRAÇÃO DE LOGIN COM SUPABASE
 // ============================================
 async function executarLogin() {
-  const user = document.getElementById("user").value;
-  const pass = document.getElementById("pass").value;
+  const emailInput = document.getElementById("user").value.trim();
+  const senha = document.getElementById("pass").value;
   const tipoAcesso = document.getElementById("tipoAcesso").value;
   const btn = document.getElementById("btn-login");
   const loader = document.getElementById("loader");
   const status = document.getElementById("status");
 
-  if(!user || !pass) {
+  if (!emailInput || !senha) {
     status.innerHTML = "<span style='color:#ef4444'>Preencha e-mail e senha!</span>";
     return;
   }
 
   btn.disabled = true;
-  if(loader) loader.style.display = "inline-block";
+  if (loader) loader.style.display = "inline-block";
   status.innerHTML = "<span style='color:#64748b'>Validando acesso seguro VEXO...</span>";
 
-  const { data, error } = await db.auth.signInWithPassword({
-    email: user,
-    password: pass,
-  });
+  try {
+    // ─── 1. Autentica no Supabase Auth ──────────────────────
+    const { data: authData, error: authError } = await db.auth.signInWithPassword({
+      email: emailInput,
+      password: senha,
+    });
 
-  if (error) {
-    console.error('[VEXO][Login]', error);
-    status.innerHTML = "<span style='color:#ef4444'>Credenciais inválidas. Tente novamente.</span>";
-    btn.disabled = false;
-    if(loader) loader.style.display = "none";
-  } else {
-    // Após sb.auth.signInWithPassword, busca o profile completo
-const { data: { user } } = await sb.auth.getUser();
+    if (authError) {
+      console.error('[VEXO][Login]', authError);
+      status.innerHTML = "<span style='color:#ef4444'>Credenciais inválidas. Tente novamente.</span>";
+      btn.disabled = false;
+      if (loader) loader.style.display = "none";
+      return;
+    }
 
-const { data: profile } = await sb
-  .from('profiles')
-  .select('id, nome, sobrenome, email, role, ativo, tenant_id, parceiro_id, matricula, photo_url')
-  .eq('id', user.id)
-  .single();
+    // ─── 2. Busca o profile da tabela profiles ──────────────
+    const { data: profile, error: profError } = await db
+      .from('profiles')
+      .select('id, nome, sobrenome, email, role, ativo, tenant_id, parceiro_id, matricula, photo_url')
+      .eq('id', authData.user.id)
+      .single();
 
-if (!profile) {
-  alert('Perfil não encontrado. Contate o administrador.');
-  await sb.auth.signOut();
-  return;
-}
+    if (profError || !profile) {
+      console.error('[VEXO][Login] Profile não encontrado:', profError);
+      alert('Perfil não encontrado. Contate o administrador.');
+      await db.auth.signOut();
+      btn.disabled = false;
+      if (loader) loader.style.display = "none";
+      return;
+    }
 
-if (profile.ativo === false) {
-  alert('Sua conta está inativa.');
-  await sb.auth.signOut();
-  return;
-}
+    if (profile.ativo === false) {
+      alert('Sua conta está inativa. Contate o administrador.');
+      await db.auth.signOut();
+      btn.disabled = false;
+      if (loader) loader.style.display = "none";
+      return;
+    }
 
-// 🔥 AGORA SIM: salva o PROFILE, não o user do Auth
-const sessaoFinal = {
-  id: profile.id,
-  nome: profile.nome || user.email,
-  username: profile.matricula || user.email,
-  sobrenome: profile.sobrenome || '',
-  email: profile.email || user.email,
-  role: String(profile.role || '').toUpperCase().trim(),   // ← 'ADMINISTRADOR'
-  cargo: String(profile.role || '').toUpperCase().trim(),
-  ativo: profile.ativo !== false,
-  tenant_id: profile.tenant_id,
-  parceiro_id: profile.parceiro_id || null,
-  photoUrl: profile.photo_url || null
-};
+    // ─── 3. Salva o PROFILE no sessionStorage ───────────────
+    const sessaoFinal = {
+      id:          profile.id,
+      nome:        profile.nome || authData.user.email,
+      username:    profile.matricula || authData.user.email,
+      sobrenome:   profile.sobrenome || '',
+      email:       profile.email || authData.user.email,
+      role:        String(profile.role || '').toUpperCase().trim(),
+      cargo:       String(profile.role || '').toUpperCase().trim(),
+      ativo:       profile.ativo !== false,
+      tenant_id:   profile.tenant_id,
+      parceiro_id: profile.parceiro_id || null,
+      photoUrl:    profile.photo_url || null
+    };
 
-sessionStorage.setItem('usuarioLogado', JSON.stringify(sessaoFinal));
-console.log('✅ Sessão salva:', sessaoFinal);
-
-// Redireciona pro dashboard
-window.location.href = 'dashboard.html'; // ou dashboard_parceiro.html
+    sessionStorage.setItem('usuarioLogado', JSON.stringify(sessaoFinal));
     sessionStorage.setItem('tipoAcessoLogado', tipoAcesso);
     salvarPreferencia(tipoAcesso);
-    
+
+    console.log('✅ [VEXO] Sessão salva:', sessaoFinal);
+
     status.innerHTML = "<span style='color:#10b981'>Acesso Liberado!</span>";
+
+    // ─── 4. Redireciona pro painel correto ──────────────────
     carregarPainel(tipoAcesso);
+
+  } catch (err) {
+    console.error('[VEXO][Login] Erro inesperado:', err);
+    status.innerHTML = "<span style='color:#ef4444'>Erro inesperado. Tente novamente.</span>";
+    btn.disabled = false;
+    if (loader) loader.style.display = "none";
   }
 }
 
