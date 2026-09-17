@@ -271,11 +271,7 @@
 
     // 🔥 Redirecionamento inteligente por cargo
     try {
-      const cargo = String(getSessao().role || getSessao().cargo || '').toUpperCase().trim();
-      if (pagina === 'home_parceiro' && (cargo === 'FREELANCER' || cargo === 'TERCEIRO')) {
-        pagina = 'home_freelancer';
-        console.log('🔄 Redirecionado para home_freelancer (cargo:', cargo, ')');
-      }
+      
     } catch (e) { /* ignora */ }
 
     const content = $('main-content');
@@ -336,9 +332,7 @@
       });
 
       // Hooks específicos de módulos
-      if (pagina === 'home_freelancer' && typeof window.inicializarHomeFreelancer === 'function') {
-        setTimeout(() => window.inicializarHomeFreelancer(), 100);
-      }
+  
       if (pagina === 'usuarios_parceiro' && window.UP && typeof window.UP.carregar === 'function') {
         setTimeout(() => window.UP.carregar(), 100);
       }
