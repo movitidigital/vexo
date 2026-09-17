@@ -2506,9 +2506,12 @@
     document.getElementById('cofreValor').value = '';
     document.getElementById('cofreLinhas').value = '';
     document.getElementById('cofreMotivo').value = '';
-    document.getElementById('cofreDocCapturada').value = 'false';
-    document.getElementById('cofreToggleDoc').classList.remove('ativo');
-    document.getElementById('cofreDocStatus').innerText = 'Documentação não capturada';
+    const _docInp = document.getElementById('cofreDocCapturada');
+    const _docRow = document.getElementById('cofreToggleDoc');
+    const _docSts = document.getElementById('cofreDocStatus');
+    if (_docInp) _docInp.value = 'false';
+    if (_docRow) _docRow.classList.remove('ativo');
+    if (_docSts) _docSts.innerText = 'Documentação não capturada';
     document.querySelector('input[name="cofreTipo"][value="RENOVACAO"]').checked = true;
     document.querySelector('input[name="cofrePrioridade"][value="MEDIA"]').checked = true;
     document.getElementById('cofreModalTitulo').innerText = 'Nova Retomada';
@@ -2528,11 +2531,14 @@
       if (rt) rt.checked = true;
       const rp = document.querySelector(`input[name="cofrePrioridade"][value="${dadosExistentes.prioridade}"]`);
       if (rp) rp.checked = true;
-            // popular o toggle de documentação
+                 // popular o toggle de documentação
       const docCapturada = dadosExistentes.documentacao_capturada === true;
-      document.getElementById('cofreDocCapturada').value = docCapturada ? 'true' : 'false';
-      document.getElementById('cofreToggleDoc').classList.toggle('ativo', docCapturada);
-      document.getElementById('cofreDocStatus').innerText = docCapturada
+      const _docInpE = document.getElementById('cofreDocCapturada');
+      const _docRowE = document.getElementById('cofreToggleDoc');
+      const _docStsE = document.getElementById('cofreDocStatus');
+      if (_docInpE) _docInpE.value = docCapturada ? 'true' : 'false';
+      if (_docRowE) _docRowE.classList.toggle('ativo', docCapturada);
+      if (_docStsE) _docStsE.innerText = docCapturada
         ? '✅ Documentação capturada'
         : 'Documentação não capturada';
 
@@ -2576,7 +2582,7 @@
       motivo,
       valor_potencial: document.getElementById('cofreValor').value || null,
       qtd_linhas_estimada: document.getElementById('cofreLinhas').value || null,
-      documentacao_capturada: document.getElementById('cofreDocCapturada').value === 'true'
+          documentacao_capturada: (document.getElementById('cofreDocCapturada')?.value === 'true') || false
     };
 
     google.script.run
