@@ -1,0 +1,1254 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestão de Parceiros · VEXO</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <script>
+    if (typeof supabase === 'undefined') {
+      document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');
+    }
+  </script>
+  <script>
+    if (typeof window.sb === 'undefined') {
+      document.write('<script src="supabase-client.js"><\/script>');
+    }
+  </script>
+
+  <style>
+    * { box-sizing: border-box; }
+
+    .up-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+      font-family: 'Poppins', sans-serif;
+    }
+
+    /* ─── HEADER ─────────────────────────────────────── */
+    .up-header {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 55%, #4338ca 100%);
+      border-radius: 20px;
+      padding: 26px 30px;
+      color: white;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-bottom: 22px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 12px 32px rgba(30,60,114,0.22);
+    }
+    .up-header::before {
+      content: '🤝';
+      position: absolute;
+      font-size: 200px;
+      opacity: 0.06;
+      right: -40px; top: -60px;
+      transform: rotate(-15deg);
+      pointer-events: none;
+    }
+    .up-header h2 {
+      margin: 0 0 4px 0;
+      font-size: 24px;
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      position: relative;
+      z-index: 1;
+    }
+    .up-header p {
+      margin: 0;
+      font-size: 13px;
+      opacity: 0.85;
+      position: relative;
+      z-index: 1;
+    }
+    .up-header-actions {
+      display: flex;
+      gap: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .up-btn {
+      border: none;
+      border-radius: 12px;
+      padding: 12px 22px;
+      font-weight: 700;
+      font-size: 13px;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .up-btn-white {
+      background: white;
+      color: #1e3c72;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.15);
+    }
+    .up-btn-white:hover { transform: translateY(-2px); box-shadow: 0 12px 26px rgba(0,0,0,0.22); }
+
+    .up-btn-ghost {
+      background: rgba(255,255,255,0.13);
+      color: white;
+      border: 1px solid rgba(255,255,255,0.22);
+    }
+    .up-btn-ghost:hover { background: rgba(255,255,255,0.22); }
+
+    /* ─── KPIs ───────────────────────────────────────── */
+    .up-kpis {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+    .up-kpi {
+      background: white;
+      border-radius: 16px;
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border: 1px solid #eef2f6;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+      transition: all 0.2s;
+    }
+    .up-kpi:hover { transform: translateY(-3px); box-shadow: 0 10px 24px rgba(0,0,0,0.07); }
+    .up-kpi-icon {
+      width: 46px; height: 46px;
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+    }
+    .up-kpi-icon.blue    { background: #eff6ff; color: #2563eb; }
+    .up-kpi-icon.green   { background: #ecfdf5; color: #059669; }
+    .up-kpi-icon.purple  { background: #f5f3ff; color: #7c3aed; }
+    .up-kpi-icon.amber   { background: #fffbeb; color: #d97706; }
+    .up-kpi-body { flex: 1; }
+    .up-kpi-label {
+      font-size: 11px; font-weight: 600; color: #64748b;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      margin-bottom: 2px;
+    }
+    .up-kpi-value {
+      font-size: 22px; font-weight: 800; color: #1e293b;
+      line-height: 1;
+    }
+
+    /* ─── FILTROS ────────────────────────────────────── */
+    .up-filters {
+      background: white;
+      border-radius: 16px;
+      padding: 16px 20px;
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-bottom: 18px;
+      border: 1px solid #eef2f6;
+    }
+    .up-search {
+      flex: 1; min-width: 240px;
+      position: relative;
+    }
+    .up-search i {
+      position: absolute; left: 14px; top: 50%;
+      transform: translateY(-50%);
+      color: #94a3b8;
+    }
+    .up-search input {
+      width: 100%;
+      padding: 11px 14px 11px 38px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .up-search input:focus {
+      outline: none; border-color: #1e3c72;
+      box-shadow: 0 0 0 3px rgba(30,60,114,0.08);
+    }
+    .up-select {
+      padding: 11px 14px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 13px;
+      background: white;
+      font-weight: 600;
+      color: #475569;
+      cursor: pointer;
+    }
+    .up-select:focus {
+      outline: none; border-color: #1e3c72;
+      box-shadow: 0 0 0 3px rgba(30,60,114,0.08);
+    }
+
+    /* ─── LISTA ──────────────────────────────────────── */
+    .up-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 16px;
+    }
+
+    .up-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px 22px;
+      border: 1px solid #eef2f6;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+    .up-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; bottom: 0; width: 5px;
+      background: #94a3b8;
+    }
+    .up-card.terceiro   { --c: linear-gradient(180deg, #3b82f6, #2563eb); }
+    .up-card.freelancer { --c: linear-gradient(180deg, #8b5cf6, #6d28d9); }
+    .up-card::before { background: var(--c, #94a3b8); }
+    .up-card:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(30,60,114,0.1); }
+
+    .up-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+    .up-card-badges { display: flex; gap: 6px; flex-wrap: wrap; }
+    .up-badge {
+      font-size: 10px; font-weight: 800;
+      padding: 4px 10px; border-radius: 20px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      display: inline-flex; align-items: center; gap: 5px;
+    }
+    .up-badge-terceiro    { background: #eff6ff; color: #1e40af; }
+    .up-badge-freelancer  { background: #f5f3ff; color: #6d28d9; }
+    .up-badge-ativo       { background: #ecfdf5; color: #065f46; }
+    .up-badge-inativo     { background: #f1f5f9; color: #475569; }
+    .up-badge-suspenso    { background: #fef2f2; color: #991b1b; }
+
+    .up-card-name {
+      font-size: 15px;
+      font-weight: 800;
+      color: #0f172a;
+      margin: 0 0 4px 0;
+      line-height: 1.3;
+    }
+    .up-card-doc {
+      font-size: 11px;
+      font-family: ui-monospace, monospace;
+      color: #64748b;
+      margin-bottom: 12px;
+    }
+    .up-card-info {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-size: 12px;
+      color: #475569;
+      margin-bottom: 14px;
+      padding-bottom: 14px;
+      border-bottom: 1px dashed #e2e8f0;
+    }
+    .up-card-info div { display: flex; align-items: center; gap: 6px; }
+    .up-card-info i { color: #94a3b8; width: 14px; }
+
+    .up-card-comissao {
+      background: #f8fafc;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 11px;
+      color: #475569;
+      margin-bottom: 14px;
+    }
+    .up-card-comissao b { color: #1e3c72; }
+
+    .up-card-actions {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+    .up-act {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 12px;
+      border: 1px solid #e2e8f0;
+      background: white;
+      color: #475569;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.18s;
+    }
+    .up-act:hover { background: #f8fafc; border-color: #cbd5e1; }
+    .up-act.edit:hover  { background: #eff6ff; border-color: #3b82f6; color: #1e40af; }
+    .up-act.toggle:hover { background: #fef2f2; border-color: #ef4444; color: #991b1b; }
+
+    /* ─── EMPTY ──────────────────────────────────────── */
+    .up-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 70px 30px;
+      background: white;
+      border-radius: 20px;
+      border: 2px dashed #e2e8f0;
+    }
+    .up-empty i { font-size: 54px; color: #cbd5e1; margin-bottom: 14px; display: block; }
+    .up-empty h3 { color: #475569; margin: 0 0 6px 0; font-weight: 800; font-size: 16px; }
+    .up-empty p  { color: #94a3b8; font-size: 13px; margin: 0; }
+
+    /* ─── MODAL ──────────────────────────────────────── */
+    .up-modal {
+      position: fixed; inset: 0; z-index: 10000;
+      background: rgba(15, 23, 42, 0.55);
+      backdrop-filter: blur(6px);
+      display: none; align-items: center; justify-content: center;
+    }
+    .up-modal.open { display: flex; }
+    .up-modal-box {
+      background: white;
+      width: 95%; max-width: 720px;
+      max-height: 92vh;
+      border-radius: 22px;
+      display: flex; flex-direction: column;
+      overflow: hidden;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+      animation: upIn 0.28s cubic-bezier(0.4,0,0.2,1);
+    }
+    @keyframes upIn {
+      from { transform: scale(0.94) translateY(12px); opacity: 0; }
+      to   { transform: scale(1) translateY(0); opacity: 1; }
+    }
+    .up-modal-head {
+      background: linear-gradient(135deg, #1e3c72 0%, #2a5298 55%, #4338ca 100%);
+      padding: 22px 26px;
+      color: white;
+      display: flex; align-items: center; gap: 14px;
+      position: relative; overflow: hidden;
+    }
+    .up-modal-head::after {
+      content: '🤝'; position: absolute;
+      font-size: 110px; opacity: 0.08;
+      right: -10px; top: -30px;
+      transform: rotate(-15deg);
+    }
+    .up-modal-head h3 {
+      margin: 0; font-size: 17px; font-weight: 800;
+      position: relative; z-index: 1;
+    }
+    .up-modal-head p {
+      margin: 2px 0 0 0; font-size: 12px;
+      opacity: 0.85; position: relative; z-index: 1;
+    }
+    .up-modal-head .close {
+      margin-left: auto;
+      width: 34px; height: 34px;
+      border: none; border-radius: 50%;
+      background: rgba(255,255,255,0.15);
+      color: white; font-size: 18px; cursor: pointer;
+      position: relative; z-index: 1;
+      transition: all 0.2s;
+    }
+    .up-modal-head .close:hover { background: rgba(255,255,255,0.3); transform: rotate(90deg); }
+    .up-modal-body {
+      padding: 22px 26px;
+      overflow-y: auto;
+      flex: 1;
+      background: #f8fafc;
+    }
+    .up-fs {
+      background: white;
+      border-radius: 14px;
+      border: 1px solid #eef2f6;
+      padding: 18px 20px;
+      margin-bottom: 14px;
+    }
+    .up-fs-title {
+      font-size: 11px; font-weight: 800;
+      color: #1e3c72;
+      text-transform: uppercase; letter-spacing: 0.6px;
+      margin: 0 0 14px 0;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .up-fs-title::after {
+      content: ''; flex: 1; height: 1px;
+      background: linear-gradient(to right, #e2e8f0, transparent);
+    }
+    .up-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+    .up-row:last-child { margin-bottom: 0; }
+    .up-fg { display: flex; flex-direction: column; gap: 5px; }
+    .up-fg.full { grid-column: 1 / -1; }
+    .up-fg label {
+      font-size: 10px; font-weight: 700; color: #475569;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+    .up-input {
+      padding: 10px 12px;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 9px;
+      font-family: inherit;
+      font-size: 13px;
+      background: white;
+      transition: all 0.2s;
+    }
+    .up-input:focus {
+      outline: none; border-color: #1e3c72;
+      box-shadow: 0 0 0 3px rgba(30,60,114,0.08);
+    }
+    .up-input:disabled { background: #f8fafc; color: #94a3b8; cursor: not-allowed; }
+
+    /* Radio tipo */
+    .up-tipo-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .up-tipo { cursor: pointer; position: relative; }
+    .up-tipo input { position: absolute; opacity: 0; pointer-events: none; }
+    .up-tipo-box {
+      border: 2px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 14px 12px;
+      text-align: center;
+      transition: all 0.2s;
+      background: white;
+    }
+    .up-tipo-box .ico { font-size: 22px; display: block; margin-bottom: 4px; }
+    .up-tipo-box .txt { font-size: 12px; font-weight: 800; color: #475569; text-transform: uppercase; letter-spacing: 0.3px; }
+    .up-tipo input:checked + .up-tipo-box {
+      border-color: #1e3c72; background: #eff6ff;
+      box-shadow: 0 4px 12px rgba(30,60,114,0.12);
+    }
+    .up-tipo input:checked + .up-tipo-box .txt { color: #1e3c72; }
+
+    /* Radio comissão */
+    .up-com-tipo {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .up-com-tipo label {
+      display: inline-flex; cursor: pointer;
+    }
+    .up-com-tipo input { position: absolute; opacity: 0; pointer-events: none; }
+    .up-pill {
+      padding: 9px 16px;
+      border: 2px solid #e2e8f0;
+      background: white;
+      border-radius: 22px;
+      font-size: 12px; font-weight: 800;
+      text-transform: uppercase; letter-spacing: 0.4px;
+      transition: all 0.2s;
+      color: #475569;
+    }
+    .up-com-tipo input:checked + .up-pill.simplificado { border-color: #10b981; background: #ecfdf5; color: #065f46; }
+    .up-com-tipo input:checked + .up-pill.detalhado    { border-color: #8b5cf6; background: #f5f3ff; color: #5b21b6; }
+
+    .up-com-extra { display: none; }
+    .up-com-extra.active { display: block; }
+
+    /* Senha gerador */
+    .up-senha-wrap {
+      display: flex; gap: 6px; align-items: stretch;
+    }
+    .up-senha-wrap .up-input { flex: 1; font-family: ui-monospace, monospace; }
+    .up-gerar-btn {
+      padding: 0 14px;
+      border: 1.5px solid #cbd5e1;
+      background: #f1f5f9;
+      color: #1e3c72;
+      border-radius: 9px;
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.18s;
+    }
+    .up-gerar-btn:hover { background: #1e3c72; color: white; border-color: #1e3c72; }
+
+    /* Footer do modal */
+    .up-modal-foot {
+      padding: 16px 26px;
+      background: white;
+      border-top: 1px solid #eef2f6;
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+    }
+    .up-foot-btn {
+      padding: 12px 24px;
+      border-radius: 11px;
+      font-family: inherit;
+      font-weight: 700;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+    .up-foot-btn.cancel { background: #f1f5f9; color: #64748b; }
+    .up-foot-btn.cancel:hover { background: #e2e8f0; }
+    .up-foot-btn.save {
+      background: linear-gradient(135deg, #1e3c72, #2a5298);
+      color: white;
+      box-shadow: 0 6px 16px rgba(30,60,114,0.25);
+    }
+    .up-foot-btn.save:hover { transform: translateY(-1px); box-shadow: 0 10px 22px rgba(30,60,114,0.35); }
+    .up-foot-btn:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+
+    /* ─── TOAST ──────────────────────────────────────── */
+    .up-toast {
+      position: fixed;
+      bottom: 24px; right: 24px;
+      padding: 14px 20px;
+      border-radius: 12px;
+      background: white;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+      border-left: 4px solid #10b981;
+      font-size: 13px; font-weight: 600; color: #1e293b;
+      z-index: 99999;
+      max-width: 340px;
+      display: none;
+      font-family: 'Poppins', sans-serif;
+    }
+    .up-toast.show { display: block; animation: upToastIn 0.3s ease; }
+    .up-toast.error   { border-left-color: #ef4444; }
+    .up-toast.warning { border-left-color: #f59e0b; }
+    @keyframes upToastIn {
+      from { transform: translateX(120%); opacity: 0; }
+      to   { transform: translateX(0); opacity: 1; }
+    }
+
+    @media (max-width: 640px) {
+      .up-wrap { padding: 14px; }
+      .up-header { padding: 20px; }
+      .up-header h2 { font-size: 19px; }
+      .up-grid { grid-template-columns: 1fr; }
+      .up-tipo-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="up-wrap">
+  <div class="up-header">
+    <div>
+      <h2>🤝 Gestão de Parceiros</h2>
+      <p>Crie e gerencie os parceiros terceiros e freelancers</p>
+    </div>
+    <div class="up-header-actions">
+      <button class="up-btn up-btn-ghost" onclick="UP.carregar()">
+        <i class="fas fa-sync-alt"></i> Atualizar
+      </button>
+      <button id="up-btn-novo" class="up-btn up-btn-white" onclick="UP.abrirModal()">
+        <i class="fas fa-plus"></i> Novo Parceiro
+      </button>
+    </div>
+  </div>
+
+  <div class="up-kpis" id="up-kpis"></div>
+
+  <div class="up-filters">
+    <div class="up-search">
+      <i class="fas fa-search"></i>
+      <input type="text" id="up-busca" placeholder="Buscar por nome, e-mail, CNPJ ou cidade...">
+    </div>
+    <select class="up-select" id="up-filtro-tipo">
+      <option value="">Todos os tipos</option>
+      <option value="TERCEIRO">🤝 Terceiro</option>
+      <option value="FREELANCER">⚡ Freelancer</option>
+    </select>
+    <select class="up-select" id="up-filtro-status">
+      <option value="">Todos os status</option>
+      <option value="ATIVO">🟢 Ativos</option>
+      <option value="INATIVO">⚪ Inativos</option>
+      <option value="SUSPENSO">🔴 Suspensos</option>
+    </select>
+  </div>
+
+  <div class="up-grid" id="up-grid">
+    <div class="up-empty">
+      <i class="fas fa-spinner fa-spin"></i>
+      <h3>Carregando parceiros...</h3>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL ═══ -->
+<div class="up-modal" id="up-modal">
+  <div class="up-modal-box">
+    <div class="up-modal-head">
+      <div>
+        <h3 id="up-modal-titulo">Novo Parceiro</h3>
+        <p id="up-modal-sub">Preencha os dados e crie o acesso</p>
+      </div>
+      <button class="close" onclick="UP.fecharModal()">&times;</button>
+    </div>
+
+    <div class="up-modal-body">
+      <input type="hidden" id="up-edit-id">
+
+      <!-- ─── TIPO ─── -->
+      <div class="up-fs">
+        <div class="up-fs-title">👤 Tipo de Parceiro</div>
+        <div class="up-tipo-grid">
+          <label class="up-tipo">
+            <input type="radio" name="up-tipo" value="TERCEIRO" checked>
+            <div class="up-tipo-box">
+              <span class="ico">🤝</span>
+              <span class="txt">Terceiro (PJ)</span>
+            </div>
+          </label>
+          <label class="up-tipo">
+            <input type="radio" name="up-tipo" value="FREELANCER">
+            <div class="up-tipo-box">
+              <span class="ico">⚡</span>
+              <span class="txt">Freelancer (PF)</span>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <!-- ─── DADOS ─── -->
+      <div class="up-fs">
+        <div class="up-fs-title">📋 Dados Cadastrais</div>
+        <div class="up-row">
+          <div class="up-fg full">
+            <label>Nome / Razão Social *</label>
+            <input type="text" id="up-nome" class="up-input" placeholder="Nome completo ou razão social">
+          </div>
+        </div>
+        <div class="up-row">
+          <div class="up-fg">
+            <label>CNPJ / CPF</label>
+            <input type="text" id="up-cnpj" class="up-input" placeholder="00.000.000/0000-00">
+          </div>
+          <div class="up-fg">
+            <label>Nome Fantasia</label>
+            <input type="text" id="up-fantasia" class="up-input" placeholder="Opcional">
+          </div>
+        </div>
+        <div class="up-row">
+          <div class="up-fg">
+            <label>Telefone / WhatsApp</label>
+            <input type="text" id="up-telefone" class="up-input" placeholder="(00) 00000-0000">
+          </div>
+          <div class="up-fg">
+            <label>Cidade</label>
+            <input type="text" id="up-cidade" class="up-input" placeholder="Ex: Garanhuns">
+          </div>
+          <div class="up-fg">
+            <label>UF</label>
+            <input type="text" id="up-uf" class="up-input" placeholder="PE" maxlength="2">
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── ACESSO ─── -->
+      <div class="up-fs" id="up-fs-acesso">
+        <div class="up-fs-title">🔑 Acesso ao Sistema</div>
+        <div class="up-row">
+          <div class="up-fg full">
+            <label>E-mail (login) *</label>
+            <input type="email" id="up-email" class="up-input" placeholder="parceiro@empresa.com">
+          </div>
+        </div>
+        <div class="up-row">
+          <div class="up-fg full">
+            <label>Senha inicial *</label>
+            <div class="up-senha-wrap">
+              <input type="text" id="up-senha" class="up-input" placeholder="Mínimo 6 caracteres">
+              <button type="button" class="up-gerar-btn" onclick="UP.gerarSenha()" title="Gerar senha aleatória">
+                <i class="fas fa-dice"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── COMISSÃO ─── -->
+      <div class="up-fs">
+        <div class="up-fs-title">💰 Modelo de Comissão</div>
+        <div class="up-com-tipo">
+          <label>
+            <input type="radio" name="up-com-tipo" value="SIMPLIFICADO" checked onchange="UP.trocarComissao()">
+            <span class="up-pill simplificado">Simplificado</span>
+          </label>
+          <label>
+            <input type="radio" name="up-com-tipo" value="DETALHADO" onchange="UP.trocarComissao()">
+            <span class="up-pill detalhado">Detalhado</span>
+          </label>
+        </div>
+
+        <div id="up-com-simplificado" class="up-com-extra active">
+          <div class="up-row">
+            <div class="up-fg">
+              <label>Vendas (%)</label>
+              <input type="number" id="up-com-vendas" class="up-input" value="10" step="0.5" min="0" max="100">
+            </div>
+            <div class="up-fg">
+              <label>Renegociação (%)</label>
+              <input type="number" id="up-com-reneg" class="up-input" value="8" step="0.5" min="0" max="100">
+            </div>
+          </div>
+        </div>
+
+        <div id="up-com-detalhado" class="up-com-extra">
+          <div class="up-row">
+            <div class="up-fg"><label>Acessos Novos (%)</label><input type="number" id="up-com-acessos_novos" class="up-input" value="10" step="0.5" min="0" max="100"></div>
+            <div class="up-fg"><label>Aditivo (%)</label><input type="number" id="up-com-aditivo" class="up-input" value="5" step="0.5" min="0" max="100"></div>
+            <div class="up-fg"><label>Migração (%)</label><input type="number" id="up-com-migracao" class="up-input" value="8" step="0.5" min="0" max="100"></div>
+            <div class="up-fg"><label>Portabilidade (%)</label><input type="number" id="up-com-portabilidade" class="up-input" value="12" step="0.5" min="0" max="100"></div>
+            <div class="up-fg"><label>Corporate M2M (%)</label><input type="number" id="up-com-m2m" class="up-input" value="15" step="0.5" min="0" max="100"></div>
+            <div class="up-fg"><label>VAS (%)</label><input type="number" id="up-com-vas" class="up-input" value="20" step="0.5" min="0" max="100"></div>
+            <div class="up-fg"><label>Renegociação (%)</label><input type="number" id="up-com-renegociacao" class="up-input" value="7" step="0.5" min="0" max="100"></div>
+            <div class="up-fg"><label>Ultra Fibra (%)</label><input type="number" id="up-com-ultra_fibra" class="up-input" value="10" step="0.5" min="0" max="100"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── STATUS ─── (só na edição) -->
+      <div class="up-fs" id="up-fs-status" style="display:none;">
+        <div class="up-fs-title">⚙️ Status</div>
+        <div class="up-row">
+          <div class="up-fg full">
+            <label>Status do Parceiro</label>
+            <select id="up-status" class="up-input">
+              <option value="ATIVO">🟢 Ativo</option>
+              <option value="INATIVO">⚪ Inativo</option>
+              <option value="SUSPENSO">🔴 Suspenso</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="up-modal-foot">
+      <button class="up-foot-btn cancel" onclick="UP.fecharModal()">Cancelar</button>
+      <button class="up-foot-btn save" id="up-btn-salvar" onclick="UP.salvar()">
+        <i class="fas fa-check"></i> Criar Parceiro
+      </button>
+    </div>
+  </div>
+</div>
+
+<div class="up-toast" id="up-toast"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  if (window._vexoParceirosLoaded) return;
+  window._vexoParceirosLoaded = true;
+
+  // ─── ESTADO ───────────────────────────────────────────
+  let PROFILE = null;
+  let PARCEIROS = [];
+  let PERMITE_EDITAR = false;
+  let PERMITE_CRIAR = false;
+
+  // ─── HELPERS ──────────────────────────────────────────
+  const $ = (id) => document.getElementById(id);
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m =>
+    ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+
+  function toast(msg, tipo) {
+    const t = $('up-toast');
+    t.className = 'up-toast show' + (tipo ? ' ' + tipo : '');
+    t.textContent = msg;
+    clearTimeout(t._timer);
+    t._timer = setTimeout(() => t.classList.remove('show'), 3500);
+  }
+
+  // ─── INIT ─────────────────────────────────────────────
+  (async function init() {
+    if (!window.sb) {
+      console.error('❌ supabase-client.js ausente');
+      toast('Erro: Supabase não carregado', 'error');
+      return;
+    }
+
+    // Perfil do usuário logado
+    try {
+      if (typeof window.getProfile === 'function') {
+        PROFILE = await window.getProfile();
+      }
+    } catch (e) {
+      console.warn('getProfile() falhou:', e);
+    }
+
+    // Fallback: lê do sessionStorage
+    if (!PROFILE) {
+      PROFILE = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    }
+
+    const role = String(PROFILE.role || PROFILE.cargo || '').toUpperCase().trim();
+
+    PERMITE_CRIAR  = role === 'ADMINISTRADOR' || role === 'BACKOFFICE';
+    PERMITE_EDITAR = role === 'ADMINISTRADOR' || role === 'BACKOFFICE';
+
+    // Se não é admin/gerente/backoffice → bloqueia
+    const podeVer = ['ADMINISTRADOR','BACKOFFICE','GERENTE'].includes(role);
+    if (!podeVer) {
+      $('up-grid').innerHTML = `
+        <div class="up-empty">
+          <i class="fas fa-lock"></i>
+          <h3>Acesso restrito</h3>
+          <p>Você não tem permissão para gerenciar parceiros.</p>
+        </div>`;
+      const btn = $('up-btn-novo'); if (btn) btn.style.display = 'none';
+      return;
+    }
+
+    // Esconde botão "Novo" pra GERENTE (só leitura)
+    if (!PERMITE_CRIAR) {
+      const btn = $('up-btn-novo');
+      if (btn) btn.style.display = 'none';
+    }
+
+    // Bind dos filtros
+    $('up-busca').addEventListener('input', aplicarFiltros);
+    $('up-filtro-tipo').addEventListener('change', aplicarFiltros);
+    $('up-filtro-status').addEventListener('change', aplicarFiltros);
+
+    // Fecha modal clicando no overlay
+    $('up-modal').addEventListener('click', (e) => {
+      if (e.target === $('up-modal')) fecharModal();
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && $('up-modal').classList.contains('open')) fecharModal();
+    });
+
+    carregar();
+  })();
+
+  // ─── CARREGAR ─────────────────────────────────────────
+  async function carregar() {
+    const grid = $('up-grid');
+    grid.innerHTML = `
+      <div class="up-empty">
+        <i class="fas fa-spinner fa-spin"></i>
+        <h3>Carregando parceiros...</h3>
+      </div>`;
+
+    const { data, error } = await window.sb.rpc('listar_parceiros_para_gestao');
+
+    if (error) {
+      console.error(error);
+      grid.innerHTML = `
+        <div class="up-empty">
+          <i class="fas fa-exclamation-triangle" style="color:#ef4444;"></i>
+          <h3 style="color:#991b1b;">Erro ao carregar</h3>
+          <p>${esc(error.message)}</p>
+        </div>`;
+      return;
+    }
+
+    PARCEIROS = Array.isArray(data) ? data : [];
+    renderKPIs();
+    aplicarFiltros();
+  }
+
+  function renderKPIs() {
+    const total = PARCEIROS.length;
+    const ativos = PARCEIROS.filter(p => p.status === 'ATIVO').length;
+    const terceiros = PARCEIROS.filter(p => p.tipo === 'TERCEIRO').length;
+    const freelancers = PARCEIROS.filter(p => p.tipo === 'FREELANCER').length;
+
+    $('up-kpis').innerHTML = `
+      <div class="up-kpi">
+        <div class="up-kpi-icon blue"><i class="fas fa-handshake"></i></div>
+        <div class="up-kpi-body">
+          <div class="up-kpi-label">Total</div>
+          <div class="up-kpi-value">${total}</div>
+        </div>
+      </div>
+      <div class="up-kpi">
+        <div class="up-kpi-icon green"><i class="fas fa-check-circle"></i></div>
+        <div class="up-kpi-body">
+          <div class="up-kpi-label">Ativos</div>
+          <div class="up-kpi-value">${ativos}</div>
+        </div>
+      </div>
+      <div class="up-kpi">
+        <div class="up-kpi-icon purple"><i class="fas fa-building"></i></div>
+        <div class="up-kpi-body">
+          <div class="up-kpi-label">Terceiros (PJ)</div>
+          <div class="up-kpi-value">${terceiros}</div>
+        </div>
+      </div>
+      <div class="up-kpi">
+        <div class="up-kpi-icon amber"><i class="fas fa-bolt"></i></div>
+        <div class="up-kpi-body">
+          <div class="up-kpi-label">Freelancers</div>
+          <div class="up-kpi-value">${freelancers}</div>
+        </div>
+      </div>
+    `;
+  }
+
+  // ─── FILTROS ──────────────────────────────────────────
+  function aplicarFiltros() {
+    const busca = ($('up-busca').value || '').toLowerCase().trim();
+    const tipo = $('up-filtro-tipo').value;
+    const status = $('up-filtro-status').value;
+
+    let filtrados = [...PARCEIROS];
+
+    if (busca) {
+      filtrados = filtrados.filter(p =>
+        (p.nome_razao || '').toLowerCase().includes(busca) ||
+        (p.nome_fantasia || '').toLowerCase().includes(busca) ||
+        (p.email_login || '').toLowerCase().includes(busca) ||
+        (p.cnpj_cpf || '').toLowerCase().includes(busca) ||
+        (p.cidade || '').toLowerCase().includes(busca)
+      );
+    }
+    if (tipo)   filtrados = filtrados.filter(p => p.tipo === tipo);
+    if (status) filtrados = filtrados.filter(p => p.status === status);
+
+    renderLista(filtrados);
+  }
+
+  // ─── LISTA ────────────────────────────────────────────
+  function renderLista(lista) {
+    const grid = $('up-grid');
+
+    if (!lista.length) {
+      grid.innerHTML = `
+        <div class="up-empty">
+          <i class="fas fa-handshake"></i>
+          <h3>Nenhum parceiro encontrado</h3>
+          <p>Ajuste os filtros ou clique em "Novo Parceiro" para começar.</p>
+        </div>`;
+      return;
+    }
+
+    grid.innerHTML = lista.map(p => {
+      const tipoCls = p.tipo === 'FREELANCER' ? 'freelancer' : 'terceiro';
+      const tipoBadge = p.tipo === 'FREELANCER'
+        ? '<span class="up-badge up-badge-freelancer">⚡ Freelancer</span>'
+        : '<span class="up-badge up-badge-terceiro">🤝 Terceiro</span>';
+
+      const statusKey = (p.status || '').toLowerCase();
+      const statusBadge = p.status === 'ATIVO'
+        ? '<span class="up-badge up-badge-ativo">🟢 Ativo</span>'
+        : p.status === 'SUSPENSO'
+          ? '<span class="up-badge up-badge-suspenso">🔴 Suspenso</span>'
+          : '<span class="up-badge up-badge-inativo">⚪ Inativo</span>';
+
+      const cfg = p.comissao_config || {};
+      const isSimpl = cfg.tipo === 'SIMPLIFICADO';
+      const comResumo = isSimpl
+        ? `Simplificado · Vendas ${cfg.vendas ?? 0}% / Reneg ${cfg.renegociacao ?? 0}%`
+        : 'Detalhado · 8 modalidades';
+
+      const statusLogin = p.tem_login
+        ? '<span style="color:#10b981;">✅ Login ativo</span>'
+        : '<span style="color:#f59e0b;">⚠️ Sem login</span>';
+
+      const botoes = PERMITE_EDITAR
+        ? `
+          <button class="up-act edit" onclick="UP.abrirModal('${esc(p.id)}')">
+            <i class="fas fa-pen"></i> Editar
+          </button>
+          <button class="up-act toggle" onclick="UP.toggleStatus('${esc(p.id)}', '${esc(p.status)}')">
+            <i class="fas fa-power-off"></i> ${p.status === 'ATIVO' ? 'Desativar' : 'Ativar'}
+          </button>`
+        : `<button class="up-act" onclick="UP.abrirModal('${esc(p.id)}')">
+             <i class="fas fa-eye"></i> Ver
+           </button>`;
+
+      return `
+        <div class="up-card ${tipoCls}">
+          <div class="up-card-head">
+            <div class="up-card-badges">
+              ${tipoBadge}
+              ${statusBadge}
+            </div>
+          </div>
+
+          <h4 class="up-card-name">${esc(p.nome_razao || '—')}</h4>
+          <div class="up-card-doc">
+            ${esc(p.cnpj_cpf || '—')}
+          </div>
+
+          <div class="up-card-info">
+            <div><i class="fas fa-envelope"></i> ${esc(p.email_login || '—')}</div>
+            ${p.telefone ? `<div><i class="fas fa-phone"></i> ${esc(p.telefone)}</div>` : ''}
+            ${(p.cidade || p.uf) ? `<div><i class="fas fa-map-marker-alt"></i> ${esc(p.cidade || '')}${p.uf ? '/' + esc(p.uf) : ''}</div>` : ''}
+            <div><i class="fas fa-user-shield"></i> ${statusLogin}</div>
+          </div>
+
+          <div class="up-card-comissao">
+            💰 <b>${esc(comResumo)}</b>
+          </div>
+
+          <div class="up-card-actions">
+            ${botoes}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  // ─── MODAL ────────────────────────────────────────────
+  function abrirModal(parceiroId) {
+    const edit = !!parceiroId;
+    $('up-edit-id').value = parceiroId || '';
+    $('up-modal-titulo').textContent = edit ? 'Editar Parceiro' : 'Novo Parceiro';
+    $('up-modal-sub').textContent = edit
+      ? 'Atualize os dados do parceiro'
+      : 'Preencha os dados e crie o acesso';
+
+    // Reset
+    limparForm();
+
+    if (edit) {
+      const p = PARCEIROS.find(x => x.id === parceiroId);
+      if (!p) { toast('Parceiro não encontrado', 'error'); return; }
+
+      document.querySelector(`input[name="up-tipo"][value="${p.tipo}"]`).checked = true;
+      $('up-nome').value = p.nome_razao || '';
+      $('up-fantasia').value = p.nome_fantasia || '';
+      $('up-cnpj').value = p.cnpj_cpf || '';
+      $('up-telefone').value = p.telefone || '';
+      $('up-cidade').value = p.cidade || '';
+      $('up-uf').value = p.uf || '';
+
+      // Esconde a seção de acesso (email/senha) na edição
+      $('up-fs-acesso').style.display = 'none';
+      $('up-fs-status').style.display = '';
+
+      // Status atual
+      $('up-status').value = p.status || 'ATIVO';
+
+      // Config de comissão
+      const cfg = p.comissao_config || {};
+      const tipoCom = cfg.tipo === 'DETALHADO' ? 'DETALHADO' : 'SIMPLIFICADO';
+      document.querySelector(`input[name="up-com-tipo"][value="${tipoCom}"]`).checked = true;
+      trocarComissao();
+
+      if (tipoCom === 'SIMPLIFICADO') {
+        $('up-com-vendas').value = cfg.vendas ?? 10;
+        $('up-com-reneg').value  = cfg.renegociacao ?? 8;
+      } else {
+        ['acessos_novos','aditivo','migracao','portabilidade','m2m','vas','renegociacao','ultra_fibra'].forEach(k => {
+          const el = $('up-com-' + k);
+          if (el) el.value = cfg[k] ?? 0;
+        });
+      }
+
+      // Bloqueia tudo se for só leitura
+      if (!PERMITE_EDITAR) {
+        document.querySelectorAll('#up-modal .up-input, #up-modal input, #up-modal select').forEach(el => {
+          el.disabled = true;
+        });
+        $('up-btn-salvar').style.display = 'none';
+      } else {
+        $('up-btn-salvar').textContent = 'Salvar Alterações';
+      }
+    } else {
+      $('up-fs-acesso').style.display = '';
+      $('up-fs-status').style.display = 'none';
+      $('up-btn-salvar').innerHTML = '<i class="fas fa-check"></i> Criar Parceiro';
+    }
+
+    $('up-modal').classList.add('open');
+  }
+
+  function fecharModal() {
+    $('up-modal').classList.remove('open');
+  }
+
+  function limparForm() {
+    $('up-nome').value = '';
+    $('up-fantasia').value = '';
+    $('up-cnpj').value = '';
+    $('up-telefone').value = '';
+    $('up-cidade').value = '';
+    $('up-uf').value = '';
+    $('up-email').value = '';
+    $('up-senha').value = '';
+    $('up-com-vendas').value = 10;
+    $('up-com-reneg').value  = 8;
+    document.querySelector('input[name="up-tipo"][value="TERCEIRO"]').checked = true;
+    document.querySelector('input[name="up-com-tipo"][value="SIMPLIFICADO"]').checked = true;
+    trocarComissao();
+
+    // Reabilita campos (caso a última edição tenha sido em modo leitura)
+    document.querySelectorAll('#up-modal .up-input, #up-modal input, #up-modal select').forEach(el => {
+      el.disabled = false;
+    });
+    $('up-btn-salvar').style.display = '';
+  }
+
+  function trocarComissao() {
+    const tipo = document.querySelector('input[name="up-com-tipo"]:checked').value;
+    $('up-com-simplificado').classList.toggle('active', tipo === 'SIMPLIFICADO');
+    $('up-com-detalhado').classList.toggle('active', tipo === 'DETALHADO');
+  }
+
+  function gerarSenha() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let senha = '';
+    for (let i = 0; i < 10; i++) senha += chars[Math.floor(Math.random() * chars.length)];
+    $('up-senha').value = senha;
+  }
+
+  // ─── SALVAR ───────────────────────────────────────────
+  async function salvar() {
+    const editId = $('up-edit-id').value;
+    const editando = !!editId;
+
+    const btn = $('up-btn-salvar');
+    btn.disabled = true;
+    const txtAntigo = btn.innerHTML;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+
+    try {
+      const tipo = document.querySelector('input[name="up-tipo"]:checked').value;
+      const nome = $('up-nome').value.trim();
+      const nomeFantasia = $('up-fantasia').value.trim() || null;
+      const cnpj = $('up-cnpj').value.trim() || null;
+      const telefone = $('up-telefone').value.trim() || null;
+      const cidade = $('up-cidade').value.trim() || null;
+      const uf = ($('up-uf').value.trim() || '').toUpperCase() || null;
+
+      // Validações
+      if (!nome) throw new Error('Nome / Razão Social é obrigatório.');
+
+      // Monta comissao_config
+      const tipoCom = document.querySelector('input[name="up-com-tipo"]:checked').value;
+      let comissao_config;
+      if (tipoCom === 'SIMPLIFICADO') {
+        comissao_config = {
+          tipo: 'SIMPLIFICADO',
+          vendas: parseFloat($('up-com-vendas').value) || 0,
+          renegociacao: parseFloat($('up-com-reneg').value) || 0
+        };
+      } else {
+        comissao_config = { tipo: 'DETALHADO' };
+        ['acessos_novos','aditivo','migracao','portabilidade','m2m','vas','renegociacao','ultra_fibra'].forEach(k => {
+          comissao_config[k] = parseFloat($('up-com-' + k).value) || 0;
+        });
+      }
+
+      // ─── EDITAR ───────────────────────────────────
+      if (editando) {
+        const status = $('up-status').value;
+        const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
+          p_parceiro_id: editId,
+          p_nome_razao: nome,
+          p_nome_fantasia: nomeFantasia,
+          p_cnpj_cpf: cnpj,
+          p_telefone: telefone,
+          p_cidade: cidade,
+          p_uf: uf,
+          p_comissao_config: comissao_config,
+          p_status: status
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.message || 'Erro ao salvar');
+
+        toast('✅ Parceiro atualizado!', 'success');
+      }
+      // ─── CRIAR ────────────────────────────────────
+      else {
+        const email = $('up-email').value.trim().toLowerCase();
+        const senha = $('up-senha').value;
+
+        if (!email) throw new Error('E-mail é obrigatório.');
+        if (!senha || senha.length < 6) throw new Error('Senha deve ter ao menos 6 caracteres.');
+
+        const { data, error } = await window.sb.rpc('admin_criar_parceiro', {
+          p_email: email,
+          p_senha: senha,
+          p_nome_razao: nome,
+          p_tipo: tipo,
+          p_nome_fantasia: nomeFantasia,
+          p_cnpj_cpf: cnpj,
+          p_telefone: telefone,
+          p_cidade: cidade,
+          p_uf: uf,
+          p_comissao_config: comissao_config
+        });
+
+        if (error) throw error;
+        if (!data?.success) throw new Error(data?.message || 'Erro ao criar parceiro');
+
+        toast('✅ Parceiro criado com sucesso!', 'success');
+      }
+
+      fecharModal();
+      await carregar();
+
+    } catch (e) {
+      console.error(e);
+      toast('❌ ' + (e.message || 'Erro inesperado'), 'error');
+    } finally {
+      btn.disabled = false;
+      btn.innerHTML = txtAntigo;
+    }
+  }
+
+  // ─── TOGGLE STATUS ────────────────────────────────────
+  async function toggleStatus(id, statusAtual) {
+    const novoStatus = statusAtual === 'ATIVO' ? 'INATIVO' : 'ATIVO';
+    if (!confirm(`Deseja ${novoStatus === 'ATIVO' ? 'ativar' : 'desativar'} este parceiro?`)) return;
+
+    const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
+      p_parceiro_id: id,
+      p_status: novoStatus
+    });
+
+    if (error || !data?.success) {
+      toast('❌ Erro: ' + (error?.message || data?.message || '?'), 'error');
+      return;
+    }
+
+    toast(`✅ Parceiro ${novoStatus === 'ATIVO' ? 'ativado' : 'desativado'}!`, 'success');
+    await carregar();
+  }
+
+  // ─── EXPÕE API ────────────────────────────────────────
+  window.UP = {
+    carregar,
+    abrirModal,
+    fecharModal,
+    salvar,
+    trocarComissao,
+    gerarSenha,
+    toggleStatus
+  };
+
+  console.log('✅ [VEXO] Módulo Gestão de Parceiros inicializado');
+})();
+</script>
+</body>
+</html>
