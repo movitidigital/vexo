@@ -153,8 +153,8 @@
 <div class="menu-item" id="menu-credenciamento" onclick="navegar('credenciamento', this)">
   <i class="fa-solid fa-user-check"></i> Credenciamento
 </div>
-<div class="menu-item" onclick="navegar('usuarios', this)">
-  <i class="fa-solid fa-users-gear"></i> Gestão de Usuários
+<div class="menu-item" id="menu-parceiros" onclick="navegar('usuarios_parceiro', this)" style="display: none;">
+  <i class="fa-solid fa-handshake"></i> Gestão de Parceiros
 </div>
 
 <!-- 🌟 APENAS UM ITEM DE CONFIGURAÇÕES (visível apenas para ADMIN) -->
@@ -196,6 +196,16 @@
   </main>
 
   <script>
+    function verificarPermissaoParceiros() {
+  const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const cargo = (user.role || '').toUpperCase().trim();
+  const menu = document.getElementById('menu-parceiros');
+  if (menu) {
+    menu.style.display = ['ADMINISTRADOR','BACKOFFICE','GERENTE'].includes(cargo) ? 'flex' : 'none';
+  }
+}
+// Chame após o login
+verificarPermissaoParceiros();
     // ============================================
     // FUNÇÕES DE INICIALIZAÇÃO DO DASHBOARD FREELANCER
     // ============================================
