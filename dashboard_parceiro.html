@@ -427,7 +427,7 @@
     if (user) {
       const nameEl = $('user-display-name');
       const avEl = $('user-avatar');
-      if (nameEl) nameEl.innerText = user.username || user.nome || 'Usuário';
+      if (nameEl) nameEl.innerText = user.nome || user.username || 'Usuário';
       if (avEl) {
         avEl.src = user.photoUrl
           || `https://ui-avatars.com/api/?name=${encodeURIComponent(user.username || user.nome || 'U')}&background=3b82f6&color=fff`;
