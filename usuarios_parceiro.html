@@ -1085,27 +1085,32 @@
     $('up-modal').classList.remove('open');
   }
 
-  function limparForm() {
-    $('up-nome').value = '';
-    $('up-fantasia').value = '';
-    $('up-cnpj').value = '';
-    $('up-telefone').value = '';
-    $('up-cidade').value = '';
-    $('up-uf').value = '';
-    $('up-email').value = '';
-    $('up-senha').value = '';
-    $('up-com-vendas').value = 10;
-    $('up-com-reneg').value  = 8;
-    document.querySelector('input[name="up-tipo"][value="TERCEIRO"]').checked = true;
-    document.querySelector('input[name="up-com-tipo"][value="SIMPLIFICADO"]').checked = true;
-    trocarComissao();
+ function limparForm() {
+  $('up-nome').value = '';
+  $('up-fantasia').value = '';
+  $('up-cnpj').value = '';
+  $('up-telefone').value = '';
+  $('up-cidade').value = '';
+  $('up-uf').value = '';
+  $('up-email').value = '';
+  $('up-senha').value = '';
+  $('up-com-vendas').value = 10;
+  $('up-com-reneg').value = 8;
 
-    // Reabilita campos (caso a última edição tenha sido em modo leitura)
-    document.querySelectorAll('#up-modal .up-input, #up-modal input, #up-modal select').forEach(el => {
-      el.disabled = false;
-    });
-    $('up-btn-salvar').style.display = '';
-  }
+  document.querySelector('input[name="up-tipo"][value="TERCEIRO"]').checked = true;
+  document.querySelector('input[name="up-com-tipo"][value="SIMPLIFICADO"]').checked = true;
+  trocarComissao();
+
+  // 🔥 ESTA LINHA É A CORREÇÃO CRÍTICA:
+  $('up-fs-acesso').style.display = '';
+  $('up-fs-status').style.display = 'none';
+
+  document.querySelectorAll('#up-modal .up-input, #up-modal input, #up-modal select').forEach(el => {
+    el.disabled = false;
+  });
+  $('up-btn-salvar').style.display = '';
+  $('up-btn-salvar').innerHTML = '<i class="fas fa-check"></i> Criar Parceiro';
+}
 
   function trocarComissao() {
     const tipo = document.querySelector('input[name="up-com-tipo"]:checked').value;
