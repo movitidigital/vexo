@@ -1213,9 +1213,21 @@
       <div class="cofre-modal-body">
         <input type="hidden" id="cofreEditId">
 
-        <div class="cofre-fieldset">
+              <div class="cofre-fieldset">
           <div class="cofre-fieldset-title">🏢 Cliente</div>
-                   <div class="cofre-form-row">
+
+          <div class="cofre-form-row">
+            <div class="cofre-form-group">
+              <label>CNPJ *</label>
+              <input type="text" id="cofreCnpj" class="cofre-input is-cnpj" placeholder="00.000.000/0000-00">
+            </div>
+            <div class="cofre-form-group" style="grid-column: span 2;">
+              <label>Razão Social *</label>
+              <input type="text" id="cofreRazao" class="cofre-input" placeholder="Nome da empresa">
+            </div>
+          </div>
+
+          <div class="cofre-form-row">
             <div class="cofre-form-group">
               <label>Contato (WhatsApp)</label>
               <input type="text" id="cofreContato" class="cofre-input" placeholder="(00) 00000-0000">
