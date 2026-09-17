@@ -196,14 +196,28 @@
   </main>
 
   <script>
-    function verificarPermissaoParceiros() {
+function verificarPermissaoParceiros() {
   const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const cargo = (user.role || '').toUpperCase().trim();
+  const cargo = String(user.role || user.cargo || '').toUpperCase().trim();
+
   const menu = document.getElementById('menu-parceiros');
   if (menu) {
-    menu.style.display = ['ADMINISTRADOR','BACKOFFICE','GERENTE'].includes(cargo) ? 'flex' : 'none';
+    const podeVer = ['ADMINISTRADOR','BACKOFFICE','GERENTE'].includes(cargo);
+    menu.style.display = podeVer ? 'flex' : 'none';
+    console.log('🔎 menu-parceiros:', { cargo, podeVer });
+  }
+
+  // Aproveita e revalida o credenciamento
+  const menuCred = document.getElementById('menu-credenciamento');
+  if (menuCred) {
+    const podeVerCred = ['ADMINISTRADOR','MASTER'].includes(cargo);
+    menuCred.style.display = podeVerCred ? 'flex' : 'none';
+    console.log('🔎 menu-credenciamento:', { cargo, podeVerCred });
   }
 }
+
+// Chama depois do DOM pronto
+document.addEventListener('DOMContentLoaded', verificarPermissaoParceiros);
 // Chame após o login
 verificarPermissaoParceiros();
     // ============================================
