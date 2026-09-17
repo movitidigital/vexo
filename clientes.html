@@ -924,6 +924,90 @@
       cursor: not-allowed;
       transform: none;
     }
+        /* ═══════════════════════════════════════════════════════
+       TOGGLE: DOCUMENTAÇÃO CAPTURADA
+    ═══════════════════════════════════════════════════════ */
+    .cofre-toggle-row {
+      background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+      border: 1.5px solid #bae6fd;
+      border-radius: 14px;
+      padding: 16px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      user-select: none;
+      margin-top: 14px;
+    }
+    .cofre-toggle-row:hover {
+      border-color: #7dd3fc;
+      box-shadow: 0 4px 12px rgba(14, 165, 233, 0.1);
+    }
+    .cofre-toggle-row.ativo {
+      background: linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%);
+      border-color: #6ee7b7;
+    }
+    .cofre-toggle-row.ativo:hover {
+      border-color: #34d399;
+      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.15);
+    }
+    .cofre-toggle-icon {
+      width: 44px; height: 44px;
+      border-radius: 12px;
+      background: #e0f2fe;
+      color: #0284c7;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px; flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+    .cofre-toggle-row.ativo .cofre-toggle-icon {
+      background: #d1fae5;
+      color: #059669;
+    }
+    .cofre-toggle-text { flex: 1; min-width: 0; }
+    .cofre-toggle-title {
+      font-size: 13px; font-weight: 800;
+      color: #0f172a; margin-bottom: 3px;
+    }
+    .cofre-toggle-row.ativo .cofre-toggle-title { color: #065f46; }
+    .cofre-toggle-desc {
+      font-size: 11px; color: #64748b; line-height: 1.4;
+    }
+    .cofre-switch {
+      position: relative;
+      width: 48px; height: 28px;
+      border-radius: 20px;
+      background: #cbd5e1;
+      flex-shrink: 0;
+      transition: background 0.25s ease;
+    }
+    .cofre-switch::after {
+      content: '';
+      position: absolute;
+      top: 3px; left: 3px;
+      width: 22px; height: 22px;
+      border-radius: 50%;
+      background: white;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      transition: transform 0.25s ease;
+    }
+    .cofre-toggle-row.ativo .cofre-switch {
+      background: linear-gradient(135deg, #10b981, #059669);
+    }
+    .cofre-toggle-row.ativo .cofre-switch::after {
+      transform: translateX(20px);
+    }
+    .cofre-badge.doc-ok {
+      background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+    }
+    .cofre-badge.doc-pendente {
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+      color: #9a3412;
+      border: 1px solid #fdba74;
+    }
   </style>
 </head>
 <body>
@@ -1131,16 +1215,37 @@
 
         <div class="cofre-fieldset">
           <div class="cofre-fieldset-title">🏢 Cliente</div>
-          <div class="cofre-form-row">
+                   <div class="cofre-form-row">
             <div class="cofre-form-group">
-              <label>CNPJ *</label>
-              <input type="text" id="cofreCnpj" class="cofre-input is-cnpj" placeholder="00.000.000/0000-00">
+              <label>Contato (WhatsApp)</label>
+              <input type="text" id="cofreContato" class="cofre-input" placeholder="(00) 00000-0000">
             </div>
-            <div class="cofre-form-group" style="grid-column: span 2;">
-              <label>Razão Social *</label>
-              <input type="text" id="cofreRazao" class="cofre-input" placeholder="Nome da empresa">
+            <div class="cofre-form-group">
+              <label>Contato Alternativo</label>
+              <input type="text" id="cofreContatoAlt" class="cofre-input" placeholder="Opcional">
+            </div>
+            <div class="cofre-form-group">
+              <label>Código do Cliente</label>
+              <input type="text" id="cofreCodigo" class="cofre-input" placeholder="Ex: 7.2236705">
             </div>
           </div>
+
+          <div class="cofre-toggle-row" id="cofreToggleDoc" onclick="toggleDocumentacaoCapturada()">
+            <div class="cofre-toggle-icon">
+              <i class="fas fa-folder-open"></i>
+            </div>
+            <div class="cofre-toggle-text">
+              <div class="cofre-toggle-title">
+                <span id="cofreDocStatus">Documentação não capturada</span>
+              </div>
+              <div class="cofre-toggle-desc">
+                Marque quando já tiver em mãos CNPJ, contrato social e dados cadastrais do cliente.
+              </div>
+            </div>
+            <div class="cofre-switch"></div>
+            <input type="hidden" id="cofreDocCapturada" value="false">
+          </div>
+        </div>
           <div class="cofre-form-row">
             <div class="cofre-form-group">
               <label>Contato (WhatsApp)</label>
@@ -1957,7 +2062,8 @@
       tentativas: row.tentativas || 0,
       ultimo_contato: row.ultimo_contato,
       nota_encerramento: row.nota_encerramento,
-      historico_contatos: row.historico_contatos || []
+      historico_contatos: row.historico_contatos || [],
+      documentacao_capturada: row.documentacao_capturada === true
     };
   }
 
@@ -2205,10 +2311,13 @@
             </div>` : ''}
 
           <div class="cofre-card-top">
-            <div class="cofre-card-badges">
+             <div class="cofre-card-badges">
               <span class="cofre-badge ${tipo.cls}">${tipo.ico} ${tipo.label}</span>
               <span class="cofre-badge ${prio.cls}">${prio.ico} ${prio.label}</span>
               ${isPj ? `<span class="cofre-badge pj-futuro-tag">⭐ PJ Futuro</span>` : ''}
+              <span class="cofre-badge ${c.documentacao_capturada ? 'doc-ok' : 'doc-pendente'}">
+                ${c.documentacao_capturada ? '📄 Doc OK' : '📄 Doc pendente'}
+              </span>
             </div>
             <span class="cofre-card-urgencia ${urg.urgCls || ''}">${urg.label}</span>
           </div>
@@ -2367,7 +2476,20 @@
       .cofreExcluirLote(ids);
   };
 
+  window.toggleDocumentacaoCapturada = function() {
+    const input = document.getElementById('cofreDocCapturada');
+    const row = document.getElementById('cofreToggleDoc');
+    const status = document.getElementById('cofreDocStatus');
+    if (!input || !row || !status) return;
 
+    const novoValor = input.value !== 'true';
+    input.value = novoValor ? 'true' : 'false';
+
+    row.classList.toggle('ativo', novoValor);
+    status.innerText = novoValor
+      ? '✅ Documentação capturada'
+      : 'Documentação não capturada';
+  };
   // ═══════════════════════════════════════════════════════════
   // Modal — Abrir/Salvar
   // ═══════════════════════════════════════════════════════════
@@ -2384,6 +2506,9 @@
     document.getElementById('cofreValor').value = '';
     document.getElementById('cofreLinhas').value = '';
     document.getElementById('cofreMotivo').value = '';
+    document.getElementById('cofreDocCapturada').value = 'false';
+    document.getElementById('cofreToggleDoc').classList.remove('ativo');
+    document.getElementById('cofreDocStatus').innerText = 'Documentação não capturada';
     document.querySelector('input[name="cofreTipo"][value="RENOVACAO"]').checked = true;
     document.querySelector('input[name="cofrePrioridade"][value="MEDIA"]').checked = true;
     document.getElementById('cofreModalTitulo').innerText = 'Nova Retomada';
@@ -2403,6 +2528,14 @@
       if (rt) rt.checked = true;
       const rp = document.querySelector(`input[name="cofrePrioridade"][value="${dadosExistentes.prioridade}"]`);
       if (rp) rp.checked = true;
+            // popular o toggle de documentação
+      const docCapturada = dadosExistentes.documentacao_capturada === true;
+      document.getElementById('cofreDocCapturada').value = docCapturada ? 'true' : 'false';
+      document.getElementById('cofreToggleDoc').classList.toggle('ativo', docCapturada);
+      document.getElementById('cofreDocStatus').innerText = docCapturada
+        ? '✅ Documentação capturada'
+        : 'Documentação não capturada';
+
       document.getElementById('cofreModalTitulo').innerText = 'Editar Retomada';
     }
 
@@ -2442,7 +2575,8 @@
       data_retomada: data,
       motivo,
       valor_potencial: document.getElementById('cofreValor').value || null,
-      qtd_linhas_estimada: document.getElementById('cofreLinhas').value || null
+      qtd_linhas_estimada: document.getElementById('cofreLinhas').value || null,
+      documentacao_capturada: document.getElementById('cofreDocCapturada').value === 'true'
     };
 
     google.script.run
