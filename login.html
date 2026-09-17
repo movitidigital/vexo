@@ -296,7 +296,47 @@ async function executarLogin() {
     btn.disabled = false;
     if(loader) loader.style.display = "none";
   } else {
-    sessionStorage.setItem('usuarioLogado', JSON.stringify(data.user));
+    // Após sb.auth.signInWithPassword, busca o profile completo
+const { data: { user } } = await sb.auth.getUser();
+
+const { data: profile } = await sb
+  .from('profiles')
+  .select('id, nome, sobrenome, email, role, ativo, tenant_id, parceiro_id, matricula, photo_url')
+  .eq('id', user.id)
+  .single();
+
+if (!profile) {
+  alert('Perfil não encontrado. Contate o administrador.');
+  await sb.auth.signOut();
+  return;
+}
+
+if (profile.ativo === false) {
+  alert('Sua conta está inativa.');
+  await sb.auth.signOut();
+  return;
+}
+
+// 🔥 AGORA SIM: salva o PROFILE, não o user do Auth
+const sessaoFinal = {
+  id: profile.id,
+  nome: profile.nome || user.email,
+  username: profile.matricula || user.email,
+  sobrenome: profile.sobrenome || '',
+  email: profile.email || user.email,
+  role: String(profile.role || '').toUpperCase().trim(),   // ← 'ADMINISTRADOR'
+  cargo: String(profile.role || '').toUpperCase().trim(),
+  ativo: profile.ativo !== false,
+  tenant_id: profile.tenant_id,
+  parceiro_id: profile.parceiro_id || null,
+  photoUrl: profile.photo_url || null
+};
+
+sessionStorage.setItem('usuarioLogado', JSON.stringify(sessaoFinal));
+console.log('✅ Sessão salva:', sessaoFinal);
+
+// Redireciona pro dashboard
+window.location.href = 'dashboard.html'; // ou dashboard_parceiro.html
     sessionStorage.setItem('tipoAcessoLogado', tipoAcesso);
     salvarPreferencia(tipoAcesso);
     
