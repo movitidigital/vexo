@@ -183,11 +183,10 @@
     .btn-cancel { background: #f1f5f9; border: none; color: #64748b; }
     .btn-save { background: #1e3c72; border: none; color: white; }
     .btn-save:hover { background: #162d54; transform: translateY(-1px); }
-        /* ═══════════════════════════════════════════════════════
+
+    /* ═══════════════════════════════════════════════════════
        ABA COFRE DE OPORTUNIDADES
     ═══════════════════════════════════════════════════════ */
-
-    /* ---------- Header do Cofre ---------- */
     .cofre-header {
       background: linear-gradient(135deg, #1e3c72 0%, #2a5298 55%, #4338ca 100%);
       border-radius: 20px;
@@ -582,7 +581,7 @@
     .cofre-act.ligar:hover { background: #3b82f6; color: white; }
     .cofre-act.vendas   { background: linear-gradient(135deg, #1e3c72, #2a5298); color: white; }
     .cofre-act.vendas:hover { box-shadow: 0 6px 14px rgba(30,60,114,0.3); }
-   .cofre-act.mais {
+    .cofre-act.mais {
       flex: 0 0 auto;
       min-width: 44px;
       background: #f1f5f9;
@@ -594,7 +593,7 @@
       padding: 0 10px;
       letter-spacing: 0;
     }
-  .cofre-act.mais:hover {
+    .cofre-act.mais:hover {
       background: #1e3c72;
       color: #ffffff;
       border-color: #1e3c72;
@@ -810,11 +809,10 @@
       .cofre-modal-body { padding: 18px; }
       .cofre-fieldset { padding: 16px; }
     }
-        /* ═══════════════════════════════════════════════════════
+
+    /* ═══════════════════════════════════════════════════════
        MODO SELEÇÃO + EXCLUSÃO EM LOTE
     ═══════════════════════════════════════════════════════ */
-
-    /* Checkbox nos cards */
     .cofre-card-check {
       position: absolute;
       top: 16px;
@@ -843,12 +841,10 @@
       color: white;
     }
 
-    /* Quando o modo seleção está ativo, cards ganham padding-left extra */
     body.cofre-selecao-ativa .cofre-card {
       padding-left: 52px;
     }
 
-    /* Barra flutuante inferior */
     .cofre-barra-lote {
       position: fixed;
       bottom: 20px;
@@ -924,7 +920,8 @@
       cursor: not-allowed;
       transform: none;
     }
-        /* ═══════════════════════════════════════════════════════
+
+    /* ═══════════════════════════════════════════════════════
        TOGGLE: DOCUMENTAÇÃO CAPTURADA
     ═══════════════════════════════════════════════════════ */
     .cofre-toggle-row {
@@ -1106,10 +1103,9 @@
     </div>
   </div>
 
-    <!-- ═══════════════ ABA: COFRE DE OPORTUNIDADES ═══════════════ -->
+  <!-- ═══════════════ ABA: COFRE DE OPORTUNIDADES ═══════════════ -->
   <div id="tab-cofre" style="display: none;">
 
-    <!-- Header com CTA -->
     <div class="cofre-header">
       <div class="cofre-header-text">
         <h2>
@@ -1118,7 +1114,7 @@
         </h2>
         <p>Retomadas agendadas, contratos madurando e clientes prontos para voltar ao radar. <strong>Você decide quando chamar. O Cofre lembra pra você.</strong></p>
       </div>
-            <div class="cofre-header-actions">
+      <div class="cofre-header-actions">
         <button class="btn-cofre ghost" onclick="carregarCofre()">
           <i class="fas fa-sync-alt"></i> Atualizar
         </button>
@@ -1131,13 +1127,10 @@
       </div>
     </div>
 
-    <!-- KPIs -->
     <div class="cofre-kpis" id="cofreKpis"></div>
 
-    <!-- Ranking (só ADMIN/BACKOFFICE) -->
     <div class="cofre-ranking" id="cofreRanking" style="display:none;"></div>
 
-    <!-- Filtros -->
     <div class="cofre-filtros">
       <div class="cofre-filtros-row">
         <div class="cofre-search">
@@ -1187,7 +1180,6 @@
       </div>
     </div>
 
-    <!-- Grid de cards -->
     <div class="cofre-grid" id="cofreGrid">
       <div class="cofre-vazio">
         <span class="ico">🎯</span>
@@ -1213,7 +1205,7 @@
       <div class="cofre-modal-body">
         <input type="hidden" id="cofreEditId">
 
-              <div class="cofre-fieldset">
+        <div class="cofre-fieldset">
           <div class="cofre-fieldset-title">🏢 Cliente</div>
 
           <div class="cofre-form-row">
@@ -1256,21 +1248,6 @@
             </div>
             <div class="cofre-switch"></div>
             <input type="hidden" id="cofreDocCapturada" value="false">
-          </div>
-        </div>
-          <div class="cofre-form-row">
-            <div class="cofre-form-group">
-              <label>Contato (WhatsApp)</label>
-              <input type="text" id="cofreContato" class="cofre-input" placeholder="(00) 00000-0000">
-            </div>
-            <div class="cofre-form-group">
-              <label>Contato Alternativo</label>
-              <input type="text" id="cofreContatoAlt" class="cofre-input" placeholder="Opcional">
-            </div>
-            <div class="cofre-form-group">
-              <label>Código do Cliente</label>
-              <input type="text" id="cofreCodigo" class="cofre-input" placeholder="Ex: 7.2236705">
-            </div>
           </div>
         </div>
 
@@ -1524,7 +1501,6 @@
     btnPendentes.onclick = () => mudarAba('pendentes');
     btnConsultar.onclick = () => mudarAba('consultar');
 
-    // Mostra aba Pendências se admin
     if (podeVerPendencias) btnPendentes.style.display = 'flex';
 
     // ============ CARREGAR CLIENTES ============
@@ -1811,7 +1787,7 @@
     $('btnSincronizar').onclick = () => { if (confirm("Sincronizar clientes com a base VENDAS?")) sincronizarEAtualizar(); };
 
     // ═══════════════════════════════════════════════════════════
-    // CONSULTAR HISTÓRICO — busca + render
+    // CONSULTAR HISTÓRICO
     // ═══════════════════════════════════════════════════════════
     window.executarConsultaCliente = function() {
       const termo = (inputConsulta.value || '').trim();
@@ -1861,7 +1837,6 @@
     }
 
     function renderHistoricoCliente(cliente, contratos) {
-      // ---- KPIs ----
       let totalMensal = 0, linhasAtivas = 0, totalLinhas = 0;
       contratos.forEach(c => {
         const ativo = String(c.status || '').toUpperCase().includes('ATIVADO');
@@ -1872,9 +1847,7 @@
           if (ativo) linhasAtivas++;
         });
       });
-      const ultimaCompra = contratos[0]?.data_venda || '—';
 
-      // ---- Header cliente ----
       const clienteHtml = `
         <div class="cliente-card-resumo">
           <div class="header-row">
@@ -1900,7 +1873,6 @@
           </div>
         </div>`;
 
-      // ---- KPIs visuais ----
       const kpisHtml = `
         <div class="stats-grid">
           <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-file-contract"></i></div><div class="stat-info"><span class="stat-label">Contratos</span><strong class="stat-value">${contratos.length}</strong></div></div>
@@ -1919,7 +1891,6 @@
         return;
       }
 
-      // ---- Contratos ----
       let contratosHtml = '';
       contratos.forEach(c => {
         const status = String(c.status || 'PENDENTE').toUpperCase();
@@ -2009,7 +1980,6 @@
 (function () {
   'use strict';
 
-  // ---------- Sessão / Role ----------
   const sessaoStorage = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
   const meta = (window.VEXO && window.VEXO.user && window.VEXO.user.user_metadata) || {};
   const roleRaw = (sessaoStorage.role || sessaoStorage.cargo || meta.role || meta.cargo || '').toString().trim();
@@ -2018,7 +1988,6 @@
   const userIdCofre = (window.VEXO && window.VEXO.user && window.VEXO.user.id) || sessaoStorage.id || null;
   const isGestorCofre = (cargoUsuario === 'ADMINISTRADOR' || cargoUsuario === 'BACKOFFICE' || cargoUsuario === 'ADMIN');
 
-  // ---------- Estado ----------
   const COFRE_ESTADO = {
     dados: [],
     filtroChip: 'todos',
@@ -2029,14 +1998,10 @@
     carregando: false
   };
 
-    // ═══════════════════════════════════════════════════════════
-  // ESTADO DO MODO SELEÇÃO (exclusão em lote)
-  // ═══════════════════════════════════════════════════════════
   const podeExcluirCofre = isGestorCofre;
   let cofreModoSelecao = false;
   const cofreSelecionados = new Set();
 
-  // ---------- Helpers ----------
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
   function showToastCofre(msg, type) {
@@ -2052,7 +2017,6 @@
     setTimeout(() => t.remove(), 3500);
   }
 
-  // ---------- Mapeamento banco → UI ----------
   function cofreRowParaUI(row) {
     return {
       id: row.id,
@@ -2079,7 +2043,6 @@
     };
   }
 
-  // ---------- Helpers visuais ----------
   function cofreTipoInfo(tipo) {
     return {
       RENOVACAO:         { label: 'Renovação',         ico: '♻️', cls: 'tipo-renovacao' },
@@ -2123,10 +2086,7 @@
     return n.length >= 10 ? n : '';
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // CARREGAR (RPC)
-  // ═══════════════════════════════════════════════════════════
-    function carregarCofre() {
+  function carregarCofre() {
     COFRE_ESTADO.carregando = true;
     const grid = document.getElementById('cofreGrid');
     if (grid) {
@@ -2160,7 +2120,7 @@
         renderizarCardsCofre();
         atualizarBadgeAba();
         popularSelectConsultoresCofre();
-        carregarAlertasCofre();   // ← ADICIONA ESSA LINHA
+        carregarAlertasCofre();
       })
       .withFailureHandler(function (err) {
         COFRE_ESTADO.carregando = false;
@@ -2178,9 +2138,6 @@
       .cofreListar(filtros);
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // KPIs
-  // ═══════════════════════════════════════════════════════════
   function renderizarKPIsCofre() {
     const el = document.getElementById('cofreKpis');
     if (!el) return;
@@ -2210,9 +2167,6 @@
     el.innerHTML = html;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // Ranking
-  // ═══════════════════════════════════════════════════════════
   function renderizarRankingCofre() {
     const el = document.getElementById('cofreRanking');
     if (!el) return;
@@ -2237,9 +2191,6 @@
     el.style.display = 'block';
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // Chips
-  // ═══════════════════════════════════════════════════════════
   function renderizarChipsCofre() {
     const ativos = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO' || c.status === 'EM_CONTATO');
     const set = (id, v) => { const e = document.getElementById(id); if (e) e.innerText = v; };
@@ -2258,9 +2209,6 @@
     badge.innerText = COFRE_ESTADO.dados.filter(c => c.status === 'AGENDADO' || c.status === 'EM_CONTATO').length;
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // Cards
-  // ═══════════════════════════════════════════════════════════
   function renderizarCardsCofre() {
     const grid = document.getElementById('cofreGrid');
     if (!grid) return;
@@ -2306,7 +2254,6 @@
       const selecionado = cofreSelecionados.has(c.id);
       const modoSel = cofreModoSelecao;
 
-      // Clique no card: no modo seleção, marca/desmarca. Fora dele, não faz nada.
       const cardClick = modoSel
         ? `onclick="window.cofreToggleCardClick('${esc(c.id)}', event)"`
         : '';
@@ -2323,7 +2270,7 @@
             </div>` : ''}
 
           <div class="cofre-card-top">
-             <div class="cofre-card-badges">
+            <div class="cofre-card-badges">
               <span class="cofre-badge ${tipo.cls}">${tipo.ico} ${tipo.label}</span>
               <span class="cofre-badge ${prio.cls}">${prio.ico} ${prio.label}</span>
               ${isPj ? `<span class="cofre-badge pj-futuro-tag">⭐ PJ Futuro</span>` : ''}
@@ -2502,6 +2449,7 @@
       ? '✅ Documentação capturada'
       : 'Documentação não capturada';
   };
+
   // ═══════════════════════════════════════════════════════════
   // Modal — Abrir/Salvar
   // ═══════════════════════════════════════════════════════════
@@ -2543,7 +2491,7 @@
       if (rt) rt.checked = true;
       const rp = document.querySelector(`input[name="cofrePrioridade"][value="${dadosExistentes.prioridade}"]`);
       if (rp) rp.checked = true;
-                 // popular o toggle de documentação
+
       const docCapturada = dadosExistentes.documentacao_capturada === true;
       const _docInpE = document.getElementById('cofreDocCapturada');
       const _docRowE = document.getElementById('cofreToggleDoc');
@@ -2594,7 +2542,7 @@
       motivo,
       valor_potencial: document.getElementById('cofreValor').value || null,
       qtd_linhas_estimada: document.getElementById('cofreLinhas').value || null,
-          documentacao_capturada: (document.getElementById('cofreDocCapturada')?.value === 'true') || false
+      documentacao_capturada: (document.getElementById('cofreDocCapturada')?.value === 'true') || false
     };
 
     google.script.run
@@ -2622,7 +2570,6 @@
     const item = COFRE_ESTADO.dados.find(x => x.id === id);
     if (!item) return;
 
-    // Remove menus anteriores
     document.querySelectorAll('.cofre-menu-pop').forEach(m => m.remove());
 
     const pop = document.createElement('div');
@@ -2634,7 +2581,6 @@
       border:1px solid #eef2f6;
     `;
 
-    // Ações conforme status atual
     let acoes = '';
     if (item.status === 'AGENDADO') {
       acoes += `<div class="cofre-menu-item" data-acao="EM_CONTATO">📞 Iniciar contato</div>`;
@@ -2664,18 +2610,16 @@
       </style>
       ${acoes}`;
 
-      const rect = ev && ev.target ? ev.target.getBoundingClientRect() : { right: 200, top: 200, bottom: 200 };
+    const rect = ev && ev.target ? ev.target.getBoundingClientRect() : { right: 200, top: 200, bottom: 200 };
     pop.style.top  = (rect.bottom + 6) + 'px';
     pop.style.left = Math.max(10, rect.right - 190) + 'px';
     document.body.appendChild(pop);
 
-    // ⚙️ Ajuste anti-corte: se o menu não couber abaixo, abre acima
     const popRect = pop.getBoundingClientRect();
     if (rect.bottom + popRect.height + 8 > window.innerHeight) {
       const acima = rect.top - popRect.height - 6;
       pop.style.top = Math.max(8, acima) + 'px';
     }
-    // Ajuste horizontal: se passar da direita, encosta
     if (rect.right > window.innerWidth - 10) {
       pop.style.left = Math.max(10, window.innerWidth - popRect.width - 12) + 'px';
     }
@@ -2738,7 +2682,6 @@
   window.cofreAbrirNoVendas = function (id) {
     const item = COFRE_ESTADO.dados.find(x => x.id === id);
     if (!item) return;
-    // Salva pra o Vendas pegar (mesmo padrão do pedidoParaInput)
     try {
       sessionStorage.setItem('cofreParaVendas', JSON.stringify({
         cnpj: item.cnpj,
@@ -2750,7 +2693,6 @@
       }));
     } catch (e) {}
 
-    // Marca como EM_CONTATO (sinal de que iniciou)
     if (item.status === 'AGENDADO') {
       google.script.run
         .withSuccessHandler(() => {})
@@ -2768,15 +2710,11 @@
     showToastCofre('Abrindo Vendas com os dados pré-preenchidos...', 'info');
   };
 
-  // ═══════════════════════════════════════════════════════════
-  // Filtros / Listeners
-  // ═══════════════════════════════════════════════════════════
   function popularSelectConsultoresCofre() {
     if (!isGestorCofre) return;
     const cons = document.getElementById('cofreFiltroConsultor');
     if (!cons) return;
     cons.style.display = '';
-    // Agrupa por consultor_id + nome
     const mapa = {};
     COFRE_ESTADO.dados.forEach(c => { if (c.consultor_id) mapa[c.consultor_id] = c.consultor; });
     const opcoes = Object.entries(mapa).sort((a, b) => a[1].localeCompare(b[1]));
@@ -2807,9 +2745,6 @@
     if (modal) modal.addEventListener('click', e => { if (e.target === modal) fecharModalCofre(); });
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // Hook abas
-  // ═══════════════════════════════════════════════════════════
   function hookAbasCofre() {
     const btnCofre = document.getElementById('btnCofre');
     const tabCofre = document.getElementById('tab-cofre');
@@ -2841,17 +2776,13 @@
     });
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // Boot
-  // ═══════════════════════════════════════════════════════════
-   function boot() {
+  function boot() {
     if (!document.getElementById('btnCofre')) return setTimeout(boot, 200);
     bindFiltrosCofre();
     hookAbasCofre();
     carregarAlertasCofre();
     console.log('✅ Cofre de Oportunidades conectado ao Supabase');
 
-    // 🔥 Auto-abre a aba Cofre se veio do banner do dashboard
     try {
       if (sessionStorage.getItem('vexoAbrirCofreAuto') === 'true') {
         sessionStorage.removeItem('vexoAbrirCofreAuto');
@@ -2867,11 +2798,10 @@
   else boot();
 })();
 
-    // ═══════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
   // BANNER DE ALERTA (notificação in-app)
   // ═══════════════════════════════════════════════════════════
   function renderizarBannerAlerta(alertas) {
-    // Helper local — não depende de esc externo
     const _esc = (s) => String(s ?? '').replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
 
     const antigo = document.getElementById('cofre-banner-alerta');
@@ -2959,15 +2889,11 @@
     }
   }
 
-  // Filtra pra ver só os urgentes ao clicar no banner
   window.cofreFiltrarUrgentes = function () {
     const chipVencidas = document.querySelector('#cofreChips .cofre-chip[data-filtro="vencidas"]');
     if (chipVencidas) chipVencidas.click();
   };
 
-  // ═══════════════════════════════════════════════════════════
-  // Busca os alertas ao carregar o Cofre
-  // ═══════════════════════════════════════════════════════════
   function carregarAlertasCofre() {
     google.script.run
       .withSuccessHandler(function (res) {
