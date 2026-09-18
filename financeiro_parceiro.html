@@ -1195,44 +1195,39 @@
     const cpf = sessao.cpf_cnpj || sessao.cpf || sessao.cnpj || '—';
     const mesExt = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][state.mes - 1];
 
-    // ─── Tenta várias formas de obter o sb ───
-    const sbClient = window.sb || (typeof sb !== 'undefined' ? sb : null);
-    console.log('🔍 [Espelho] sbClient disponível?', !!sbClient);
+    // ─── Detecta o sb ───
+    let sbClient = null;
+    try { if (typeof sb !== 'undefined' && sb?.storage) sbClient = sb; } catch (e) {}
+    if (!sbClient && window.sb?.storage) sbClient = window.sb;
+    if (!sbClient && globalThis?.sb?.storage) sbClient = globalThis.sb;
 
-    // ─── Gera signed URL da logo ───
+    // ─── Signed URL da logo ───
     let LOGO_URL = '';
     if (sbClient) {
       try {
-        // Tenta direto na raiz do bucket
         const { data: signed, error: signErr } = await sbClient.storage
-          .from('LOGOMARCAS')
-          .createSignedUrl('EEE-LOGO-TRANSPARENTE.png', 3600);
-
-        if (signErr) {
-          console.warn('⚠️ [Espelho] Erro ao gerar signed URL:', signErr.message);
-          // Fallback: tenta listar e achar qualquer .png que tenha "EEE" no nome
+          .from('LOGOMARCAS').createSignedUrl('EEE-LOGO-TRANSPARENTE.png', 3600);
+        if (!signErr && signed?.signedUrl) LOGO_URL = signed.signedUrl;
+        else {
           const { data: files } = await sbClient.storage.from('LOGOMARCAS').list('', { limit: 100 });
-          console.log('📁 [Espelho] Arquivos no bucket:', files);
           const logoFile = (files || []).find(f =>
-            f.name.toUpperCase().includes('EEE') || f.name.toUpperCase().includes('LOGO')
-          );
+            f.name.toUpperCase().includes('EEE') || f.name.toUpperCase().includes('LOGO'));
           if (logoFile) {
-            const { data: signed2 } = await sbClient.storage
-              .from('LOGOMARCAS')
-              .createSignedUrl(logoFile.name, 3600);
-            LOGO_URL = signed2?.signedUrl || '';
-            console.log('✅ [Espelho] Logo encontrada:', logoFile.name);
+            const { data: s2 } = await sbClient.storage.from('LOGOMARCAS').createSignedUrl(logoFile.name, 3600);
+            LOGO_URL = s2?.signedUrl || '';
           }
-        } else {
-          LOGO_URL = signed?.signedUrl || '';
-          console.log('✅ [Espelho] Signed URL gerada:', LOGO_URL.slice(0, 80) + '...');
         }
-      } catch (e) {
-        console.error('❌ [Espelho] Exceção ao gerar signed URL:', e);
-      }
-    } else {
-      console.error('❌ [Espelho] sb não disponível — logo não será carregada');
+      } catch (e) { console.warn('⚠️ Logo:', e.message); }
     }
+
+    // ─── DADOS FIXOS DA E&E (Tomador) ───
+    const TOMADOR = {
+      razao: 'E&E CORDEIRO DIGITAL SOLUÇÕES LTDA',
+      cnpj: '64.101.740/0001-05',
+      endereco: 'Rua Dom José, 198 - Sala 01 - Santo Antônio',
+      cidade: 'Garanhuns / PE',
+      cep: '55.293-120'
+    };
 
     const rows = (d.vendas || []).map(v => `
       <tr>
@@ -1245,7 +1240,17 @@
         <td class="r">${fmtBRL(v.valor)}</td>
       </tr>`).join('');
 
-    const descricaoNF = `Serviços de intermediação de vendas referente ao mês de ${mesExt}/${state.ano} - ${nome} - Total: ${fmtBRL(d.totais.comissao)}`;
+    // ─── Descrição NF ───
+    const descricaoNF = `Prestação de serviços de intermediação de vendas referente ao mês de ${mesExt}/${state.ano}.
+
+Prestador: ${nome}
+CPF/CNPJ: ${cpf}
+
+Tomador: ${TOMADOR.razao}
+CNPJ: ${TOMADOR.cnpj}
+Endereço: ${TOMADOR.endereco}, ${TOMADOR.cidade}, CEP: ${TOMADOR.cep}
+
+Valor Total: ${fmtBRL(d.totais.comissao)}`;
 
     const html = `<!DOCTYPE html>
 <html>
@@ -1255,30 +1260,18 @@
 <style>
   @page { size: A4; margin: 15mm; }
   * { box-sizing: border-box; }
-
-  /* 🔥 Layout com margens de volta */
   body {
     font-family: 'Helvetica', 'Arial', sans-serif;
-    color: #0f172a;
-    font-size: 11px;
-    margin: 0;
-    padding: 40px 50px;
-    background: #fff;
+    color: #0f172a; font-size: 11px;
+    margin: 0; padding: 40px 50px; background: #fff;
   }
-
   .head {
     display: flex; justify-content: space-between; align-items: center;
     padding-bottom: 18px; margin-bottom: 22px; border-bottom: 3px solid #1e3c72;
   }
-  .head .logo-img {
-    max-height: 70px; max-width: 280px; object-fit: contain; display: block;
-  }
-  .head .logo-fallback {
-    font-size: 28px; font-weight: 900; color: #1e3c72; letter-spacing: -1px;
-  }
-  .head .meta {
-    text-align: right; font-size: 10px; color: #64748b; line-height: 1.7;
-  }
+  .head .logo-img { max-height: 70px; max-width: 280px; object-fit: contain; display: block; }
+  .head .logo-fallback { font-size: 28px; font-weight: 900; color: #1e3c72; letter-spacing: -1px; }
+  .head .meta { text-align: right; font-size: 10px; color: #64748b; line-height: 1.7; }
   .head .meta strong { color: #1e3c72; }
 
   .section { margin-bottom: 18px; }
@@ -1288,15 +1281,38 @@
     padding-bottom: 6px; margin-bottom: 10px;
   }
 
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .info-item { font-size: 11px; }
-  .info-item .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; }
-  .info-item .val { font-weight: 700; color: #0f172a; }
+  /* 🔥 Grid 2 colunas para Prestador + Tomador */
+  .partes-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
+    margin-bottom: 20px;
+  }
+  .parte-box {
+    border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 14px 16px; background: #f8fafc;
+  }
+  .parte-box.prestador { border-left: 4px solid #3b82f6; }
+  .parte-box.tomador { border-left: 4px solid #10b981; }
+  .parte-box .parte-tipo {
+    font-size: 9px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; margin-bottom: 8px;
+  }
+  .parte-box.prestador .parte-tipo { color: #3b82f6; }
+  .parte-box.tomador .parte-tipo { color: #10b981; }
+  .parte-box .parte-campo {
+    display: flex; flex-direction: column; margin-bottom: 6px;
+  }
+  .parte-box .parte-campo:last-child { margin-bottom: 0; }
+  .parte-box .parte-lbl {
+    font-size: 8px; color: #94a3b8; text-transform: uppercase;
+    font-weight: 700; letter-spacing: 0.3px;
+  }
+  .parte-box .parte-val {
+    font-size: 11px; font-weight: 700; color: #0f172a; line-height: 1.4;
+  }
 
   .descricao-box {
     position: relative; padding: 16px 18px; background: #f8fafc;
-    border: 1px solid #e2e8f0; border-radius: 10px;
-    font-size: 11px; line-height: 1.7;
+    border: 1px solid #e2e8f0; border-radius: 10px; font-size: 11px; line-height: 1.7;
   }
   .descricao-box .btn-copiar {
     position: absolute; top: 12px; right: 12px;
@@ -1307,8 +1323,7 @@
   }
   .descricao-box .btn-copiar:hover { background: #152c56; transform: translateY(-1px); }
   .descricao-box .btn-copiar.copiado { background: #10b981; }
-  .descricao-box .descricao-texto { padding-right: 130px; }
-  .descricao-box .descricao-texto strong { color: #1e3c72; }
+  .descricao-box .descricao-texto { padding-right: 130px; white-space: pre-wrap; font-size: 10px; line-height: 1.6; color: #475569; }
 
   table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 6px; }
   th {
@@ -1331,21 +1346,16 @@
     margin-top: 24px; padding: 12px; background: #f8fafc;
     border-radius: 8px; font-size: 10px; line-height: 1.6; color: #475569;
   }
-
-  .assinatura {
-    margin-top: 40px; display: flex; justify-content: space-between; gap: 40px;
-  }
+  .assinatura { margin-top: 40px; display: flex; justify-content: space-between; gap: 40px; }
   .assinatura .line {
     flex: 1; border-top: 1px solid #cbd5e1; padding-top: 6px;
     text-align: center; font-size: 9px; color: #64748b;
   }
-
   .no-print { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 999; }
   .no-print button {
     padding: 10px 20px; border: none; border-radius: 8px;
     font-weight: 700; cursor: pointer; font-family: inherit; font-size: 12px;
   }
-
   @media print {
     .no-print { display: none; }
     body { padding: 0; }
@@ -1359,7 +1369,7 @@
 
   <div class="head">
     ${LOGO_URL
-      ? `<img src="${LOGO_URL}" alt="E&E" class="logo-img" onerror="console.warn('❌ Erro ao carregar a logo'); this.outerHTML='<div class=&quot;logo-fallback&quot;>E&amp;E</div>'">`
+      ? `<img src="${LOGO_URL}" alt="E&E" class="logo-img" onerror="this.outerHTML='<div class=\\'logo-fallback\\'>E&amp;E</div>'">`
       : `<div class="logo-fallback">E&amp;E</div>`}
     <div class="meta">
       <div><strong>COMPETÊNCIA:</strong> ${mesExt} / ${state.ano}</div>
@@ -1367,11 +1377,40 @@
     </div>
   </div>
 
+  <!-- 🔥 BLOCO: PRESTADOR + TOMADOR -->
   <div class="section">
-    <div class="section-title">Dados do Prestador</div>
-    <div class="info-grid">
-      <div class="info-item"><div class="lbl">Nome</div><div class="val">${nome}</div></div>
-      <div class="info-item"><div class="lbl">CPF/CNPJ</div><div class="val">${cpf}</div></div>
+    <div class="section-title">Dados das Partes</div>
+    <div class="partes-grid">
+      <div class="parte-box prestador">
+        <div class="parte-tipo">👤 Prestador (Emissor da NF)</div>
+        <div class="parte-campo">
+          <span class="parte-lbl">Razão Social / Nome</span>
+          <span class="parte-val">${nome}</span>
+        </div>
+        <div class="parte-campo">
+          <span class="parte-lbl">CPF / CNPJ</span>
+          <span class="parte-val">${cpf}</span>
+        </div>
+      </div>
+
+      <div class="parte-box tomador">
+        <div class="parte-tipo">🏢 Tomador dos Serviços</div>
+        <div class="parte-campo">
+          <span class="parte-lbl">Razão Social</span>
+          <span class="parte-val">${TOMADOR.razao}</span>
+        </div>
+        <div class="parte-campo">
+          <span class="parte-lbl">CNPJ</span>
+          <span class="parte-val">${TOMADOR.cnpj}</span>
+        </div>
+        <div class="parte-campo">
+          <span class="parte-lbl">Endereço</span>
+          <span class="parte-val" style="font-weight:600; font-size:10px;">
+            ${TOMADOR.endereco}<br>
+            ${TOMADOR.cidade} · CEP ${TOMADOR.cep}
+          </span>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -1381,12 +1420,7 @@
       <button class="btn-copiar" id="btn-copiar-descricao" onclick="copiarDescricaoNF()">
         📋 Copiar descrição
       </button>
-      <div class="descricao-texto">
-        Serviços de intermediação de vendas referente ao mês de <strong>${mesExt}/${state.ano}</strong>.<br>
-        Prestador: <strong>${nome}</strong><br>
-        CPF/CNPJ: <strong>${cpf}</strong><br>
-        Valor total: <strong>${fmtBRL(d.totais.comissao)}</strong>
-      </div>
+      <div class="descricao-texto">${descricaoNF}</div>
     </div>
   </div>
 
@@ -1398,7 +1432,6 @@
       </tr></thead>
       <tbody>${rows}</tbody>
     </table>
-
     <div class="total-box">
       <div>
         <div class="lbl">Valor Total da Comissão</div>
@@ -1428,7 +1461,6 @@
     function copiarDescricaoNF() {
       var texto = ${JSON.stringify(descricaoNF)};
       var btn = document.getElementById('btn-copiar-descricao');
-
       function onSuccess() {
         btn.innerHTML = '✅ Copiado!';
         btn.classList.add('copiado');
@@ -1437,24 +1469,18 @@
           btn.classList.remove('copiado');
         }, 2500);
       }
-
       function fallback() {
         var ta = document.createElement('textarea');
         ta.value = texto;
-        ta.style.position = 'fixed';
-        ta.style.left = '-9999px';
-        document.body.appendChild(ta);
-        ta.select();
+        ta.style.position = 'fixed'; ta.style.left = '-9999px';
+        document.body.appendChild(ta); ta.select();
         try { document.execCommand('copy'); onSuccess(); }
         catch (e) { alert('Não foi possível copiar. Texto:\\n\\n' + texto); }
         document.body.removeChild(ta);
       }
-
       if (navigator.clipboard && navigator.clipboard.writeText) {
         navigator.clipboard.writeText(texto).then(onSuccess).catch(fallback);
-      } else {
-        fallback();
-      }
+      } else { fallback(); }
     }
   <\/script>
 </body>
