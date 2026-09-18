@@ -807,6 +807,16 @@
 <div id="vexo-toast-container" class="vexo-toast-container"></div>
 
 <script>
+(function() {
+  'use strict';
+
+  // 🛡️ Guard: impede reinjeção duplicada quando o módulo é recarregado via `navegar()`
+  if (window._vexoVendasParceiroLoaded) {
+    console.log('🔄 vendas_parceiro.html já carregado — ignorando reinjeção');
+    return;
+  }
+  window._vexoVendasParceiroLoaded = true;
+
   // ============================================
   // VARIÁVEIS GLOBAIS
   // ============================================
@@ -2166,6 +2176,8 @@ window._ativarAutocompletePlanoParceiro = function(wrapper) {
 };
 
 console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
+
+})();   // 🛡️ fecha a IIFE do guard
 </script>
 
 </body>
