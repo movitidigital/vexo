@@ -616,7 +616,7 @@
         </div>
 
         <div class="modalidade-selector">
-  <div class="mod-btn active" data-modalidade="PRIMEIRA ATIVAÇÃO" onclick="window.toggleModalidade('PRIMEIRA ATIVAÇÃO', this)">
+  <div class="mod-btn" data-modalidade="PRIMEIRA ATIVAÇÃO" onclick="window.toggleModalidade('PRIMEIRA ATIVAÇÃO', this)">
     <i class="fa-solid fa-plus-circle"></i> PRIMEIRA ATIVAÇÃO
   </div>
   <div class="mod-btn" data-modalidade="PORTABILIDADE" onclick="window.toggleModalidade('PORTABILIDADE', this)">
@@ -634,7 +634,7 @@
 </div>
 
         <form id="vendaForm">
-          <input type="hidden" id="modalidades-selecionadas" value="PRIMEIRA ATIVAÇÃO">
+          <input type="hidden" id="modalidades-selecionadas" value="">
           <div class="form-grid">
             <div class="section-header"><i class="fa-solid fa-id-card"></i> Identificação da Empresa</div>
             
@@ -675,7 +675,6 @@
     <option value="25">Dia 25</option>
   </select>
 </div>
-            <div class="field col-8"><label>Consultor Externo</label><input type="text" id="consultorVendeu" placeholder="Nome de quem vendeu"></div>
             
             <div class="field col-12">
               <label>Observações Importantes</label>
@@ -884,66 +883,65 @@ window.addLinha = function() {
 window.verificarEPreencherPreco = function(inputElement) {
   try {
     if (!inputElement) return;
-    var valorDigitado = inputElement.value.trim().toLowerCase();
-    if (!valorDigitado) return;
-    
-    // Encontra o card mais próximo
-    var card = inputElement.closest('.linha-card');
-    if (!card) {
-      console.warn('Card não encontrado para:', inputElement);
-      return;
-    }
-    
-    var campoValor = card.querySelector('.input-valor-dinamico');
-    if (!campoValor) {
-      console.warn('Campo valor não encontrado');
-      return;
-    }
-    
-    // Busca o plano nos dados carregados
-    if (!window.dadosPlanosVexo || window.dadosPlanosVexo.length === 0) {
-      console.warn('Planos não carregados ainda');
-      return;
-    }
-    
-    var planoEncontrado = window.dadosPlanosVexo.find(function(p) {
-      return p.nome.toLowerCase() === valorDigitado;
-    });
-    
-    if (planoEncontrado) {
-      // Formata o valor
-      var valor = planoEncontrado.valor;
-      var centavos = Math.round(valor * 100).toString();
+    const card = inputElement.closest('.linha-card');
+    if (!card) return;
+
+    const campoValor = card.querySelector('.input-valor-dinamico');
+    if (!campoValor) return;
+
+    const opt = inputElement.selectedOptions?.[0];
+    const valor = opt?.dataset?.valor;
+
+    if (valor) {
+      const centavos = Math.round(parseFloat(valor) * 100).toString();
       campoValor.value = fmk.moeda(centavos);
       campoValor.style.backgroundColor = '#ecfdf5';
-      setTimeout(function() {
-        campoValor.style.backgroundColor = '';
-      }, 1000);
-      console.log('✅ Plano encontrado:', planoEncontrado.nome, 'Valor:', valor);
+      setTimeout(() => { campoValor.style.backgroundColor = ''; }, 1000);
     } else {
-      // Se não encontrar, limpa o valor
       campoValor.value = '';
     }
   } catch (error) {
     console.error('Erro em verificarEPreencherPreco:', error);
   }
 };
-
   // ============================================
   // NAVEGAÇÃO - ESCOLHER SEGMENTO
   // ============================================
-  window.escolherSegmento = function(tipo, elemento) {
-    document.querySelectorAll('.seg-card').forEach(card => card.classList.remove('active'));
-    elemento.classList.add('active');
-    const area = document.getElementById('areaFormularios');
-    if (tipo === 'empresas') {
-      area.style.display = 'block';
-      area.style.animation = 'fadeInUp 0.5s ease forwards';
-      setTimeout(() => {
-        area.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 100);
+window.escolherSegmento = function(tipo, elemento) {
+  document.querySelectorAll('.seg-card').forEach(card => card.classList.remove('active'));
+  elemento.classList.add('active');
+
+  const area = document.getElementById('areaFormularios');
+  if (tipo !== 'empresas') return;
+
+  area.style.display = 'block';
+  area.style.animation = 'fadeInUp 0.5s ease forwards';
+
+  // 🔥 CORREÇÃO: cria as linhas SÓ depois que os planos carregarem
+  const criarLinhas = () => {
+    if (typeof window.adicionarLinhaGlobal === 'function') {
+      window.adicionarLinhaGlobal();
     }
   };
+
+  if (window.dadosPlanosVexo && window.dadosPlanosVexo.length > 0) {
+    criarLinhas();
+  } else {
+    // Aguarda o `carregarPlanosVexo` terminar (máx 3s)
+    let tentativas = 0;
+    const intervalo = setInterval(() => {
+      tentativas++;
+      if (window.dadosPlanosVexo?.length > 0 || tentativas > 30) {
+        clearInterval(intervalo);
+        criarLinhas();
+      }
+    }, 100);
+  }
+
+  setTimeout(() => {
+    area.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 100);
+};
 
   // ============================================
   // BUSCAR EMPRESA POR CNPJ
@@ -991,16 +989,7 @@ window.toggleModalidade = function(modalidade, btn) {
   
   hidden.value = selecionadas.join(',');
   
-  // Se não houver nenhuma selecionada, marca a primeira como padrão
-  if (selecionadas.length === 0) {
-    const primeira = document.querySelector('.mod-btn');
-    if (primeira) {
-      const mod = primeira.getAttribute('data-modalidade');
-      selecionadas.push(mod);
-      hidden.value = mod;
-      primeira.classList.add('active');
-    }
-  }
+
   
   // 🔥 RECRIA AS LINHAS COM AS NOVAS MODALIDADES
   window.recriarLinhasPorModalidade();
@@ -1075,7 +1064,12 @@ window.salvarAgora = function() {
   const user = JSON.parse(sessionStorage.getItem("usuarioLogado")) || {};
   const cards = document.querySelectorAll('.linha-card');
   let listaLinhas = [];
-
+// 🔥 BLOQUEIO: exige que ao menos uma modalidade esteja marcada
+  const modalidadesMarcadas = document.getElementById('modalidades-selecionadas').value;
+  if (!modalidadesMarcadas || !modalidadesMarcadas.trim()) {
+    alert('⚠️ Selecione ao menos uma modalidade no topo (PRIMEIRA ATIVAÇÃO, PORTABILIDADE, etc.)');
+    return;
+  }
   // 🔥 Itera sobre cada card existente (cada card já tem sua modalidade definida)
   for (let card of cards) {
     const modalidade = card.dataset.modalidade || 'PRIMEIRA ATIVAÇÃO';
@@ -1148,7 +1142,6 @@ window.salvarAgora = function() {
     contatoFinanceiro: document.getElementById("contatoFinanceiro").value,
     modalidade: document.getElementById('modalidades-selecionadas').value,
     dataVenc: document.getElementById("dataVenc").value,
-    consultorVendeu: document.getElementById("consultorVendeu").value,
     obs: document.getElementById("obs") ? document.getElementById("obs").value : "",
     statusPedido: "PENDENTE DE INPUT",
     listaLinhas: listaLinhas
@@ -1740,15 +1733,12 @@ window.adicionarLinhaPorModalidade = function(modalidade) {
     
     // Plano
     camposHTML += `
-      <div class="field" style="flex:2;">
-        <label>Plano Escolhido *</label>
-        <input type="text" 
-               list="${idListaUnico}" 
-               class="input-plano-dinamico" 
-               placeholder="Digite para buscar o plano..." 
-               style="width:100%;">
-        <datalist id="${idListaUnico}" class="lista-planos-vexo"></datalist>
-      </div>
+     <div class="field" style="flex:2;">
+  <label>Plano Escolhido *</label>
+  <select class="input-plano-dinamico" style="width:100%;padding:13px;border-radius:12px;border:2px solid #e2e8f0;background:#fcfdfe;font-family:inherit;font-size:14px;">
+    <option value="">Selecione o plano...</option>
+  </select>
+</div>
     `;
     
     // Valor
@@ -1789,11 +1779,41 @@ window.adicionarLinhaPorModalidade = function(modalidade) {
       </div>
     `;
     
-    container.appendChild(card);
-    
-    // Atualiza contagem
-    var span = document.getElementById('qtd-linhas-' + modalidade);
-    if (span) span.innerText = container.children.length;
+  container.appendChild(card);
+
+// 🔥 POPULA O SELECT DE PLANOS (vem dos dados carregados por get_ofertas_tim)
+const selectPlano = card.querySelector('.input-plano-dinamico');
+if (selectPlano) {
+  (window.dadosPlanosVexo || []).forEach(p => {
+    const opt = document.createElement('option');
+    opt.value = p.nome;
+    opt.textContent = `${p.nome} — R$ ${Number(p.valor).toFixed(2).replace('.', ',')}`;
+    opt.dataset.valor = p.valor;
+    selectPlano.appendChild(opt);
+  });
+
+  // Atualiza o valor ao trocar o plano
+  selectPlano.addEventListener('change', function() {
+    const opt = this.selectedOptions?.[0];
+    const valor = opt?.dataset?.valor;
+    const inputValor = card.querySelector('.input-valor-dinamico');
+    if (inputValor) {
+      if (valor) {
+        const centavos = Math.round(parseFloat(valor) * 100).toString();
+        inputValor.value = fmk.moeda(centavos);
+        inputValor.style.background = '#ecfdf5';
+        setTimeout(() => { inputValor.style.background = ''; }, 800);
+      } else {
+        inputValor.value = '';
+      }
+    }
+  });
+}
+// 🔥 fim do popula select
+
+// Atualiza contagem
+var span = document.getElementById('qtd-linhas-' + modalidade);
+if (span) span.innerText = container.children.length;
     
     // 🔥 ADICIONA OS EVENTOS NECESSÁRIOS
     var inputPlano = card.querySelector('.input-plano-dinamico');
