@@ -1186,7 +1186,7 @@
   // ═══════════════════════════════════════════════════════════
   // GERAR ESPELHO (PDF via janela de impressão)
   // ═══════════════════════════════════════════════════════════
-  function gerarEspelho() {
+  async function gerarEspelho() {
     if (!state.espelho) { alert('Espelho não disponível'); return; }
 
     const d = state.espelho;
@@ -1194,6 +1194,31 @@
     const nome = sessao.nome || sessao.username || '—';
     const cpf = sessao.cpf_cnpj || sessao.cpf || sessao.cnpj || '—';
     const mesExt = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][state.mes - 1];
+
+    // ─── Detecta a URL do Supabase ───
+    let SUPABASE_URL = '';
+    try {
+      // 1. Tenta do cliente Supabase
+      if (window.sb?.supabaseUrl) SUPABASE_URL = window.sb.supabaseUrl;
+      else if (window.sb?.rest?.url) SUPABASE_URL = window.sb.rest.url.replace(/\/rest\/v1\/?$/, '');
+      // 2. Tenta do setup salvo da página de importação
+      else {
+        const setup = localStorage.getItem('vexo_import_setup');
+        if (setup) {
+          const cfg = JSON.parse(setup);
+          if (cfg?.url) SUPABASE_URL = cfg.url;
+        }
+      }
+    } catch (e) { console.warn('⚠️ URL supabase:', e); }
+
+    if (!SUPABASE_URL) {
+      console.warn('⚠️ Não foi possível detectar a URL do Supabase — usando logo placeholder');
+    }
+
+    // ─── URL da logo E&E (bucket LOGOMARCAS) ───
+    const LOGO_URL = SUPABASE_URL
+      ? `${SUPABASE_URL}/storage/v1/object/public/LOGOMARCAS/EEE-LOGO-TRANSPARENTE.png`
+      : '';
 
     const rows = (d.vendas || []).map(v => `
       <tr>
@@ -1206,50 +1231,71 @@
         <td class="r">${fmtBRL(v.valor)}</td>
       </tr>`).join('');
 
-    const totalFaturamento = (d.vendas || []).reduce((a, v) => a + Number(v.valor || 0), 0);
+    // ─── Descrição para o emissor de NF ───
+    const descricaoNF = `Serviços de intermediação de vendas referente ao mês de ${mesExt}/${state.ano} - ${nome} - Total: ${fmtBRL(d.totais.comissao)}`;
 
     const html = `<!DOCTYPE html>
-<html><head><meta charset="utf-8"><title>Espelho ${mesExt}/${state.ano}</title>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Espelho ${mesExt}/${state.ano}</title>
 <style>
   @page { size: A4; margin: 18mm 15mm; }
   * { box-sizing: border-box; }
-  body { font-family: 'Helvetica', 'Arial', sans-serif; color: #0f172a; font-size: 11px; }
-  h1 { font-size: 16px; margin: 0 0 4px; }
-  .head { border-bottom: 3px solid #1e3c72; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
-  .head .logo { font-size: 20px; font-weight: 800; color: #1e3c72; }
-  .head .meta { text-align: right; font-size: 10px; color: #64748b; }
+  body { font-family: 'Helvetica', 'Arial', sans-serif; color: #0f172a; font-size: 11px; margin: 0; padding: 0; background: #fff; }
+  .head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 18px; margin-bottom: 22px; border-bottom: 3px solid #1e3c72; }
+  .head .logo-img { max-height: 70px; max-width: 280px; object-fit: contain; display: block; }
+  .head .logo-fallback { font-size: 24px; font-weight: 900; color: #1e3c72; letter-spacing: -1px; }
+  .head .meta { text-align: right; font-size: 10px; color: #64748b; line-height: 1.7; }
+  .head .meta strong { color: #1e3c72; }
   .section { margin-bottom: 18px; }
   .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #1e3c72; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; }
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .info-item { font-size: 11px; }
   .info-item .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; }
   .info-item .val { font-weight: 700; color: #0f172a; }
+
+  /* 🔥 Caixa da descrição NF com botão copiar */
+  .descricao-box { position: relative; padding: 16px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 11px; line-height: 1.7; }
+  .descricao-box .btn-copiar {
+    position: absolute; top: 12px; right: 12px;
+    background: #1e3c72; color: white; border: none;
+    padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    font-size: 10px; font-weight: 800; font-family: inherit;
+    transition: 0.2s; box-shadow: 0 3px 10px rgba(30,60,114,0.2);
+  }
+  .descricao-box .btn-copiar:hover { background: #152c56; transform: translateY(-1px); }
+  .descricao-box .btn-copiar.copiado { background: #10b981; box-shadow: 0 3px 10px rgba(16,185,129,0.3); }
+  .descricao-box .descricao-texto { padding-right: 130px; }
+  .descricao-box .descricao-texto strong { color: #1e3c72; }
+
   table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 6px; }
   th { background: #f1f5f9; text-align: left; padding: 6px 8px; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid #cbd5e1; }
   td { padding: 6px 8px; border-bottom: 1px solid #eef2f6; }
   td.r { text-align: right; font-weight: 700; }
-  .total-box { margin-top: 16px; background: #0f172a; color: white; padding: 14px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .total-box { margin-top: 16px; background: #0f172a; color: white; padding: 16px 22px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
   .total-box .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
-  .total-box .val { font-size: 20px; font-weight: 800; }
+  .total-box .val { font-size: 22px; font-weight: 800; }
   .obs { margin-top: 24px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 10px; line-height: 1.6; color: #475569; }
   .assinatura { margin-top: 40px; display: flex; justify-content: space-between; gap: 40px; }
   .assinatura .line { flex: 1; border-top: 1px solid #cbd5e1; padding-top: 6px; text-align: center; font-size: 9px; color: #64748b; }
-  .no-print { position: fixed; top: 10px; right: 10px; }
+  .no-print { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 999; }
+  .no-print button { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 12px; }
   @media print { .no-print { display: none; } }
-</style></head>
+</style>
+</head>
 <body>
   <div class="no-print">
-    <button onclick="window.print()" style="padding: 10px 20px; background: #1e3c72; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">🖨️ Imprimir / Salvar PDF</button>
+    <button onclick="window.print()" style="background: #1e3c72; color: white;">🖨️ Imprimir / Salvar PDF</button>
   </div>
 
   <div class="head">
-    <div>
-      <div class="logo">VEXO · HUB</div>
-      <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Espelho de Comissão</div>
-    </div>
+    ${LOGO_URL
+      ? `<img src="${LOGO_URL}" alt="E&E" class="logo-img" onerror="this.outerHTML='<div class=\\'logo-fallback\\'>E&amp;E</div>'">`
+      : `<div class="logo-fallback">E&amp;E</div>`}
     <div class="meta">
-      <div><strong>Competência:</strong> ${mesExt} / ${state.ano}</div>
-      <div>Emitido em ${new Date().toLocaleDateString('pt-BR')}</div>
+      <div><strong>COMPETÊNCIA:</strong> ${mesExt} / ${state.ano}</div>
+      <div><strong>EMITIDO EM:</strong> ${new Date().toLocaleDateString('pt-BR')}</div>
     </div>
   </div>
 
@@ -1263,9 +1309,16 @@
 
   <div class="section">
     <div class="section-title">Discriminação dos Serviços</div>
-    <div style="font-size: 11px; line-height: 1.6;">
-      Comissão referente à prestação de serviços de intermediação de vendas no mês de <strong>${mesExt}/${state.ano}</strong>.<br>
-      Finalidade: modelo para emissão de Nota Fiscal de prestação de serviços.
+    <div class="descricao-box">
+      <button class="btn-copiar" id="btn-copiar-descricao" onclick="copiarDescricaoNF()">
+        📋 Copiar descrição
+      </button>
+      <div class="descricao-texto">
+        Serviços de intermediação de vendas referente ao mês de <strong>${mesExt}/${state.ano}</strong>.<br>
+        Prestador: <strong>${nome}</strong><br>
+        CPF/CNPJ: <strong>${cpf}</strong><br>
+        Valor total: <strong>${fmtBRL(d.totais.comissao)}</strong>
+      </div>
     </div>
   </div>
 
@@ -1300,9 +1353,44 @@
 
   <div class="assinatura">
     <div class="line">Prestador de Serviços</div>
-    <div class="line">VEXO · Departamento Financeiro</div>
+    <div class="line">E&E · Departamento Financeiro</div>
   </div>
-</body></html>`;
+
+  <script>
+    function copiarDescricaoNF() {
+      var texto = ${JSON.stringify(descricaoNF)};
+      var btn = document.getElementById('btn-copiar-descricao');
+
+      function onSuccess() {
+        btn.innerHTML = '✅ Copiado!';
+        btn.classList.add('copiado');
+        setTimeout(function () {
+          btn.innerHTML = '📋 Copiar descrição';
+          btn.classList.remove('copiado');
+        }, 2500);
+      }
+
+      function fallback() {
+        var ta = document.createElement('textarea');
+        ta.value = texto;
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try { document.execCommand('copy'); onSuccess(); }
+        catch (e) { alert('Não foi possível copiar. Texto:\\n\\n' + texto); }
+        document.body.removeChild(ta);
+      }
+
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(texto).then(onSuccess).catch(fallback);
+      } else {
+        fallback();
+      }
+    }
+  <\/script>
+</body>
+</html>`;
 
     const w = window.open('', '_blank', 'width=900,height=800');
     w.document.write(html);
