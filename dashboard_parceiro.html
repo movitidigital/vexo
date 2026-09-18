@@ -309,6 +309,8 @@ if (pagina !== 'vendas_parceiro') delete window._vexoVendasParceiroLoaded;
     // Busca o HTML via fetch
     try {
       const arquivo = `${pagina}.html`;
+      // 🔥 Limpa guard pra permitir reentrada no módulo
+if (pagina !== 'vendas_parceiro') delete window._vexoVendasParceiroLoaded;
       const resp = await fetch(arquivo + '?v=' + Date.now(), { cache: 'no-store' });
 
       if (!resp.ok) {
