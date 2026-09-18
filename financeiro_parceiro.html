@@ -1,536 +1,1387 @@
-<div class="modulo-card" style="background: white; padding: 30px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); font-family: 'Poppins', sans-serif;">
-  
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
-    <div>
-      <h2 style="color: #1e3c72; margin: 0; font-weight: 800;">📊 Minhas Comissões</h2>
-      <p style="margin: 0; font-size: 11px; color: #1e3c72; font-weight: 600;">
-        🗓️ Competência: <span id="label-mes-ano" style="color: #64748b;">Selecione um mês</span>
-        <span id="status-liberacao" style="margin-left: 15px; font-weight: 700;"></span>
-      </p>
-      <div id="painel-taxas-aplicadas" style="margin-top: 10px;"></div>
-    </div>
+<style>
+  /* ═══════════════════════════════════════════════════════════════
+     FINANCEIRO PARCEIRO · VEXO
+     ═══════════════════════════════════════════════════════════════ */
+  .finp-root { font-family: 'Poppins', sans-serif; color: #0f172a; }
 
-    <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-      <input type="month" id="filtro-mes-fin-parceiro" onchange="carregarResumoParceiro()" style="padding: 9px 15px; border-radius: 10px; border: 1px solid #cbd5e1; font-family: 'Poppins'; color: #1e293b; outline: none; font-weight: 600; cursor: pointer;">
-      
-      <button onclick="carregarResumoParceiro()" style="padding: 10px 18px; background: #1e3c72; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; color: white; font-size: 12px; transition: 0.3s; box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);">
-        🔄 Atualizar
-      </button>
+  /* ─── Header ─── */
+  .finp-header {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3c72 60%, #4338ca 100%);
+    border-radius: 20px; padding: 28px 32px; color: white;
+    margin-bottom: 22px; position: relative; overflow: hidden;
+    box-shadow: 0 15px 40px rgba(15,23,42,0.15);
+  }
+  .finp-header::before {
+    content: '💰'; position: absolute; right: 24px; top: 50%;
+    transform: translateY(-50%); font-size: 110px; opacity: 0.07;
+  }
+  .finp-header-top {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    flex-wrap: wrap; gap: 20px; position: relative; z-index: 1;
+  }
+  .finp-header h1 {
+    font-size: 26px; font-weight: 800; margin: 0 0 6px; letter-spacing: -0.5px;
+  }
+  .finp-header p { margin: 0; opacity: 0.85; font-size: 13px; }
 
-      <button onclick="gerarExtratoParceiro()" style="background: white; color: #1e3c72; border: 1px solid #1e3c72; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
-        📄 Extrato
-      </button>
+  .finp-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .finp-btn {
+    padding: 10px 18px; border-radius: 12px; font-weight: 700; font-size: 12px;
+    cursor: pointer; border: none; display: inline-flex; align-items: center;
+    gap: 8px; font-family: inherit; transition: 0.2s;
+  }
+  .finp-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .finp-btn-primary { background: white; color: #1e3c72; }
+  .finp-btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.15); }
+  .finp-btn-ghost { background: rgba(255,255,255,0.12); color: white; border: 1px solid rgba(255,255,255,0.2); }
+  .finp-btn-ghost:hover:not(:disabled) { background: rgba(255,255,255,0.2); }
+  .finp-btn-green { background: #10b981; color: white; }
+  .finp-btn-green:hover:not(:disabled) { background: #059669; transform: translateY(-2px); }
+  .finp-btn-dark { background: #0f172a; color: white; }
+  .finp-btn-danger { background: #ef4444; color: white; }
 
-      <button onclick="abrirModalUploadNF()" style="background: #10b981; color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 12px; transition: 0.3s; display: flex; align-items: center; gap: 8px;">
-        📎 Enviar NF
-      </button>
+  .finp-mes-selector {
+    display: flex; gap: 8px; align-items: center;
+    background: rgba(0,0,0,0.25); padding: 8px 14px; border-radius: 12px;
+    backdrop-filter: blur(8px); border: 1px solid rgba(255,255,255,0.1);
+  }
+  .finp-mes-selector input[type="month"] {
+    background: transparent; border: none; color: white; font-family: inherit;
+    font-size: 13px; font-weight: 700; cursor: pointer; outline: none;
+  }
+  .finp-mes-selector input[type="month"]::-webkit-calendar-picker-indicator {
+    filter: invert(1); cursor: pointer;
+  }
+
+  /* ─── Timeline ─── */
+  .finp-timeline {
+    background: white; border-radius: 20px; padding: 24px 28px;
+    margin-bottom: 22px; border: 1px solid #eef2f6;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.03);
+  }
+  .finp-timeline-title {
+    font-size: 11px; font-weight: 800; color: #64748b;
+    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 20px;
+  }
+  .finp-steps {
+    display: flex; align-items: flex-start; gap: 0; position: relative;
+  }
+  .finp-step {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    position: relative; min-width: 0;
+  }
+  .finp-step-icon {
+    width: 52px; height: 52px; border-radius: 50%; background: #f1f5f9;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 22px; position: relative; z-index: 2;
+    border: 3px solid #f1f5f9; transition: 0.3s;
+  }
+  .finp-step.done .finp-step-icon {
+    background: #10b981; border-color: #d1fae5; color: white;
+  }
+  .finp-step.active .finp-step-icon {
+    background: #3b82f6; border-color: #dbeafe; color: white;
+    box-shadow: 0 0 0 6px rgba(59,130,246,0.15);
+    animation: finp-pulse 2s infinite;
+  }
+  .finp-step.pending .finp-step-icon { color: #94a3b8; }
+  @keyframes finp-pulse {
+    0%,100% { box-shadow: 0 0 0 6px rgba(59,130,246,0.15); }
+    50% { box-shadow: 0 0 0 12px rgba(59,130,246,0.05); }
+  }
+  .finp-step-label {
+    margin-top: 12px; text-align: center; padding: 0 6px;
+  }
+  .finp-step-label strong {
+    display: block; font-size: 12px; font-weight: 800; color: #0f172a;
+    margin-bottom: 4px;
+  }
+  .finp-step.pending .finp-step-label strong { color: #94a3b8; }
+  .finp-step-label span {
+    font-size: 10px; color: #64748b; line-height: 1.4;
+  }
+  .finp-step-connector {
+    position: absolute; top: 26px; left: 50%; width: 100%; height: 3px;
+    background: #f1f5f9; z-index: 1;
+  }
+  .finp-step.done .finp-step-connector { background: #10b981; }
+  .finp-step:last-child .finp-step-connector { display: none; }
+
+  /* ─── KPIs ─── */
+  .finp-kpis {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px;
+    margin-bottom: 22px;
+  }
+  @media (max-width: 1100px) { .finp-kpis { grid-template-columns: repeat(2, 1fr); } }
+  .finp-kpi {
+    background: white; border-radius: 16px; padding: 18px 20px;
+    border: 1px solid #eef2f6; position: relative; overflow: hidden;
+    transition: 0.25s;
+  }
+  .finp-kpi:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.06); }
+  .finp-kpi::before {
+    content: ''; position: absolute; top: 0; left: 0; height: 3px;
+    width: 100%; background: var(--kpi-color, #1e3c72);
+  }
+  .finp-kpi-label {
+    font-size: 10px; font-weight: 700; color: #64748b;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .finp-kpi-value {
+    font-size: 24px; font-weight: 800; color: #0f172a;
+    margin: 6px 0 0; line-height: 1.1;
+  }
+  .finp-kpi-sub { font-size: 11px; color: #94a3b8; margin-top: 4px; font-weight: 600; }
+
+  /* ─── Cards de período ─── */
+  .finp-info-row {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px;
+    margin-bottom: 22px;
+  }
+  @media (max-width: 900px) { .finp-info-row { grid-template-columns: repeat(2, 1fr); } }
+  .finp-info-card {
+    background: #f8fafc; border-radius: 14px; padding: 14px 16px;
+    border: 1px solid #eef2f6;
+  }
+  .finp-info-card .label {
+    font-size: 9px; font-weight: 800; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .finp-info-card .value {
+    font-size: 14px; font-weight: 800; color: #0f172a; margin-top: 4px;
+  }
+  .finp-info-card .value.alert { color: #f59e0b; }
+  .finp-info-card .value.ok { color: #10b981; }
+
+  /* ─── Seção espelho ─── */
+  .finp-section {
+    background: white; border-radius: 20px; border: 1px solid #eef2f6;
+    margin-bottom: 22px; overflow: hidden;
+  }
+  .finp-section-head {
+    padding: 18px 24px; background: #f8fafc;
+    border-bottom: 1px solid #eef2f6; display: flex;
+    justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 12px;
+  }
+  .finp-section-head h3 {
+    margin: 0; font-size: 15px; font-weight: 800; color: #1e293b;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .finp-section-body { padding: 0; }
+
+  .finp-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .finp-table th {
+    background: #f8fafc; padding: 12px 16px; text-align: left;
+    font-size: 10px; font-weight: 800; color: #64748b;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid #eef2f6; white-space: nowrap;
+  }
+  .finp-table td {
+    padding: 14px 16px; border-bottom: 1px solid #f1f5f9;
+    vertical-align: middle;
+  }
+  .finp-table tr:hover td { background: #fafbfc; }
+  .finp-table .td-right { text-align: right; }
+  .finp-table .td-center { text-align: center; }
+  .finp-table .td-mono { font-family: 'SF Mono', Consolas, monospace; font-size: 11px; }
+
+  .finp-badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 3px 10px; border-radius: 20px; font-size: 10px;
+    font-weight: 800; letter-spacing: 0.3px;
+  }
+  .finp-badge.green { background: #dcfce7; color: #166534; }
+  .finp-badge.blue { background: #dbeafe; color: #1e40af; }
+  .finp-badge.amber { background: #fef3c7; color: #92400e; }
+  .finp-badge.red { background: #fee2e2; color: #991b1b; }
+  .finp-badge.gray { background: #f1f5f9; color: #475569; }
+
+  .finp-total-row {
+    background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%);
+    color: white; padding: 20px 24px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px;
+  }
+  .finp-total-row .label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 1px; opacity: 0.7;
+  }
+  .finp-total-row .value {
+    font-size: 28px; font-weight: 800; letter-spacing: -1px;
+  }
+
+  .finp-empty {
+    padding: 60px 30px; text-align: center; color: #94a3b8;
+  }
+  .finp-empty .icon { font-size: 48px; margin-bottom: 12px; opacity: 0.5; }
+  .finp-empty h4 { color: #64748b; font-size: 15px; margin: 0 0 6px; }
+  .finp-empty p { font-size: 13px; margin: 0; }
+
+  /* ─── Lista de NFs ─── */
+  .finp-nf-list { padding: 8px 0; }
+  .finp-nf-item {
+    padding: 16px 24px; border-bottom: 1px solid #f1f5f9;
+    display: flex; justify-content: space-between; align-items: center;
+    gap: 16px; flex-wrap: wrap; transition: 0.15s;
+  }
+  .finp-nf-item:hover { background: #fafbfc; }
+  .finp-nf-item:last-child { border-bottom: none; }
+  .finp-nf-item-left { display: flex; align-items: center; gap: 14px; }
+  .finp-nf-item-icon {
+    width: 42px; height: 42px; border-radius: 12px;
+    background: #eff6ff; color: #3b82f6; display: flex;
+    align-items: center; justify-content: center; font-size: 18px;
+  }
+  .finp-nf-item-info strong {
+    display: block; font-size: 13px; color: #0f172a; margin-bottom: 2px;
+  }
+  .finp-nf-item-info span { font-size: 11px; color: #64748b; }
+
+  /* ─── Modais ─── */
+  .finp-modal {
+    position: fixed !important; inset: 0 !important;
+    width: 100vw !important; height: 100vh !important;
+    background: rgba(15,23,42,0.75) !important;
+    backdrop-filter: blur(6px) !important;
+    z-index: 2147483646 !important;
+    display: none; align-items: center; justify-content: center;
+    padding: 20px; box-sizing: border-box;
+  }
+  .finp-modal.active { display: flex !important; }
+  .finp-modal-box {
+    background: white; border-radius: 20px; width: 100%;
+    max-width: 520px; max-height: 92vh; overflow: hidden;
+    display: flex; flex-direction: column;
+    box-shadow: 0 25px 60px -12px rgba(0,0,0,0.4);
+    animation: finpModalIn 0.25s ease-out;
+  }
+  @keyframes finpModalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(10px); }
+    to   { opacity: 1; transform: scale(1) translateY(0); }
+  }
+  .finp-modal-head {
+    padding: 20px 24px; border-bottom: 1px solid #eef2f6;
+    display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%);
+    color: white;
+  }
+  .finp-modal-head h3 {
+    margin: 0; font-size: 16px; font-weight: 800;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .finp-modal-close {
+    background: rgba(255,255,255,0.15); border: none;
+    width: 32px; height: 32px; border-radius: 50%; cursor: pointer;
+    color: white; font-size: 18px; display: flex;
+    align-items: center; justify-content: center;
+  }
+  .finp-modal-close:hover { background: rgba(255,255,255,0.25); }
+  .finp-modal-body { padding: 24px; overflow-y: auto; flex: 1; }
+  .finp-modal-foot {
+    padding: 16px 24px; border-top: 1px solid #eef2f6;
+    background: #f8fafc; display: flex; justify-content: flex-end; gap: 10px;
+  }
+
+  .finp-field { margin-bottom: 16px; }
+  .finp-field:last-child { margin-bottom: 0; }
+  .finp-field label {
+    display: block; font-size: 11px; font-weight: 800;
+    color: #475569; text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .finp-field input,
+  .finp-field textarea,
+  .finp-field select {
+    width: 100%; padding: 11px 14px; border: 1px solid #cbd5e1;
+    border-radius: 10px; font-size: 13px; font-family: inherit;
+    outline: none; transition: 0.2s; box-sizing: border-box;
+    background: white; color: #0f172a;
+  }
+  .finp-field input:focus,
+  .finp-field textarea:focus {
+    border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+  }
+  .finp-field textarea { resize: vertical; min-height: 80px; }
+  .finp-field-hint { font-size: 11px; color: #94a3b8; margin-top: 4px; }
+  .finp-field-error { font-size: 11px; color: #ef4444; margin-top: 4px; display: none; }
+  .finp-field-error.show { display: block; }
+
+  .finp-dropzone {
+    border: 2px dashed #cbd5e1; border-radius: 12px;
+    padding: 32px 20px; text-align: center; cursor: pointer;
+    background: #f8fafc; transition: 0.2s;
+  }
+  .finp-dropzone:hover, .finp-dropzone.drag {
+    border-color: #3b82f6; background: #eff6ff;
+  }
+  .finp-dropzone .icon { font-size: 34px; margin-bottom: 8px; }
+  .finp-dropzone .text { font-size: 12px; color: #64748b; }
+  .finp-dropzone .text b { color: #1e293b; }
+  .finp-dropzone.has-file {
+    border-color: #10b981; background: #f0fdf4; border-style: solid;
+  }
+  .finp-dropzone.has-file .icon { color: #10b981; }
+
+  .finp-alert {
+    padding: 12px 16px; border-radius: 10px; font-size: 12px;
+    line-height: 1.5; margin-bottom: 16px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .finp-alert.info    { background: #eff6ff; color: #1e40af; border: 1px solid #bfdbfe; }
+  .finp-alert.warn    { background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+  .finp-alert.success { background: #f0fdf4; color: #166534; border: 1px solid #bbf7d0; }
+  .finp-alert.error   { background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+
+  .finp-spinner {
+    width: 18px; height: 18px; border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white; border-radius: 50%;
+    animation: finpSpin 0.7s linear infinite; display: inline-block;
+  }
+  @keyframes finpSpin { to { transform: rotate(360deg); } }
+
+  .finp-loading {
+    padding: 60px 20px; text-align: center; color: #94a3b8;
+    display: flex; flex-direction: column; align-items: center; gap: 14px;
+  }
+  .finp-loading .spin {
+    width: 40px; height: 40px; border: 3px solid #e2e8f0;
+    border-top-color: #3b82f6; border-radius: 50%;
+    animation: finpSpin 0.8s linear infinite;
+  }
+</style>
+
+<div class="finp-root">
+
+  <!-- ═══ HEADER ═══ -->
+  <div class="finp-header">
+    <div class="finp-header-top">
+      <div>
+        <h1>💰 Minhas Comissões</h1>
+        <p>Acompanhe seu extrato, envie notas fiscais e conteste linhas divergentes.</p>
+      </div>
+      <div class="finp-actions">
+        <div class="finp-mes-selector">
+          <span style="font-size: 14px;">📅</span>
+          <input type="month" id="finp-mes-input">
+        </div>
+        <button class="finp-btn finp-btn-ghost" onclick="FinP.carregar()">🔄 Atualizar</button>
+        <button class="finp-btn finp-btn-primary" id="finp-btn-espelho" onclick="FinP.gerarEspelho()" disabled>
+          📄 Gerar Espelho
+        </button>
+        <button class="finp-btn finp-btn-green" id="finp-btn-nf" onclick="FinP.abrirModalNF()" disabled>
+          📎 Enviar NF
+        </button>
+      </div>
     </div>
   </div>
 
-  <!-- CARDS -->
-  <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px;">
-    <div style="background: #0f172a; padding: 15px; border-radius: 15px; color: white;">
-      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Receita Total</span>
-      <h3 id="card-receita-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
-    </div>
-    <div style="background: #38ef7d; padding: 15px; border-radius: 15px; color: #064e3b;">
-      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Gross (Linhas)</span>
-      <h3 id="card-gross-parceiro" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
-    </div>
-    <div style="background: #10b981; padding: 15px; border-radius: 15px; color: white;">
-      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Portabilidade</span>
-      <h3 id="card-port-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
-    </div>
-    <div style="background: #f59e0b; padding: 15px; border-radius: 15px; color: white;">
-      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Renegociações (Qtd)</span>
-      <h3 id="card-mid-parceiro" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
-    </div>
-    <div style="background: #d32f2f; padding: 15px; border-radius: 15px; color: white;">
-      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Comissão Total</span>
-      <h3 id="card-com-total-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+  <!-- ═══ TIMELINE ═══ -->
+  <div class="finp-timeline" id="finp-timeline">
+    <div class="finp-timeline-title">📊 Ciclo do mês de referência</div>
+    <div class="finp-steps" id="finp-steps">
+      <div class="finp-loading"><div class="spin"></div>Carregando ciclo...</div>
     </div>
   </div>
 
-  <!-- ESPELHO DE COMISSÃO -->
-  <div style="background: #f8fafc; padding: 15px; border-radius: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap;">
-    <div>
-      <span style="font-weight: 700; font-size: 14px; color: #1e3c72;">📋 ESPELHO DE COMISSÃO</span>
-      <span style="font-size: 11px; color: #64748b; margin-left: 15px;">
-        Total a Receber: <strong id="total-espelho" style="color: #1e3c72;">R$ 0,00</strong>
-      </span>
+  <!-- ═══ KPIs ═══ -->
+  <div class="finp-kpis">
+    <div class="finp-kpi" style="--kpi-color:#1e3c72;">
+      <div class="finp-kpi-label">Faturamento</div>
+      <div class="finp-kpi-value" id="finp-kpi-fat">R$ 0,00</div>
+      <div class="finp-kpi-sub" id="finp-kpi-fat-sub">0 linhas</div>
     </div>
-    <div>
-      <button onclick="copiarMensagemNF()" style="background: #6366f1; color: white; border: none; padding: 8px 16px; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 11px;">
-        📋 Copiar descrição NF
-      </button>
-      <span id="mensagem-nf-copiada" style="font-size: 10px; color: #10b981; margin-left: 8px; display: none;">Copiado!</span>
+    <div class="finp-kpi" style="--kpi-color:#10b981;">
+      <div class="finp-kpi-label">Comissão Total</div>
+      <div class="finp-kpi-value" id="finp-kpi-com">R$ 0,00</div>
+      <div class="finp-kpi-sub">Valor a receber</div>
+    </div>
+    <div class="finp-kpi" style="--kpi-color:#3b82f6;">
+      <div class="finp-kpi-label">P.A. + Aditivo</div>
+      <div class="finp-kpi-value" id="finp-kpi-base">R$ 0,00</div>
+      <div class="finp-kpi-sub" id="finp-kpi-base-sub">0 un</div>
+    </div>
+    <div class="finp-kpi" style="--kpi-color:#8b5cf6;">
+      <div class="finp-kpi-label">Portabilidade</div>
+      <div class="finp-kpi-value" id="finp-kpi-port">R$ 0,00</div>
+      <div class="finp-kpi-sub" id="finp-kpi-port-sub">0 un</div>
+    </div>
+    <div class="finp-kpi" style="--kpi-color:#f59e0b;">
+      <div class="finp-kpi-label">Renegociação</div>
+      <div class="finp-kpi-value" id="finp-kpi-reneg">R$ 0,00</div>
+      <div class="finp-kpi-sub" id="finp-kpi-reneg-sub">0 un</div>
     </div>
   </div>
 
-  <!-- TABELA DE VENDAS DETALHADA (ESPELHO) -->
-  <div style="background: white; border: 1px solid #f1f5f9; border-radius: 12px; overflow-x: auto;">
-    <table style="width: 100%; border-collapse: collapse; font-size: 11px; min-width: 900px;">
-      <thead>
-        <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #64748b;">
-          <th style="padding: 12px 15px;">DATA</th>
-          <th style="padding: 12px 15px;">CLIENTE</th>
-          <th style="padding: 12px 15px;">MODALIDADE</th>
-          <th style="padding: 12px 15px;">LINHA</th>
-          <th style="padding: 12px 15px;">VALOR</th>
-          <th style="padding: 12px 15px;">COMISSÃO BASE</th>
-          <th style="padding: 12px 15px;">COMISSÃO PORT</th>
-          <th style="padding: 12px 15px;">COMISSÃO RENEG</th>
-          <th style="padding: 12px 15px; color: #1e3c72; font-weight: 800;">TOTAL</th>
-          <th style="padding: 12px 15px; text-align: center;">AÇÕES</th>
-        </tr>
-      </thead>
-      <tbody id="tabela-vendas-parceiro">
-        <tr><td colspan="10" style="text-align: center; padding: 40px; color: #94a3b8;">Carregando suas vendas...</td></tr>
-      </tbody>
-    </table>
+  <!-- ═══ DATAS DO CICLO ═══ -->
+  <div class="finp-info-row" id="finp-datas-row" style="display:none;">
+    <div class="finp-info-card">
+      <div class="label">Validação E&E até</div>
+      <div class="value" id="finp-data-validacao">—</div>
+    </div>
+    <div class="finp-info-card">
+      <div class="label">Espelho liberado em</div>
+      <div class="value" id="finp-data-espelho">—</div>
+    </div>
+    <div class="finp-info-card">
+      <div class="label">Emitir NF a partir de</div>
+      <div class="value" id="finp-data-nf-ini">—</div>
+    </div>
+    <div class="finp-info-card">
+      <div class="label">Enviar NF até</div>
+      <div class="value alert" id="finp-data-nf-fim">—</div>
+    </div>
   </div>
 
-  <!-- RODAPÉ COM TOTAIS POR MODALIDADE -->
-  <div id="totais-modalidade-parceiro" style="margin-top: 20px; padding: 15px; background: #f8fafc; border-radius: 12px; text-align: center; font-size: 12px; border: 1px solid #e2e8f0;"></div>
+  <!-- ═══ ESPELHO DE COMISSÃO ═══ -->
+  <div class="finp-section" id="finp-sec-espelho">
+    <div class="finp-section-head">
+      <h3>📋 Espelho de Comissão</h3>
+      <div style="display:flex; gap:8px; align-items:center;">
+        <button class="finp-btn finp-btn-ghost" style="color:#475569; border-color:#e2e8f0; background:#f8fafc;" onclick="FinP.copiarDescricaoNF()" id="finp-btn-copiar" disabled>
+          📋 Copiar descrição NF
+        </button>
+      </div>
+    </div>
+    <div class="finp-section-body" id="finp-espelho-body">
+      <div class="finp-loading">
+        <div class="spin"></div>
+        Carregando espelho...
+      </div>
+    </div>
+    <div class="finp-total-row" id="finp-total-row" style="display:none;">
+      <div>
+        <div class="label">Total a Receber</div>
+        <div class="value" id="finp-total-value">R$ 0,00</div>
+      </div>
+      <div style="text-align:right;">
+        <div class="label">Linhas Ativas</div>
+        <div class="value" id="finp-total-qtd">0</div>
+      </div>
+    </div>
+  </div>
 
-  <!-- PAINEL DE NOTAS FISCAIS ENVIADAS -->
-  <div style="margin-top: 30px; padding: 20px; background: #f1f5f9; border-radius: 12px;">
-    <h4 style="margin: 0 0 15px 0; color: #1e3c72;">📎 Notas Fiscais Enviadas</h4>
-    <div id="lista-notas-parceiro" style="font-size: 12px;">
-      <p style="color: #94a3b8;">Nenhuma nota fiscal enviada ainda.</p>
+  <!-- ═══ NOTAS FISCAIS ENVIADAS ═══ -->
+  <div class="finp-section">
+    <div class="finp-section-head">
+      <h3>📎 Notas Fiscais Enviadas</h3>
+    </div>
+    <div class="finp-section-body finp-nf-list" id="finp-nf-list">
+      <div class="finp-loading" style="padding: 40px 20px;">
+        <div class="spin"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ MODAL: UPLOAD NF ═══ -->
+<div class="finp-modal" id="finp-modal-nf">
+  <div class="finp-modal-box">
+    <div class="finp-modal-head">
+      <h3>📎 Enviar Nota Fiscal</h3>
+      <button class="finp-modal-close" onclick="FinP.fecharModalNF()">✕</button>
+    </div>
+    <div class="finp-modal-body">
+      <div class="finp-alert info" id="finp-nf-instrucoes">
+        <!-- Preenchido via JS -->
+      </div>
+
+      <div class="finp-field">
+        <label>Número da NF *</label>
+        <input type="text" id="finp-nf-numero" placeholder="Ex: 000123456">
+      </div>
+
+      <div class="finp-field">
+        <label>Valor Total da NF (R$) *</label>
+        <input type="number" step="0.01" id="finp-nf-valor" placeholder="0,00">
+      </div>
+
+      <div class="finp-field">
+        <label>Data de Emissão *</label>
+        <input type="date" id="finp-nf-data">
+      </div>
+
+      <div class="finp-field">
+        <label>Arquivo da NF (PDF) *</label>
+        <div class="finp-dropzone" id="finp-nf-dropzone">
+          <div class="icon">📄</div>
+          <div class="text">Arraste o PDF aqui ou <b>clique para selecionar</b></div>
+        </div>
+        <input type="file" id="finp-nf-file" accept="application/pdf" style="display:none;">
+        <div class="finp-field-hint" id="finp-nf-file-name"></div>
+      </div>
+
+      <div class="finp-field">
+        <label>Observação (opcional)</label>
+        <textarea id="finp-nf-obs" placeholder="Alguma informação adicional..."></textarea>
+      </div>
+
+      <div class="finp-field-error" id="finp-nf-erro"></div>
+    </div>
+    <div class="finp-modal-foot">
+      <button class="finp-btn" style="background:#f1f5f9; color:#64748b;" onclick="FinP.fecharModalNF()">Cancelar</button>
+      <button class="finp-btn finp-btn-green" id="finp-nf-btn-enviar" onclick="FinP.enviarNF()">Enviar NF</button>
     </div>
   </div>
 </div>
 
-<!-- MODAL DE UPLOAD DE NF -->
-<div id="modal-upload-nf" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
-  <div style="background:white; width:95%; max-width:500px; padding:30px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); position: relative;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h3 style="margin:0; color:#1e293b; font-weight: 800; font-size: 18px;">📎 Enviar Nota Fiscal</h3>
-      <button onclick="fecharModalUploadNF()" style="background:none; border:none; font-size: 24px; cursor:pointer; color:#94a3b8;">&times;</button>
+<!-- ═══ MODAL: CONTESTAÇÃO ═══ -->
+<div class="finp-modal" id="finp-modal-cont">
+  <div class="finp-modal-box" style="max-width: 480px;">
+    <div class="finp-modal-head" style="background: linear-gradient(135deg, #7f1d1d 0%, #b91c1c 100%);">
+      <h3>⚠️ Contestar Comissão</h3>
+      <button class="finp-modal-close" onclick="FinP.fecharModalCont()">✕</button>
     </div>
-    <div style="display:grid; gap:15px;">
-      <div>
-        <label style="font-weight:600; font-size:12px; color:#1e293b;">Mês de Competência</label>
-        <input type="month" id="nf-mes" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
+    <div class="finp-modal-body">
+      <div class="finp-alert warn">
+        <span>ℹ️</span>
+        <div>
+          <b>Atenção:</b> Contestações são enviadas para a equipe E&E e analisadas caso a caso.
+          Prazo máximo: até a data limite de validação do período.
+        </div>
       </div>
-      <div>
-        <label style="font-weight:600; font-size:12px; color:#1e293b;">Valor Total da NF</label>
-        <input type="number" id="nf-valor" step="0.01" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;" placeholder="0,00">
-      </div>
-      <div>
-        <label style="font-weight:600; font-size:12px; color:#1e293b;">Arquivo (PDF)</label>
-        <input type="file" id="nf-arquivo" accept=".pdf" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px;">
-        <span id="nf-upload-status" style="font-size:11px; color:#64748b;"></span>
-      </div>
-      <div>
-        <label style="font-weight:600; font-size:12px; color:#1e293b;">Observação (opcional)</label>
-        <textarea id="nf-obs" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px; resize:vertical;" rows="3"></textarea>
-      </div>
-    </div>
-    <div style="margin-top:25px; display:flex; gap:10px;">
-      <button onclick="fecharModalUploadNF()" style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; color:#64748b; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Cancelar</button>
-      <button onclick="enviarNotaFiscal()" style="flex:2; background:#10b981; color:white; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Enviar NF</button>
-    </div>
-  </div>
-</div>
 
-<!-- MODAL DE CONTESTAÇÃO -->
-<div id="modal-contestar" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
-  <div style="background:white; width:95%; max-width:450px; padding:30px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); position: relative;">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-      <h3 style="margin:0; color:#1e293b; font-weight: 800; font-size: 18px;">⚠️ Contestar Comissão</h3>
-      <button onclick="fecharModalContestar()" style="background:none; border:none; font-size: 24px; cursor:pointer; color:#94a3b8;">&times;</button>
-    </div>
-    <div style="display:grid; gap:15px;">
-      <p style="font-size:13px; color:#64748b;">Informe o motivo da contestação para esta linha telefônica:</p>
-      <div>
-        <label style="font-weight:600; font-size:12px; color:#1e293b;">Linha</label>
-        <input type="text" id="contestar-linha" readonly style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px; background:#f1f5f9;">
+      <div class="finp-field">
+        <label>Linha</label>
+        <input type="text" id="finp-cont-linha" readonly style="background:#f8fafc;">
       </div>
-      <div>
-        <label style="font-weight:600; font-size:12px; color:#1e293b;">Motivo</label>
-        <textarea id="contestar-motivo" style="width:100%; padding:10px; border:1px solid #e2e8f0; border-radius:8px; outline:none; font-size:13px; resize:vertical;" rows="4" placeholder="Descreva detalhadamente o motivo da contestação..."></textarea>
+
+      <div class="finp-field">
+        <label>Motivo da Contestação *</label>
+        <textarea id="finp-cont-motivo" placeholder="Descreva detalhadamente o motivo da contestação..."></textarea>
       </div>
+
+      <div class="finp-field-error" id="finp-cont-erro"></div>
     </div>
-    <div style="margin-top:25px; display:flex; gap:10px;">
-      <button onclick="fecharModalContestar()" style="flex:1; background:#f8fafc; border:1px solid #e2e8f0; color:#64748b; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Cancelar</button>
-      <button onclick="confirmarContestacao()" style="flex:2; background:#ef4444; color:white; border:none; padding:12px; border-radius:10px; cursor:pointer; font-weight:600;">Enviar Contestação</button>
+    <div class="finp-modal-foot">
+      <button class="finp-btn" style="background:#f1f5f9; color:#64748b;" onclick="FinP.fecharModalCont()">Cancelar</button>
+      <button class="finp-btn finp-btn-danger" id="finp-cont-btn-enviar" onclick="FinP.enviarContestacao()">Enviar Contestação</button>
     </div>
   </div>
 </div>
 
 <script>
-/**
- * MÓDULO FINANCEIRO PARA PARCEIROS - VERSÃO COMPLETA
- * Inclui: espelho, upload NF, contestação, liberação automática
- */
+(function () {
+  'use strict';
+  if (window._vexoFinParceiroLoaded) { console.log('ℹ️ [FINP] já carregado'); return; }
+  window._vexoFinParceiroLoaded = true;
 
-let dadosParceiroAtual = null;
-let idUnicoParaContestar = null;
-let linhaParaContestar = null;
+  const $ = (id) => document.getElementById(id);
+  const fmtBRL = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmtDate = (d) => {
+    if (!d) return '—';
+    if (typeof d === 'string' && d.includes('/')) return d;
+    if (typeof d === 'string' && d.match(/^\d{4}-\d{2}-\d{2}/)) {
+      const [a, m, dia] = d.split('T')[0].split('-');
+      return `${dia}/${m}/${a}`;
+    }
+    return String(d);
+  };
 
-// ================================================================
-// CARREGAMENTO PRINCIPAL
-// ================================================================
+  const state = {
+    mes: null,
+    ano: null,
+    periodo: null,
+    espelho: null,
+    nfs: [],
+    file: null
+  };
+  window.FinPState = state;
 
-function carregarResumoParceiro() {
-  const inputMes = document.getElementById('filtro-mes-fin-parceiro');
-  const [ano, mes] = inputMes.value.split('-');
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const matricula = sessao.matricula;
+  // ═══════════════════════════════════════════════════════════
+  // CARREGAR
+  // ═══════════════════════════════════════════════════════════
+  async function carregar() {
+    if (!window.sb) {
+      console.warn('⚠️ [FINP] Supabase não disponível');
+      return;
+    }
 
-  google.script.run
-    .withSuccessHandler(function(liberacao) {
-      if (!liberacao.liberado) {
-        document.getElementById('tabela-vendas-parceiro').innerHTML = `
-          <tr><td colspan="8" style="text-align:center;padding:40px;color:#f59e0b;">
-            ⏳ Aguardando liberação pela E&E. O espelho será disponibilizado após o dia 24 do mês seguinte ou quando a empresa autorizar.
-          </td></tr>`;
-        return;
+    const input = $('finp-mes-input');
+    if (!input.value) {
+      const hoje = new Date();
+      const mesAnterior = hoje.getMonth() === 0 ? 12 : hoje.getMonth();
+      const anoRef = hoje.getMonth() === 0 ? hoje.getFullYear() - 1 : hoje.getFullYear();
+      input.value = `${anoRef}-${String(mesAnterior).padStart(2, '0')}`;
+    }
+
+    const [ano, mes] = input.value.split('-').map(Number);
+    state.mes = mes;
+    state.ano = ano;
+
+    renderLoading();
+
+    try {
+      const [rPeriodo, rNfs] = await Promise.all([
+        window.sb.rpc('parceiro_periodo_status', { p_mes: mes, p_ano: ano }),
+        window.sb.rpc('parceiro_listar_nfs')
+      ]);
+
+      if (rPeriodo.error) throw rPeriodo.error;
+      if (rNfs.error) throw rNfs.error;
+
+      state.periodo = rPeriodo.data?.periodo || null;
+      state.nfs = rNfs.data?.notas || [];
+
+      await carregarEspelho(); // tenta carregar (retorna erro amigável se não liberado)
+      renderTimeline();
+      renderDatas();
+      renderNfs();
+      atualizarBotoes();
+
+    } catch (e) {
+      console.error('❌ [FINP] Erro:', e);
+      renderErro(e.message || String(e));
+    }
+  }
+
+  async function carregarEspelho() {
+    if (!state.periodo || !state.periodo.espelho_liberado) {
+      state.espelho = null;
+      renderEspelhoNaoLiberado();
+      return;
+    }
+
+    const { data, error } = await window.sb.rpc('parceiro_espelho', {
+      p_mes: state.mes,
+      p_ano: state.ano
+    });
+
+    if (error) {
+      console.warn('⚠️ [FINP] espelho:', error.message);
+      state.espelho = null;
+      renderEspelhoNaoLiberado();
+      return;
+    }
+    if (!data?.success) {
+      state.espelho = null;
+      renderEspelhoNaoLiberado(data?.message);
+      return;
+    }
+
+    state.espelho = data;
+    renderEspelho();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // RENDER · TIMELINE
+  // ═══════════════════════════════════════════════════════════
+  function renderTimeline() {
+    const container = $('finp-steps');
+    const p = state.periodo;
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+
+    const parseD = (s) => {
+      if (!s) return null;
+      if (s.match(/^\d{4}-\d{2}-\d{2}/)) return new Date(s + 'T12:00:00');
+      return null;
+    };
+
+    const dl  = parseD(p?.data_limite_validacao);
+    const dle = parseD(p?.data_liberacao_espelho);
+    const dnf = parseD(p?.data_inicio_nf);
+    const dnfFim = parseD(p?.data_limite_nf);
+
+    // Etapa 1 — Vendas lançadas
+    const step1 = { icon: '📥', label: 'Vendas Lançadas', sub: `${state.mes}/${state.ano}`, state: 'done' };
+
+    // Etapa 2 — Validação E&E
+    let step2State = 'pending';
+    let step2Sub = dl ? `Até ${dl.toLocaleDateString('pt-BR')}` : 'Aguardando';
+    if (p?.espelho_liberado) step2State = 'done';
+    else if (dl && hoje >= dl) step2State = 'active';
+    else if (dl && hoje >= new Date(dl.getTime() - 5 * 864e5)) step2State = 'active';
+    const step2 = { icon: '🔍', label: 'Validação E&E', sub: step2Sub, state: step2State };
+
+    // Etapa 3 — Espelho liberado
+    const step3 = {
+      icon: '📋', label: 'Espelho Liberado',
+      sub: p?.espelho_liberado && p?.espelho_liberado_em
+        ? new Date(p.espelho_liberado_em).toLocaleDateString('pt-BR')
+        : (dle ? `Previsto ${dle.toLocaleDateString('pt-BR')}` : 'Aguardando'),
+      state: p?.espelho_liberado ? 'done' : (dle && hoje >= dle ? 'active' : 'pending')
+    };
+
+    // Etapa 4 — Envio NF
+    let step4State = 'pending';
+    let step4Sub = dnf && dnfFim
+      ? `${dnf.toLocaleDateString('pt-BR')} → ${dnfFim.toLocaleDateString('pt-BR')}`
+      : 'Aguardando';
+    const nfEnviada = state.nfs.some(n =>
+      n.mes === state.mes && n.ano === state.ano &&
+      ['RECEBIDA','EM_VALIDACAO','APROVADA','PAGA'].includes(n.status)
+    );
+    if (nfEnviada) step4State = 'done';
+    else if (dnf && dnfFim && hoje >= dnf && hoje <= dnfFim) step4State = 'active';
+    const step4 = { icon: '📎', label: 'Envio da NF', sub: step4Sub, state: step4State };
+
+    // Etapa 5 — Pagamento
+    const nfPaga = state.nfs.find(n =>
+      n.mes === state.mes && n.ano === state.ano && n.status === 'PAGA'
+    );
+    const step5 = {
+      icon: '✅', label: 'Pagamento',
+      sub: nfPaga?.pago_em
+        ? new Date(nfPaga.pago_em).toLocaleDateString('pt-BR')
+        : 'Aguardando',
+      state: nfPaga ? 'done' : 'pending'
+    };
+
+    const steps = [step1, step2, step3, step4, step5];
+
+    container.innerHTML = steps.map(s => `
+      <div class="finp-step ${s.state}">
+        <div class="finp-step-connector"></div>
+        <div class="finp-step-icon">${s.icon}</div>
+        <div class="finp-step-label">
+          <strong>${s.label}</strong>
+          <span>${s.sub}</span>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // RENDER · DATAS
+  // ═══════════════════════════════════════════════════════════
+  function renderDatas() {
+    const p = state.periodo;
+    if (!p) {
+      $('finp-datas-row').style.display = 'none';
+      return;
+    }
+    $('finp-datas-row').style.display = 'grid';
+    $('finp-data-validacao').textContent = fmtDate(p.data_limite_validacao);
+    $('finp-data-espelho').textContent   = fmtDate(p.espelho_liberado_em) || fmtDate(p.data_liberacao_espelho);
+    $('finp-data-nf-ini').textContent    = fmtDate(p.data_inicio_nf);
+    $('finp-data-nf-fim').textContent    = fmtDate(p.data_limite_nf);
+
+    // Alerta de prazo se estiver próximo
+    if (p.data_limite_nf) {
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      const limite = new Date(p.data_limite_nf + 'T12:00:00');
+      const dias = Math.ceil((limite - hoje) / 864e5);
+      const el = $('finp-data-nf-fim');
+      if (dias < 0) {
+        el.className = 'value';
+        el.style.color = '#94a3b8';
+        el.textContent += ' (encerrado)';
+      } else if (dias <= 5) {
+        el.className = 'value alert';
+        el.textContent += ` (${dias}d restantes)`;
       }
-      // Liberado: carrega dados
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (!res.success) { alert('Erro: ' + res.message); return; }
-          atualizarInterfaceParceiro(res);
-        })
-        .p_calcularComissaoParceiroCompleta(sessao.bancoDeDadosId, sessao.username, mes, ano);
-    })
-    .verificarLiberacaoEspelho(matricula, parseInt(mes), parseInt(ano));
-}
+    }
+  }
 
-// ================================================================
-// ATUALIZAR INTERFACE
-// ================================================================
+  // ═══════════════════════════════════════════════════════════
+  // RENDER · ESPELHO
+  // ═══════════════════════════════════════════════════════════
+  function renderLoading() {
+    $('finp-espelho-body').innerHTML = `
+      <div class="finp-loading">
+        <div class="spin"></div>
+        Carregando...
+      </div>`;
+    $('finp-total-row').style.display = 'none';
+  }
 
-function atualizarInterfaceParceiro(dados) {
-  const formatMoeda = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  function renderErro(msg) {
+    $('finp-espelho-body').innerHTML = `
+      <div class="finp-empty">
+        <div class="icon">⚠️</div>
+        <h4>Erro ao carregar</h4>
+        <p>${msg}</p>
+      </div>`;
+    $('finp-total-row').style.display = 'none';
+  }
 
-  // CARDS
-  document.getElementById('card-receita-parceiro').innerText = formatMoeda(dados.totais.faturamento);
-  document.getElementById('card-gross-parceiro').innerHTML = `${dados.totais.gross || 0} un`;
-  document.getElementById('card-port-parceiro').innerText = formatMoeda(dados.totais.portabilidade);
-  document.getElementById('card-mid-parceiro').innerHTML = `${dados.totais.midQtd || 0} un / ${formatMoeda(dados.totais.midVal)}`;
-  document.getElementById('card-com-total-parceiro').innerText = formatMoeda(dados.totais.comissaoTotal);
+  function renderEspelhoNaoLiberado(msg) {
+    const p = state.periodo;
+    let icone = '⏳';
+    let titulo = 'Espelho ainda não liberado';
+    let texto = 'Aguarde a equipe E&E finalizar a validação das linhas do período.';
 
-  // TOTAL ESPELHO
-  document.getElementById('total-espelho').innerText = formatMoeda(dados.totais.comissaoTotal);
+    if (!p) {
+      icone = '📭';
+      titulo = 'Nenhum ciclo aberto para este mês';
+      texto = 'Quando o ciclo de validação for aberto para este período, ele aparecerá aqui.';
+    } else if (msg) {
+      texto = msg;
+    }
 
-  // PAINEL DE TAXAS
-  const painel = document.getElementById('painel-taxas-aplicadas');
-  painel.innerHTML = `
-    <div style="background: #fef3c7; border-radius: 12px; padding: 12px 20px; margin: 20px 0; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
-      <span><strong>📈 FATURAMENTO:</strong> ${dados.percentuais.fat}%</span>
-      <span><strong>🔄 PORTABILIDADE:</strong> ${dados.percentuais.port}%</span>
-      <span><strong>📱 RENEGOCIAÇÃO:</strong> ${dados.percentuais.reneg}%</span>
-      <span><strong>🔓 STATUS:</strong> ${dados.lojaDesbloqueada ? '✅ DESBLOQUEADO' : '🔒 BLOQUEADO'}</span>
-    </div>
-  `;
+    $('finp-espelho-body').innerHTML = `
+      <div class="finp-empty">
+        <div class="icon">${icone}</div>
+        <h4>${titulo}</h4>
+        <p>${texto}</p>
+      </div>`;
+    $('finp-total-row').style.display = 'none';
 
-  // TABELA DE VENDAS
-  const tbody = document.getElementById('tabela-vendas-parceiro');
-  if (!dados.vendas || dados.vendas.length === 0) {
-    tbody.innerHTML = `<tr><td colspan="10" style="text-align: center; padding: 60px; color: #94a3b8; background: #f8fafc;">Nenhuma venda validada no período.</td></tr>`;
-  } else {
-    let html = '';
-    dados.vendas.forEach(v => {
-      const totalLinha = v.comissaoBase + v.comissaoPort + v.comissaoReneg;
-      const linhaTelefone = v.numeroLinha || v.linha || '---';
-      const idUnico = v.idUnico || '';
-      html += `
-        <tr style="border-bottom: 1px solid #f1f5f9; transition: all 0.2s ease;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
-          <td style="padding: 12px 15px; font-size: 11px;">${v.data || '---'}</td>
-          <td style="padding: 12px 15px; font-weight: 600; color: #1e293b;">${v.cliente || 'N/I'}</td>
-          <td style="padding: 12px 15px;">${v.modalidade || '---'}</td>
-          <td style="padding: 12px 15px; font-weight: 600; color: #1e3c72;">${linhaTelefone}</td>
-          <td style="padding: 12px 15px; font-weight: 600;">${formatMoeda(v.valor)}</td>
-          <td style="padding: 12px 15px; color: #1e3c72;">${formatMoeda(v.comissaoBase)}</td>
-          <td style="padding: 12px 15px; color: #10b981;">${formatMoeda(v.comissaoPort)}</td>
-          <td style="padding: 12px 15px; color: #f59e0b;">${formatMoeda(v.comissaoReneg)}</td>
-          <td style="padding: 12px 15px; text-align: center;">
-            <div style="background: rgba(30, 60, 114, 0.05); border: 1px solid rgba(30, 60, 114, 0.15); padding: 6px 12px; border-radius: 12px; font-size: 14px; font-weight: 800; color: #1e3c72; backdrop-filter: blur(8px);">
-              ${formatMoeda(totalLinha)}
-            </div>
+    // Zera KPIs
+    ['fat','com','base','port','reneg'].forEach(k => {
+      const el = $('finp-kpi-' + k); if (el) el.textContent = k === 'fat' || k === 'com' ? 'R$ 0,00' : '0';
+    });
+    ['finp-kpi-fat-sub','finp-kpi-base-sub','finp-kpi-port-sub','finp-kpi-reneg-sub'].forEach(id => {
+      const el = $(id); if (el) el.textContent = '0';
+    });
+  }
+
+  function renderEspelho() {
+    const d = state.espelho;
+    if (!d) { renderEspelhoNaoLiberado(); return; }
+
+    const vendas = d.vendas || [];
+    const tot = d.totais || {};
+
+    // KPIs
+    const porMod = {};
+    vendas.forEach(v => {
+      const m = (v.modalidade || 'OUTROS').toUpperCase();
+      if (!porMod[m]) porMod[m] = { fat: 0, com: 0, qtd: 0 };
+      porMod[m].fat += Number(v.valor || 0);
+      porMod[m].com += Number(v.comissao_bruta || 0);
+      porMod[m].qtd += 1;
+    });
+
+    let baseFat = 0, baseCom = 0, baseQtd = 0;
+    let portFat = 0, portCom = 0, portQtd = 0;
+    let renegFat = 0, renegCom = 0, renegQtd = 0;
+
+    Object.entries(porMod).forEach(([m, info]) => {
+      if (m.includes('PORT')) {
+        portFat += info.fat; portCom += info.com; portQtd += info.qtd;
+      } else if (m.includes('RENEG')) {
+        renegFat += info.fat; renegCom += info.com; renegQtd += info.qtd;
+      } else {
+        baseFat += info.fat; baseCom += info.com; baseQtd += info.qtd;
+      }
+    });
+
+    $('finp-kpi-fat').textContent = fmtBRL(tot.faturamento);
+    $('finp-kpi-fat-sub').textContent = `${tot.qtd || 0} linhas ativas`;
+    $('finp-kpi-com').textContent = fmtBRL(tot.comissao);
+    $('finp-kpi-base').textContent = fmtBRL(baseCom);
+    $('finp-kpi-base-sub').textContent = `${baseQtd} un`;
+    $('finp-kpi-port').textContent = fmtBRL(portCom);
+    $('finp-kpi-port-sub').textContent = `${portQtd} un`;
+    $('finp-kpi-reneg').textContent = fmtBRL(renegCom);
+    $('finp-kpi-reneg-sub').textContent = `${renegQtd} un`;
+
+    // Total row
+    $('finp-total-row').style.display = 'flex';
+    $('finp-total-value').textContent = fmtBRL(tot.comissao);
+    $('finp-total-qtd').textContent = tot.qtd || 0;
+
+    // Tabela
+    if (vendas.length === 0) {
+      $('finp-espelho-body').innerHTML = `
+        <div class="finp-empty">
+          <div class="icon">📭</div>
+          <h4>Nenhuma linha ativa neste período</h4>
+          <p>Não há comissões validadas para ${state.mes}/${state.ano}.</p>
+        </div>`;
+      return;
+    }
+
+    const rows = vendas.map(v => {
+      const statusBadge = v.status_validacao === 'VALIDADA'
+        ? '<span class="finp-badge green">✓ Validada</span>'
+        : v.status_validacao === 'CORRIGIDA'
+          ? '<span class="finp-badge amber">⚙ Corrigida</span>'
+          : v.status_validacao === 'REJEITADA'
+            ? '<span class="finp-badge red">✕ Rejeitada</span>'
+            : '<span class="finp-badge gray">⏳ Pendente</span>';
+
+      return `
+        <tr>
+          <td class="td-mono">${fmtDate(v.data_ativacao || v.data_venda)}</td>
+          <td>
+            <div style="font-weight: 700; color: #0f172a;">${escapeHtml(v.cliente || '')}</div>
+            <div style="font-size: 10px; color: #64748b; margin-top: 2px;">${escapeHtml(v.cnpj || '')}</div>
           </td>
-          <td style="padding: 12px 15px; text-align: center;">
-            <button onclick="abrirContestacao('${idUnico}', '${linhaTelefone}')" 
-              style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 10px; font-weight: 700; transition: 0.3s;"
-              onmouseover="this.style.background='#dc2626'" onmouseout="this.style.background='#ef4444'">
+          <td>${escapeHtml(v.modalidade || '—')}</td>
+          <td class="td-mono">${escapeHtml(v.numero_linha || '—')}</td>
+          <td class="td-right">${fmtBRL(v.valor)}</td>
+          <td class="td-right" style="color: #1e3c72; font-weight: 700;">${fmtBRL(v.comissao_total)}</td>
+          <td class="td-center">${statusBadge}</td>
+          <td class="td-center">
+            <button class="finp-btn" style="padding: 5px 12px; font-size: 10px; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca;"
+              onclick="FinP.abrirModalCont('${v.venda_id}', '${escapeHtml(v.numero_linha || '')}')">
               ⚠️ Contestar
             </button>
           </td>
-        </tr>
+        </tr>`;
+    }).join('');
+
+    $('finp-espelho-body').innerHTML = `
+      <div style="overflow-x: auto;">
+        <table class="finp-table">
+          <thead>
+            <tr>
+              <th>Data Ativação</th>
+              <th>Cliente</th>
+              <th>Modalidade</th>
+              <th>Linha</th>
+              <th class="td-right">Valor</th>
+              <th class="td-right">Comissão</th>
+              <th class="td-center">Status</th>
+              <th class="td-center">Ações</th>
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>`;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // RENDER · NFs
+  // ═══════════════════════════════════════════════════════════
+  function renderNfs() {
+    const el = $('finp-nf-list');
+    if (!state.nfs || state.nfs.length === 0) {
+      el.innerHTML = `
+        <div class="finp-empty" style="padding: 40px 30px;">
+          <div class="icon">📭</div>
+          <h4>Nenhuma NF enviada</h4>
+          <p>Quando você enviar sua primeira nota fiscal, ela aparecerá aqui.</p>
+        </div>`;
+      return;
+    }
+
+    const statusMap = {
+      'RECEBIDA':    { label: 'Recebida', cls: 'blue' },
+      'EM_VALIDACAO':{ label: 'Em Validação', cls: 'amber' },
+      'APROVADA':    { label: 'Aprovada', cls: 'green' },
+      'RECUSADA':    { label: 'Recusada', cls: 'red' },
+      'PAGA':        { label: 'Paga', cls: 'green' }
+    };
+
+    el.innerHTML = state.nfs.map(nf => {
+      const st = statusMap[nf.status] || { label: nf.status, cls: 'gray' };
+      const dataEmissao = fmtDate(nf.data_emissao);
+      const dataEnvio = fmtDate(nf.created_at);
+
+      return `
+        <div class="finp-nf-item">
+          <div class="finp-nf-item-left">
+            <div class="finp-nf-item-icon">📄</div>
+            <div class="finp-nf-item-info">
+              <strong>NF ${escapeHtml(nf.numero_nf || '—')} · ${String(nf.mes).padStart(2,'0')}/${nf.ano}</strong>
+              <span>Enviada em ${dataEnvio} · Emissão ${dataEmissao}</span>
+            </div>
+          </div>
+          <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+            <span style="font-weight:800; color:#0f172a; font-size:14px;">${fmtBRL(nf.valor)}</span>
+            <span class="finp-badge ${st.cls}">${st.label}</span>
+            ${nf.arquivo_url ? `<button class="finp-btn finp-btn-ghost" style="color:#1e3c72; background:#eff6ff; border:none; padding:5px 12px; font-size:10px;" onclick="FinP.abrirArquivo('${encodeURIComponent(nf.arquivo_url)}')">Ver PDF</button>` : ''}
+          </div>
+        </div>
+        ${nf.motivo_recusa ? `
+          <div style="padding: 0 24px 16px;">
+            <div class="finp-alert error" style="margin: 0;">
+              <span>❌</span>
+              <div><b>Motivo da recusa:</b> ${escapeHtml(nf.motivo_recusa)}</div>
+            </div>
+          </div>` : ''}
       `;
-    });
-    tbody.innerHTML = html;
+    }).join('');
   }
 
-  // RODAPÉ
-  const footer = document.getElementById('totais-modalidade-parceiro');
-  if (dados.modalidades) {
-    const m = dados.modalidades;
-    footer.innerHTML = `
-      <strong style="color: #1e293b;">📊 RESUMO POR MODALIDADE:</strong><br>
-      <span style="color: #64748b;">
-        Base: <strong>${formatMoeda(m.totalBase)}</strong> &nbsp;|&nbsp;
-        Portabilidade: <strong>${formatMoeda(m.totalPort)}</strong> &nbsp;|&nbsp;
-        Renegociação: <strong>${formatMoeda(m.totalReneg)}</strong>
-        ${m.detalhes ? `&nbsp;|&nbsp; ${m.detalhes}` : ''}
-      </span>
-    `;
-  } else {
-    footer.innerHTML = '';
-  }
-}
+  // ═══════════════════════════════════════════════════════════
+  // AÇÕES
+  // ═══════════════════════════════════════════════════════════
+  function atualizarBotoes() {
+    const p = state.periodo;
+    const liberado = p?.espelho_liberado && state.espelho;
 
-// ================================================================
-// NOTAS FISCAIS
-// ================================================================
+    const btnEspelho = $('finp-btn-espelho');
+    const btnCopiar = $('finp-btn-copiar');
+    const btnNf = $('finp-btn-nf');
 
-function carregarNotasFiscais(nomeParceiro) {
-  google.script.run
-    .withSuccessHandler(function(notas) {
-      const container = document.getElementById('lista-notas-parceiro');
-      if (!notas || notas.length === 0) {
-        container.innerHTML = '<p style="color: #94a3b8;">Nenhuma nota fiscal enviada ainda.</p>';
-        return;
-      }
-      let html = '<ul style="list-style:none; padding:0; margin:0;">';
-      notas.forEach(n => {
-        html += `
-          <li style="display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:white; border-radius:8px; margin-bottom:6px; border:1px solid #e2e8f0;">
-            <span>
-              <strong>${n.mesReferencia}</strong> - R$ ${Number(n.valor).toFixed(2)}
-              <span style="font-size:10px; color:#64748b; margin-left:10px;">Enviado: ${n.dataEnvio}</span>
-              ${n.contestada ? '<span style="background:#ef4444; color:white; padding:2px 8px; border-radius:12px; font-size:9px; margin-left:8px;">CONTESTADA</span>' : ''}
-            </span>
-            <a href="${n.url}" target="_blank" style="color:#1e3c72; text-decoration:none; font-weight:600; font-size:12px;">Visualizar</a>
-          </li>
-        `;
-      });
-      html += '</ul>';
-      container.innerHTML = html;
-    })
-    .p_listarNotasFiscais(nomeParceiro);
-}
-
-// ================================================================
-// UPLOAD DE NF
-// ================================================================
-
-function abrirModalUploadNF() {
-  document.getElementById('modal-upload-nf').style.display = 'flex';
-  const hoje = new Date();
-  const mesAtual = String(hoje.getMonth() + 1).padStart(2, '0');
-  document.getElementById('nf-mes').value = `${hoje.getFullYear()}-${mesAtual}`;
-  document.getElementById('nf-valor').value = '';
-  document.getElementById('nf-arquivo').value = '';
-  document.getElementById('nf-obs').value = '';
-  document.getElementById('nf-upload-status').innerText = '';
-}
-
-function fecharModalUploadNF() {
-  document.getElementById('modal-upload-nf').style.display = 'none';
-}
-
-function enviarNotaFiscal() {
-  const mes = document.getElementById('nf-mes').value;
-  const valor = document.getElementById('nf-valor').value;
-  const arquivoInput = document.getElementById('nf-arquivo');
-  const obs = document.getElementById('nf-obs').value;
-  const statusEl = document.getElementById('nf-upload-status');
-
-  if (!mes) {
-    statusEl.innerText = '⚠️ Selecione o mês de competência.';
-    statusEl.style.color = '#ef4444';
-    return;
-  }
-  if (!valor || parseFloat(valor) <= 0) {
-    statusEl.innerText = '⚠️ Informe o valor total da NF.';
-    statusEl.style.color = '#ef4444';
-    return;
-  }
-  if (arquivoInput.files.length === 0) {
-    statusEl.innerText = '⚠️ Selecione um arquivo PDF.';
-    statusEl.style.color = '#ef4444';
-    return;
+    btnEspelho.disabled = !liberado;
+    btnCopiar.disabled = !liberado;
+    btnNf.disabled = !liberado || !p?.data_inicio_nf || !p?.data_limite_nf;
   }
 
-  const file = arquivoInput.files[0];
-  if (file.type !== 'application/pdf') {
-    statusEl.innerText = '⚠️ Apenas arquivos PDF são aceitos.';
-    statusEl.style.color = '#ef4444';
-    return;
-  }
-
-  statusEl.innerText = '⏳ Enviando...';
-  statusEl.style.color = '#f59e0b';
-
-  const reader = new FileReader();
-  reader.onload = function(e) {
-    const base64 = e.target.result;
+  function copiarDescricaoNF() {
+    if (!state.espelho) return;
+    const total = fmtBRL(state.espelho.totais.comissao);
+    const mesExt = ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][state.mes - 1];
     const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-    const nomeParceiro = sessao.username || sessao.nome || '';
+    const nome = sessao.nome || sessao.username || '';
+    const msg = `Serviços de intermediação de vendas referente ao mês de ${mesExt}/${state.ano} - ${nome} - Total: ${total}`;
+    navigator.clipboard.writeText(msg).then(() => {
+      const b = $('finp-btn-copiar');
+      const orig = b.innerHTML;
+      b.innerHTML = '✅ Copiado!';
+      setTimeout(() => b.innerHTML = orig, 2000);
+    }).catch(() => {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = msg; document.body.appendChild(ta); ta.select();
+      document.execCommand('copy'); ta.remove();
+    });
+  }
 
-    google.script.run
-      .withSuccessHandler(function(res) {
-        if (res.success) {
-          statusEl.innerText = '✅ NF enviada com sucesso!';
-          statusEl.style.color = '#10b981';
-          setTimeout(() => {
-            fecharModalUploadNF();
-            carregarResumoParceiro();
-          }, 1000);
-        } else {
-          statusEl.innerText = '❌ Erro: ' + res.message;
-          statusEl.style.color = '#ef4444';
-        }
-      })
-      .withFailureHandler(function(err) {
-        statusEl.innerText = '❌ Erro: ' + err;
-        statusEl.style.color = '#ef4444';
-      })
-      .p_uploadNotaFiscal(base64, file.name, nomeParceiro, mes, valor, obs);
+  function abrirModalNF() {
+    if (!state.periodo) { alert('Nenhum período aberto'); return; }
+    if (!state.periodo.espelho_liberado) { alert('Espelho ainda não foi liberado'); return; }
+
+    const hoje = new Date().toISOString().split('T')[0];
+    $('finp-nf-numero').value = '';
+    $('finp-nf-valor').value = state.espelho?.totais?.comissao || '';
+    $('finp-nf-data').value = hoje;
+    $('finp-nf-obs').value = '';
+    $('finp-nf-file').value = '';
+    $('finp-nf-file-name').textContent = '';
+    $('finp-nf-dropzone').classList.remove('has-file');
+    $('finp-nf-dropzone').querySelector('.text').innerHTML = 'Arraste o PDF aqui ou <b>clique para selecionar</b>';
+    $('finp-nf-erro').classList.remove('show');
+    state.file = null;
+
+    const p = state.periodo;
+    $('finp-nf-instrucoes').innerHTML = `
+      <span>ℹ️</span>
+      <div>
+        <b>Janela de envio:</b> ${fmtDate(p.data_inicio_nf)} até <b>${fmtDate(p.data_limite_nf)}</b>.<br>
+        <b>Valor esperado:</b> ${fmtBRL(state.espelho.totais.comissao)}<br>
+        <b>CPF/CNPJ do emitente:</b> deve bater com o cadastro.
+      </div>`;
+
+    $('finp-modal-nf').classList.add('active');
+  }
+
+  function fecharModalNF() {
+    $('finp-modal-nf').classList.remove('active');
+  }
+
+  async function enviarNF() {
+    const numero = $('finp-nf-numero').value.trim();
+    const valor = parseFloat($('finp-nf-valor').value);
+    const dataEmissao = $('finp-nf-data').value;
+    const obs = $('finp-nf-obs').value.trim();
+    const erro = $('finp-nf-erro');
+
+    erro.classList.remove('show');
+    if (!numero) return showErro('Informe o número da NF.');
+    if (!valor || valor <= 0) return showErro('Informe o valor total da NF.');
+    if (!dataEmissao) return showErro('Informe a data de emissão.');
+    if (!state.file) return showErro('Anexe o arquivo PDF da NF.');
+
+    const btn = $('finp-nf-btn-enviar');
+    btn.disabled = true; btn.innerHTML = '<span class="finp-spinner"></span> Enviando...';
+
+    try {
+      const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+      const parceiroId = sessao.parceiro_id || sessao.parceiroId || null;
+
+      if (!parceiroId) {
+        // fallback: buscar do profile
+        const { data: prof } = await window.sb.from('profiles')
+          .select('parceiro_id').eq('id', sessao.id || sessao.user_id).maybeSingle();
+        if (!prof?.parceiro_id) throw new Error('Parceiro não identificado');
+        // usa esse
+      }
+
+      const pid = parceiroId || 'unknown';
+      const nomeArq = state.file.name.replace(/[^\w.-]/g, '_');
+      const path = `${pid}/${state.ano}_${String(state.mes).padStart(2,'0')}/${Date.now()}_${nomeArq}`;
+
+      const { error: upErr } = await window.sb.storage
+        .from('notas-fiscais')
+        .upload(path, state.file, { contentType: 'application/pdf', upsert: false });
+
+      if (upErr) throw new Error('Upload falhou: ' + upErr.message);
+
+      // Gera URL assinada (1 ano)
+      const { data: sign } = await window.sb.storage
+        .from('notas-fiscais').createSignedUrl(path, 31536000);
+
+      const { data, error: rpcErr } = await window.sb.rpc('parceiro_enviar_nf', {
+        p_mes: state.mes,
+        p_ano: state.ano,
+        p_numero: numero,
+        p_valor: valor,
+        p_data_emissao: dataEmissao,
+        p_arquivo_path: path,
+        p_arquivo_url: sign?.signedUrl || path,
+        p_observacao: obs || null
+      });
+
+      if (rpcErr) throw rpcErr;
+      if (!data?.success) throw new Error(data?.message || 'Erro ao registrar NF');
+
+      fecharModalNF();
+      alert('✅ NF enviada com sucesso! Aguarde a validação da equipe E&E.');
+      await carregar();
+
+    } catch (e) {
+      console.error(e);
+      showErro(e.message || String(e));
+    } finally {
+      btn.disabled = false; btn.innerHTML = 'Enviar NF';
+    }
+  }
+
+  function showErro(msg) {
+    const erro = $('finp-nf-erro');
+    erro.textContent = msg;
+    erro.classList.add('show');
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // CONTESTAÇÃO
+  // ═══════════════════════════════════════════════════════════
+  let contState = { vendaId: null };
+
+  function abrirModalCont(vendaId, linha) {
+    contState.vendaId = vendaId;
+    $('finp-cont-linha').value = linha || '—';
+    $('finp-cont-motivo').value = '';
+    $('finp-cont-erro').classList.remove('show');
+    $('finp-modal-cont').classList.add('active');
+  }
+
+  function fecharModalCont() {
+    $('finp-modal-cont').classList.remove('active');
+  }
+
+  async function enviarContestacao() {
+    const motivo = $('finp-cont-motivo').value.trim();
+    const erro = $('finp-cont-erro');
+    erro.classList.remove('show');
+
+    if (!motivo) {
+      erro.textContent = 'Descreva o motivo da contestação.';
+      erro.classList.add('show');
+      return;
+    }
+
+    const btn = $('finp-cont-btn-enviar');
+    btn.disabled = true; btn.innerHTML = '<span class="finp-spinner"></span> Enviando...';
+
+    try {
+      const { data, error } = await window.sb.rpc('parceiro_abrir_contestacao', {
+        p_venda_id: contState.vendaId,
+        p_motivo: motivo
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      fecharModalCont();
+      alert('✅ Contestação registrada! A equipe E&E irá analisar.');
+      await carregar();
+
+    } catch (e) {
+      console.error(e);
+      erro.textContent = e.message || String(e);
+      erro.classList.add('show');
+    } finally {
+      btn.disabled = false; btn.innerHTML = 'Enviar Contestação';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // GERAR ESPELHO (PDF via janela de impressão)
+  // ═══════════════════════════════════════════════════════════
+  function gerarEspelho() {
+    if (!state.espelho) { alert('Espelho não disponível'); return; }
+
+    const d = state.espelho;
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const nome = sessao.nome || sessao.username || '—';
+    const cpf = sessao.cpf_cnpj || sessao.cpf || sessao.cnpj || '—';
+    const mesExt = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][state.mes - 1];
+
+    const rows = (d.vendas || []).map(v => `
+      <tr>
+        <td>${fmtDate(v.data_venda)}</td>
+        <td>${v.cnpj || ''}</td>
+        <td>${v.cliente || ''}</td>
+        <td>${v.modalidade || ''}</td>
+        <td>${v.plano || ''}</td>
+        <td>${v.numero_linha || ''}</td>
+        <td class="r">${fmtBRL(v.valor)}</td>
+      </tr>`).join('');
+
+    const totalFaturamento = (d.vendas || []).reduce((a, v) => a + Number(v.valor || 0), 0);
+
+    const html = `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><title>Espelho ${mesExt}/${state.ano}</title>
+<style>
+  @page { size: A4; margin: 18mm 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Helvetica', 'Arial', sans-serif; color: #0f172a; font-size: 11px; }
+  h1 { font-size: 16px; margin: 0 0 4px; }
+  .head { border-bottom: 3px solid #1e3c72; padding-bottom: 12px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: flex-start; }
+  .head .logo { font-size: 20px; font-weight: 800; color: #1e3c72; }
+  .head .meta { text-align: right; font-size: 10px; color: #64748b; }
+  .section { margin-bottom: 18px; }
+  .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #1e3c72; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .info-item { font-size: 11px; }
+  .info-item .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .info-item .val { font-weight: 700; color: #0f172a; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 6px; }
+  th { background: #f1f5f9; text-align: left; padding: 6px 8px; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid #cbd5e1; }
+  td { padding: 6px 8px; border-bottom: 1px solid #eef2f6; }
+  td.r { text-align: right; font-weight: 700; }
+  .total-box { margin-top: 16px; background: #0f172a; color: white; padding: 14px 20px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
+  .total-box .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
+  .total-box .val { font-size: 20px; font-weight: 800; }
+  .obs { margin-top: 24px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 10px; line-height: 1.6; color: #475569; }
+  .assinatura { margin-top: 40px; display: flex; justify-content: space-between; gap: 40px; }
+  .assinatura .line { flex: 1; border-top: 1px solid #cbd5e1; padding-top: 6px; text-align: center; font-size: 9px; color: #64748b; }
+  .no-print { position: fixed; top: 10px; right: 10px; }
+  @media print { .no-print { display: none; } }
+</style></head>
+<body>
+  <div class="no-print">
+    <button onclick="window.print()" style="padding: 10px 20px; background: #1e3c72; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+
+  <div class="head">
+    <div>
+      <div class="logo">VEXO · HUB</div>
+      <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Espelho de Comissão</div>
+    </div>
+    <div class="meta">
+      <div><strong>Competência:</strong> ${mesExt} / ${state.ano}</div>
+      <div>Emitido em ${new Date().toLocaleDateString('pt-BR')}</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Dados do Prestador</div>
+    <div class="info-grid">
+      <div class="info-item"><div class="lbl">Nome</div><div class="val">${nome}</div></div>
+      <div class="info-item"><div class="lbl">CPF/CNPJ</div><div class="val">${cpf}</div></div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Discriminação dos Serviços</div>
+    <div style="font-size: 11px; line-height: 1.6;">
+      Comissão referente à prestação de serviços de intermediação de vendas no mês de <strong>${mesExt}/${state.ano}</strong>.<br>
+      Finalidade: modelo para emissão de Nota Fiscal de prestação de serviços.
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="section-title">Extrato de Vendas Ativas</div>
+    <table>
+      <thead><tr>
+        <th>Data Venda</th><th>CNPJ</th><th>Razão Social</th><th>Modalidade</th><th>Plano</th><th>Linha</th><th class="r">Valor</th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+
+    <div class="total-box">
+      <div>
+        <div class="lbl">Valor Total da Comissão</div>
+        <div class="val">${fmtBRL(d.totais.comissao)}</div>
+      </div>
+      <div style="text-align: right;">
+        <div class="lbl">Linhas Ativas</div>
+        <div class="val">${d.totais.qtd || 0}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="obs">
+    <strong>Observações:</strong><br>
+    • Este espelho é o documento base para a emissão da Nota Fiscal.<br>
+    • O valor total acima deve constar na NF emitida pelo prestador.<br>
+    • Prazo para envio da NF: conforme datas do ciclo financeiro vigente.<br>
+    • Em caso de divergência, utilize o botão "Contestar" no portal antes do encerramento da validação.
+  </div>
+
+  <div class="assinatura">
+    <div class="line">Prestador de Serviços</div>
+    <div class="line">VEXO · Departamento Financeiro</div>
+  </div>
+</body></html>`;
+
+    const w = window.open('', '_blank', 'width=900,height=800');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // HELPERS
+  // ═══════════════════════════════════════════════════════════
+  function escapeHtml(s) {
+    if (s == null) return '';
+    return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  }
+
+  // Drag & drop do arquivo
+  function setupDragDrop() {
+    const dz = $('finp-nf-dropzone');
+    const fi = $('finp-nf-file');
+    if (dz._bound) return;
+    dz._bound = true;
+
+    dz.addEventListener('click', () => fi.click());
+    dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag'); });
+    dz.addEventListener('dragleave', () => dz.classList.remove('drag'));
+    dz.addEventListener('drop', e => {
+      e.preventDefault(); dz.classList.remove('drag');
+      const f = e.dataTransfer.files[0];
+      if (f) setFile(f);
+    });
+    fi.addEventListener('change', e => {
+      const f = e.target.files[0];
+      if (f) setFile(f);
+    });
+
+    function setFile(f) {
+      if (f.type !== 'application/pdf') {
+        alert('Apenas arquivos PDF são aceitos.');
+        return;
+      }
+      if (f.size > 5 * 1024 * 1024) {
+        alert('Arquivo muito grande (máx 5 MB).');
+        return;
+      }
+      state.file = f;
+      $('finp-nf-file-name').textContent = `📎 ${f.name} (${(f.size/1024).toFixed(0)} KB)`;
+      dz.classList.add('has-file');
+      dz.querySelector('.text').innerHTML = `<b>${f.name}</b><br>Clique para trocar`;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // INIT
+  // ═══════════════════════════════════════════════════════════
+  function init() {
+    $('finp-mes-input').addEventListener('change', carregar);
+    setupDragDrop();
+    carregar();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+  // API pública
+  window.FinP = {
+    carregar,
+    gerarEspelho,
+    copiarDescricaoNF,
+    abrirModalNF,
+    fecharModalNF,
+    enviarNF,
+    abrirModalCont,
+    fecharModalCont,
+    enviarContestacao,
+    abrirArquivo: (urlEncoded) => window.open(decodeURIComponent(urlEncoded), '_blank')
   };
-  reader.readAsDataURL(file);
-}
 
-// ================================================================
-// CONTESTAÇÃO
-// ================================================================
-
-function abrirContestacao(idUnico, linha) {
-  // Verifica se já passaram 5 dias do envio da NF para este mês
-  // Para simplificar, vamos verificar se existe NF enviada para este mês
-  // e se a data de envio é >= 5 dias atrás. Se não houver NF, não pode contestar.
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const nomeParceiro = sessao.username || sessao.nome || '';
-  const mesReferencia = document.getElementById('label-mes-ano').innerText;
-
-  google.script.run
-    .withSuccessHandler(function(notas) {
-      // Filtra notas do mesmo mês
-      const notasMes = notas.filter(n => n.mesReferencia === mesReferencia);
-      if (notasMes.length === 0) {
-        alert('⚠️ Você precisa enviar a nota fiscal deste mês antes de contestar.');
-        return;
-      }
-      // Verifica se alguma nota já tem mais de 5 dias
-      const podeContestar = notasMes.some(n => n.podeContestar === true);
-      if (!podeContestar) {
-        alert('⚠️ Aguarde 5 dias após o envio da nota fiscal para contestar.');
-        return;
-      }
-
-      // Se passou, abre o modal
-      idUnicoParaContestar = idUnico;
-      linhaParaContestar = linha;
-      document.getElementById('contestar-linha').value = linha;
-      document.getElementById('contestar-motivo').value = '';
-      document.getElementById('modal-contestar').style.display = 'flex';
-    })
-    .withFailureHandler(function(err) {
-      alert('Erro ao verificar notas: ' + err);
-    })
-    .p_listarNotasFiscais(nomeParceiro);
-}
-
-function fecharModalContestar() {
-  document.getElementById('modal-contestar').style.display = 'none';
-}
-
-function confirmarContestacao() {
-  const motivo = document.getElementById('contestar-motivo').value.trim();
-  if (!motivo) {
-    alert('Por favor, descreva o motivo da contestação.');
-    return;
-  }
-
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const nomeParceiro = sessao.username || sessao.nome || '';
-  const mesReferencia = document.getElementById('label-mes-ano').innerText;
-
-  const btn = event.target;
-  const originalText = btn.innerHTML;
-  btn.disabled = true;
-  btn.innerHTML = '⏳ Enviando...';
-
-  google.script.run
-    .withSuccessHandler(function(res) {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-      if (res.success) {
-        alert('✅ Contestação registrada com sucesso!');
-        fecharModalContestar();
-        carregarResumoParceiro(); // recarrega para atualizar status
-      } else {
-        alert('❌ Erro: ' + res.message);
-      }
-    })
-    .withFailureHandler(function(err) {
-      btn.disabled = false;
-      btn.innerHTML = originalText;
-      alert('❌ Erro: ' + err);
-    })
-    .p_registrarContestacao(idUnicoParaContestar, nomeParceiro, motivo, mesReferencia);
-}
-
-// ================================================================
-// COPIAR MENSAGEM PARA NOTA FISCAL
-// ================================================================
-
-function copiarMensagemNF() {
-  const total = document.getElementById('total-espelho').innerText;
-  const mes = document.getElementById('label-mes-ano').innerText;
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const nome = sessao.username || sessao.nome || '';
-
-  const mensagem = `Serviços de intermediação de vendas - Comissão referente ao mês de ${mes} - Parceiro: ${nome} - Total: ${total}`;
-
-  // Copia para a área de transferência
-  const textarea = document.createElement('textarea');
-  textarea.value = mensagem;
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand('copy');
-  document.body.removeChild(textarea);
-
-  // Feedback
-  const el = document.getElementById('mensagem-nf-copiada');
-  el.style.display = 'inline';
-  setTimeout(() => { el.style.display = 'none'; }, 3000);
-}
-
-// ================================================================
-// GERAR EXTRATO
-// ================================================================
-
-function gerarExtratoParceiro() {
-  if (!dadosParceiroAtual) {
-    alert('Carregue os dados primeiro.');
-    return;
-  }
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const nomeParceiro = sessao.username || sessao.nome || 'Parceiro';
-  const inputMes = document.getElementById('filtro-mes-fin-parceiro');
-  const [ano, mes] = inputMes.value.split('-');
-
-  google.script.run
-    .withSuccessHandler(function(html) {
-      const win = window.open('', '_blank', 'width=950,height=850');
-      win.document.write(html);
-      win.document.close();
-    })
-    .withFailureHandler(function(err) {
-      alert('Erro ao gerar extrato: ' + err);
-    })
-    .p_gerarExtratoParceiro(dadosParceiroAtual, nomeParceiro, mes, ano);
-}
-
-// ================================================================
-// INICIALIZA
-// ================================================================
-
-carregarResumoParceiro();
+  console.log('✅ [FINP] Financeiro Parceiro carregado');
+})();
 </script>
