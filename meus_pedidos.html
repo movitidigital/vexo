@@ -1126,7 +1126,94 @@
   // FUNÇÃO EDITAR PEDIDO (global)
   // ============================================
 window.editarPedido = function(pedidoId) {
-  window.showToast('✏️ Edição de pedidos será liberada em breve. Por enquanto, exclua e lance novamente.', 'warning');
+  const pedido = window.meusPedidos.find(p => p.pedido_id === pedidoId);
+  if (!pedido) {
+    window.showToast('Pedido não encontrado', 'error');
+    return;
+  }
+
+  if (pedido.status_etapa !== 0) {
+    window.showToast('Este pedido já foi processado e não pode ser editado.', 'warning');
+    return;
+  }
+
+  window.showLoading('Carregando pedido...');
+
+  window.sb.rpc('parceiro_detalhes_pedido', { p_pedido_id: pedidoId })
+    .then(function(r) {
+      window.hideLoading();
+      if (r.error) throw r.error;
+      const res = r.data;
+
+      if (!res || !res.success) {
+        window.showToast(res?.message || 'Erro ao carregar pedido', 'error');
+        return;
+      }
+
+      const p = res.pedido;
+
+      // 🔥 Agrupa linhas por modalidade
+      const linhasPorModalidade = {};
+      (p.linhas || []).forEach(function(l) {
+        const mod = (l.modalidade || 'PRIMEIRA ATIVAÇÃO').toUpperCase();
+        if (!linhasPorModalidade[mod]) linhasPorModalidade[mod] = [];
+        linhasPorModalidade[mod].push(l);
+      });
+
+      // 🔥 Monta objeto de edição
+      const pedidoEdicao = {
+        modo: 'EDITAR',
+        pedido_id: pedidoId,
+
+        // Dados da empresa
+        cnpj:          p.cnpj || '',
+        razaoSocial:   p.razao_social || '',
+        inscricaoEstadual: p.inscricao_estadual || '',
+        cep:           p.cep || '',
+        endereco:      p.endereco || '',
+        numero:        p.numero || '',
+        compl:         p.complemento || '',
+        bairro:        p.bairro || '',
+        cidade:        p.cidade || '',
+        uf:            p.uf || '',
+        cpfAdmin:      p.cpf_admin || '',
+        nomeAdmin:     p.nome_admin || '',
+        email:         p.email || '',
+        contatoFinanceiro: p.contato_financeiro || '',
+
+        // Venda
+        dataVenda:     p.data_venda || '',
+        dataVenc:      p.data_de_venc || '',
+
+        // Lista de modalidades e linhas
+        modalidadesList: Object.keys(linhasPorModalidade),
+        linhasPorModalidade: linhasPorModalidade
+      };
+
+      try {
+        sessionStorage.setItem('pedidoEmEdicao', JSON.stringify(pedidoEdicao));
+      } catch (e) {
+        window.showToast('Erro ao preparar edição: ' + e.message, 'error');
+        return;
+      }
+
+      window.showToast('📝 Abrindo pedido para edição...', 'info');
+
+      // Navega para o módulo de vendas
+      setTimeout(function() {
+        if (typeof window.navegar === 'function') {
+          window.navegar('vendas_parceiro');
+        } else if (typeof window.irParaVendas === 'function') {
+          window.irParaVendas();
+        } else {
+          window.location.href = 'vendas_parceiro.html';
+        }
+      }, 400);
+    })
+    .catch(function(err) {
+      window.hideLoading();
+      window.showToast('Erro: ' + (err.message || err), 'error');
+    });
 };
 
   // ============================================
@@ -2079,6 +2166,124 @@ function aplicarFiltros() {
     // --- Iniciar ---
     inicializar();
   })();
+  // ═══════════════════════════════════════════════════════════
+// MODO EDIÇÃO DE PEDIDO
+// ═══════════════════════════════════════════════════════════
+(function detectarModoEdicao() {
+  let pedidoEdicao = null;
+  try {
+    pedidoEdicao = JSON.parse(sessionStorage.getItem('pedidoEmEdicao') || 'null');
+  } catch (e) { pedidoEdicao = null; }
+
+  if (!pedidoEdicao || pedidoEdicao.modo !== 'EDITAR') return;
+
+  console.log('📝 Modo EDIÇÃO detectado para pedido:', pedidoEdicao.pedido_id);
+
+  // Aguarda o DOM + planos carregarem
+  function aplicarEdicao() {
+    const area = document.getElementById('areaFormularios');
+    const btn = document.getElementById('btnSalvarVexo');
+    if (!area || !btn) return;
+
+    // Abre o segmento
+    area.style.display = 'block';
+    document.querySelectorAll('.seg-card').forEach(c => c.classList.remove('active'));
+    document.getElementById('btn-empresas')?.classList.add('active');
+
+    // Marca as modalidades no topo
+    const modalidades = pedidoEdicao.modalidadesList || [];
+    modalidades.forEach(function(mod) {
+      const btnMod = document.querySelector(`.mod-btn[data-modalidade="${mod}"]`);
+      if (btnMod) btnMod.classList.add('active');
+    });
+    document.getElementById('modalidades-selecionadas').value = modalidades.join(',');
+
+    // Cria as seções e linhas
+    if (typeof window.adicionarLinhaGlobal === 'function') {
+      window.adicionarLinhaGlobal();
+    }
+
+    // Aguarda o DOM das linhas, preenche
+    setTimeout(function() {
+      // Preenche os campos comuns
+      const setVal = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ''; };
+      setVal('cnpj', pedidoEdicao.cnpj);
+      setVal('razaoSocial', pedidoEdicao.razaoSocial);
+      setVal('inscricaoEstadual', pedidoEdicao.inscricaoEstadual);
+      setVal('cep', pedidoEdicao.cep);
+      setVal('endereco', pedidoEdicao.endereco);
+      setVal('numero', pedidoEdicao.numero);
+      setVal('compl', pedidoEdicao.compl);
+      setVal('bairro', pedidoEdicao.bairro);
+      setVal('cidade', pedidoEdicao.cidade);
+      setVal('uf', pedidoEdicao.uf);
+      setVal('cpfAdmin', pedidoEdicao.cpfAdmin);
+      setVal('nomeAdmin', pedidoEdicao.nomeAdmin);
+      setVal('email', pedidoEdicao.email);
+      setVal('contatoFinanceiro', pedidoEdicao.contatoFinanceiro);
+      setVal('dataVenc', pedidoEdicao.dataVenc);
+
+      // Preenche as linhas de cada modalidade
+      const linhasPorMod = pedidoEdicao.linhasPorModalidade || {};
+      Object.keys(linhasPorMod).forEach(function(mod) {
+        const container = document.getElementById('linhas-' + mod);
+        if (!container) return;
+
+        // Limpa a linha vazia que foi criada
+        container.innerHTML = '';
+
+        linhasPorMod[mod].forEach(function(linha) {
+          window.adicionarLinhaPorModalidade(mod);
+          const cards = container.querySelectorAll('.linha-card');
+          const card = cards[cards.length - 1];
+          if (!card) return;
+
+          const inputNumero  = card.querySelector('.input-telefone-dinamico');
+          const inputPlano   = card.querySelector('.input-plano-dinamico');
+          const inputValor   = card.querySelector('.input-valor-dinamico');
+          const inputDoadora = card.querySelector('.input-doadora-dinamico');
+
+          if (inputNumero) inputNumero.value = linha.numero_da_linha || '';
+          if (inputPlano)  inputPlano.value  = linha.plano || '';
+          if (inputValor && linha.valor) {
+            const centavos = Math.round(parseFloat(linha.valor) * 100).toString();
+            inputValor.value = fmk.moeda(centavos);
+          }
+          if (inputDoadora && linha.operadora_doadora) {
+            inputDoadora.value = linha.operadora_doadora;
+          }
+        });
+
+        // Atualiza contador
+        const span = document.getElementById('qtd-linhas-' + mod);
+        if (span) span.innerText = container.children.length;
+      });
+
+      // Ajusta o botão
+      btn.innerHTML = '<i class="fas fa-pen"></i> ATUALIZAR PEDIDO';
+      btn.style.background = '#f59e0b';
+
+      window.showToast('📝 Editando pedido. Altere e clique em Atualizar.', 'info');
+
+      // Scroll até o form
+      setTimeout(() => area.scrollIntoView({ behavior: 'smooth', block: 'start' }), 200);
+    }, 300);
+  }
+
+  // Se planos ainda não carregaram, aguarda
+  if (window.dadosPlanosVexo?.length > 0) {
+    aplicarEdicao();
+  } else {
+    let tentativas = 0;
+    const intervalo = setInterval(() => {
+      tentativas++;
+      if (window.dadosPlanosVexo?.length > 0 || tentativas > 40) {
+        clearInterval(intervalo);
+        aplicarEdicao();
+      }
+    }, 100);
+  }
+})();
 </script>
 
 </body>
