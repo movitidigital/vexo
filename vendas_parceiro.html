@@ -850,24 +850,28 @@
         } else {
           const lista = Array.isArray(data) ? data : [];
 
-          window.dadosPlanosVexo = lista
-            .map(p => ({
-              // 🔥 Nome de exibição + busca
-              nome:         String(p.nome_comercial || p.nome_interno || '').trim(),
-              nome_interno: String(p.nome_interno || '').trim(),
+               window.dadosPlanosVexo = lista
+            .map(p => {
+              // 🔥 Prioriza o nome_interno (nome completo)
+              //    Fallback: nome_comercial
+              const nomeCompleto = String(p.nome_interno || p.nome_comercial || '').trim();
+              const nomeCurto    = String(p.nome_comercial || '').trim();
 
-              // Valor numérico
-              valor: parseFloat(p.valor) || 0,
+              return {
+                nome:          nomeCompleto || nomeCurto,
+                nome_interno:  nomeCompleto,
+                nome_comercial: nomeCurto,
 
-              // 🔥 Dados extras pro dropdown enriquecido
-              tecnologia: p.tecnologia   || '',
-              categoria:  p.categoria    || '',
-              franquia:   p.franquia_total || p.franquia_plano || '',
-              destaque:   p.destaque     || '',
-              fidelidade: p.fidelidade   || 12,
+                valor: parseFloat(p.valor) || 0,
+                tecnologia: p.tecnologia || '',
+                categoria:  p.categoria  || '',
+                franquia:   p.franquia_total || p.franquia_plano || '',
+                destaque:   p.destaque   || '',
+                fidelidade: p.fidelidade || 12,
 
-              _raw: p
-            }))
+                _raw: p
+              };
+            })
             .filter(p => p.nome && p.valor > 0);
         }
 
