@@ -1183,7 +1183,7 @@ window.editarPedido = function(pedidoId) {
 
         // Venda
         dataVenda:     p.data_venda || '',
-        dataVenc:      p.data_de_venc || '',
+        dataVenc:      p.data_de_venc ? String(p.data_de_venc).padStart(2, '0') : '',
 
         // Lista de modalidades e linhas
         modalidadesList: Object.keys(linhasPorModalidade),
