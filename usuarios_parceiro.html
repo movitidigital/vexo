@@ -1163,7 +1163,7 @@
         });
       }
 
-      // ─── EDITAR ───────────────────────────────────
+           // ─── EDITAR ───────────────────────────────────
       if (editando) {
         const status = $('up-status').value;
         const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
@@ -1175,7 +1175,8 @@
           p_cidade: cidade,
           p_uf: uf,
           p_comissao_config: comissao_config,
-          p_status: status
+          p_status: status,
+          p_tipo: tipo                // 🔥 AQUI — envia o tipo
         });
 
         if (error) throw error;
