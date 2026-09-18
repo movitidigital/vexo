@@ -126,58 +126,99 @@
     transform: translateY(-1px);
   }
 
-  /* ─── KPIs ──────────────────────────────────────── */
-  .stats-grid {
+  /* ─── KPI FRENTES (Entrantes / Ativos) ──────────── */
+  .kpi-fronts {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    grid-template-columns: 1fr 1fr;
     gap: 16px;
     margin-bottom: 24px;
   }
-  .kpi-card {
+  @media (max-width: 900px) {
+    .kpi-fronts { grid-template-columns: 1fr; }
+  }
+
+  .kpi-front {
     background: white;
-    padding: 20px;
     border-radius: 16px;
     border: 1px solid #eef2f6;
+    overflow: hidden;
+    transition: 0.25s;
+  }
+  .kpi-front:hover {
+    box-shadow: 0 12px 28px rgba(0,0,0,0.06);
+    transform: translateY(-2px);
+  }
+
+  .kpi-front-header {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  .kpi-front-entrantes .kpi-front-header {
+    background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+    border-bottom-color: #fde68a;
+  }
+  .kpi-front-ativos .kpi-front-header {
+    background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+    border-bottom-color: #bbf7d0;
+  }
+  .kpi-front-icon { font-size: 22px; line-height: 1; }
+  .kpi-front-title {
+    font-size: 14px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: 0.3px;
+  }
+  .kpi-front-sub {
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 600;
+    margin-top: 2px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+
+  .kpi-front-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 18px;
+    gap: 14px;
+  }
+  .kpi-mini {
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    transition: 0.25s;
-    position: relative;
-    overflow: hidden;
+    gap: 4px;
+    min-width: 0;
   }
-  .kpi-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; height: 3px; width: 100%;
-    background: var(--kpi-accent, #1e3c72);
+  .kpi-mini-value {
+    font-size: 22px;
+    font-weight: 800;
+    color: #0f172a;
+    line-height: 1.1;
+    word-break: break-word;
   }
-  .kpi-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 12px 28px rgba(0,0,0,0.06);
+  .kpi-mini-label {
+    font-size: 11px;
+    color: #64748b;
+    font-weight: 600;
   }
-  .kpi-icon {
-    width: 42px; height: 42px;
-    border-radius: 12px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 18px;
+  .kpi-mini-badge {
+    font-size: 9px;
+    font-weight: 800;
+    padding: 3px 9px;
+    border-radius: 20px;
+    display: inline-block;
+    width: fit-content;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    margin-top: 2px;
   }
-  .kpi-value {
-    font-size: 24px; font-weight: 800; color: #0f172a;
-    line-height: 1;
-  }
-  .kpi-label {
-    font-size: 12px; color: #64748b; font-weight: 500;
-  }
-  .kpi-sub {
-    font-size: 10px; font-weight: 700;
-    padding: 3px 10px; border-radius: 20px;
-    display: inline-block; margin-top: 4px; width: fit-content;
-  }
-  .sub-green  { background: #dcfce7; color: #166534; }
-  .sub-blue   { background: #dbeafe; color: #1e40af; }
-  .sub-purple { background: #f3e8ff; color: #6d28d9; }
-  .sub-amber  { background: #fef3c7; color: #92400e; }
-  .sub-gray   { background: #f1f5f9; color: #475569; }
+  .badge-amber  { background: #fef3c7; color: #92400e; }
+  .badge-purple { background: #f3e8ff; color: #6d28d9; }
+  .badge-green  { background: #dcfce7; color: #166534; }
+  .badge-blue   { background: #dbeafe; color: #1e40af; }
 
   /* ─── SEÇÃO / COMISSÕES ────────────────────────── */
   .section-head {
@@ -196,6 +237,12 @@
     align-items: center;
     gap: 10px;
     margin: 0;
+  }
+  .section-sub {
+    font-size: 11px;
+    color: #94a3b8;
+    font-weight: 500;
+    margin-left: 6px;
   }
 
   .toggle-btn {
@@ -353,6 +400,57 @@
   }
   .comunicado-item small { font-size: 10px; color: #94a3b8; }
 
+  /* ─── STATUS TAXA DE ATIVAÇÃO ──────────────────── */
+  .status-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+  .status-row.status-ativos {
+    background: #ecfdf5;
+    color: #065f46;
+  }
+  .status-row.status-ativos strong { color: #065f46; font-size: 15px; }
+  .status-row.status-entrantes {
+    background: #fffbeb;
+    color: #92400e;
+  }
+  .status-row.status-entrantes strong { color: #92400e; font-size: 15px; }
+  .status-row .status-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+  }
+
+  .status-progress {
+    margin-top: 14px;
+  }
+  .status-progress-label {
+    font-size: 10px;
+    color: #64748b;
+    font-weight: 700;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .status-progress-label b { color: #1e293b; font-size: 12px; }
+  .status-progress-bar {
+    height: 8px;
+    background: #f1f5f9;
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .status-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #10b981, #059669);
+    transition: width 0.6s ease;
+  }
+
   /* ─── AÇÕES RÁPIDAS ────────────────────────────── */
   .quick-actions {
     display: grid;
@@ -397,7 +495,7 @@
     .quick-actions { grid-template-columns: repeat(2, 1fr); }
     .hero-header { padding: 22px 20px; }
     .hero-header h1 { font-size: 20px; }
-    .stats-grid { grid-template-columns: 1fr; }
+    .kpi-front-body { grid-template-columns: 1fr; }
   }
 </style>
 
@@ -439,49 +537,63 @@
     </button>
   </div>
 
-  <!-- KPIs -->
-  <div class="stats-grid">
-    <div class="kpi-card" style="--kpi-accent:#1e3c72;">
-      <div class="kpi-icon" style="background:#eff6ff; color:#1e3c72;">
-        <i class="fa-solid fa-cart-shopping"></i>
+  <!-- 🟡 ENTRANTES vs 🟢 ATIVOS -->
+  <div class="kpi-fronts">
+
+    <!-- BLOCO ENTRANTES -->
+    <div class="kpi-front kpi-front-entrantes">
+      <div class="kpi-front-header">
+        <span class="kpi-front-icon">🟡</span>
+        <div>
+          <div class="kpi-front-title">Entrantes</div>
+          <div class="kpi-front-sub">Aguardando ativação na TIM</div>
+        </div>
       </div>
-      <div class="kpi-value" id="val-faturamento">R$ 0,00</div>
-      <div class="kpi-label">Faturamento no Mês</div>
-      <span class="kpi-sub sub-blue" id="sub-faturamento">0 vendas</span>
+      <div class="kpi-front-body">
+        <div class="kpi-mini">
+          <div class="kpi-mini-value" id="val-fat-entrante">R$ 0,00</div>
+          <div class="kpi-mini-label">Faturamento Entrante</div>
+          <span class="kpi-mini-badge badge-amber" id="sub-qtd-entrante">0 pedidos</span>
+        </div>
+        <div class="kpi-mini">
+          <div class="kpi-mini-value" id="val-com-estimada">R$ 0,00</div>
+          <div class="kpi-mini-label">Comissão Estimada</div>
+          <span class="kpi-mini-badge badge-purple">Projeção</span>
+        </div>
+      </div>
     </div>
 
-    <div class="kpi-card" style="--kpi-accent:#10b981;">
-      <div class="kpi-icon" style="background:#ecfdf5; color:#059669;">
-        <i class="fa-solid fa-check-circle"></i>
+    <!-- BLOCO ATIVOS -->
+    <div class="kpi-front kpi-front-ativos">
+      <div class="kpi-front-header">
+        <span class="kpi-front-icon">🟢</span>
+        <div>
+          <div class="kpi-front-title">Ativos</div>
+          <div class="kpi-front-sub">Pedidos aprovados na TIM (etapa 6)</div>
+        </div>
       </div>
-      <div class="kpi-value" id="val-ativos">0</div>
-      <div class="kpi-label">Pedidos Ativos</div>
-      <span class="kpi-sub sub-green" id="sub-ativos">Confirmados</span>
+      <div class="kpi-front-body">
+        <div class="kpi-mini">
+          <div class="kpi-mini-value" id="val-fat-ativo">R$ 0,00</div>
+          <div class="kpi-mini-label">Faturamento Ativo</div>
+          <span class="kpi-mini-badge badge-green" id="sub-qtd-ativo">0 pedidos</span>
+        </div>
+        <div class="kpi-mini">
+          <div class="kpi-mini-value" id="val-com-confirmada">R$ 0,00</div>
+          <div class="kpi-mini-label">Comissão Confirmada</div>
+          <span class="kpi-mini-badge badge-green">Garantido</span>
+        </div>
+      </div>
     </div>
 
-    <div class="kpi-card" style="--kpi-accent:#8b5cf6;">
-      <div class="kpi-icon" style="background:#f5f3ff; color:#7c3aed;">
-        <i class="fa-solid fa-coins"></i>
-      </div>
-      <div class="kpi-value" id="val-comissao-total">R$ 0,00</div>
-      <div class="kpi-label">Comissão Total</div>
-      <span class="kpi-sub sub-purple">Estimada no mês</span>
-    </div>
-
-    <div class="kpi-card" style="--kpi-accent:#f59e0b;">
-      <div class="kpi-icon" style="background:#fffbeb; color:#d97706;">
-        <i class="fa-solid fa-hand-holding-dollar"></i>
-      </div>
-      <div class="kpi-value" id="val-comissao-ativa">R$ 0,00</div>
-      <div class="kpi-label">Comissão Confirmada</div>
-      <span class="kpi-sub sub-amber" id="sub-com-ativa">Pedidos ativos</span>
-    </div>
   </div>
 
   <!-- COMISSÃO POR MODALIDADE -->
   <div class="section-head">
     <h3 class="section-title">
-      <i class="fa-solid fa-percent" style="color:#1e3c72;"></i> Comissão por Modalidade
+      <i class="fa-solid fa-percent" style="color:#1e3c72;"></i>
+      Comissão por Modalidade
+      <span class="section-sub">(entrantes + ativos)</span>
     </h3>
     <button id="toggle-comissao-btn" class="toggle-btn" onclick="HP.toggleComissao()">
       <span class="icone">▼</span> <span id="toggle-text">Recolher</span>
@@ -495,7 +607,7 @@
     </div>
   </div>
 
-  <!-- COMUNICADOS -->
+  <!-- COMUNICADOS + TAXA DE ATIVAÇÃO -->
   <div class="main-grid">
     <div class="chart-container">
       <h3><i class="fa-regular fa-bullhorn" style="color:#1e3c72;"></i> Novidades da E&E</h3>
@@ -513,8 +625,8 @@
     </div>
 
     <div class="chart-container">
-      <h3><i class="fa-solid fa-gauge-high" style="color:#1e3c72;"></i> Status das Comissões</h3>
-      <div id="status-comissoes" style="display:flex; flex-direction:column; gap:10px;">
+      <h3><i class="fa-solid fa-gauge-high" style="color:#1e3c72;"></i> Taxa de Ativação</h3>
+      <div id="status-comissoes" style="display:flex; flex-direction:column; gap:0;">
         <div style="text-align:center; color:#94a3b8; font-size:12px; padding:20px 0;">Carregando...</div>
       </div>
     </div>
@@ -522,9 +634,9 @@
 
   <!-- AÇÕES RÁPIDAS -->
   <div class="quick-actions">
-   <button class="action-btn primary" onclick="HP.irPara('vendas_parceiro')">
-  <i class="fa-solid fa-plus-circle"></i> Nova Venda TIM
-</button>
+    <button class="action-btn primary" onclick="HP.irPara('vendas_parceiro')">
+      <i class="fa-solid fa-plus-circle"></i> Nova Venda TIM
+    </button>
     <button class="action-btn success" onclick="HP.irPara('meus_pedidos')">
       <i class="fa-solid fa-list-check"></i> Meus Pedidos
     </button>
@@ -563,11 +675,9 @@
   function init() {
     const user = getSessao();
 
-    // Nome no hero
     const nome = (user.nome || user.username || 'Parceiro').split(' ')[0];
     if ($('partner-name')) $('partner-name').innerText = nome;
 
-    // Badge por tipo
     const tipo = String(user.role || '').toUpperCase().trim();
     const badge = $('partner-badge');
     if (badge) {
@@ -578,7 +688,6 @@
       }
     }
 
-    // Data atual
     const dataEl = $('data-atual');
     if (dataEl) {
       dataEl.innerText = new Date().toLocaleDateString('pt-BR', {
@@ -586,11 +695,9 @@
       });
     }
 
-    // Matrícula
     const matEl = $('partner-matricula');
     if (matEl) matEl.innerText = user.username || user.matricula || '—';
 
-    // Select de ano
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
     const selAno = $('ano-selecionado');
@@ -604,18 +711,14 @@
       }
     }
 
-    // Mês atual
     const selMes = $('mes-selecionado');
     if (selMes) selMes.value = hoje.getMonth() + 1;
 
-    // Restaura estado do "Recolher"
     restaurarEstadoComissao();
 
-    // Listeners de mudança de período
     if (selMes) selMes.addEventListener('change', carregar);
     if (selAno) selAno.addEventListener('change', carregar);
 
-    // Primeira carga
     carregar();
     carregarComunicados();
   }
@@ -627,8 +730,8 @@
     const mes = parseInt($('mes-selecionado')?.value || 0) || (new Date().getMonth() + 1);
     const ano = parseInt($('ano-selecionado')?.value || 0) || new Date().getFullYear();
 
-    // Loading nos KPIs
-    ['val-faturamento','val-ativos','val-comissao-total','val-comissao-ativa'].forEach(id => {
+    // Loading
+    ['val-fat-entrante','val-com-estimada','val-fat-ativo','val-com-confirmada'].forEach(id => {
       const el = $(id); if (el) el.innerText = '⏳';
     });
 
@@ -654,19 +757,19 @@
 
       atualizarKPIs(data);
       renderizarComissaoCards(data);
-      renderizarStatusComissoes(data);
+      renderizarTaxaAtivacao(data);
 
     } catch (err) {
       console.error('❌ parceiro_dashboard:', err);
-
       const msgErro = err?.message || String(err);
 
-      // Zera os KPIs
-      ['val-faturamento','val-ativos','val-comissao-total','val-comissao-ativa'].forEach(id => {
+      ['val-fat-entrante','val-com-estimada','val-fat-ativo','val-com-confirmada'].forEach(id => {
         const el = $(id); if (el) el.innerText = 'R$ 0,00';
       });
+      ['sub-qtd-entrante','sub-qtd-ativo'].forEach(id => {
+        const el = $(id); if (el) el.innerText = '0 pedidos';
+      });
 
-      // Renderiza os cards com os percentuais configurados (fallback visual)
       renderizarComissaoCards({
         comissao_config: (() => {
           try {
@@ -679,7 +782,6 @@
         faturamento_mes: 0
       });
 
-      // Mostra o erro real na seção de status
       const statusEl = $('status-comissoes');
       if (statusEl) {
         statusEl.innerHTML = `
@@ -697,26 +799,36 @@
   }
 
   function atualizarKPIs(d) {
-    $('val-faturamento').innerText = fmtBRL(d.faturamento_mes);
-    $('val-ativos').innerText = d.qtd_ativos || 0;
-    $('val-comissao-total').innerText = fmtBRL(d.comissao_total);
-    $('val-comissao-ativa').innerText = fmtBRL(d.comissao_ativa);
+    // ─── DADOS ATIVOS ───
+    const fatAtivo = Number(d.faturamento_ativo) || 0;
+    const qtdAtivo = Number(d.qtd_ativos) || 0;
+    const comAtiva = Number(d.comissao_ativa) || 0;
 
-    const subFat = $('sub-faturamento');
-    if (subFat) subFat.innerText = `${d.qtd_vendas || 0} pedido(s)`;
+    // ─── DADOS TOTAIS ───
+    const fatTotal = Number(d.faturamento_mes) || 0;
+    const qtdTotal = Number(d.qtd_vendas) || 0;
+    const comTotal = Number(d.comissao_total) || 0;
 
-    const subAtivos = $('sub-ativos');
-    if (subAtivos) subAtivos.innerText = d.qtd_ativos > 0
-      ? `${fmtBRL(d.faturamento_ativo)}`
-      : 'Nenhum ainda';
+    // ─── ENTRANTES = TOTAL - ATIVOS ───
+    const fatEntrante = Math.max(0, fatTotal - fatAtivo);
+    const qtdEntrante = Math.max(0, qtdTotal - qtdAtivo);
+    const comEstimada = Math.max(0, comTotal - comAtiva);
 
-    const subComAtiva = $('sub-com-ativa');
-    if (subComAtiva) {
-      const pct = d.comissao_total > 0
-        ? Math.round((d.comissao_ativa / d.comissao_total) * 100)
-        : 0;
-      subComAtiva.innerText = `${pct}% confirmado`;
-    }
+    // ─── ATUALIZA DOM ───
+    // Bloco Entrantes
+    $('val-fat-entrante').innerText = fmtBRL(fatEntrante);
+    $('val-com-estimada').innerText = fmtBRL(comEstimada);
+    $('sub-qtd-entrante').innerText = `${qtdEntrante} pedido${qtdEntrante !== 1 ? 's' : ''}`;
+
+    // Bloco Ativos
+    $('val-fat-ativo').innerText = fmtBRL(fatAtivo);
+    $('val-com-confirmada').innerText = fmtBRL(comAtiva);
+    $('sub-qtd-ativo').innerText = `${qtdAtivo} pedido${qtdAtivo !== 1 ? 's' : ''}`;
+
+    // Guarda pra renderizar taxa
+    d._qtdEntrante = qtdEntrante;
+    d._qtdAtivo = qtdAtivo;
+    d._qtdTotal = qtdTotal;
   }
 
   function renderizarComissaoCards(d) {
@@ -727,7 +839,6 @@
     const porMod = d.por_modalidade || {};
     const chaves = Object.keys(porMod);
 
-    // Se ainda não tem dados, mostra os percentuais configurados com 0
     if (chaves.length === 0) {
       const percentuais = cfg.tipo === 'DETALHADO'
         ? {
@@ -774,7 +885,6 @@
       return;
     }
 
-    // Com dados
     let html = '';
     Object.entries(porMod).forEach(([nome, info]) => {
       const cfgKey = nome.toUpperCase();
@@ -784,7 +894,6 @@
       } else if (cfg.tipo === 'SIMPLIFICADO' && cfgKey.includes('RENEG')) {
         perc = cfg.renegociacao ?? 0;
       } else {
-        // Tenta achar pelo nome
         for (const [k, v] of Object.entries(cfg)) {
           if (k === 'tipo') continue;
           if (cfgKey.includes(k.toUpperCase()) || k.toUpperCase().includes(cfgKey)) {
@@ -820,44 +929,40 @@
     container.innerHTML = html;
   }
 
-  function renderizarStatusComissoes(d) {
+  function renderizarTaxaAtivacao(d) {
     const el = $('status-comissoes');
     if (!el) return;
 
-    const total = d.comissao_total || 0;
-    const ativa = d.comissao_ativa || 0;
-    const pendente = Math.max(0, total - ativa);
+    const qtdTotal = Number(d._qtdTotal ?? d.qtd_vendas) || 0;
+    const qtdAtivo = Number(d._qtdAtivo ?? d.qtd_ativos) || 0;
+    const qtdEntrante = Number(d._qtdEntrante ?? (qtdTotal - qtdAtivo)) || 0;
 
-    if (total === 0) {
+    if (qtdTotal === 0) {
       el.innerHTML = `
         <div style="text-align:center; padding:24px; color:#94a3b8; font-size:12px;">
           <i class="fa-solid fa-inbox" style="font-size:28px; display:block; margin-bottom:10px; opacity:0.5;"></i>
-          Nenhuma comissão registrada no período.
+          Nenhum pedido no período.
         </div>`;
       return;
     }
 
-    const pctAtiva = Math.round((ativa / total) * 100);
+    const pctAtivo = qtdTotal > 0 ? Math.round((qtdAtivo / qtdTotal) * 100) : 0;
 
     el.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#ecfdf5; border-radius:10px;">
-        <span style="font-size:12px; color:#065f46; font-weight:600;">
-          ✅ Confirmada
-        </span>
-        <strong style="color:#065f46; font-size:14px;">${fmtBRL(ativa)}</strong>
+      <div class="status-row status-ativos">
+        <div class="status-label">✅ Ativos</div>
+        <strong>${qtdAtivo} pedido${qtdAtivo !== 1 ? 's' : ''}</strong>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; padding:12px; background:#fffbeb; border-radius:10px;">
-        <span style="font-size:12px; color:#92400e; font-weight:600;">
-          ⏳ Pendente
-        </span>
-        <strong style="color:#92400e; font-size:14px;">${fmtBRL(pendente)}</strong>
+      <div class="status-row status-entrantes">
+        <div class="status-label">⏳ Entrantes</div>
+        <strong>${qtdEntrante} pedido${qtdEntrante !== 1 ? 's' : ''}</strong>
       </div>
-      <div style="margin-top:8px;">
-        <div style="font-size:10px; color:#64748b; font-weight:700; margin-bottom:6px; text-transform:uppercase; letter-spacing:0.5px;">
-          ${pctAtiva}% do total confirmado
+      <div class="status-progress">
+        <div class="status-progress-label">
+          ${pctAtivo}% dos pedidos já foram ativados
         </div>
-        <div style="height:8px; background:#f1f5f9; border-radius:10px; overflow:hidden;">
-          <div style="width:${pctAtiva}%; height:100%; background:linear-gradient(90deg, #10b981, #059669); transition:width 0.6s;"></div>
+        <div class="status-progress-bar">
+          <div class="status-progress-fill" style="width:${pctAtivo}%"></div>
         </div>
       </div>`;
   }
@@ -963,7 +1068,6 @@
   }
 
   function abrirArquivos() {
-    // Chama função do modal — vem do home_parceiro quando migrado
     if (typeof window.abrirModalArquivos === 'function') {
       window.abrirModalArquivos();
     } else {
@@ -982,9 +1086,6 @@
     abrirArquivos
   };
 
-  // ─────────────────────────────────────────────
-  // BOOT
-  // ─────────────────────────────────────────────
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
@@ -992,6 +1093,5 @@
   }
 
   console.log('✅ [VEXO] Home Parceiro unificado carregado');
-
 })();
 </script>
