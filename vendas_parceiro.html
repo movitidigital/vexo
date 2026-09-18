@@ -581,6 +581,12 @@
   z-index: 999; margin-top: 4px;
   display: none;
 }
+    .plano-dropdown .opt-sub {
+  font-size: 11px;
+  color: #94a3b8;
+  font-weight: 600;
+  margin-top: -2px;
+}
 .plano-dropdown.open { display: block; }
 .plano-dropdown .opt {
   display: flex;
@@ -852,14 +858,13 @@
 
                window.dadosPlanosVexo = lista
             .map(p => {
-              // 🔥 Prioriza o nome_interno (nome completo)
-              //    Fallback: nome_comercial
-              const nomeCompleto = String(p.nome_interno || p.nome_comercial || '').trim();
+              // 🔥 Prioriza o nome_interno (nome completo tipo "NV/ADP B 30GB...")
+              const nomeCompleto = String(p.nome_interno || '').trim();
               const nomeCurto    = String(p.nome_comercial || '').trim();
 
               return {
-                nome:          nomeCompleto || nomeCurto,
-                nome_interno:  nomeCompleto,
+                nome:           nomeCompleto || nomeCurto || '',
+                nome_interno:   nomeCompleto,
                 nome_comercial: nomeCurto,
 
                 valor: parseFloat(p.valor) || 0,
@@ -1992,7 +1997,7 @@ window._ativarAutocompletePlanoParceiro = function(wrapper) {
     // 🔥 Filtra por nome comercial, nome interno OU franquia
     filtrados = (window.dadosPlanosVexo || [])
       .filter(p => {
-        const blob = `${p.nome} ${p.nome_interno || ''} ${p.franquia || ''}`;
+        const blob = `${p.nome} ${p.nome_interno || ''} ${p.nome_comercial || ''} ${p.franquia || ''}`;
         return normalizar(blob).includes(t);
       })
       .slice(0, 40);
@@ -2016,6 +2021,11 @@ window._ativarAutocompletePlanoParceiro = function(wrapper) {
         ? `${nome.substring(0, pos)}<mark>${nome.substring(pos, pos + t.length)}</mark>${nome.substring(pos + t.length)}`
         : nome;
 
+      // 🔥 Subtítulo: nome comercial quando for diferente do nome principal
+      const subtitulo = (p.nome_comercial && p.nome_comercial !== nome)
+        ? `<div class="opt-sub">${p.nome_comercial}</div>`
+        : '';
+
       // ─── Badges ───
       const is5G = String(p.tecnologia || '').toUpperCase().includes('5G');
 
@@ -2038,6 +2048,7 @@ window._ativarAutocompletePlanoParceiro = function(wrapper) {
         <div class="opt ${i === 0 ? 'active' : ''}" data-idx="${i}">
           <div class="opt-info">
             <div class="opt-nome">${nomeDestacado}</div>
+            ${subtitulo}
             ${(badgeTec || badgeCat || badgeFranquia) ? `
               <div class="opt-badges">
                 ${badgeTec}${badgeCat}${badgeFranquia}
