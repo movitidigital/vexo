@@ -65,77 +65,116 @@
   </div>
 
   <!-- ==================== ABA PARCEIROS ==================== -->
-  <div id="aba-parceiros" class="aba-financeiro" style="display: none; animation: fadeIn 0.4s; padding: 10px;">
-    <h2 style="color: #1e3c72; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 25px;">🤝 Gestão de Comissões – Parceiros</h2>
+  <!-- ==================== ABA PARCEIROS (NOVA) ==================== -->
+<div id="aba-parceiros" class="aba-financeiro" style="display: none; animation: fadeIn 0.4s; padding: 10px;">
+  <h2 style="color: #1e3c72; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 25px;">🤝 Gestão de Comissões – Parceiros</h2>
 
-    <!-- Filtros -->
-    <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 20px;">
-      <div style="flex: 1; min-width: 200px;">
-        <label style="font-weight: 600; font-size: 12px; color: #475569;">📌 Parceiro</label>
-        <select id="select-parceiro" class="v-input" style="width: 100%; padding: 10px;">
-          <option value="">Selecione um parceiro...</option>
-        </select>
-      </div>
-      <div style="min-width: 150px;">
-        <label style="font-weight: 600; font-size: 12px; color: #475569;">📅 Mês/Ano</label>
-        <input type="month" id="filtro-mes-parceiro" class="v-input" style="width: 100%; padding: 10px;">
-      </div>
-      <button onclick="carregarComissaoParceiro()" style="background: #1e3c72; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(30,60,114,0.2);">
-        🔄 Atualizar
-      </button>
+  <!-- Filtros -->
+  <div style="display: flex; flex-wrap: wrap; gap: 15px; align-items: center; margin-bottom: 20px;">
+    <div style="flex: 1; min-width: 220px;">
+      <label style="font-weight: 600; font-size: 12px; color: #475569;">📌 Parceiro</label>
+      <select id="fin-parceiro-select" class="v-input" style="width: 100%; padding: 10px;">
+        <option value="">Selecione um parceiro...</option>
+      </select>
     </div>
-
-    <!-- Cards -->
-    <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 30px;">
-      <div style="background: #0f172a; padding: 15px; border-radius: 15px; color: white;">
-        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Receita Total</span>
-        <h3 id="card-receita-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
-      </div>
-      <div style="background: #38ef7d; padding: 15px; border-radius: 15px; color: #064e3b;">
-        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Gross (Linhas)</span>
-        <h3 id="card-gross-parceiro" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
-      </div>
-      <div style="background: #10b981; padding: 15px; border-radius: 15px; color: white;">
-        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Portabilidade</span>
-        <h3 id="card-port-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
-      </div>
-      <div style="background: #f59e0b; padding: 15px; border-radius: 15px; color: white;">
-        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Renegociações (Qtd)</span>
-        <h3 id="card-mid-parceiro" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
-      </div>
-      <div style="background: #d32f2f; padding: 15px; border-radius: 15px; color: white;">
-        <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Comissão Total</span>
-        <h3 id="card-com-total-parceiro" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
-      </div>
+    <div style="min-width: 150px;">
+      <label style="font-weight: 600; font-size: 12px; color: #475569;">📅 Mês/Ano</label>
+      <input type="month" id="fin-parceiro-mes" class="v-input" style="width: 100%; padding: 10px;">
     </div>
+    <button onclick="FinAdm.carregar()" style="background: #1e3c72; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: bold; cursor: pointer; box-shadow: 0 4px 12px rgba(30,60,114,0.2);">
+      🔄 Carregar Período
+    </button>
+  </div>
 
-    <!-- Painel de taxas (dinâmico) -->
-    <div id="painel-taxas-parceiro" style="margin-bottom: 20px;"></div>
-
-    <!-- Tabela de Vendas Detalhada -->
-    <div style="background: white; border: 1px solid #f1f5f9; border-radius: 12px; overflow-x: auto;">
-      <table style="width: 100%; border-collapse: collapse; font-size: 11px; min-width: 900px;">
-        <thead>
-          <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #64748b;">
-            <th style="padding: 12px 15px;">DATA</th>
-            <th style="padding: 12px 15px;">CLIENTE</th>
-            <th style="padding: 12px 15px;">MODALIDADE</th>
-            <th style="padding: 12px 15px;">LINHA</th>
-            <th style="padding: 12px 15px;">VALOR</th>
-            <th style="padding: 12px 15px;">COMISSÃO BASE</th>
-            <th style="padding: 12px 15px;">COMISSÃO PORT</th>
-            <th style="padding: 12px 15px;">COMISSÃO RENEG</th>
-            <th style="padding: 12px 15px; color: #1e3c72; font-weight: 800;">TOTAL</th>
-            <th style="padding: 12px 15px;">STATUS TIM</th>
-            <th style="padding: 12px 15px;">AÇÕES</th>
-          </tr>
-        </thead>
-        <tbody id="tabela-vendas-parceiro">
-          <tr><td colspan="11" style="text-align: center; padding: 40px; color: #94a3b8;">Selecione um parceiro e clique em Atualizar.</td></tr>
-        </tbody>
-      </table>
+  <!-- Cards -->
+  <div style="display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 24px;">
+    <div style="background: #0f172a; padding: 15px; border-radius: 15px; color: white;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Faturamento</span>
+      <h3 id="fin-card-fat" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+    </div>
+    <div style="background: #38ef7d; padding: 15px; border-radius: 15px; color: #064e3b;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Linhas Ativas</span>
+      <h3 id="fin-card-qtd" style="margin: 5px 0 0; font-size: 18px;">0 un</h3>
+    </div>
+    <div style="background: #3b82f6; padding: 15px; border-radius: 15px; color: white;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Validadas</span>
+      <h3 id="fin-card-valid" style="margin: 5px 0 0; font-size: 18px;">0 / 0</h3>
+    </div>
+    <div style="background: #f59e0b; padding: 15px; border-radius: 15px; color: white;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Comissão Total</span>
+      <h3 id="fin-card-com" style="margin: 5px 0 0; font-size: 18px;">R$ 0,00</h3>
+    </div>
+    <div style="background: #d32f2f; padding: 15px; border-radius: 15px; color: white;">
+      <span style="font-size: 9px; font-weight: 600; opacity: 0.8; text-transform: uppercase;">Status do Ciclo</span>
+      <h3 id="fin-card-status" style="margin: 5px 0 0; font-size: 14px;">—</h3>
     </div>
   </div>
+
+  <!-- Painel do Ciclo (ações) -->
+  <div id="fin-painel-ciclo" style="display:none; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 14px; padding: 18px 20px; margin-bottom: 22px;">
+    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 12px;">
+      <div>
+        <div style="font-size: 11px; font-weight: 800; color: #1e3c72; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px;">📊 Ciclo do Período</div>
+        <div style="font-size: 12px; color: #475569; line-height: 1.8;" id="fin-ciclo-datas"></div>
+      </div>
+      <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+        <button id="fin-btn-validar-tudo" onclick="FinAdm.validarTudo()"
+                style="background: #3b82f6; color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 8px;">
+          ✓ Validar Todas as Linhas
+        </button>
+        <button id="fin-btn-liberar" onclick="FinAdm.liberarEspelho()"
+                style="background: #10b981; color: white; border: none; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 700; font-size: 12px; display: inline-flex; align-items: center; gap: 8px;">
+          📤 Liberar Espelho
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabela de Linhas -->
+  <div style="background: white; border: 1px solid #f1f5f9; border-radius: 12px; overflow-x: auto; margin-bottom: 24px;">
+    <div style="padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center;">
+      <strong style="font-size: 13px; color: #1e293b;">📋 Linhas Ativas do Período</strong>
+      <span id="fin-linhas-info" style="font-size: 11px; color: #64748b;"></span>
+    </div>
+    <table style="width: 100%; border-collapse: collapse; font-size: 11px; min-width: 900px;">
+      <thead>
+        <tr style="background: #f8fafc; border-bottom: 2px solid #e2e8f0; text-align: left; color: #64748b;">
+          <th style="padding: 12px 15px;">DATA ATIV.</th>
+          <th style="padding: 12px 15px;">CLIENTE</th>
+          <th style="padding: 12px 15px;">MODALIDADE</th>
+          <th style="padding: 12px 15px;">LINHA</th>
+          <th style="padding: 12px 15px;">VALOR</th>
+          <th style="padding: 12px 15px;">COMISSÃO</th>
+          <th style="padding: 12px 15px;">STATUS VALIDAÇÃO</th>
+          <th style="padding: 12px 15px; text-align: center;">AÇÕES</th>
+        </tr>
+      </thead>
+      <tbody id="fin-linhas-tbody">
+        <tr><td colspan="8" style="text-align: center; padding: 40px; color: #94a3b8;">Selecione um parceiro e clique em Carregar Período.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- NFs Recebidas -->
+  <div style="background: white; border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden; margin-bottom: 24px;">
+    <div style="padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+      <strong style="font-size: 13px; color: #1e293b;">📎 Notas Fiscais Recebidas</strong>
+    </div>
+    <div id="fin-nfs-lista" style="padding: 16px 20px;">
+      <p style="color: #94a3b8; font-size: 12px;">Nenhuma NF para este período.</p>
+    </div>
+  </div>
+
+  <!-- Contestações -->
+  <div style="background: white; border: 1px solid #f1f5f9; border-radius: 12px; overflow: hidden;">
+    <div style="padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;">
+      <strong style="font-size: 13px; color: #1e293b;">⚠️ Contestações do Parceiro</strong>
+    </div>
+    <div id="fin-cont-lista" style="padding: 16px 20px;">
+      <p style="color: #94a3b8; font-size: 12px;">Nenhuma contestação para este período.</p>
+    </div>
+  </div>
+</div>
 
   <!-- ==================== ABA GERAL (EXISTENTE) ==================== -->
   <div id="aba-geral" class="aba-financeiro" style="display: block;">
@@ -1318,5 +1357,470 @@ document.addEventListener('DOMContentLoaded', function() {
   mudarAbaFinanceiro('geral');
 });
 
+// ══════════════════════════════════════════════════════════════
+// FINANCEIRO ADMIN · GESTÃO DE PARCEIROS (VEXO)
+// ══════════════════════════════════════════════════════════════
+window.FinAdm = (function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmtDate = (d) => {
+    if (!d) return '—';
+    if (typeof d === 'string' && d.match(/^\d{4}-\d{2}-\d{2}/)) {
+      const [a, m, dia] = d.split('T')[0].split('-');
+      return `${dia}/${m}/${a}`;
+    }
+    return String(d);
+  };
+
+  const state = {
+    parceiros: [],
+    periodo: null,
+    vendas: [],
+    nfs: [],
+    contestacoes: [],
+    totais: {},
+    carregado: false
+  };
+
+  // ─── 1. Carrega lista de parceiros no select ───
+  async function carregarParceirosSelect() {
+    const sel = $('fin-parceiro-select');
+    if (!sel) return;
+    if (!window.sb) { console.warn('⚠️ sb ausente'); return; }
+
+    try {
+      const { data, error } = await window.sb.rpc('admin_listar_parceiros_gestao');
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      state.parceiros = data.parceiros || [];
+      sel.innerHTML = '<option value="">Selecione um parceiro...</option>' +
+        state.parceiros.map(p =>
+          `<option value="${p.id}">${p.nome_razao} (${p.tipo || 'PARCEIRO'})</option>`
+        ).join('');
+
+      // Define mês anterior por padrão
+      const inp = $('fin-parceiro-mes');
+      if (inp && !inp.value) {
+        const h = new Date();
+        const mes = h.getMonth() === 0 ? 12 : h.getMonth();
+        const ano = h.getMonth() === 0 ? h.getFullYear() - 1 : h.getFullYear();
+        inp.value = `${ano}-${String(mes).padStart(2, '0')}`;
+      }
+    } catch (e) {
+      console.error('❌ parceiros:', e);
+      sel.innerHTML = '<option value="">Erro ao carregar parceiros</option>';
+    }
+  }
+
+  // ─── 2. Carrega período selecionado ───
+  async function carregar() {
+    const pid = $('fin-parceiro-select')?.value;
+    const mesAno = $('fin-parceiro-mes')?.value;
+    if (!pid || !mesAno) {
+      alert('Selecione parceiro e mês/ano.');
+      return;
+    }
+    const [ano, mes] = mesAno.split('-').map(Number);
+
+    $('fin-linhas-tbody').innerHTML =
+      '<tr><td colspan="8" style="text-align:center; padding:40px; color:#64748b;">⏳ Carregando...</td></tr>';
+
+    try {
+      const { data, error } = await window.sb.rpc('admin_periodo_detalhes', {
+        p_parceiro_id: pid, p_mes: mes, p_ano: ano
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      state.periodo = data.periodo;
+      state.vendas = data.vendas || [];
+      state.nfs = data.nfs || [];
+      state.contestacoes = data.contestacoes || [];
+      state.totais = data.totais || {};
+      state.carregado = true;
+
+      renderTudo();
+    } catch (e) {
+      console.error(e);
+      $('fin-linhas-tbody').innerHTML =
+        `<tr><td colspan="8" style="text-align:center; padding:40px; color:#ef4444; font-weight:600;">❌ ${e.message || e}</td></tr>`;
+    }
+  }
+
+  // ─── 3. Render geral ───
+  function renderTudo() {
+    renderCards();
+    renderCiclo();
+    renderLinhas();
+    renderNfs();
+    renderContestacoes();
+  }
+
+  function renderCards() {
+    const t = state.totais || {};
+    $('fin-card-fat').innerText = fmt(t.faturamento);
+    $('fin-card-qtd').innerText = `${t.qtd || 0} un`;
+    $('fin-card-valid').innerText = `${t.validadas || 0} / ${t.qtd || 0}`;
+    $('fin-card-com').innerText = fmt(t.comissao);
+
+    const statusMap = {
+      'ABERTO':         '🔵 Aberto',
+      'EM_VALIDACAO':   '🟡 Em Validação',
+      'AGUARDANDO_NF':  '🟠 Aguardando NF',
+      'NF_RECEBIDA':    '🔷 NF Recebida',
+      'NF_APROVADA':    '🟢 NF Aprovada',
+      'PAGO':           '✅ Pago',
+      'FECHADO':        '⚫ Fechado'
+    };
+    const status = state.periodo?.status || (state.vendas.length > 0 ? 'EM_VALIDACAO' : 'ABERTO');
+    $('fin-card-status').innerText = statusMap[status] || status;
+  }
+
+  function renderCiclo() {
+    const p = state.periodo;
+    const painel = $('fin-painel-ciclo');
+    painel.style.display = 'block';
+
+    const hoje = new Date(); hoje.setHours(0,0,0,0);
+    const toDate = (s) => s ? new Date(s + 'T12:00:00') : null;
+
+    const dLimVal = p?.data_limite_validacao ? fmtDate(p.data_limite_validacao) : '—';
+    const dLib    = p?.data_liberacao_espelho ? fmtDate(p.data_liberacao_espelho) : '—';
+    const dNfIni  = p?.data_inicio_nf ? fmtDate(p.data_inicio_nf) : '—';
+    const dNfFim  = p?.data_limite_nf ? fmtDate(p.data_limite_nf) : '—';
+
+    const t = state.totais || {};
+    const pendentes = t.pendentes || 0;
+    const liberado  = p?.espelho_liberado || false;
+
+    // Datas previstas (pra mostrar se o período ainda não existe)
+    const [anoRef, mesRef] = ($('fin-parceiro-mes').value || '').split('-').map(Number);
+    const dPrevLim = new Date(anoRef, mesRef - 1 + 1, 20);
+    const dPrevLib = new Date(anoRef, mesRef - 1 + 1, 25);
+    const dPrevIni = new Date(anoRef, mesRef - 1 + 2, 1);
+    const dPrevFim = new Date(anoRef, mesRef - 1 + 2, 10);
+
+    const fmtPrev = (d) => d.toLocaleDateString('pt-BR');
+
+    $('fin-ciclo-datas').innerHTML = `
+      <div><b>🔍 Validação até:</b> ${p ? dLimVal : fmtPrev(dPrevLim)}</div>
+      <div><b>📋 Liberação espelho:</b> ${p && liberado ? 'Liberado em ' + fmtDate(p.espelho_liberado_em) : (p ? dLib : fmtPrev(dPrevLib))}</div>
+      <div><b>📎 Janela NF:</b> ${p ? `${dNfIni} → ${dNfFim}` : `${fmtPrev(dPrevIni)} → ${fmtPrev(dPrevFim)}`}</div>
+      <div style="margin-top:8px;">
+        <b>Status das linhas:</b>
+        <span style="background:#dcfce7; color:#166534; padding:2px 8px; border-radius:10px; font-weight:700; font-size:11px;">✓ ${t.validadas || 0} validadas</span>
+        <span style="background:#fef3c7; color:#92400e; padding:2px 8px; border-radius:10px; font-weight:700; font-size:11px; margin-left:4px;">⏳ ${pendentes} pendentes</span>
+        ${t.rejeitadas ? `<span style="background:#fee2e2; color:#991b1b; padding:2px 8px; border-radius:10px; font-weight:700; font-size:11px; margin-left:4px;">✕ ${t.rejeitadas} rejeitadas</span>` : ''}
+      </div>
+    `;
+
+    $('fin-btn-validar-tudo').disabled = (pendentes === 0 || liberado);
+    $('fin-btn-validar-tudo').style.opacity = (pendentes === 0 || liberado) ? '0.5' : '1';
+    $('fin-btn-liberar').disabled = (pendentes > 0 || liberado || state.vendas.length === 0);
+    $('fin-btn-liberar').style.opacity = (pendentes > 0 || liberado || state.vendas.length === 0) ? '0.5' : '1';
+    $('fin-btn-liberar').innerHTML = liberado ? '✅ Espelho Liberado' : '📤 Liberar Espelho';
+  }
+
+  function renderLinhas() {
+    const tbody = $('fin-linhas-tbody');
+    const vendas = state.vendas || [];
+
+    $('fin-linhas-info').innerText = `${vendas.length} linha(s)`;
+    if (vendas.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding:60px; color:#94a3b8;">Nenhuma linha ativa neste período.</td></tr>';
+      return;
+    }
+
+    const statusMap = {
+      'VALIDADA':  { label: '✓ Validada',  bg: '#dcfce7', cor: '#166534' },
+      'CORRIGIDA': { label: '⚙ Corrigida', bg: '#fef3c7', cor: '#92400e' },
+      'REJEITADA': { label: '✕ Rejeitada', bg: '#fee2e2', cor: '#991b1b' },
+      'PENDENTE':  { label: '⏳ Pendente', bg: '#f1f5f9', cor: '#475569' }
+    };
+
+    tbody.innerHTML = vendas.map(v => {
+      const st = statusMap[v.status_validacao || 'PENDENTE'] || statusMap.PENDENTE;
+      const podeValidar = (v.status_validacao === 'PENDENTE') && !state.periodo?.espelho_liberado;
+
+      return `
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:12px 15px;">${fmtDate(v.data_ativacao || v.data_venda)}</td>
+          <td style="padding:12px 15px; font-weight:600; color:#1e293b;">
+            ${v.cliente || ''}
+            <div style="font-size:9px; color:#94a3b8; font-weight:400;">${v.cnpj || ''}</div>
+          </td>
+          <td style="padding:12px 15px;">${v.modalidade || '—'}</td>
+          <td style="padding:12px 15px; font-weight:600; color:#1e3c72; font-family:monospace;">${v.numero_linha || '—'}</td>
+          <td style="padding:12px 15px; font-weight:600;">${fmt(v.valor)}</td>
+          <td style="padding:12px 15px; font-weight:700; color:#1e3c72;">${fmt(v.comissao_total)}</td>
+          <td style="padding:12px 15px;">
+            <span style="background:${st.bg}; color:${st.cor}; padding:4px 10px; border-radius:12px; font-size:10px; font-weight:700;">${st.label}</span>
+          </td>
+          <td style="padding:12px 15px; text-align:center;">
+            ${podeValidar ? `
+              <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
+                <button onclick="FinAdm.validarLinha('${v.comissao_id}', 'VALIDADA')"
+                        style="background:#10b981; color:white; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:10px; font-weight:700;">✓ OK</button>
+                <button onclick="FinAdm.validarLinha('${v.comissao_id}', 'CORRIGIDA')"
+                        style="background:#f59e0b; color:white; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:10px; font-weight:700;">⚙ Corrigir</button>
+                <button onclick="FinAdm.validarLinha('${v.comissao_id}', 'REJEITADA')"
+                        style="background:#ef4444; color:white; border:none; padding:5px 10px; border-radius:6px; cursor:pointer; font-size:10px; font-weight:700;">✕ Rejeitar</button>
+              </div>
+            ` : `<span style="font-size:10px; color:#94a3b8;">${st.label}</span>`}
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  function renderNfs() {
+    const el = $('fin-nfs-lista');
+    const nfs = state.nfs || [];
+    if (nfs.length === 0) {
+      el.innerHTML = '<p style="color:#94a3b8; font-size:12px;">Nenhuma NF para este período.</p>';
+      return;
+    }
+
+    const stMap = {
+      'RECEBIDA':    { label:'Recebida',    bg:'#dbeafe', cor:'#1e40af' },
+      'EM_VALIDACAO':{ label:'Em Validação',bg:'#fef3c7', cor:'#92400e' },
+      'APROVADA':    { label:'Aprovada',    bg:'#dcfce7', cor:'#166534' },
+      'RECUSADA':    { label:'Recusada',    bg:'#fee2e2', cor:'#991b1b' },
+      'PAGA':        { label:'Paga',        bg:'#dcfce7', cor:'#166534' }
+    };
+
+    el.innerHTML = nfs.map(nf => {
+      const st = stMap[nf.status] || stMap.RECEBIDA;
+      const podeAgir = nf.status === 'RECEBIDA' || nf.status === 'EM_VALIDACAO';
+      const podePagar = nf.status === 'APROVADA';
+
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:14px 16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:10px; flex-wrap:wrap; gap:10px;">
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:40px; height:40px; background:#eff6ff; color:#3b82f6; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:18px;">📄</div>
+            <div>
+              <div style="font-weight:700; font-size:13px; color:#0f172a;">NF ${nf.numero_nf || '—'}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">
+                R$ ${Number(nf.valor || 0).toFixed(2)} · Emissão ${fmtDate(nf.data_emissao)} · Enviada em ${fmtDate(nf.created_at)}
+              </div>
+              ${nf.cnpj_cpf_emitente ? `<div style="font-size:10px; color:#94a3b8; margin-top:2px;">Emitente: ${nf.cnpj_cpf_emitente}</div>` : ''}
+            </div>
+          </div>
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <span style="background:${st.bg}; color:${st.cor}; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700;">${st.label}</span>
+            ${nf.arquivo_url ? `<button onclick="window.open(decodeURIComponent('${encodeURIComponent(nf.arquivo_url)}'), '_blank')" style="background:white; border:1px solid #1e3c72; color:#1e3c72; padding:6px 12px; border-radius:8px; cursor:pointer; font-weight:600; font-size:11px;">👁 Ver PDF</button>` : ''}
+            ${podeAgir ? `
+              <button onclick="FinAdm.aprovarNF('${nf.id}')" style="background:#10b981; color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:700; font-size:11px;">✓ Aprovar</button>
+              <button onclick="FinAdm.recusarNF('${nf.id}')" style="background:#ef4444; color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:700; font-size:11px;">✕ Recusar</button>
+            ` : ''}
+            ${podePagar ? `
+              <button onclick="FinAdm.marcarPago('${nf.id}')" style="background:#8b5cf6; color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:700; font-size:11px;">💰 Marcar Pago</button>
+            ` : ''}
+          </div>
+        </div>
+        ${nf.motivo_recusa ? `
+          <div style="padding:0 16px 12px;">
+            <div style="background:#fef2f2; border:1px solid #fecaca; color:#991b1b; padding:8px 12px; border-radius:8px; font-size:11px;">
+              <b>Motivo da recusa:</b> ${nf.motivo_recusa}
+            </div>
+          </div>` : ''}
+      `;
+    }).join('');
+  }
+
+  function renderContestacoes() {
+    const el = $('fin-cont-lista');
+    const list = state.contestacoes || [];
+    if (list.length === 0) {
+      el.innerHTML = '<p style="color:#94a3b8; font-size:12px;">Nenhuma contestação para este período.</p>';
+      return;
+    }
+
+    el.innerHTML = list.map(c => {
+      const stMap = {
+        'ABERTA':     { label:'Aberta',     bg:'#fef3c7', cor:'#92400e' },
+        'EM_ANALISE': { label:'Em Análise', bg:'#dbeafe', cor:'#1e40af' },
+        'ACEITA':     { label:'Aceita',     bg:'#dcfce7', cor:'#166534' },
+        'RECUSADA':   { label:'Recusada',   bg:'#fee2e2', cor:'#991b1b' }
+      };
+      const st = stMap[c.status] || stMap.ABERTA;
+      const pendente = c.status === 'ABERTA' || c.status === 'EM_ANALISE';
+
+      return `
+        <div style="padding:14px 16px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; margin-bottom:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:10px;">
+            <div>
+              <div style="font-weight:700; font-size:13px; color:#0f172a;">${c.cliente || '—'}</div>
+              <div style="font-size:11px; color:#64748b; margin-top:2px;">
+                Linha: <b>${c.linha || '—'}</b> · ${c.modalidade || ''} · Aberta em ${fmtDate(c.created_at)}
+              </div>
+            </div>
+            <span style="background:${st.bg}; color:${st.cor}; padding:4px 12px; border-radius:20px; font-size:11px; font-weight:700;">${st.label}</span>
+          </div>
+          <div style="margin-top:10px; padding:10px 12px; background:white; border-radius:8px; font-size:12px; color:#475569; border:1px solid #e2e8f0;">
+            <b>Motivo:</b> ${c.motivo || '—'}
+          </div>
+          ${c.resposta_admin ? `
+            <div style="margin-top:8px; padding:10px 12px; background:#eff6ff; border-radius:8px; font-size:12px; color:#1e40af; border:1px solid #bfdbfe;">
+              <b>Resposta:</b> ${c.resposta_admin}
+            </div>` : ''}
+          ${pendente ? `
+            <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">
+              <button onclick="FinAdm.responderCont('${c.id}', 'ACEITA')" style="background:#10b981; color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:700; font-size:11px;">✓ Aceitar</button>
+              <button onclick="FinAdm.responderCont('${c.id}', 'RECUSADA')" style="background:#ef4444; color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-weight:700; font-size:11px;">✕ Recusar</button>
+            </div>` : ''}
+        </div>`;
+    }).join('');
+  }
+
+  // ─── 4. Ações ───
+  async function validarLinha(comissaoId, status) {
+    let obs = null, data = null;
+    if (status === 'CORRIGIDA') {
+      obs = prompt('Motivo da correção:');
+      if (obs === null) return;
+    } else if (status === 'REJEITADA') {
+      obs = prompt('Motivo da rejeição:');
+      if (obs === null) return;
+    }
+
+    try {
+      const { data, error } = await window.sb.rpc('admin_validar_comissao', {
+        p_comissao_id: comissaoId, p_status: status,
+        p_observacao: obs || null, p_data_ativacao: data || null
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+      await carregar();
+    } catch (e) {
+      alert('❌ ' + (e.message || e));
+    }
+  }
+
+  async function validarTudo() {
+    if (!confirm('Validar TODAS as linhas pendentes? Essa ação não pode ser desfeita.')) return;
+    const pendentes = (state.vendas || []).filter(v => v.status_validacao === 'PENDENTE');
+    if (pendentes.length === 0) return alert('Nenhuma linha pendente.');
+
+    try {
+      for (const v of pendentes) {
+        await window.sb.rpc('admin_validar_comissao', {
+          p_comissao_id: v.comissao_id, p_status: 'VALIDADA',
+          p_observacao: 'Validação em lote', p_data_ativacao: null
+        });
+      }
+      alert('✅ Todas as linhas foram validadas!');
+      await carregar();
+    } catch (e) {
+      alert('❌ ' + (e.message || e));
+    }
+  }
+
+  async function liberarEspelho() {
+    const pid = $('fin-parceiro-select').value;
+    const [ano, mes] = $('fin-parceiro-mes').value.split('-').map(Number);
+    if (!pid || !mes) return alert('Selecione parceiro e mês.');
+
+    if (!confirm('Liberar espelho para o parceiro gerar a NF?')) return;
+
+    try {
+      const { data, error } = await window.sb.rpc('admin_liberar_espelho', {
+        p_parceiro_id: pid, p_mes: mes, p_ano: ano
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+      alert(`✅ Espelho liberado!\nValor: R$ ${Number(data.valor_comissao || 0).toFixed(2)}\nLinhas: ${data.qtd_linhas}`);
+      await carregar();
+    } catch (e) {
+      alert('❌ ' + (e.message || e));
+    }
+  }
+
+  async function aprovarNF(nfId) {
+    if (!confirm('Aprovar esta NF?')) return;
+    try {
+      const { data, error } = await window.sb.rpc('admin_aprovar_nf', {
+        p_nf_id: nfId, p_observacao: null
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+      alert('✅ NF aprovada!');
+      await carregar();
+    } catch (e) { alert('❌ ' + (e.message || e)); }
+  }
+
+  async function recusarNF(nfId) {
+    const motivo = prompt('Motivo da recusa:');
+    if (!motivo) return;
+    try {
+      const { data, error } = await window.sb.rpc('admin_recusar_nf', {
+        p_nf_id: nfId, p_motivo: motivo
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+      alert('❌ NF recusada.');
+      await carregar();
+    } catch (e) { alert('❌ ' + (e.message || e)); }
+  }
+
+  async function marcarPago(nfId) {
+    if (!confirm('Confirmar que essa NF foi PAGA ao parceiro?')) return;
+    try {
+      const { data, error } = await window.sb.rpc('admin_marcar_pago', { p_nf_id: nfId });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+      alert('✅ Pagamento registrado!');
+      await carregar();
+    } catch (e) { alert('❌ ' + (e.message || e)); }
+  }
+
+  async function responderCont(contId, status) {
+    const resposta = prompt(status === 'ACEITA' ? 'Justificativa (aceitar):' : 'Justificativa (recusar):');
+    if (resposta === null) return;
+    try {
+      const { data, error } = await window.sb.rpc('admin_responder_contestacao', {
+        p_contestacao_id: contId, p_status: status, p_resposta: resposta || '—'
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+      alert(`✅ Contestação ${status === 'ACEITA' ? 'aceita' : 'recusada'}.`);
+      await carregar();
+    } catch (e) { alert('❌ ' + (e.message || e)); }
+  }
+
+  // ─── INIT: quando a aba for aberta pela primeira vez ───
+  function init() {
+    const abaParceiros = $('aba-parceiros');
+    if (!abaParceiros) return;
+
+    // Carrega parceiros ao entrar na aba
+    const observer = new MutationObserver(() => {
+      if (abaParceiros.style.display !== 'none' && state.parceiros.length === 0) {
+        carregarParceirosSelect();
+      }
+    });
+    observer.observe(abaParceiros, { attributes: true, attributeFilter: ['style'] });
+
+    // Se a aba já está visível, carrega
+    if (abaParceiros.style.display !== 'none') carregarParceirosSelect();
+
+    console.log('✅ [FinAdm] Gestão de parceiros pronta');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 500);
+  }
+
+  return {
+    carregar, validarLinha, validarTudo, liberarEspelho,
+    aprovarNF, recusarNF, marcarPago, responderCont,
+    carregarParceiros: carregarParceirosSelect
+  };
+})();
+ 
 carregarResumoConsolidado();
 </script>
