@@ -1168,12 +1168,26 @@ window.salvarAgora = function() {
   const user = JSON.parse(sessionStorage.getItem("usuarioLogado")) || {};
   const cards = document.querySelectorAll('.linha-card');
   let listaLinhas = [];
-// 🔥 BLOQUEIO: exige que ao menos uma modalidade esteja marcada
+
+  // 🔥 Detecta modo EDIÇÃO
+  let modoEdicao = null;
+  try {
+    const raw = sessionStorage.getItem('pedidoEmEdicao');
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (parsed.modo === 'EDITAR' && parsed.pedido_id) {
+        modoEdicao = parsed.pedido_id;
+      }
+    }
+  } catch (e) {}
+
+  // 🔥 BLOQUEIO: exige que ao menos uma modalidade esteja marcada
   const modalidadesMarcadas = document.getElementById('modalidades-selecionadas').value;
   if (!modalidadesMarcadas || !modalidadesMarcadas.trim()) {
     alert('⚠️ Selecione ao menos uma modalidade no topo (PRIMEIRA ATIVAÇÃO, PORTABILIDADE, etc.)');
     return;
   }
+
   // 🔥 Itera sobre cada card existente (cada card já tem sua modalidade definida)
   for (let card of cards) {
     const modalidade = card.dataset.modalidade || 'PRIMEIRA ATIVAÇÃO';
@@ -1187,19 +1201,13 @@ window.salvarAgora = function() {
     const isPrimeiraAtivacao = (modalidade === 'PRIMEIRA ATIVAÇÃO');
     const temTelefone = tel.replace(/\D/g, '').length >= 10;
 
-    // 🔥 Validação: se NÃO for PRIMEIRA ATIVAÇÃO, telefone é obrigatório
     if (!isPrimeiraAtivacao && !temTelefone) {
       alert(`⚠️ A linha "${plano || 'sem plano'}" na modalidade ${modalidade} requer um número de telefone.`);
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
       return;
     }
 
-    // 🔥 Validação específica para PORTABILIDADE: operadora doadora é obrigatória
     if (modalidade === 'PORTABILIDADE' && (doadora === 'NENHUMA' || doadora === '')) {
       alert(`⚠️ A linha "${plano || 'sem plano'}" na modalidade PORTABILIDADE requer a seleção da Operadora Doadora.`);
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
       return;
     }
 
@@ -1212,23 +1220,32 @@ window.salvarAgora = function() {
     });
   }
 
-  // Se não houver linhas, alerta
   if (listaLinhas.length === 0) {
     alert("⚠️ Adicione pelo menos uma linha com plano válido!");
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
     return;
   }
 
   console.log('📦 Linhas a serem enviadas:', listaLinhas);
 
-  const pedidoEmEdicao = JSON.parse(sessionStorage.getItem('pedidoEmEdicao') || 'null');
-  const isEditing = pedidoEmEdicao && pedidoEmEdicao.linha && pedidoEmEdicao.origem;
+  // 🔥 Pega dataVenda: se estiver em edição, preserva a original
+  let dataVenda = new Date().toISOString().split('T')[0];
+  if (modoEdicao) {
+    try {
+      const p = JSON.parse(sessionStorage.getItem('pedidoEmEdicao') || '{}');
+      // 🔥 Converte "DD/MM/YYYY" (formato BR) para "YYYY-MM-DD" (formato input date)
+      if (p.dataVenda && p.dataVenda.includes('/')) {
+        const [d, m, a] = p.dataVenda.split('/');
+        dataVenda = `${a}-${m}-${d}`;
+      } else if (p.dataVenda) {
+        dataVenda = p.dataVenda;
+      }
+    } catch (e) {}
+  }
 
   // Monta os dados da empresa
   const dadosEmpresa = {
     matriculaUsuario: user.matricula || user.email || user.username,
-    bancoDeDadosId: isEditing ? pedidoEmEdicao.bancoDeDadosId : (user.bancoDeDadosId || null),
+    bancoDeDadosId: user.bancoDeDadosId || null,
     parceiroNome: user.username || user.nome || "Parceiro HUB",
     cnpj: document.getElementById("cnpj").value,
     razaoSocial: document.getElementById("razaoSocial").value,
@@ -1246,80 +1263,123 @@ window.salvarAgora = function() {
     contatoFinanceiro: document.getElementById("contatoFinanceiro").value,
     modalidade: document.getElementById('modalidades-selecionadas').value,
     dataVenc: document.getElementById("dataVenc").value,
+    dataVenda: dataVenda,
     obs: document.getElementById("obs") ? document.getElementById("obs").value : "",
     statusPedido: "PENDENTE DE INPUT",
     listaLinhas: listaLinhas
   };
 
-  // Se for edição, adiciona campos extras
-  if (isEditing) {
-    dadosEmpresa.idUnico = pedidoEmEdicao.id_unico || '';
-    dadosEmpresa.dataVenda = pedidoEmEdicao.data_venda_original || 
-                             pedidoEmEdicao.data_criacao || 
-                             new Date().toISOString().split('T')[0];
-    dadosEmpresa.linha = pedidoEmEdicao.linha;
-    dadosEmpresa.origem = pedidoEmEdicao.origem;
-  }
-
   if (!dadosEmpresa.matriculaUsuario) {
-    alert("⚠️ Erro de sessão: Usuário não identificado. Por favor, recarregue a página.");
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+    alert("⚠️ Erro de sessão: Usuário não identificado. Recarregue a página.");
     return;
   }
 
   btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + (isEditing ? 'ATUALIZANDO...' : 'ENVIANDO...');
+  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ' + (modoEdicao ? 'ATUALIZANDO...' : 'ENVIANDO...');
 
-  // Função para nova venda
-  function salvarVenda() {
-    window.sb
-      .rpc('parceiro_salvar_venda', { p_payload: dadosEmpresa })
-      .then(({ data: res, error }) => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+  // ═══════════════════════════════════════════════════════════
+  // 🔥 MODO EDIÇÃO — Atualiza o pedido existente
+  // ═══════════════════════════════════════════════════════════
+  if (modoEdicao) {
+    window.sb.rpc('parceiro_editar_pedido', {
+      p_pedido_id: modoEdicao,
+      p_payload: dadosEmpresa
+    })
+    .then(function(r) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
 
-        if (error) {
-          console.error('❌ RPC parceiro_salvar_venda:', error);
-          alert("Erro ao enviar: " + error.message);
-          return;
-        }
+      if (r.error) {
+        console.error('❌ parceiro_editar_pedido:', r.error);
+        alert('Erro ao atualizar: ' + r.error.message);
+        return;
+      }
 
-        if (res && res.success) {
-          const modal = document.getElementById("modalSucesso");
-          if (modal) modal.style.display = "flex";
+      if (r.data && r.data.success) {
+        sessionStorage.removeItem('pedidoEmEdicao');
 
-          if (typeof window.carregarMeusPedidos === 'function') {
-            setTimeout(() => window.carregarMeusPedidos(true), 2000);
+        // Ajusta o modal de sucesso
+        const modal = document.getElementById("modalSucesso");
+        if (modal) {
+          const h3 = modal.querySelector('h3');
+          if (h3) h3.innerText = 'PEDIDO ATUALIZADO!';
+          const pTxt = modal.querySelector('p');
+          if (pTxt) pTxt.innerText = 'As alterações foram salvas com sucesso.';
+          modal.style.display = "flex";
+
+          // 🔥 Ajusta o botão do modal pra voltar a Meus Pedidos
+          const btnModal = modal.querySelector('.btn-modal');
+          if (btnModal) {
+            btnModal.innerText = 'OK, VOLTAR PARA MEUS PEDIDOS';
+            btnModal.onclick = function() {
+              modal.style.display = 'none';
+              if (typeof window.navegar === 'function') {
+                window.navegar('meus_pedidos');
+              } else {
+                window.location.href = 'meus_pedidos.html';
+              }
+            };
           }
-        } else {
-          alert("Erro ao enviar: " + (res?.message || 'Erro desconhecido'));
         }
-      })
-      .catch(err => {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
-        console.error('❌ Erro inesperado:', err);
-        alert("Erro no servidor: " + (err.message || err));
-      });
+      } else {
+        alert('Erro: ' + (r.data?.message || 'Erro desconhecido'));
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+      console.error('❌ Erro inesperado:', err);
+      alert('Erro no servidor: ' + (err.message || err));
+    });
+
+    return;
   }
 
-  // Função para edição in-place (com a mesma lógica sem duplicação)
-  function editarVenda() {
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+  // ═══════════════════════════════════════════════════════════
+  // 🔥 MODO CRIAÇÃO — Nova venda (comportamento original)
+  // ═══════════════════════════════════════════════════════════
+  window.sb
+    .rpc('parceiro_salvar_venda', { p_payload: dadosEmpresa })
+    .then(function(r) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
 
-    if (typeof mostrarToastPequno === 'function') {
-      mostrarToastPequno('✏️ Edição de pedidos ainda não disponível. Aguarde atualização.', 'warning');
-    } else {
-      alert('Edição de pedidos ainda não disponível. Aguarde atualização.');
-    }
+      if (r.error) {
+        console.error('❌ parceiro_salvar_venda:', r.error);
+        alert("Erro ao enviar: " + r.error.message);
+        return;
+      }
 
-    console.warn('⚠️ editarVenda() ainda não migrado');
-  }
+      if (r.data && r.data.success) {
+        const modal = document.getElementById("modalSucesso");
+        if (modal) {
+          // Restaura o texto padrão (caso tenha sido alterado numa edição anterior)
+          const h3 = modal.querySelector('h3');
+          if (h3) h3.innerText = 'Pedido Enviado com sucesso!';
+          const pTxt = modal.querySelector('p');
+          if (pTxt) pTxt.innerText = 'O Backoffice já recebeu a sua venda e ela já está na fila de entrada para conferência e INPUT.';
 
-  salvarVenda();
+          // Restaura o botão
+          const btnModal = modal.querySelector('.btn-modal');
+          if (btnModal) {
+            btnModal.innerText = 'OK, ENTENDIDO';
+            btnModal.onclick = function() {
+              window.fecharModalSucesso();
+            };
+          }
 
+          modal.style.display = "flex";
+        }
+      } else {
+        alert("Erro ao enviar: " + (r.data?.message || 'Erro desconhecido'));
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+      console.error('❌ Erro inesperado:', err);
+      alert("Erro no servidor: " + (err.message || err));
+    });
 };
 
 function preencherFormularioEdicao(dados) {
@@ -1672,6 +1732,8 @@ function resetarFormulario() {
   }
 
   console.log('✅ Formulário resetado com sucesso.');
+  sessionStorage.removeItem('pedidoEmEdicao');
+
 }
 // ============================================
 // ADICIONAR LINHA GLOBAL (uma para cada modalidade)
