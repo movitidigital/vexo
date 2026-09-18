@@ -1721,28 +1721,39 @@ window.FinAdm = (function () {
 
   // ─── 4. Ações ───
   async function validarLinha(comissaoId, status) {
-    let obs = null, data = null;
+    let obs = null;
+    let dataAtivacao = null;
+
     if (status === 'CORRIGIDA') {
       obs = prompt('Motivo da correção:');
       if (obs === null) return;
+      const dataInput = prompt('Nova data de ativação (DD/MM/AAAA) — deixe vazio pra manter:');
+      if (dataInput && /^\d{2}\/\d{2}\/\d{4}$/.test(dataInput.trim())) {
+        // Converte pra ISO
+        const [dia, mes, ano] = dataInput.trim().split('/');
+        dataAtivacao = `${ano}-${mes}-${dia}`;
+      }
     } else if (status === 'REJEITADA') {
       obs = prompt('Motivo da rejeição:');
       if (obs === null) return;
     }
 
     try {
-      const { data, error } = await window.sb.rpc('admin_validar_comissao', {
-        p_comissao_id: comissaoId, p_status: status,
-        p_observacao: obs || null, p_data_ativacao: data || null
+      const { data: resposta, error } = await window.sb.rpc('admin_validar_comissao', {
+        p_comissao_id: comissaoId,
+        p_status: status,
+        p_observacao: obs || null,
+        p_data_ativacao: dataAtivacao
       });
+
       if (error) throw error;
-      if (!data?.success) throw new Error(data?.message || 'Erro');
+      if (!resposta?.success) throw new Error(resposta?.message || 'Erro');
+
       await carregar();
     } catch (e) {
       alert('❌ ' + (e.message || e));
     }
   }
-
   async function validarTudo() {
     if (!confirm('Validar TODAS as linhas pendentes? Essa ação não pode ser desfeita.')) return;
     const pendentes = (state.vendas || []).filter(v => v.status_validacao === 'PENDENTE');
@@ -1750,10 +1761,14 @@ window.FinAdm = (function () {
 
     try {
       for (const v of pendentes) {
-        await window.sb.rpc('admin_validar_comissao', {
-          p_comissao_id: v.comissao_id, p_status: 'VALIDADA',
-          p_observacao: 'Validação em lote', p_data_ativacao: null
+        const { data: resposta, error } = await window.sb.rpc('admin_validar_comissao', {
+          p_comissao_id: v.comissao_id,
+          p_status: 'VALIDADA',
+          p_observacao: 'Validação em lote',
+          p_data_ativacao: null
         });
+        if (error) throw error;
+        if (!resposta?.success) throw new Error(resposta?.message || 'Erro');
       }
       alert('✅ Todas as linhas foram validadas!');
       await carregar();
