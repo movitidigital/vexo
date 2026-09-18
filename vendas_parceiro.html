@@ -755,19 +755,38 @@
   // CARREGAR PLANOS
   // ============================================
   window.carregarPlanosVexo = function() {
-    console.log("🔄 Buscando planos na planilha VEXO...");
-    google.script.run
-      .withSuccessHandler((planos) => {
-        window.dadosPlanosVexo = planos.map(p => ({
-          nome: String(p.nome).trim(),
-          valor: typeof p.valor === 'string' ? parseFloat(p.valor.replace(/[^\d,-]/g, '').replace(',', '.')) : p.valor
-        }));
-        const datalists = document.querySelectorAll('datalist[id^="planos-"], .lista-planos-vexo');
-        datalists.forEach(dl => window.popularDatalistPlanos(dl));
-        console.log("✅ Planos carregados");
-      })
-      .withFailureHandler(err => console.error("❌ Erro ao carregar planos:", err))
-      .p_buscarPlanos();
+    console.log("🔄 Carregando planos...");
+
+    // Tenta via RPC; se não existir, usa fallback
+    window.sb
+      .rpc('parceiro_listar_planos')
+      .then(({ data, error }) => {
+        let lista = [];
+
+        if (error) {
+          console.warn("⚠️ RPC de planos falhou, usando fallback:", error.message);
+          lista = [
+            { nome: 'TIM BLACK 100GB', valor: 149.90 },
+            { nome: 'TIM BLACK 50GB',  valor: 99.90 },
+            { nome: 'TIM CONTROLE 20GB', valor: 59.90 },
+            { nome: 'TIM CONTROLE 15GB', valor: 49.90 }
+          ];
+        } else {
+          lista = Array.isArray(data) ? data : (data?.planos || []);
+        }
+
+        window.dadosPlanosVexo = lista.map(p => ({
+          nome:  String(p.nome || p.plano || '').trim(),
+          valor: typeof p.valor === 'string'
+            ? parseFloat(p.valor.replace(/[^\d,-]/g, '').replace(',', '.'))
+            : (p.valor || 0)
+        })).filter(p => p.nome);
+
+        document.querySelectorAll('datalist[id^="planos-"], .lista-planos-vexo')
+          .forEach(dl => window.popularDatalistPlanos(dl));
+
+        console.log(`✅ ${window.dadosPlanosVexo.length} planos carregados`);
+      });
   };
 
   window.popularDatalistPlanos = function(datalistElement) {
@@ -1157,15 +1176,22 @@ window.salvarAgora = function() {
 
   // Função para nova venda
   function salvarVenda() {
-    google.script.run
-      .withSuccessHandler(function(res) {
+    window.sb
+      .rpc('parceiro_salvar_venda', { p_payload: dadosEmpresa })
+      .then(({ data: res, error }) => {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
-        
+
+        if (error) {
+          console.error('❌ RPC parceiro_salvar_venda:', error);
+          alert("Erro ao enviar: " + error.message);
+          return;
+        }
+
         if (res && res.success) {
           const modal = document.getElementById("modalSucesso");
-          if(modal) modal.style.display = "flex";
-          
+          if (modal) modal.style.display = "flex";
+
           if (typeof window.carregarMeusPedidos === 'function') {
             setTimeout(() => window.carregarMeusPedidos(true), 2000);
           }
@@ -1173,177 +1199,30 @@ window.salvarAgora = function() {
           alert("Erro ao enviar: " + (res?.message || 'Erro desconhecido'));
         }
       })
-      .withFailureHandler(function(err) {
+      .catch(err => {
         btn.disabled = false;
         btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
-        alert("Erro no servidor: " + err.message);
-      })
-      .p_salvarVendaTIM(dadosEmpresa);
+        console.error('❌ Erro inesperado:', err);
+        alert("Erro no servidor: " + (err.message || err));
+      });
   }
 
   // Função para edição in-place (com a mesma lógica sem duplicação)
   function editarVenda() {
-    const btn = document.getElementById('btnSalvarVexo');
-    if (!btn) {
-      console.error('❌ Botão btnSalvarVexo não encontrado');
-      return;
+    btn.disabled = false;
+    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
+
+    if (typeof mostrarToastPequno === 'function') {
+      mostrarToastPequno('✏️ Edição de pedidos ainda não disponível. Aguarde atualização.', 'warning');
+    } else {
+      alert('Edição de pedidos ainda não disponível. Aguarde atualização.');
     }
 
-    const pedidoEmEdicao = JSON.parse(sessionStorage.getItem('pedidoEmEdicao') || '{}');
-    const modalidadeIndex = pedidoEmEdicao.modalidadeIndex || 0;
-    const modalidadesList = pedidoEmEdicao.modalidadesList || [];
-    const modalidadeAtual = pedidoEmEdicao.modalidadeAtual || 'PRIMEIRA ATIVAÇÃO';
-
-    const user = JSON.parse(sessionStorage.getItem("usuarioLogado")) || {};
-    const cards = document.querySelectorAll('.linha-card');
-    let listaLinhasEdit = [];
-
-    // 🔥 Itera sobre os cards existentes (cada um com sua modalidade)
-    for (let card of cards) {
-      const modalidade = card.dataset.modalidade || 'PRIMEIRA ATIVAÇÃO';
-      const tel = card.querySelector('.input-telefone-dinamico').value;
-      const plano = card.querySelector('.input-plano-dinamico').value;
-      const doadora = card.querySelector('.input-doadora-dinamico') ? card.querySelector('.input-doadora-dinamico').value : 'NENHUMA';
-      let valorRaw = card.querySelector('.input-valor-dinamico').value;
-      let valorLimpo = valorRaw.replace("R$ ", "").replace(/\./g, "").replace(",", ".");
-      let valorFinal = parseFloat(valorLimpo) || 0;
-
-      const isPrimeiraAtivacao = (modalidade === 'PRIMEIRA ATIVAÇÃO');
-      const temTelefone = tel.replace(/\D/g, '').length >= 10;
-
-      if (!isPrimeiraAtivacao && !temTelefone) {
-        alert(`⚠️ A linha "${plano || 'sem plano'}" na modalidade ${modalidade} requer um número de telefone.`);
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
-        return;
-      }
-
-      if (modalidade === 'PORTABILIDADE' && (doadora === 'NENHUMA' || doadora === '')) {
-        alert(`⚠️ A linha "${plano || 'sem plano'}" na modalidade PORTABILIDADE requer a seleção da Operadora Doadora.`);
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
-        return;
-      }
-
-      listaLinhasEdit.push({
-        modalidade: modalidade,
-        numeroLinha: tel,
-        plano: plano,
-        valor: valorFinal,
-        operadoraDoadora: doadora
-      });
-    }
-
-    if (listaLinhasEdit.length === 0) {
-      alert("⚠️ Adicione pelo menos uma linha com plano válido!");
-      btn.disabled = false;
-      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
-      return;
-    }
-
-    console.log('📦 Linhas para edição:', listaLinhasEdit);
-
-    // Monta os dados da empresa para edição
-    const dadosEmpresaEdit = {
-      matriculaUsuario: user.matricula || user.email || user.username,
-      bancoDeDadosId: pedidoEmEdicao.bancoDeDadosId || null,
-      parceiroNome: user.username || user.nome || "Parceiro HUB",
-      cnpj: document.getElementById("cnpj").value,
-      razaoSocial: document.getElementById("razaoSocial").value,
-      inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
-      cep: document.getElementById("cep").value,
-      endereco: document.getElementById("endereco").value,
-      numero: document.getElementById("numero").value,
-      compl: document.getElementById("compl").value,
-      bairro: document.getElementById("bairro").value,
-      cidade: document.getElementById("cidade").value,
-      uf: document.getElementById("uf").value,
-      cpfAdmin: document.getElementById("cpfAdmin").value,
-      nomeAdmin: document.getElementById("nomeAdmin").value,
-      email: document.getElementById("email").value,
-      contatoFinanceiro: document.getElementById("contatoFinanceiro").value,
-      modalidade: 'PRIMEIRA ATIVAÇÃO', // legado
-      dataVenc: document.getElementById("dataVenc").value,
-      consultorVendeu: document.getElementById("consultorVendeu").value,
-      obs: document.getElementById("obs") ? document.getElementById("obs").value : "",
-      statusPedido: "PENDENTE DE INPUT",
-      listaLinhas: listaLinhasEdit,
-      idUnico: pedidoEmEdicao.id_unico || '',
-      linha: pedidoEmEdicao.linha,
-      origem: pedidoEmEdicao.origem,
-      modalidadeAtual: modalidadeAtual,
-      modalidadeIndex: modalidadeIndex,
-      modalidadesList: modalidadesList
-    };
-
-    btn.disabled = true;
-    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ATUALIZANDO...';
-
-    google.script.run
-      .withSuccessHandler(function(res) {
-        if (res && res.success) {
-          const nextIndex = modalidadeIndex + 1;
-          if (nextIndex < modalidadesList.length) {
-            pedidoEmEdicao.modalidadeIndex = nextIndex;
-            pedidoEmEdicao.modalidadeAtual = modalidadesList[nextIndex];
-            sessionStorage.setItem('pedidoEmEdicao', JSON.stringify(pedidoEmEdicao));
-            
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-pen"></i> ATUALIZAR PEDIDO';
-            
-            if (typeof preencherFormularioEdicao === 'function') {
-              preencherFormularioEdicao(pedidoEmEdicao);
-            }
-            
-            if (typeof mostrarToastPequno === 'function') {
-              mostrarToastPequno(`🔄 Próxima modalidade: ${modalidadesList[nextIndex]}`, 'info');
-            } else if (typeof notificacaoVexo === 'function') {
-              notificacaoVexo(`🔄 Próxima modalidade: ${modalidadesList[nextIndex]}`, 'info');
-            }
-            
-          } else {
-            sessionStorage.removeItem('pedidoEmEdicao');
-            btn.disabled = false;
-            btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
-            
-            if (typeof mostrarToastPequno === 'function') {
-              mostrarToastPequno('✅ Todas as modalidades foram atualizadas com sucesso!', 'success');
-            } else if (typeof notificacaoVexo === 'function') {
-              notificacaoVexo('✅ Todas as modalidades foram atualizadas com sucesso!', 'success');
-            }
-            
-            setTimeout(() => {
-              if (typeof window.navegar === 'function') {
-                const menuItem = document.querySelector('.menu-item[onclick*="meus_pedidos"]');
-                if (menuItem) {
-                  window.navegar('meus_pedidos', menuItem);
-                } else {
-                  window.navegar('meus_pedidos');
-                }
-              } else {
-                window.location.href = '?page=meus_pedidos';
-              }
-            }, 1000);
-          }
-        } else {
-          btn.disabled = false;
-          btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
-          alert("Erro ao editar pedido: " + (res.message || 'Erro desconhecido'));
-        }
-      })
-      .withFailureHandler(function(err) {
-        btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO DE VENDA AO BACKOFFICE';
-        alert("Erro de comunicação: " + err.message);
-      })
-      .p_editarVendaTIM(dadosEmpresaEdit);
+    console.warn('⚠️ editarVenda() ainda não migrado');
   }
 
-  if (isEditing) {
-    editarVenda();
-  } else {
-    salvarVenda();
-  }
+  salvarVenda();
+
 };
 
 function preencherFormularioEdicao(dados) {
@@ -1592,31 +1471,38 @@ setTimeout(function() {
       // Carregar planos primeiro, depois criar as linhas
       var carregarPlanosOriginal = window.carregarPlanosVexo;
       window.carregarPlanosVexo = function() {
-        console.log('🔄 Buscando planos na planilha VEXO...');
-        google.script.run
-          .withSuccessHandler(function(planos) {
-            window.dadosPlanosVexo = planos.map(function(p) {
-              return {
-                nome: String(p.nome).trim(),
-                valor: typeof p.valor === 'string' ? parseFloat(p.valor.replace(/[^\d,-]/g, '').replace(',', '.')) : p.valor
-              };
-            });
-            console.log('✅ Planos carregados, quantidade:', window.dadosPlanosVexo.length);
-            
-            // Agora que os planos estão carregados, cria as seções e linhas
-            if (typeof window.adicionarLinhaGlobal === 'function') {
-              window.adicionarLinhaGlobal();
-            }
-          })
-          .withFailureHandler(function(err) {
-            console.error('❌ Erro ao carregar planos:', err);
-            // Mesmo com erro, tenta criar as linhas (sem planos)
-            if (typeof window.adicionarLinhaGlobal === 'function') {
-              window.adicionarLinhaGlobal();
-            }
-          })
-          .p_buscarPlanos();
-      };
+    console.log("🔄 Buscando planos no Supabase...");
+
+    window.sb
+      .rpc('get_ofertas_tim')
+      .then(({ data, error }) => {
+        if (error) {
+          console.error("❌ Erro ao carregar planos:", error);
+          return;
+        }
+
+        // A RPC retorna SETOF jsonb → vem como array de objetos
+        const lista = Array.isArray(data) ? data : [];
+
+        window.dadosPlanosVexo = lista
+          .map(p => ({
+            nome:  String(p.nome_comercial || p.nome_interno || '').trim(),
+            valor: parseFloat(p.valor) || 0,
+            // Guarda o objeto inteiro pra usar depois se precisar
+            _raw:  p
+          }))
+          .filter(p => p.nome && p.valor > 0);
+
+        // Popula os datalists
+        document.querySelectorAll('datalist[id^="planos-"], .lista-planos-vexo')
+          .forEach(dl => window.popularDatalistPlanos(dl));
+
+        console.log(`✅ ${window.dadosPlanosVexo.length} planos carregados`);
+      })
+      .catch(err => {
+        console.error("❌ Erro de comunicação com Supabase:", err);
+      });
+  };
       window.carregarPlanosVexo();
     } else {
       console.warn('⚠️ carregarPlanosVexo não encontrado, criando linhas sem planos');
