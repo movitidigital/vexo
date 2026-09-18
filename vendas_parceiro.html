@@ -856,28 +856,25 @@
         } else {
           const lista = Array.isArray(data) ? data : [];
 
-               window.dadosPlanosVexo = lista
-            .map(p => {
-              // 🔥 Prioriza o nome_interno (nome completo tipo "NV/ADP B 30GB...")
-              const nomeCompleto = String(p.nome_interno || '').trim();
-              const nomeCurto    = String(p.nome_comercial || '').trim();
+              window.dadosPlanosVexo = lista
+  .map(p => {
+    const nomeCompleto = String(p.nome_interno || '').trim();
+    const nomeCurto    = String(p.nome_comercial || '').trim();
 
-              return {
-                nome:           nomeCompleto || nomeCurto || '',
-                nome_interno:   nomeCompleto,
-                nome_comercial: nomeCurto,
-
-                valor: parseFloat(p.valor) || 0,
-                tecnologia: p.tecnologia || '',
-                categoria:  p.categoria  || '',
-                franquia:   p.franquia_total || p.franquia_plano || '',
-                destaque:   p.destaque   || '',
-                fidelidade: p.fidelidade || 12,
-
-                _raw: p
-              };
-            })
-            .filter(p => p.nome && p.valor > 0);
+    return {
+      nome:           nomeCompleto || nomeCurto || '',
+      nome_interno:   nomeCompleto,
+      nome_comercial: nomeCurto,
+      valor: parseFloat(p.valor) || 0,
+      tecnologia: p.tecnologia || '',
+      categoria:  p.categoria  || '',
+      franquia:   p.franquia_total || p.franquia_plano || '',
+      destaque:   p.destaque   || '',
+      fidelidade: p.fidelidade || 12,
+      _raw: p
+    };
+  })
+  .filter(p => p.nome && p.valor > 0);
         }
 
         // Popula datalists legados (caso ainda existam em algum lugar)
