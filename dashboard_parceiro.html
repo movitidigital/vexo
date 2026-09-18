@@ -306,7 +306,7 @@
     // Busca o HTML via fetch
     try {
       const arquivo = `${pagina}.html`;
-      const resp = await fetch(arquivo);
+      const resp = await fetch(arquivo + '?v=' + Date.now(), { cache: 'no-store' });
 
       if (!resp.ok) {
         throw new Error(`Módulo "${pagina}" não encontrado (HTTP ${resp.status})`);
