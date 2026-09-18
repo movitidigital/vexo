@@ -303,6 +303,9 @@
         <span style="color: #94a3b8; font-size: 13px;">Carregando módulo...</span>
       </div>`;
 
+    // 🔥 Limpa guard pra permitir reentrada no módulo
+if (pagina !== 'vendas_parceiro') delete window._vexoVendasParceiroLoaded;
+    
     // Busca o HTML via fetch
     try {
       const arquivo = `${pagina}.html`;
