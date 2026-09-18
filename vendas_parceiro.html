@@ -577,16 +577,61 @@
   position: absolute; top: 100%; left: 0; right: 0;
   background: #fff; border: 1px solid #cbd5e1; border-radius: 8px;
   box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-  max-height: 260px; overflow-y: auto;
+  max-height: 320px; overflow-y: auto;
   z-index: 999; margin-top: 4px;
   display: none;
 }
 .plano-dropdown.open { display: block; }
 .plano-dropdown .opt {
-  padding: 10px 14px; cursor: pointer; font-size: 13px;
-  display: flex; justify-content: space-between; align-items: center; gap: 12px;
-  border-bottom: 1px solid #f1f5f9;
-  transition: 0.12s;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+    .plano-dropdown .opt-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+    .plano-dropdown .opt-nome {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 13px;
+  line-height: 1.3;
+  word-break: break-word;
+}
+    .plano-dropdown .opt-badges {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+    .plano-dropdown .opt-badge {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+    .plano-dropdown .opt-badge.tec-5g {
+  background: linear-gradient(135deg, #1e3c72, #2a5298);
+  color: white;
+}
+.plano-dropdown .opt-badge.tec-4g {
+  background: #0ea5e9;
+  color: white;
+}
+.plano-dropdown .opt-badge.cat {
+  background: #f1f5f9;
+  color: #475569;
+}
+.plano-dropdown .opt-badge.franquia {
+  background: #eff6ff;
+  color: #1d4ed8;
 }
 .plano-dropdown .opt:last-child { border-bottom: none; }
 .plano-dropdown .opt:hover,
@@ -784,37 +829,57 @@
   // CARREGAR PLANOS
   // ============================================
   window.carregarPlanosVexo = function() {
-    console.log("🔄 Carregando planos...");
+    console.log("🔄 Carregando planos no Supabase...");
 
-    // Tenta via RPC; se não existir, usa fallback
+    if (!window.sb) {
+      console.error("❌ window.sb não disponível");
+      return;
+    }
+
+    // 🔥 RPC correta do Supabase
     window.sb
-      .rpc('parceiro_listar_planos')
+      .rpc('get_ofertas_tim')
       .then(({ data, error }) => {
-        let lista = [];
-
         if (error) {
-          console.warn("⚠️ RPC de planos falhou, usando fallback:", error.message);
-          lista = [
-            { nome: 'TIM BLACK 100GB', valor: 149.90 },
-            { nome: 'TIM BLACK 50GB',  valor: 99.90 },
-            { nome: 'TIM CONTROLE 20GB', valor: 59.90 },
-            { nome: 'TIM CONTROLE 15GB', valor: 49.90 }
+          console.error("❌ Erro ao carregar planos:", error);
+          window.dadosPlanosVexo = [
+            { nome: 'TIM BLACK 100GB',   valor: 149.90 },
+            { nome: 'TIM BLACK 50GB',    valor: 99.90  },
+            { nome: 'TIM CONTROLE 20GB', valor: 59.90  }
           ];
         } else {
-          lista = Array.isArray(data) ? data : (data?.planos || []);
+          const lista = Array.isArray(data) ? data : [];
+
+          window.dadosPlanosVexo = lista
+            .map(p => ({
+              // 🔥 Nome de exibição + busca
+              nome:         String(p.nome_comercial || p.nome_interno || '').trim(),
+              nome_interno: String(p.nome_interno || '').trim(),
+
+              // Valor numérico
+              valor: parseFloat(p.valor) || 0,
+
+              // 🔥 Dados extras pro dropdown enriquecido
+              tecnologia: p.tecnologia   || '',
+              categoria:  p.categoria    || '',
+              franquia:   p.franquia_total || p.franquia_plano || '',
+              destaque:   p.destaque     || '',
+              fidelidade: p.fidelidade   || 12,
+
+              _raw: p
+            }))
+            .filter(p => p.nome && p.valor > 0);
         }
 
-        window.dadosPlanosVexo = lista.map(p => ({
-          nome:  String(p.nome || p.plano || '').trim(),
-          valor: typeof p.valor === 'string'
-            ? parseFloat(p.valor.replace(/[^\d,-]/g, '').replace(',', '.'))
-            : (p.valor || 0)
-        })).filter(p => p.nome);
-
+        // Popula datalists legados (caso ainda existam em algum lugar)
         document.querySelectorAll('datalist[id^="planos-"], .lista-planos-vexo')
           .forEach(dl => window.popularDatalistPlanos(dl));
 
         console.log(`✅ ${window.dadosPlanosVexo.length} planos carregados`);
+      })
+      .catch(err => {
+        console.error("❌ Erro de comunicação com Supabase:", err);
+        window.dadosPlanosVexo = [];
       });
   };
 
@@ -1920,8 +1985,12 @@ window._ativarAutocompletePlanoParceiro = function(wrapper) {
     const t = normalizar(termo);
     if (!t || t.length < 2) { fechar(); return; }
 
+    // 🔥 Filtra por nome comercial, nome interno OU franquia
     filtrados = (window.dadosPlanosVexo || [])
-      .filter(p => normalizar(p.nome).includes(t))
+      .filter(p => {
+        const blob = `${p.nome} ${p.nome_interno || ''} ${p.franquia || ''}`;
+        return normalizar(blob).includes(t);
+      })
       .slice(0, 40);
 
     if (filtrados.length === 0) {
@@ -1932,20 +2001,48 @@ window._ativarAutocompletePlanoParceiro = function(wrapper) {
     }
 
     idxAtivo = 0;
+
     drop.innerHTML = filtrados.map((p, i) => {
-      const nome = p.nome;
-      const tn = normalizar(nome);
-      const pos = tn.indexOf(t);
-      const antes = nome.substring(0, pos);
-      const match = nome.substring(pos, pos + t.length);
-      const depois = nome.substring(pos + t.length);
-      const nomeDestacado = pos >= 0 ? `${antes}<mark>${match}</mark>${depois}` : nome;
+      // ─── Destaca o termo buscado dentro do nome ───
+      const nome = p.nome || '';
+      const tn   = normalizar(nome);
+      const pos  = tn.indexOf(t);
+
+      const nomeDestacado = pos >= 0
+        ? `${nome.substring(0, pos)}<mark>${nome.substring(pos, pos + t.length)}</mark>${nome.substring(pos + t.length)}`
+        : nome;
+
+      // ─── Badges ───
+      const is5G = String(p.tecnologia || '').toUpperCase().includes('5G');
+
+      const badgeTec = p.tecnologia
+        ? `<span class="opt-badge tec ${is5G ? 'tec-5g' : 'tec-4g'}">${is5G ? '⚡ 5G' : '📶 4G'}</span>`
+        : '';
+
+      const badgeCat = p.categoria
+        ? `<span class="opt-badge cat">${p.categoria}</span>`
+        : '';
+
+      const franquia = p.franquia || p.franquia_plano || '';
+      const badgeFranquia = franquia
+        ? `<span class="opt-badge franquia">📶 ${franquia}</span>`
+        : '';
+
       const valor = Number(p.valor).toFixed(2).replace('.', ',');
-      return `<div class="opt ${i === 0 ? 'active' : ''}" data-idx="${i}">
-        <span class="nome">${nomeDestacado}</span>
-        <span class="valor">R$ ${valor}</span>
-      </div>`;
+
+      return `
+        <div class="opt ${i === 0 ? 'active' : ''}" data-idx="${i}">
+          <div class="opt-info">
+            <div class="opt-nome">${nomeDestacado}</div>
+            ${(badgeTec || badgeCat || badgeFranquia) ? `
+              <div class="opt-badges">
+                ${badgeTec}${badgeCat}${badgeFranquia}
+              </div>` : ''}
+          </div>
+          <span class="valor">R$ ${valor}</span>
+        </div>`;
     }).join('');
+
     drop.classList.add('open');
   }
 
