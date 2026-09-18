@@ -322,6 +322,50 @@
 </div>
 
 <script>
+ // ══════════════════════════════════════════════════════════════
+// 🔧 PATCH DE COMPATIBILIDADE — neutraliza resquícios do GAS
+// ══════════════════════════════════════════════════════════════
+(function neutralizarGAS() {
+  'use strict';
+
+  // 1. Stub do google.script.run — absorve qualquer chamada antiga sem erro
+  if (!window.google) window.google = {};
+  if (!window.google.script) window.google.script = {};
+  if (!window.google.script.run) {
+    const proxy = new Proxy(function () {}, {
+      get(target, prop) {
+        // Qualquer propriedade (metodo, withSuccessHandler, withFailureHandler) → retorna o próprio proxy
+        return function () { return proxy; };
+      },
+      apply() { return proxy; }
+    });
+    window.google.script.run = proxy;
+    console.log('🔧 [PATCH] google.script.run neutralizado (modo stub)');
+  }
+
+  // 2. Sobrescreve funções antigas que dependiam do GAS
+  window.carregarAbaParceiros = function () {
+    console.log('🔧 [PATCH] carregarAbaParceiros → redirecionando para FinAdm');
+    if (window.FinAdm && typeof window.FinAdm.carregarParceiros === 'function') {
+      window.FinAdm.carregarParceiros();
+    }
+  };
+
+  window.carregarListaParceiros = function () {
+    // no-op: agora é responsabilidade do FinAdm
+  };
+
+  window.carregarComissaoParceiro = function () {
+    // no-op: substituído por FinAdm.carregar()
+  };
+
+  window.carregarResumoConsolidado = function () {
+    // no-op: resumo consolidado foi substituído
+    console.log('ℹ️ [PATCH] carregarResumoConsolidado ignorado (função legada)');
+  };
+
+  console.log('✅ [PATCH] Compatibilidade GAS ativa');
+})();
 // ================================================================
 // 1. CARREGAMENTO DOS DADOS (Cards Loja + Tabela Vendedores)
 // ================================================================
