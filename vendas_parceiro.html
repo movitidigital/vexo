@@ -1394,161 +1394,178 @@ window.salvarAgora = function() {
 
 function preencherFormularioEdicao(dados) {
   console.log('📝 Preenchendo formulário para edição:', dados);
-  console.log('🔍 Vencimento recebido:', dados.vencimento);
 
-  // 🔥 ATIVA O CARD "TIM EMPRESAS" E EXIBE O FORMULÁRIO
+  // Ativa card TIM EMPRESAS e abre o form
   const btnEmpresas = document.getElementById('btn-empresas');
   const areaFormularios = document.getElementById('areaFormularios');
   if (btnEmpresas) {
     btnEmpresas.classList.add('active');
-    document.querySelectorAll('.seg-card').forEach(card => {
-      if (card.id !== 'btn-empresas') card.classList.remove('active');
+    document.querySelectorAll('.seg-card').forEach(c => {
+      if (c.id !== 'btn-empresas') c.classList.remove('active');
     });
   }
   if (areaFormularios) {
     areaFormularios.style.display = 'block';
     areaFormularios.style.animation = 'fadeInUp 0.5s ease forwards';
-    setTimeout(() => {
-      areaFormularios.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 200);
   }
 
-  // ============================================
-  // 1. GERENCIAMENTO DE MODALIDADES (AGRUPAMENTO)
-  // ============================================
-  if (dados.modalidadeIndex === undefined) {
-    const grupos = {};
-    (dados.linhas || []).forEach(linha => {
-      const mod = linha.modalidade || 'PRIMEIRA ATIVAÇÃO';
-      if (!grupos[mod]) grupos[mod] = [];
-      grupos[mod].push(linha);
-    });
-    const modalidadesList = Object.keys(grupos);
-    dados.modalidadesList = modalidadesList;
-    dados.modalidadeIndex = 0;
-    dados.linhasAtuais = grupos[modalidadesList[0]] || [];
-    dados.modalidadeAtual = modalidadesList[0];
-    sessionStorage.setItem('pedidoEmEdicao', JSON.stringify(dados));
-  } else {
-    const modalidades = dados.modalidadesList || [];
-    const idx = dados.modalidadeIndex || 0;
-    dados.modalidadeAtual = modalidades[idx] || 'PRIMEIRA ATIVAÇÃO';
-    dados.linhasAtuais = (dados.linhas || []).filter(l => (l.modalidade || 'PRIMEIRA ATIVAÇÃO') === dados.modalidadeAtual);
+  // ─── 1. Modalidades ─────────────────────────────────
+  const modalidadesList = dados.modalidadesList || [];
+  if (!modalidadesList.length) {
+    console.warn('⚠️ Nenhuma modalidade no pedido — abortando edição');
+    window.showToast?.('Pedido sem modalidades', 'error');
+    return;
   }
 
-  // ============================================
-  // 2. PREENCHER CAMPOS BÁSICOS
-  // ============================================
-  document.getElementById('cnpj').value = dados.cnpj || '';
-  document.getElementById('razaoSocial').value = dados.razaoSocial || '';
-  document.getElementById('inscricaoEstadual').value = dados.inscricaoEstadual || dados.ie || '';
-  document.getElementById('cep').value = dados.cep || '';
-  document.getElementById('endereco').value = dados.endereco || '';
-  document.getElementById('numero').value = dados.numero || '';
-  document.getElementById('compl').value = dados.complemento || '';
-  document.getElementById('bairro').value = dados.bairro || '';
-  document.getElementById('cidade').value = dados.cidade || '';
-  document.getElementById('uf').value = dados.uf || '';
-  document.getElementById('cpfAdmin').value = dados.cpfAdmin || '';
-  document.getElementById('nomeAdmin').value = dados.nomeAdmin || '';
-  document.getElementById('email').value = dados.email || '';
-  document.getElementById('contatoFinanceiro').value = dados.contatoFinanceiro || '';
-  
-  const vencimento = dados.vencimento || dados.dataVenc || '05';
-  document.getElementById('dataVenc').value = vencimento;
-  console.log('📌 Vencimento aplicado no select:', vencimento);
-  
-  document.getElementById('consultorVendeu').value = dados.consultorVendeu || dados.vendedor || '';
-  document.getElementById('obs').value = dados.obs || '';
+  // Marca os botões de modalidade no topo
+  document.querySelectorAll('.mod-btn').forEach(b => b.classList.remove('active'));
+  modalidadesList.forEach(mod => {
+    const btn = document.querySelector(`.mod-btn[data-modalidade="${mod}"]`);
+    if (btn) btn.classList.add('active');
+  });
+  document.getElementById('modalidades-selecionadas').value = modalidadesList.join(',');
 
-  // ============================================
-  // 3. SELECIONAR A MODALIDADE ATUAL NO TOPO
-  // ============================================
-  const modalidadeAtual = dados.modalidadeAtual || 'PRIMEIRA ATIVAÇÃO';
-  const modBtns = document.querySelectorAll('.mod-btn');
-  modBtns.forEach(btn => {
-    btn.classList.remove('active');
-    const text = btn.textContent.trim();
-    if (text === modalidadeAtual) {
-      btn.classList.add('active');
-      document.getElementById('tipoOferta').value = modalidadeAtual;
+  // ─── 2. Campos comuns ──────────────────────────────
+  const setVal = (id, v) => {
+    const el = document.getElementById(id);
+    if (el) el.value = (v === null || v === undefined) ? '' : v;
+  };
+
+  setVal('cnpj',               dados.cnpj);
+  setVal('razaoSocial',        dados.razaoSocial);
+  setVal('inscricaoEstadual',  dados.inscricaoEstadual);
+  setVal('cep',                dados.cep);
+  setVal('endereco',           dados.endereco);
+  setVal('numero',             dados.numero);
+  setVal('compl',              dados.compl);
+  setVal('bairro',             dados.bairro);
+  setVal('cidade',             dados.cidade);
+  setVal('uf',                 dados.uf);
+  setVal('cpfAdmin',           dados.cpfAdmin);
+  setVal('nomeAdmin',          dados.nomeAdmin);
+  setVal('email',              dados.email);
+  setVal('contatoFinanceiro',  dados.contatoFinanceiro);
+
+  // ─── 3. Vencimento ─────────────────────────────────
+  const selVenc = document.getElementById('dataVenc');
+  if (selVenc && dados.dataVenc) {
+    const vencNum = String(dados.dataVenc).replace(/\D/g, '');
+    const opt = Array.from(selVenc.options).find(o =>
+      String(o.value).padStart(2, '0') === String(vencNum).padStart(2, '0')
+    );
+    if (opt) selVenc.value = opt.value;
+  }
+
+  // ─── 4. Cria as linhas e preenche ──────────────────
+  const container = document.getElementById('containerLinhas');
+  if (container) container.innerHTML = '';
+
+  const linhasPorMod = dados.linhasPorModalidade || {};
+
+  modalidadesList.forEach(mod => {
+    // Cria a seção
+    if (typeof window.adicionarLinhaGlobal === 'function') {
+      // Só cria a seção, sem linhas (vou criar manualmente abaixo)
     }
+
+    // Cria a seção manualmente (replica do adicionarLinhaGlobal)
+    const isPrimeiraAtivacao = (mod === 'PRIMEIRA ATIVAÇÃO');
+    const cor = isPrimeiraAtivacao ? '#3b82f6' : '#8b5cf6';
+    const secao = document.createElement('div');
+    secao.className = 'modalidade-group';
+    secao.dataset.modalidade = mod;
+    secao.style.cssText = 'background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; margin-bottom: 20px;';
+    secao.innerHTML = `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
+        <div>
+          <span style="display:inline-block; background:${cor}; color:white; padding:4px 14px; border-radius:20px; font-size:12px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;">
+            ${mod}
+          </span>
+          <span style="font-size:11px; color:#64748b; margin-left:10px; font-weight:500;">
+            <span id="qtd-linhas-${mod}">0</span> linha(s)
+          </span>
+        </div>
+        <button type="button" onclick="window.tentarAdicionarLinha('${mod}')" style="background:#3b82f6; color:white; border:none; padding:6px 14px; border-radius:8px; cursor:pointer; font-size:11px; font-weight:700; display:flex; align-items:center; gap:4px;">
+          <i class="fa-solid fa-plus"></i> Adicionar Linha
+        </button>
+      </div>
+      <div id="linhas-${mod}" class="linhas-container" style="display:flex; flex-direction:column; gap:12px;"></div>
+    `;
+    container.appendChild(secao);
+
+    // Pega as linhas dessa modalidade
+    const linhasMod = linhasPorMod[mod] || [];
+    const divLinhas = document.getElementById('linhas-' + mod);
+
+    if (!linhasMod.length) {
+      // Se não tem linhas salvas, cria uma vazia
+      window.adicionarLinhaPorModalidade(mod);
+      return;
+    }
+
+    // Preenche cada linha
+    linhasMod.forEach(linha => {
+      window.adicionarLinhaPorModalidade(mod);
+      const cards = divLinhas.querySelectorAll('.linha-card');
+      const card = cards[cards.length - 1];
+      if (!card) return;
+
+      const inputNumero  = card.querySelector('.input-telefone-dinamico');
+      const inputPlano   = card.querySelector('.input-plano-dinamico');
+      const inputValor   = card.querySelector('.input-valor-dinamico');
+      const inputDoadora = card.querySelector('.input-doadora-dinamico');
+
+      if (inputNumero) inputNumero.value = linha.numero_da_linha || '';
+
+      // 🔥 NORMALIZA O PLANO
+      if (inputPlano) {
+        const planoSalvo = String(linha.plano || '').trim();
+        let nomeCanonico = planoSalvo;
+
+        const match = (window.dadosPlanosVexo || []).find(p =>
+          p.nome === planoSalvo ||
+          p.nome_interno === planoSalvo ||
+          p.nome_comercial === planoSalvo
+        );
+
+        if (match) nomeCanonico = match.nome;
+        inputPlano.value = nomeCanonico;
+      }
+
+      if (inputValor && linha.valor) {
+        const centavos = Math.round(parseFloat(linha.valor) * 100).toString();
+        inputValor.value = fmk.moeda(centavos);
+      }
+
+      if (inputDoadora && linha.operadora_doadora) {
+        inputDoadora.value = linha.operadora_doadora;
+      }
+    });
+
+    // Atualiza contador
+    const span = document.getElementById('qtd-linhas-' + mod);
+    if (span) span.innerText = divLinhas.children.length;
   });
 
-  // ============================================
-  // 4. PREENCHER AS LINHAS (APENAS DA MODALIDADE ATUAL)
-  // ============================================
-  const container = document.getElementById('containerLinhas');
-  container.querySelectorAll('.linha-card').forEach(card => card.remove());
-
-  const linhasParaPreencher = dados.linhasAtuais || [];
-  console.log(`📱 Preenchendo ${linhasParaPreencher.length} linha(s) da modalidade: ${modalidadeAtual}`);
-
-  if (linhasParaPreencher.length > 0) {
-    linhasParaPreencher.forEach((linha, index) => {
-      let card;
-      if (index === 0 && container.querySelector('.linha-card')) {
-        card = container.querySelector('.linha-card');
-        card.querySelector('.input-telefone-dinamico').value = '';
-        card.querySelector('.input-plano-dinamico').value = '';
-        card.querySelector('.input-valor-dinamico').value = '';
-        card.querySelector('.input-doadora-dinamico').value = 'NENHUMA';
-      } else {
-        window.addLinha();
-        const cards = container.querySelectorAll('.linha-card');
-        card = cards[cards.length - 1];
-      }
-      if (card) {
-        card.querySelector('.input-telefone-dinamico').value = linha.numero || '';
-        card.querySelector('.input-plano-dinamico').value = linha.plano || '';
-        card.querySelector('.input-valor-dinamico').value = linha.valor ? `R$ ${Number(linha.valor).toFixed(2).replace('.', ',')}` : '';
-        
-        // 🔥 CORREÇÃO: Opera Doadora - aceita operadoraDoadora, operadora, operadora_doadora
-        const operadora = linha.operadoraDoadora || linha.operadora || linha.operadora_doadora || 'NENHUMA';
-        const select = card.querySelector('.input-doadora-dinamico');
-        if (select) {
-          const opcoes = Array.from(select.options).map(o => o.value);
-          // Primeiro tenta encontrar exatamente
-          if (opcoes.includes(operadora)) {
-            select.value = operadora;
-          } else {
-            // Se não, normaliza para maiúsculas e tenta novamente
-            const operadoraNormalizada = operadora.toUpperCase();
-            const opcaoEncontrada = opcoes.find(o => o.toUpperCase() === operadoraNormalizada);
-            select.value = opcaoEncontrada || 'NENHUMA';
-          }
-        }
-      }
-    });
-  } else {
-    window.addLinha();
-  }
-
-  // ============================================
-  // 5. APLICAR REGRA DE TELEFONE (PRIMEIRA ATIVAÇÃO)
-  // ============================================
-  if (typeof window.atualizarEstadoCamposTelefone === 'function') {
-    window.atualizarEstadoCamposTelefone();
-  }
-
-  // ============================================
-  // 6. ATUALIZAR BOTÃO COM INDICADOR DE PROGRESSO
-  // ============================================
-  const total = dados.modalidadesList?.length || 1;
-  const atual = (dados.modalidadeIndex || 0) + 1;
-  const btn = document.getElementById('btnSalvarVexo');
-  if (btn) {
-    btn.innerHTML = `<i class="fa-solid fa-pen"></i> ATUALIZAR PEDIDO (${atual}/${total}) - ${modalidadeAtual}`;
-    btn.style.background = '#f59e0b';
-  }
-
-  // ============================================
-  // 7. GUARDAR ESTADO DE EDIÇÃO
-  // ============================================
+  // ─── 5. Marca como modo edição no flag global ──────
   isEditing = true;
   pedidoEmEdicaoData = dados;
 
-  mostrarToastPequno(`📝 Editando modalidade ${atual}/${total}: ${modalidadeAtual}`, 'info');
+  // ─── 6. Botão laranja ──────────────────────────────
+  const btn = document.getElementById('btnSalvarVexo');
+  if (btn) {
+    btn.innerHTML = '<i class="fa-solid fa-pen"></i> ATUALIZAR PEDIDO';
+    btn.style.background = '#f59e0b';
+  }
+
+  // ─── 7. Scroll ─────────────────────────────────────
+  setTimeout(() => {
+    areaFormularios?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }, 200);
+
+  if (typeof mostrarToastPequno === 'function') {
+    mostrarToastPequno('📝 Editando pedido. Altere e clique em Atualizar.', 'info');
+  }
 }
 // 🔥 FUNÇÃO AUXILIAR PARA TOAST (se ainda não estiver definida)
 function mostrarToastPequno(mensagem, tipo = 'info') {
