@@ -1121,8 +1121,37 @@ async function _finalizarPedidoExistente(pedido) {
       throw new Error('Não foi possível determinar a data original do pedido. Recarregue a tela.');
     }
 
-    const nomeConsultor = [PERFIL_USUARIO.nome, PERFIL_USUARIO.sobrenome]
-      .filter(Boolean).join(' ').toUpperCase() || PERFIL_USUARIO.email;
+        // 🔥 FIX: preservar o consultor ORIGINAL que lançou a venda.
+    // O backoffice só altera o campo consultor_do_input_no_easy_vendas,
+    // NUNCA o consultor_que_vendeu.
+    let consultorOriginal = null;
+    try {
+      const { data: linhasOriginais, error: errBusca } = await sb
+        .from('VENDAS')
+        .select('consultor_que_vendeu')
+        .eq('tenant_id', TENANT)
+        .eq('cnpj', cnpj)
+        .eq('data_da_venda', dataOriginal)
+        .not('consultor_que_vendeu', 'is', null)
+        .limit(10);
+
+      if (!errBusca && linhasOriginais && linhasOriginais.length > 0) {
+        consultorOriginal = linhasOriginais
+          .map(l => (l.consultor_que_vendeu || '').trim())
+          .find(v => v !== '') || null;
+      }
+    } catch (e) {
+      console.warn('⚠️ Não foi possível recuperar consultor_que_vendeu original:', e);
+    }
+
+    // Fallback só se o banco não devolveu nada (não deve acontecer)
+    const nomeConsultor = consultorOriginal
+      || [PERFIL_USUARIO.nome, PERFIL_USUARIO.sobrenome]
+           .filter(Boolean).join(' ').toUpperCase()
+      || PERFIL_USUARIO.email;
+
+    console.log(`👤 Consultor que vendeu (PRESERVADO): ${nomeConsultor}`);
+    console.log(`📋 Consultor do input (selecionado no dropdown): ${campos.consultor_do_input_no_easy_vendas || 'NULL'}`);
 
     let totalLinhasGravadas = 0;
 
