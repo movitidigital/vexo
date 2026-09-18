@@ -1563,51 +1563,15 @@ setTimeout(function() {
   try {
     console.log('🚀 Inicializando módulo de vendas...');
     
-    // 1. Carregar planos (com callback para criar as linhas)
+       // 1. Carrega os planos (a função correta já está definida no topo do arquivo)
     if (typeof window.carregarPlanosVexo === 'function') {
-      // Carregar planos primeiro, depois criar as linhas
-      var carregarPlanosOriginal = window.carregarPlanosVexo;
-      window.carregarPlanosVexo = function() {
-    console.log("🔄 Buscando planos no Supabase...");
-
-    window.sb
-      .rpc('get_ofertas_tim')
-      .then(({ data, error }) => {
-        if (error) {
-          console.error("❌ Erro ao carregar planos:", error);
-          return;
-        }
-
-        // A RPC retorna SETOF jsonb → vem como array de objetos
-        const lista = Array.isArray(data) ? data : [];
-
-        window.dadosPlanosVexo = lista
-          .map(p => ({
-            nome:  String(p.nome_comercial || p.nome_interno || '').trim(),
-            valor: parseFloat(p.valor) || 0,
-            // Guarda o objeto inteiro pra usar depois se precisar
-            _raw:  p
-          }))
-          .filter(p => p.nome && p.valor > 0);
-
-        // Popula os datalists
-        document.querySelectorAll('datalist[id^="planos-"], .lista-planos-vexo')
-          .forEach(dl => window.popularDatalistPlanos(dl));
-
-        console.log(`✅ ${window.dadosPlanosVexo.length} planos carregados`);
-      })
-      .catch(err => {
-        console.error("❌ Erro de comunicação com Supabase:", err);
-      });
-  };
       window.carregarPlanosVexo();
     } else {
-      console.warn('⚠️ carregarPlanosVexo não encontrado, criando linhas sem planos');
+      console.warn('⚠️ carregarPlanosVexo não encontrado');
       if (typeof window.adicionarLinhaGlobal === 'function') {
         window.adicionarLinhaGlobal();
       }
-    }
-    
+    }    
     // 2. Configurar máscaras
     var form = document.getElementById("vendaForm");
     if (form) {
