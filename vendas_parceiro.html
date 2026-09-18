@@ -1607,7 +1607,7 @@ function mostrarToastPequno(mensagem, tipo = 'info') {
   // Verifica se há um pedido em edição
   const pedidoEdicao = JSON.parse(sessionStorage.getItem('pedidoEmEdicao') || 'null');
   
-  if (pedidoEdicao && pedidoEdicao.linha) {
+  if (pedidoEdicao && (pedidoEdicao.modo === 'EDITAR' || pedidoEdicao.linha)) {
     console.log('📝 Pedido em edição encontrado:', pedidoEdicao);
     
     // Função para executar o preenchimento
