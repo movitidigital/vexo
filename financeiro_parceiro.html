@@ -1195,30 +1195,44 @@
     const cpf = sessao.cpf_cnpj || sessao.cpf || sessao.cnpj || '—';
     const mesExt = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][state.mes - 1];
 
-    // ─── Detecta a URL do Supabase ───
-    let SUPABASE_URL = '';
-    try {
-      // 1. Tenta do cliente Supabase
-      if (window.sb?.supabaseUrl) SUPABASE_URL = window.sb.supabaseUrl;
-      else if (window.sb?.rest?.url) SUPABASE_URL = window.sb.rest.url.replace(/\/rest\/v1\/?$/, '');
-      // 2. Tenta do setup salvo da página de importação
-      else {
-        const setup = localStorage.getItem('vexo_import_setup');
-        if (setup) {
-          const cfg = JSON.parse(setup);
-          if (cfg?.url) SUPABASE_URL = cfg.url;
+    // ─── Tenta várias formas de obter o sb ───
+    const sbClient = window.sb || (typeof sb !== 'undefined' ? sb : null);
+    console.log('🔍 [Espelho] sbClient disponível?', !!sbClient);
+
+    // ─── Gera signed URL da logo ───
+    let LOGO_URL = '';
+    if (sbClient) {
+      try {
+        // Tenta direto na raiz do bucket
+        const { data: signed, error: signErr } = await sbClient.storage
+          .from('LOGOMARCAS')
+          .createSignedUrl('EEE-LOGO-TRANSPARENTE.png', 3600);
+
+        if (signErr) {
+          console.warn('⚠️ [Espelho] Erro ao gerar signed URL:', signErr.message);
+          // Fallback: tenta listar e achar qualquer .png que tenha "EEE" no nome
+          const { data: files } = await sbClient.storage.from('LOGOMARCAS').list('', { limit: 100 });
+          console.log('📁 [Espelho] Arquivos no bucket:', files);
+          const logoFile = (files || []).find(f =>
+            f.name.toUpperCase().includes('EEE') || f.name.toUpperCase().includes('LOGO')
+          );
+          if (logoFile) {
+            const { data: signed2 } = await sbClient.storage
+              .from('LOGOMARCAS')
+              .createSignedUrl(logoFile.name, 3600);
+            LOGO_URL = signed2?.signedUrl || '';
+            console.log('✅ [Espelho] Logo encontrada:', logoFile.name);
+          }
+        } else {
+          LOGO_URL = signed?.signedUrl || '';
+          console.log('✅ [Espelho] Signed URL gerada:', LOGO_URL.slice(0, 80) + '...');
         }
+      } catch (e) {
+        console.error('❌ [Espelho] Exceção ao gerar signed URL:', e);
       }
-    } catch (e) { console.warn('⚠️ URL supabase:', e); }
-
-    if (!SUPABASE_URL) {
-      console.warn('⚠️ Não foi possível detectar a URL do Supabase — usando logo placeholder');
+    } else {
+      console.error('❌ [Espelho] sb não disponível — logo não será carregada');
     }
-
-    // ─── URL da logo E&E (bucket LOGOMARCAS) ───
-    const LOGO_URL = SUPABASE_URL
-      ? `${SUPABASE_URL}/storage/v1/object/public/LOGOMARCAS/EEE-LOGO-TRANSPARENTE.png`
-      : '';
 
     const rows = (d.vendas || []).map(v => `
       <tr>
@@ -1231,7 +1245,6 @@
         <td class="r">${fmtBRL(v.valor)}</td>
       </tr>`).join('');
 
-    // ─── Descrição para o emissor de NF ───
     const descricaoNF = `Serviços de intermediação de vendas referente ao mês de ${mesExt}/${state.ano} - ${nome} - Total: ${fmtBRL(d.totais.comissao)}`;
 
     const html = `<!DOCTYPE html>
@@ -1240,23 +1253,51 @@
 <meta charset="utf-8">
 <title>Espelho ${mesExt}/${state.ano}</title>
 <style>
-  @page { size: A4; margin: 18mm 15mm; }
+  @page { size: A4; margin: 15mm; }
   * { box-sizing: border-box; }
-  body { font-family: 'Helvetica', 'Arial', sans-serif; color: #0f172a; font-size: 11px; margin: 0; padding: 0; background: #fff; }
-  .head { display: flex; justify-content: space-between; align-items: center; padding-bottom: 18px; margin-bottom: 22px; border-bottom: 3px solid #1e3c72; }
-  .head .logo-img { max-height: 70px; max-width: 280px; object-fit: contain; display: block; }
-  .head .logo-fallback { font-size: 24px; font-weight: 900; color: #1e3c72; letter-spacing: -1px; }
-  .head .meta { text-align: right; font-size: 10px; color: #64748b; line-height: 1.7; }
+
+  /* 🔥 Layout com margens de volta */
+  body {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    color: #0f172a;
+    font-size: 11px;
+    margin: 0;
+    padding: 40px 50px;
+    background: #fff;
+  }
+
+  .head {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 18px; margin-bottom: 22px; border-bottom: 3px solid #1e3c72;
+  }
+  .head .logo-img {
+    max-height: 70px; max-width: 280px; object-fit: contain; display: block;
+  }
+  .head .logo-fallback {
+    font-size: 28px; font-weight: 900; color: #1e3c72; letter-spacing: -1px;
+  }
+  .head .meta {
+    text-align: right; font-size: 10px; color: #64748b; line-height: 1.7;
+  }
   .head .meta strong { color: #1e3c72; }
+
   .section { margin-bottom: 18px; }
-  .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #1e3c72; border-bottom: 1px solid #e2e8f0; padding-bottom: 6px; margin-bottom: 10px; }
+  .section-title {
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 1px; color: #1e3c72; border-bottom: 1px solid #e2e8f0;
+    padding-bottom: 6px; margin-bottom: 10px;
+  }
+
   .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
   .info-item { font-size: 11px; }
   .info-item .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; }
   .info-item .val { font-weight: 700; color: #0f172a; }
 
-  /* 🔥 Caixa da descrição NF com botão copiar */
-  .descricao-box { position: relative; padding: 16px 18px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 11px; line-height: 1.7; }
+  .descricao-box {
+    position: relative; padding: 16px 18px; background: #f8fafc;
+    border: 1px solid #e2e8f0; border-radius: 10px;
+    font-size: 11px; line-height: 1.7;
+  }
   .descricao-box .btn-copiar {
     position: absolute; top: 12px; right: 12px;
     background: #1e3c72; color: white; border: none;
@@ -1265,23 +1306,50 @@
     transition: 0.2s; box-shadow: 0 3px 10px rgba(30,60,114,0.2);
   }
   .descricao-box .btn-copiar:hover { background: #152c56; transform: translateY(-1px); }
-  .descricao-box .btn-copiar.copiado { background: #10b981; box-shadow: 0 3px 10px rgba(16,185,129,0.3); }
+  .descricao-box .btn-copiar.copiado { background: #10b981; }
   .descricao-box .descricao-texto { padding-right: 130px; }
   .descricao-box .descricao-texto strong { color: #1e3c72; }
 
   table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 6px; }
-  th { background: #f1f5f9; text-align: left; padding: 6px 8px; font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid #cbd5e1; }
+  th {
+    background: #f1f5f9; text-align: left; padding: 6px 8px;
+    font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: #475569; border-bottom: 1px solid #cbd5e1;
+  }
   td { padding: 6px 8px; border-bottom: 1px solid #eef2f6; }
   td.r { text-align: right; font-weight: 700; }
-  .total-box { margin-top: 16px; background: #0f172a; color: white; padding: 16px 22px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; }
+
+  .total-box {
+    margin-top: 16px; background: #0f172a; color: white;
+    padding: 16px 22px; border-radius: 10px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
   .total-box .lbl { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.7; }
   .total-box .val { font-size: 22px; font-weight: 800; }
-  .obs { margin-top: 24px; padding: 12px; background: #f8fafc; border-radius: 8px; font-size: 10px; line-height: 1.6; color: #475569; }
-  .assinatura { margin-top: 40px; display: flex; justify-content: space-between; gap: 40px; }
-  .assinatura .line { flex: 1; border-top: 1px solid #cbd5e1; padding-top: 6px; text-align: center; font-size: 9px; color: #64748b; }
+
+  .obs {
+    margin-top: 24px; padding: 12px; background: #f8fafc;
+    border-radius: 8px; font-size: 10px; line-height: 1.6; color: #475569;
+  }
+
+  .assinatura {
+    margin-top: 40px; display: flex; justify-content: space-between; gap: 40px;
+  }
+  .assinatura .line {
+    flex: 1; border-top: 1px solid #cbd5e1; padding-top: 6px;
+    text-align: center; font-size: 9px; color: #64748b;
+  }
+
   .no-print { position: fixed; top: 10px; right: 10px; display: flex; gap: 8px; z-index: 999; }
-  .no-print button { padding: 10px 20px; border: none; border-radius: 8px; font-weight: 700; cursor: pointer; font-family: inherit; font-size: 12px; }
-  @media print { .no-print { display: none; } }
+  .no-print button {
+    padding: 10px 20px; border: none; border-radius: 8px;
+    font-weight: 700; cursor: pointer; font-family: inherit; font-size: 12px;
+  }
+
+  @media print {
+    .no-print { display: none; }
+    body { padding: 0; }
+  }
 </style>
 </head>
 <body>
@@ -1291,7 +1359,7 @@
 
   <div class="head">
     ${LOGO_URL
-      ? `<img src="${LOGO_URL}" alt="E&E" class="logo-img" onerror="this.outerHTML='<div class=\\'logo-fallback\\'>E&amp;E</div>'">`
+      ? `<img src="${LOGO_URL}" alt="E&E" class="logo-img" onerror="console.warn('❌ Erro ao carregar a logo'); this.outerHTML='<div class=&quot;logo-fallback&quot;>E&amp;E</div>'">`
       : `<div class="logo-fallback">E&amp;E</div>`}
     <div class="meta">
       <div><strong>COMPETÊNCIA:</strong> ${mesExt} / ${state.ano}</div>
@@ -1396,7 +1464,6 @@
     w.document.write(html);
     w.document.close();
   }
-
   // ═══════════════════════════════════════════════════════════
   // HELPERS
   // ═══════════════════════════════════════════════════════════
