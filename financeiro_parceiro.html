@@ -1220,7 +1220,7 @@
       } catch (e) { console.warn('⚠️ Logo:', e.message); }
     }
 
-    // ─── DADOS FIXOS DA E&E (Tomador) ───
+    // ─── DADOS DA E&E ───
     const TOMADOR = {
       razao: 'E&E CORDEIRO DIGITAL SOLUÇÕES LTDA',
       cnpj: '64.101.740/0001-05',
@@ -1228,6 +1228,9 @@
       cidade: 'Garanhuns / PE',
       cep: '55.293-120'
     };
+
+    // ─── Frase que será copiada ───
+    const fraseNF = `Serviços de intermediação de vendas referente ao mês de ${mesExt}/${state.ano}.`;
 
     const rows = (d.vendas || []).map(v => `
       <tr>
@@ -1239,18 +1242,6 @@
         <td>${v.numero_linha || ''}</td>
         <td class="r">${fmtBRL(v.valor)}</td>
       </tr>`).join('');
-
-    // ─── Descrição NF ───
-    const descricaoNF = `Prestação de serviços de intermediação de vendas referente ao mês de ${mesExt}/${state.ano}.
-
-Prestador: ${nome}
-CPF/CNPJ: ${cpf}
-
-Tomador: ${TOMADOR.razao}
-CNPJ: ${TOMADOR.cnpj}
-Endereço: ${TOMADOR.endereco}, ${TOMADOR.cidade}, CEP: ${TOMADOR.cep}
-
-Valor Total: ${fmtBRL(d.totais.comissao)}`;
 
     const html = `<!DOCTYPE html>
 <html>
@@ -1265,14 +1256,46 @@ Valor Total: ${fmtBRL(d.totais.comissao)}`;
     color: #0f172a; font-size: 11px;
     margin: 0; padding: 40px 50px; background: #fff;
   }
+
+  /* ═══ TOPO: Logo + Dados da E&E (para copiar no emissor) ═══ */
   .head {
-    display: flex; justify-content: space-between; align-items: center;
-    padding-bottom: 18px; margin-bottom: 22px; border-bottom: 3px solid #1e3c72;
+    display: flex; justify-content: space-between; align-items: flex-start;
+    gap: 24px; padding-bottom: 18px; margin-bottom: 20px;
+    border-bottom: 3px solid #1e3c72;
   }
-  .head .logo-img { max-height: 70px; max-width: 280px; object-fit: contain; display: block; }
+  .head .logo-img { max-height: 80px; max-width: 260px; object-fit: contain; display: block; }
   .head .logo-fallback { font-size: 28px; font-weight: 900; color: #1e3c72; letter-spacing: -1px; }
-  .head .meta { text-align: right; font-size: 10px; color: #64748b; line-height: 1.7; }
-  .head .meta strong { color: #1e3c72; }
+
+  /* 🔥 Bloco da E&E — destacado no topo */
+  .empresa-box {
+    flex: 1; max-width: 380px;
+    background: #f8fafc;
+    border-left: 4px solid #1e3c72;
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+  .empresa-box .emp-titulo {
+    font-size: 9px; font-weight: 800; color: #1e3c72;
+    text-transform: uppercase; letter-spacing: 1px;
+    margin-bottom: 6px;
+  }
+  .empresa-box .emp-razao {
+    font-size: 12px; font-weight: 800; color: #0f172a;
+    margin-bottom: 4px; line-height: 1.3;
+  }
+  .empresa-box .emp-linha {
+    font-size: 10px; color: #475569; line-height: 1.5;
+  }
+  .empresa-box .emp-linha strong { color: #1e3c72; font-weight: 700; }
+
+  .titulo-espelho {
+    text-align: center;
+    font-size: 18px; font-weight: 800; color: #1e3c72;
+    letter-spacing: 2px; text-transform: uppercase;
+    padding: 12px 0; margin-bottom: 22px;
+    border-top: 1px solid #e2e8f0;
+    border-bottom: 1px solid #e2e8f0;
+  }
 
   .section { margin-bottom: 18px; }
   .section-title {
@@ -1281,57 +1304,45 @@ Valor Total: ${fmtBRL(d.totais.comissao)}`;
     padding-bottom: 6px; margin-bottom: 10px;
   }
 
-  /* 🔥 Grid 2 colunas para Prestador + Tomador */
-  .partes-grid {
-    display: grid; grid-template-columns: 1fr 1fr; gap: 18px;
-    margin-bottom: 20px;
-  }
-  .parte-box {
-    border: 1px solid #e2e8f0; border-radius: 10px;
-    padding: 14px 16px; background: #f8fafc;
-  }
-  .parte-box.prestador { border-left: 4px solid #3b82f6; }
-  .parte-box.tomador { border-left: 4px solid #10b981; }
-  .parte-box .parte-tipo {
-    font-size: 9px; font-weight: 800; text-transform: uppercase;
-    letter-spacing: 1px; margin-bottom: 8px;
-  }
-  .parte-box.prestador .parte-tipo { color: #3b82f6; }
-  .parte-box.tomador .parte-tipo { color: #10b981; }
-  .parte-box .parte-campo {
-    display: flex; flex-direction: column; margin-bottom: 6px;
-  }
-  .parte-box .parte-campo:last-child { margin-bottom: 0; }
-  .parte-box .parte-lbl {
-    font-size: 8px; color: #94a3b8; text-transform: uppercase;
-    font-weight: 700; letter-spacing: 0.3px;
-  }
-  .parte-box .parte-val {
-    font-size: 11px; font-weight: 700; color: #0f172a; line-height: 1.4;
-  }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .info-item { font-size: 11px; }
+  .info-item .lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .info-item .val { font-weight: 700; color: #0f172a; }
 
-  .descricao-box {
-    position: relative; padding: 16px 18px; background: #f8fafc;
-    border: 1px solid #e2e8f0; border-radius: 10px; font-size: 11px; line-height: 1.7;
+  /* 🔥 Frase NF + botão copiar */
+  .frase-nf-box {
+    position: relative;
+    padding: 16px 18px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+    font-size: 12px;
+    line-height: 1.6;
+    color: #1e293b;
+    font-weight: 600;
   }
-  .descricao-box .btn-copiar {
+  .frase-nf-box .btn-copiar {
     position: absolute; top: 12px; right: 12px;
     background: #1e3c72; color: white; border: none;
     padding: 8px 16px; border-radius: 8px; cursor: pointer;
     font-size: 10px; font-weight: 800; font-family: inherit;
     transition: 0.2s; box-shadow: 0 3px 10px rgba(30,60,114,0.2);
   }
-  .descricao-box .btn-copiar:hover { background: #152c56; transform: translateY(-1px); }
-  .descricao-box .btn-copiar.copiado { background: #10b981; }
-  .descricao-box .descricao-texto { padding-right: 130px; white-space: pre-wrap; font-size: 10px; line-height: 1.6; color: #475569; }
+  .frase-nf-box .btn-copiar:hover { background: #152c56; transform: translateY(-1px); }
+  .frase-nf-box .btn-copiar.copiado { background: #10b981; }
+  .frase-nf-box .frase-texto { padding-right: 130px; }
+  .frase-nf-box .frase-hint {
+    font-size: 10px; color: #64748b; font-weight: 500;
+    margin-top: 6px; padding-right: 130px;
+  }
 
   table { width: 100%; border-collapse: collapse; font-size: 9px; margin-top: 6px; }
   th {
-    background: #f1f5f9; text-align: left; padding: 6px 8px;
+    background: #f1f5f9; text-align: left; padding: 7px 8px;
     font-size: 8px; text-transform: uppercase; letter-spacing: 0.5px;
     color: #475569; border-bottom: 1px solid #cbd5e1;
   }
-  td { padding: 6px 8px; border-bottom: 1px solid #eef2f6; }
+  td { padding: 7px 8px; border-bottom: 1px solid #eef2f6; }
   td.r { text-align: right; font-weight: 700; }
 
   .total-box {
@@ -1367,63 +1378,47 @@ Valor Total: ${fmtBRL(d.totais.comissao)}`;
     <button onclick="window.print()" style="background: #1e3c72; color: white;">🖨️ Imprimir / Salvar PDF</button>
   </div>
 
+  <!-- ═══ TOPO: Logo + Dados da E&E ═══ -->
   <div class="head">
-    ${LOGO_URL
-      ? `<img src="${LOGO_URL}" alt="E&E" class="logo-img" onerror="this.outerHTML='<div class=\\'logo-fallback\\'>E&amp;E</div>'">`
-      : `<div class="logo-fallback">E&amp;E</div>`}
-    <div class="meta">
-      <div><strong>COMPETÊNCIA:</strong> ${mesExt} / ${state.ano}</div>
-      <div><strong>EMITIDO EM:</strong> ${new Date().toLocaleDateString('pt-BR')}</div>
+    <div>
+      ${LOGO_URL
+        ? `<img src="${LOGO_URL}" alt="E&E" class="logo-img" onerror="this.outerHTML='<div class=\\'logo-fallback\\'>E&amp;E</div>'">`
+        : `<div class="logo-fallback">E&amp;E</div>`}
+    </div>
+
+    <div class="empresa-box">
+      <div class="emp-titulo">🏢 Dados para emissão da NF — Tomador</div>
+      <div class="emp-razao">${TOMADOR.razao}</div>
+      <div class="emp-linha"><strong>CNPJ:</strong> ${TOMADOR.cnpj}</div>
+      <div class="emp-linha"><strong>Endereço:</strong> ${TOMADOR.endereco}</div>
+      <div class="emp-linha"><strong>Cidade:</strong> ${TOMADOR.cidade} · <strong>CEP:</strong> ${TOMADOR.cep}</div>
     </div>
   </div>
 
-  <!-- 🔥 BLOCO: PRESTADOR + TOMADOR -->
+  <div class="titulo-espelho">Espelho de Comissão</div>
+
+  <!-- ═══ DADOS DO PRESTADOR ═══ -->
   <div class="section">
-    <div class="section-title">Dados das Partes</div>
-    <div class="partes-grid">
-      <div class="parte-box prestador">
-        <div class="parte-tipo">👤 Prestador (Emissor da NF)</div>
-        <div class="parte-campo">
-          <span class="parte-lbl">Razão Social / Nome</span>
-          <span class="parte-val">${nome}</span>
-        </div>
-        <div class="parte-campo">
-          <span class="parte-lbl">CPF / CNPJ</span>
-          <span class="parte-val">${cpf}</span>
-        </div>
-      </div>
-
-      <div class="parte-box tomador">
-        <div class="parte-tipo">🏢 Tomador dos Serviços</div>
-        <div class="parte-campo">
-          <span class="parte-lbl">Razão Social</span>
-          <span class="parte-val">${TOMADOR.razao}</span>
-        </div>
-        <div class="parte-campo">
-          <span class="parte-lbl">CNPJ</span>
-          <span class="parte-val">${TOMADOR.cnpj}</span>
-        </div>
-        <div class="parte-campo">
-          <span class="parte-lbl">Endereço</span>
-          <span class="parte-val" style="font-weight:600; font-size:10px;">
-            ${TOMADOR.endereco}<br>
-            ${TOMADOR.cidade} · CEP ${TOMADOR.cep}
-          </span>
-        </div>
-      </div>
+    <div class="section-title">Dados do Prestador de Serviços</div>
+    <div class="info-grid">
+      <div class="info-item"><div class="lbl">Nome / Razão Social</div><div class="val">${nome}</div></div>
+      <div class="info-item"><div class="lbl">CPF / CNPJ</div><div class="val">${cpf}</div></div>
     </div>
   </div>
 
+  <!-- ═══ DISCRIMINAÇÃO DOS SERVIÇOS ═══ -->
   <div class="section">
     <div class="section-title">Discriminação dos Serviços</div>
-    <div class="descricao-box">
-      <button class="btn-copiar" id="btn-copiar-descricao" onclick="copiarDescricaoNF()">
-        📋 Copiar descrição
+    <div class="frase-nf-box">
+      <button class="btn-copiar" id="btn-copiar-frase" onclick="copiarFraseNF()">
+        📋 Copiar frase
       </button>
-      <div class="descricao-texto">${descricaoNF}</div>
+      <div class="frase-texto">${fraseNF}</div>
+      <div class="frase-hint">Cole esta frase no campo "Discriminação dos Serviços" da NF.</div>
     </div>
   </div>
 
+  <!-- ═══ EXTRATO DE VENDAS ═══ -->
   <div class="section">
     <div class="section-title">Extrato de Vendas Ativas</div>
     <table>
@@ -1458,14 +1453,14 @@ Valor Total: ${fmtBRL(d.totais.comissao)}`;
   </div>
 
   <script>
-    function copiarDescricaoNF() {
-      var texto = ${JSON.stringify(descricaoNF)};
-      var btn = document.getElementById('btn-copiar-descricao');
+    function copiarFraseNF() {
+      var texto = ${JSON.stringify(fraseNF)};
+      var btn = document.getElementById('btn-copiar-frase');
       function onSuccess() {
         btn.innerHTML = '✅ Copiado!';
         btn.classList.add('copiado');
         setTimeout(function () {
-          btn.innerHTML = '📋 Copiar descrição';
+          btn.innerHTML = '📋 Copiar frase';
           btn.classList.remove('copiado');
         }, 2500);
       }
