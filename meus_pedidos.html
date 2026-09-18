@@ -1125,134 +1125,52 @@
   // ============================================
   // FUNÇÃO EDITAR PEDIDO (global)
   // ============================================
-window.editarPedido = function(linha, origem) {
-  const pedido = window.meusPedidos.find(p => p.linha === linha && p.origem === origem);
+window.editarPedido = function(pedidoId) {
+  window.showToast('✏️ Edição de pedidos será liberada em breve. Por enquanto, exclua e lance novamente.', 'warning');
+};
+
+  // ============================================
+  // FUNÇÃO EXCLUIR PEDIDO (global)
+  // ============================================
+window.excluirPedido = function(pedidoId) {
+  const pedido = window.meusPedidos.find(p => p.pedido_id === pedidoId);
   if (!pedido) {
     window.showToast('Pedido não encontrado', 'error');
     return;
   }
 
   if (pedido.status_etapa !== 0) {
-    window.showToast('Este pedido já foi processado e não pode ser editado.', 'warning');
+    window.showToast('Este pedido já foi processado e não pode ser excluído.', 'warning');
     return;
   }
 
-  const bancoDeDadosId = pedido.bancoDeDadosId || null;
-  window.showToast('Carregando dados do pedido...', 'info');
-
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res.success && res.pedido) {
-        const dadosPedido = res.pedido;
-        console.log('📝 Dados do pedido detalhado:', dadosPedido);
-
-        // 🔥 Extrai todas as linhas do pedido (já vêm com modalidade)
-        const todasLinhas = dadosPedido.linhas_agrupadas || pedido.linhas || [];
-
-        // 🔥 AGRUPAR LINHAS POR MODALIDADE
-        const modalidadesMap = new Map();
-        todasLinhas.forEach(linha => {
-          const mod = linha.modalidade || dadosPedido.modalidade || 'PRIMEIRA ATIVAÇÃO';
-          if (!modalidadesMap.has(mod)) modalidadesMap.set(mod, []);
-          modalidadesMap.get(mod).push(linha);
-        });
-
-        const modalidadesList = Array.from(modalidadesMap.keys());
-        const linhasPorModalidade = {};
-        modalidadesList.forEach(mod => {
-          linhasPorModalidade[mod] = modalidadesMap.get(mod);
-        });
-
-        console.log('📋 Modalidades encontradas:', modalidadesList);
-        console.log('📊 Linhas por modalidade:', JSON.stringify(linhasPorModalidade, null, 2));
-
-        // 🔥 CONSTRUIR id_unico SEM MODALIDADE (apenas CNPJ|data)
-        const idUnicoSemModalidade = dadosPedido.id_unico ? dadosPedido.id_unico.split('|').slice(0, 2).join('|') : pedido.id_unico;
-
-        const pedidoEdicao = {
-          // Dados de identificação (comuns)
-          linha: linha,
-          origem: origem,
-          bancoDeDadosId: bancoDeDadosId,
-          id_unico: idUnicoSemModalidade, // sem modalidade
-
-          // Dados da empresa
-          cnpj: dadosPedido.cnpj || pedido.cnpj,
-          razaoSocial: dadosPedido.cliente || pedido.cliente,
-          ie: dadosPedido.ie || pedido.ie || '',
-          cep: dadosPedido.cep || pedido.cep || '',
-          endereco: dadosPedido.endereco || pedido.endereco || '',
-          numero: dadosPedido.numero_endereco || pedido.numero_endereco || '',
-          complemento: dadosPedido.complemento || pedido.complemento || '',
-          bairro: dadosPedido.bairro || pedido.bairro || '',
-          cidade: dadosPedido.cidade || pedido.cidade || '',
-          uf: dadosPedido.uf || pedido.uf || '',
-          cpfAdmin: dadosPedido.cpf_admin || pedido.cpf_admin || '',
-          nomeAdmin: dadosPedido.nome_admin || pedido.nome_admin || '',
-          email: dadosPedido.email || pedido.email || '',
-          contatoFinanceiro: dadosPedido.contato_financeiro || pedido.contato_financeiro || '',
-          modalidade: dadosPedido.modalidade || pedido.modalidade || 'PRIMEIRA ATIVAÇÃO', // apenas para compatibilidade
-          vencimento: dadosPedido.vencimento || pedido.vencimento || '05',
-          consultorVendeu: dadosPedido.vendedor || pedido.vendedor || '',
-          obs: dadosPedido.obs || pedido.obs || '',
-          data_venda_original: dadosPedido.data_venda || pedido.data_venda || '',
-
-          // 🔥 CONTROLE DE MÚLTIPLAS MODALIDADES
-          modalidadesList: modalidadesList,
-          modalidadeIndex: 0,
-          linhasPorModalidade: linhasPorModalidade,
-
-          // Linhas (todas) – mantido por compatibilidade, mas o formulário usará linhasPorModalidade
-          linhas: todasLinhas
-        };
-
-        console.log('📦 pedidoEdicao montado:', pedidoEdicao);
-
-        sessionStorage.setItem('pedidoEmEdicao', JSON.stringify(pedidoEdicao));
-        window.showToast('Pedido carregado para edição! Redirecionando...', 'success');
-
-        setTimeout(function() {
-          window.irParaVendas();
-        }, 500);
-      } else {
-        window.showToast(res?.message || 'Erro ao carregar detalhes do pedido', 'error');
-      }
-    })
-    .withFailureHandler(function(err) {
-      window.showToast('Erro de comunicação: ' + err, 'error');
-    })
-    .p_detalhesPedidoGestao(linha, origem, pedido.cnpj, pedido.data_key, bancoDeDadosId); // sem modalidade
+  window.showConfirmModal(
+    'Excluir Pedido',
+    `Deseja excluir o pedido de <strong>${(pedido.razao_social || '').substring(0, 40)}</strong>?<br><span style="font-size:12px;color:#64748b;">Esta ação não pode ser desfeita.</span>`,
+    function() { window.executarExclusao(pedidoId); },
+    null
+  );
 };
 
-  // ============================================
-  // FUNÇÃO EXCLUIR PEDIDO (global)
-  // ============================================
-  window.excluirPedido = function(linha, origem) {
-    const pedido = window.meusPedidos.find(p => p.linha === linha && p.origem === origem);
-    if (!pedido) {
-      window.showToast('Pedido não encontrado', 'error');
-      return;
-    }
-
-    if (pedido.status_etapa !== 0) {
-      window.showToast('Este pedido já foi processado e não pode ser excluído.', 'warning');
-      return;
-    }
-
-    const qtdLinhas = pedido.linhas_agrupadas ? pedido.linhas_agrupadas.length : 1;
-    const idUnico = pedido.id_unico;
-
-    if (qtdLinhas === 1) {
-      window.showConfirmModal(
-        'Excluir Pedido',
-        `Deseja excluir o pedido de <strong>${pedido.cliente.substring(0, 40)}</strong>?`,
-        function() { window.executarExclusao([pedido.linha], origem, idUnico); },
-        null
-      );
-    } else {
-      window.mostrarModalSelecaoLinhas(pedido, origem, idUnico);
-    }
-  };
+window.executarExclusao = function(pedidoId) {
+  window.showLoading('Excluindo pedido...');
+  window.sb.rpc('parceiro_excluir_pedido', { p_pedido_id: pedidoId })
+    .then(function(r) {
+      window.hideLoading();
+      if (r.error) throw r.error;
+      const res = r.data;
+      if (res && res.success) {
+        window.showToast(res.message || 'Pedido excluído!', 'success');
+        window.carregarMeusPedidos();
+      } else {
+        window.showToast(res?.message || 'Falha ao excluir', 'error');
+      }
+    })
+    .catch(function(err) {
+      window.hideLoading();
+      window.showToast('Erro: ' + (err.message || err), 'error');
+    });
+};
 
   // ============================================
   // FUNÇÕES PRINCIPAIS DO MÓDULO (dentro da IIFE)
@@ -1303,18 +1221,16 @@ function carregarMeusPedidos() {
     tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><div class="loading-spinner"></div>Carregando seus pedidos...</td></tr>';
   }
 
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
   const filtros = {
-    status: document.getElementById('filtro-status')?.value || 'todos',
-    busca: document.getElementById('filtro-busca')?.value.toLowerCase() || '',
-    mostrarConcluidos: window.mostrarConcluidos,
-    cargo: window.userCargo,
-    nome: window.userNome
-    // 🔥 bancoDeDadosId removido – o backend já identifica o parceiro via cargo e nome
+    p_status: document.getElementById('filtro-status')?.value || 'todos',
+    p_busca: document.getElementById('filtro-busca')?.value || '',
+    p_incluir_concluidos: window.mostrarConcluidos
   };
 
-  google.script.run
-    .withSuccessHandler(function(res) {
+  window.sb.rpc('parceiro_listar_pedidos', filtros)
+    .then(function(r) {
+      if (r.error) throw r.error;
+      const res = r.data;
       if (res && res.success) {
         window.meusPedidos = res.pedidos || [];
         aplicarFiltros();
@@ -1325,30 +1241,26 @@ function carregarMeusPedidos() {
         window.showToast(res?.message || 'Falha ao carregar pedidos', 'error');
       }
     })
-    .withFailureHandler(function(err) {
+    .catch(function(err) {
       console.error("❌ Erro:", err);
-      tbody.innerHTML = `<tr><td colspan="6" class="loading-state"><i class="fas fa-wifi"></i> Erro de comunicação: ${err}</td></tr>`;
-      window.showToast('Erro de comunicação com o servidor', 'error');
-    })
-    .p_listarPedidosGestao(filtros);
+      tbody.innerHTML = `<tr><td colspan="6" class="loading-state"><i class="fas fa-wifi"></i> Erro: ${err.message || err}</td></tr>`;
+      window.showToast('Erro de comunicação', 'error');
+    });
 }
 
 function carregarMeusPedidosSilenciosamente() {
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
   const filtros = {
-    status: document.getElementById('filtro-status')?.value || 'todos',
-    busca: document.getElementById('filtro-busca')?.value.toLowerCase() || '',
-    mostrarConcluidos: window.mostrarConcluidos,
-    cargo: window.userCargo,
-    nome: window.userNome
-    // 🔥 bancoDeDadosId removido – o backend já identifica o parceiro via cargo e nome
+    p_status: document.getElementById('filtro-status')?.value || 'todos',
+    p_busca: document.getElementById('filtro-busca')?.value || '',
+    p_incluir_concluidos: window.mostrarConcluidos
   };
 
-  google.script.run
-    .withSuccessHandler(function(res) {
+  window.sb.rpc('parceiro_listar_pedidos', filtros)
+    .then(function(r) {
+      if (r.error) throw r.error;
+      const res = r.data;
       if (res && res.success) {
-        let novos = res.pedidos || [];
-        
+        const novos = res.pedidos || [];
         const idsAtuais = new Set(window.meusPedidos.map(p => p.id));
         const idsNovos = new Set(novos.map(p => p.id));
         const mudou = idsAtuais.size !== idsNovos.size ||
@@ -1359,22 +1271,15 @@ function carregarMeusPedidosSilenciosamente() {
           aplicarFiltros();
           atualizarKPIs();
           const ind = document.querySelector('#polling-indicator');
-          if (ind) {
-            ind.classList.add('fa-fade');
-            setTimeout(() => ind.classList.remove('fa-fade'), 1000);
-          }
+          if (ind) { ind.classList.add('fa-fade'); setTimeout(() => ind.classList.remove('fa-fade'), 1000); }
           window.showToast('📦 Novas atualizações nos seus pedidos!', 'info');
         } else {
           aplicarFiltros();
         }
       }
     })
-    .withFailureHandler(function(err) {
-      console.warn("Polling: erro ao atualizar", err);
-    })
-    .p_listarPedidosGestao(filtros);
+    .catch(function(err) { console.warn("Polling: erro", err); });
 }
-
     // --- Filtros ---
 function aplicarFiltros() {
   const statusFiltro = document.getElementById('filtro-status')?.value || 'todos';
@@ -1427,93 +1332,78 @@ function aplicarFiltros() {
 }
 
     // --- Renderização ---
-    function renderizarTabela() {
-      const tbody = document.getElementById('pedidos-tbody');
-      if (!tbody) return;
+  function renderizarTabela() {
+  const tbody = document.getElementById('pedidos-tbody');
+  if (!tbody) return;
 
-      const filtrados = window.pedidosFiltrados || [];
-      const total = filtrados.length;
-      const totalPaginas = Math.ceil(total / window.itensPorPagina);
-      const inicio = (window.paginaAtual - 1) * window.itensPorPagina;
-      const paginados = filtrados.slice(inicio, inicio + window.itensPorPagina);
+  const filtrados = window.pedidosFiltrados || [];
+  const total = filtrados.length;
+  const totalPaginas = Math.ceil(total / window.itensPorPagina);
+  const inicio = (window.paginaAtual - 1) * window.itensPorPagina;
+  const paginados = filtrados.slice(inicio, inicio + window.itensPorPagina);
 
-      if (paginados.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><i class="fas fa-inbox"></i> Nenhum pedido encontrado</td></tr>';
-        document.getElementById('pagination-container').style.display = 'none';
-        return;
-      }
+  if (paginados.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><i class="fas fa-inbox"></i> Nenhum pedido encontrado</td></tr>';
+    document.getElementById('pagination-container').style.display = 'none';
+    return;
+  }
 
-      const formatMoeda = function(v) {
-        return `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-      };
+  const formatMoeda = function(v) {
+    return `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  };
 
-      const podeEditar = window.userPodeEditar;
-      const cargo = window.userCargo;
-      const isFreelancer = (cargo === 'FREELANCER' || cargo === 'CONSULTOR DE VENDAS' || cargo === 'PARCEIRO' || cargo === 'TERCEIRO');
+  const cargo = window.userCargo;
+  const isFreelancer = (cargo === 'FREELANCER' || cargo === 'PARCEIRO' || cargo === 'TERCEIRO');
 
-      tbody.innerHTML = paginados.map(function(pedido) {
-        let statusRaw = pedido.status_raw;
-        if (statusRaw === "INPUT REALIZADO") statusRaw = "1. INPUT REALIZADO";
-        const status = STATUS_INFO[statusRaw] || STATUS_INFO["PENDENTE DE INPUT"];
+  tbody.innerHTML = paginados.map(function(pedido) {
+    let statusRaw = pedido.status_raw || 'PENDENTE DE INPUT';
+    const status = STATUS_INFO[statusRaw] || STATUS_INFO["PENDENTE DE INPUT"];
 
-        const podeAvancar = podeEditar && pedido.status_etapa < 6;
-        const podeVoltar = podeEditar && pedido.status_etapa > 0;
-        const isPendente = (statusRaw === 'PENDENTE DE INPUT' || statusRaw.includes('PENDENTE'));
+    const isPendente = statusRaw.includes('PENDENTE');
 
-        const btnAvancarRender = isPendente && podeAvancar
-          ? `<button class="btn-action btn-forward" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-direcao="avancar" onclick="avancarPedidoParaInput(${pedido.linha}, '${pedido.origem}')"><i class="fas fa-rocket"></i> Lançar</button>`
-          : (podeAvancar ? `<button class="btn-action btn-forward" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-direcao="avancar" onclick="atualizarStatus(${pedido.linha}, 'avancar', '${pedido.origem}')"><i class="fas fa-arrow-right"></i> Avançar</button>` : '');
-
-        const btnVoltarRender = podeVoltar
-          ? `<button class="btn-action btn-back" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-direcao="voltar" onclick="atualizarStatus(${pedido.linha}, 'voltar', '${pedido.origem}')"><i class="fas fa-arrow-left"></i> Voltar</button>`
-          : '';
-
-        const timeline = gerarTimeline(pedido.status_etapa);
-
-        let btnEditar = '';
-        let btnExcluir = '';
-        if (isFreelancer && isPendente) {
-          btnEditar = `<button class="btn-action btn-edit" onclick="window.editarPedido(${pedido.linha}, '${pedido.origem}')" style="background:#fef3c7; color:#b45309;"><i class="fas fa-pen"></i> Editar</button>`;
-          btnExcluir = `<button class="btn-action btn-delete" onclick="window.excluirPedido(${pedido.linha}, '${pedido.origem}')" style="background:#fee2e2; color:#ef4444;"><i class="fas fa-trash"></i> Excluir</button>`;
-        }
-
-        return `
-          <tr>
-            <td style="font-family: monospace; font-weight: 600;">${pedido.id}</td>
-            <td>
-              <div style="font-weight: 700; color: #1e293b;">${(pedido.cliente || "").substring(0, 50)}</div>
-              <div style="font-size: 10px; color: #64748b;">CNPJ: ${pedido.cnpj || '—'}</div>
-            </td>
-            <td style="font-weight: 700; color: #1e293b;">${formatMoeda(pedido.valor)}</td>
-            <td style="font-size: 12px;">${pedido.data_criacao || '—'}</td>
-            <td>
-              <span class="status-badge ${status.classe}">${status.icone} ${status.label}</span>
-              <div class="timeline-wrapper">${timeline}</div>
-            </td>
-            <td>
-              <div class="action-buttons">
-                ${podeEditar ? btnVoltarRender : ''}
-                ${podeEditar ? btnAvancarRender : ''}
-                ${!podeEditar ? '<span class="view-only-badge"><i class="fas fa-lock"></i> Visualização</span>' : ''}
-                <button class="btn-action btn-detail" onclick="abrirDetalhes(${pedido.linha}, '${pedido.origem}')"><i class="fas fa-eye"></i> Detalhes</button>
-                ${btnEditar}
-                ${btnExcluir}
-              </div>
-            </td>
-          </tr>
-        `;
-      }).join('');
-
-      const pagContainer = document.getElementById('pagination-container');
-      if (totalPaginas > 1) {
-        pagContainer.style.display = 'flex';
-        document.getElementById('page-info').innerHTML = `Página ${window.paginaAtual} de ${totalPaginas}`;
-        document.getElementById('btn-prev').disabled = (window.paginaAtual === 1);
-        document.getElementById('btn-next').disabled = (window.paginaAtual === totalPaginas);
-      } else {
-        pagContainer.style.display = 'none';
-      }
+    let btnEditar = '';
+    let btnExcluir = '';
+    if (isFreelancer && isPendente) {
+      btnEditar = `<button class="btn-action btn-edit" onclick="window.editarPedido('${pedido.pedido_id}')" style="background:#fef3c7; color:#b45309;"><i class="fas fa-pen"></i> Editar</button>`;
+      btnExcluir = `<button class="btn-action btn-delete" onclick="window.excluirPedido('${pedido.pedido_id}')" style="background:#fee2e2; color:#ef4444;"><i class="fas fa-trash"></i> Excluir</button>`;
     }
+
+    const timeline = gerarTimeline(pedido.status_etapa);
+    const pedidoIdCurto = (pedido.id || '').substring(0, 8).toUpperCase();
+
+    return `
+      <tr>
+        <td style="font-family: monospace; font-weight: 600;">#${pedidoIdCurto}</td>
+        <td>
+          <div style="font-weight: 700; color: #1e293b;">${(pedido.razao_social || "").substring(0, 50)}</div>
+          <div style="font-size: 10px; color: #64748b;">CNPJ: ${pedido.cnpj || '—'}</div>
+        </td>
+        <td style="font-weight: 700; color: #1e293b;">${formatMoeda(pedido.valor)}</td>
+        <td style="font-size: 12px;">${pedido.data_venda || '—'}</td>
+        <td>
+          <span class="status-badge ${status.classe}">${status.icone} ${status.label}</span>
+          <div class="timeline-wrapper">${timeline}</div>
+        </td>
+        <td>
+          <div class="action-buttons">
+            <button class="btn-action btn-detail" onclick="window.abrirDetalhes('${pedido.pedido_id}')"><i class="fas fa-eye"></i> Detalhes</button>
+            ${btnEditar}
+            ${btnExcluir}
+          </div>
+        </td>
+      </tr>`;
+  }).join('');
+
+  const pagContainer = document.getElementById('pagination-container');
+  if (totalPaginas > 1) {
+    pagContainer.style.display = 'flex';
+    document.getElementById('page-info').innerHTML = `Página ${window.paginaAtual} de ${totalPaginas}`;
+    document.getElementById('btn-prev').disabled = (window.paginaAtual === 1);
+    document.getElementById('btn-next').disabled = (window.paginaAtual === totalPaginas);
+  } else {
+    pagContainer.style.display = 'none';
+  }
+}
 
     function gerarTimeline(etapaAtual) {
       const steps = [
@@ -1691,39 +1581,30 @@ function aplicarFiltros() {
     }
 
     // --- Abrir Detalhes (Modal) ---
-    function abrirDetalhes(linha, origem) {
-      const pedido = window.meusPedidos.find(function(p) { return p.linha === linha && p.origem === origem; });
-      if (!pedido) {
-        window.showToast('Pedido não encontrado', 'error');
-        return;
+ function abrirDetalhes(pedidoId) {
+  const modal = document.getElementById('modal-detalhes');
+  const body = document.getElementById('modal-body-detalhes');
+  if (!modal || !body) return;
+
+  document.body.classList.add('modal-open');
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+  body.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>Carregando detalhes...</div>';
+
+  window.sb.rpc('parceiro_detalhes_pedido', { p_pedido_id: pedidoId })
+    .then(function(r) {
+      if (r.error) throw r.error;
+      const res = r.data;
+      if (res && res.success) {
+        renderizarDetalhes(res.pedido);
+      } else {
+        body.innerHTML = `<div class="loading-state"><i class="fas fa-exclamation-triangle"></i> ${res?.message || 'Erro ao carregar'}</div>`;
       }
-
-      const modal = document.getElementById('modal-detalhes');
-      const body = document.getElementById('modal-body-detalhes');
-      if (!modal || !body) return;
-
-      document.body.classList.add('modal-open');
-      modal.style.display = 'flex';
-      modal.classList.add('active');
-      body.innerHTML = '<div class="loading-state"><div class="loading-spinner"></div>Carregando detalhes...</div>';
-
-      const bancoDeDadosId = pedido.bancoDeDadosId || null;
-
-      google.script.run
-        .withSuccessHandler(function(res) {
-          if (res && res.success) {
-            renderizarDetalhes(res.pedido);
-          } else {
-            body.innerHTML = `<div class="loading-state"><i class="fas fa-exclamation-triangle"></i> ${res?.message || 'Erro ao carregar'}</div>`;
-            window.showToast(res?.message || 'Erro ao carregar detalhes', 'error');
-          }
-        })
-        .withFailureHandler(function(err) {
-          body.innerHTML = `<div class="loading-state"><i class="fas fa-wifi"></i> Erro de comunicação: ${err}</div>`;
-          window.showToast('Erro ao carregar detalhes', 'error');
-        })
-        .p_detalhesPedidoGestao(linha, origem, pedido.cnpj, pedido.data_key, bancoDeDadosId);
-    }
+    })
+    .catch(function(err) {
+      body.innerHTML = `<div class="loading-state"><i class="fas fa-wifi"></i> Erro: ${err.message || err}</div>`;
+    });
+}
 
     function renderizarDetalhes(pedido) {
       const body = document.getElementById('modal-body-detalhes');
