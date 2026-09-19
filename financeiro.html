@@ -766,7 +766,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════
-  // EXTRATO DETALHADO (por consultor)
+  // EXTRATO DETALHADO · VERSÃO PROFISSIONAL
   // ═══════════════════════════════════════════════════════════
   async function abrirExtratoDetalhado(consultor, mes, ano) {
     const sb = getSb();
@@ -783,64 +783,355 @@
       if (!data?.success) throw new Error(data?.message || 'Erro');
 
       const vendas = data.vendas || [];
-      if (!vendas.length) {
-        toast('⚠️ Nenhuma venda encontrada.', 'warn');
-        return;
-      }
+      if (!vendas.length) return toast('⚠️ Nenhuma venda encontrada.', 'warn');
 
-      const mesNome = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][parseInt(mes, 10) - 1];
-      const total = vendas.reduce((a, v) => a + Number(v.valor || 0), 0);
+      const pct = data.percentuais || { fat: 0, port: 0, reneg: 0 };
+      const bateu = data.bateu_meta || {};
+      const metas = data.metas_pessoais || {};
+      const realizado = data.realizado || {};
+      const loja = data.loja_realizado || {};
+      const metaLoja = data.meta_loja || {};
+      const faixas = data.faixas_loja || {};
 
-      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Extrato ${consultor}</title>
+      // Separa vendas por grupo
+      const vendasFat = vendas.filter(v => v.grupo === 'FATURAMENTO');
+      const vendasPort = vendas.filter(v => v.grupo === 'PORTABILIDADE');
+      const vendasReneg = vendas.filter(v => v.grupo === 'RENEGOCIACAO');
+
+      // Totais por grupo
+      const totalFatValor = vendasFat.reduce((a, v) => a + Number(v.valor || 0), 0);
+      const totalPortValor = vendasPort.reduce((a, v) => a + Number(v.valor || 0), 0);
+      const totalRenegValor = vendasReneg.reduce((a, v) => a + Number(v.valor || 0), 0);
+
+      const totalFatCom = totalFatValor * (Number(pct.fat) || 0) / 100;
+      const totalPortCom = totalPortValor * (Number(pct.port) || 0) / 100;
+      const totalRenegCom = vendasReneg.length * (Number(pct.reneg) || 0);
+      const comissaoTotal = totalFatCom + totalPortCom + totalRenegCom;
+      const faturamentoTotal = totalFatValor + totalPortValor + totalRenegValor;
+
+      const mesNome = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][parseInt(mes,10) - 1];
+      const fmtBRL = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const faixaLabel = (f) => ({
+        'SUP': '🚀 SUPERADO',
+        'TARGET': '🎯 TARGET',
+        'MIN': '✅ MÍNIMO',
+        'PENALIDADE': '⚠️ PENALIDADE'
+      })[f] || f;
+
+      const badgeMeta = (b) => b
+        ? '<span style="background:#dcfce7;color:#166534;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:800;">✓ META BATIDA</span>'
+        : '<span style="background:#fee2e2;color:#991b1b;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:800;">✕ META NÃO BATIDA</span>';
+
+      // Logo
+      let logoUrl = '';
+      try {
+        const { data: signed } = await sb.storage.from('LOGOMARCAS').createSignedUrl('EEE-LOGO-TRANSPARENTE.png', 3600);
+        logoUrl = signed?.signedUrl || '';
+      } catch (e) {}
+
+      // Bloco de tabela por modalidade
+      const renderTabela = (titulo, emoji, cor, vendasLista, pctAplicado, tipoValor, totalValor, totalComissao) => {
+        if (!vendasLista.length) {
+          return `
+            <div class="sect" style="border-left:4px solid ${cor};">
+              <div class="sect-head" style="background:${cor};">
+                <span>${emoji} ${titulo}</span>
+                <span>TAXA APLICADA: ${pctAplicado}%</span>
+              </div>
+              <div style="padding:20px;text-align:center;color:#94a3b8;font-size:11px;background:#f8fafc;">
+                Nenhuma venda nesta modalidade.
+              </div>
+            </div>`;
+        }
+
+        const rows = vendasLista.map(v => {
+          const valor = Number(v.valor || 0);
+          const comissao = tipoValor === 'unidade'
+            ? Number(pctAplicado)
+            : valor * Number(pctAplicado) / 100;
+          return `
+            <tr>
+              <td>${v.data || '—'}</td>
+              <td>${v.cliente || '—'}</td>
+              <td>${v.plano || '—'}</td>
+              <td>${v.telefone || '—'}</td>
+              <td class="r">R$ ${fmtBRL(valor)}</td>
+              <td class="r" style="color:${cor};font-weight:800;">
+                ${tipoValor === 'unidade'
+                  ? `R$ ${fmtBRL(comissao)}`
+                  : `R$ ${fmtBRL(comissao)}`}
+              </td>
+            </tr>`;
+        }).join('');
+
+        return `
+          <div class="sect" style="border-left:4px solid ${cor};">
+            <div class="sect-head" style="background:${cor};">
+              <span>${emoji} ${titulo}</span>
+              <span>TAXA APLICADA: ${pctAplicado}%</span>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>Data</th><th>Cliente</th><th>Plano</th><th>Telefone</th>
+                  <th class="r">Valor</th><th class="r">Comissão</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${rows}
+                <tr class="subtotal">
+                  <td colspan="4" class="r">SUBTOTAL ${titulo}:</td>
+                  <td class="r">R$ ${fmtBRL(totalValor)}</td>
+                  <td class="r" style="color:${cor};">R$ ${fmtBRL(totalComissao)}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>`;
+      };
+
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Extrato de Comissão · ${consultor}</title>
 <style>
-  body{font-family:Helvetica,Arial,sans-serif;padding:40px;color:#0f172a;}
-  h1{color:#1e3c72;margin:0;font-size:20px;}
-  .head{border-bottom:3px solid #1e3c72;padding-bottom:14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-end;}
-  .head .meta{text-align:right;font-size:11px;color:#64748b;}
-  table{width:100%;border-collapse:collapse;font-size:10px;margin-top:14px;}
-  th{background:#f1f5f9;text-align:left;padding:8px;font-size:9px;text-transform:uppercase;color:#475569;border-bottom:1px solid #cbd5e1;}
-  td{padding:8px;border-bottom:1px solid #f1f5f9;}
-  .r{text-align:right;font-weight:700;}
-  .total{margin-top:20px;background:#0f172a;color:white;padding:16px 22px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;}
-  .total .l{font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:0.7;}
-  .total .v{font-size:22px;font-weight:800;}
-  @media print { .no-print { display: none; } }
-</style></head><body>
-  <div class="no-print" style="position:fixed;top:10px;right:10px;">
-    <button onclick="window.print()" style="padding:10px 20px;background:#1e3c72;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir</button>
+  @page { size: A4; margin: 15mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Helvetica', 'Arial', sans-serif;
+    color: #0f172a; margin: 0; padding: 40px;
+    font-size: 11px; line-height: 1.5;
+  }
+  .header {
+    display: flex; justify-content: space-between; align-items: center;
+    padding-bottom: 20px; margin-bottom: 24px;
+    border-bottom: 3px solid #1e3c72;
+  }
+  .header .logo { max-height: 70px; max-width: 250px; }
+  .header .meta { text-align: right; font-size: 11px; color: #475569; line-height: 1.7; }
+  .header .meta strong { color: #1e3c72; }
+  .title {
+    text-align: center; font-size: 20px; font-weight: 800;
+    color: #1e3c72; letter-spacing: 2px; text-transform: uppercase;
+    padding: 14px 0; margin-bottom: 22px;
+    border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0;
+  }
+  .info-loj {
+    background: #eff6ff; border: 1px solid #bfdbfe;
+    border-radius: 10px; padding: 14px 18px; margin-bottom: 22px;
+    font-size: 11px; color: #1e40af; line-height: 1.7;
+  }
+  .info-loj strong { color: #1e3c72; }
+
+  /* KPI CARDS */
+  .kpis {
+    display: grid; grid-template-columns: repeat(4, 1fr);
+    gap: 10px; margin-bottom: 26px;
+  }
+  .kpi {
+    background: #f8fafc; border: 1px solid #e2e8f0;
+    border-radius: 10px; padding: 12px 14px; text-align: center;
+  }
+  .kpi small {
+    display: block; font-size: 9px; font-weight: 800;
+    color: #64748b; text-transform: uppercase;
+    letter-spacing: 0.5px; margin-bottom: 6px;
+  }
+  .kpi div { font-size: 15px; font-weight: 800; color: #1e3c72; }
+  .kpi.destaque { background: #0f172a; border-color: #0f172a; }
+  .kpi.destaque small { color: #94a3b8; }
+  .kpi.destaque div { color: #38ef7d; font-size: 18px; }
+
+  /* SEÇÕES */
+  .sect {
+    background: white; border: 1px solid #e2e8f0;
+    border-radius: 10px; margin-bottom: 22px; overflow: hidden;
+  }
+  .sect-head {
+    color: white; padding: 10px 16px;
+    font-weight: 800; font-size: 12px; letter-spacing: 0.5px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .sect-head span:last-child {
+    background: rgba(255,255,255,0.2);
+    padding: 3px 10px; border-radius: 12px; font-size: 10px;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  th {
+    background: #f8fafc; text-align: left; padding: 8px 12px;
+    font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px;
+    color: #475569; border-bottom: 1px solid #cbd5e1;
+  }
+  td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+  .r { text-align: right; }
+  .subtotal td {
+    background: #f8fafc; font-weight: 800; font-size: 11px;
+    border-bottom: none; padding-top: 10px; padding-bottom: 10px;
+  }
+
+  /* RESUMO FINAL */
+  .resumo {
+    background: #0f172a; color: white; padding: 22px 26px;
+    border-radius: 12px; margin-top: 26px;
+  }
+  .resumo h3 {
+    margin: 0 0 16px; font-size: 11px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: #94a3b8;
+  }
+  .resumo-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px;
+    margin-bottom: 16px;
+  }
+  .resumo-box {
+    background: rgba(255,255,255,0.08); border-radius: 10px;
+    padding: 14px;
+  }
+  .resumo-box small {
+    display: block; font-size: 9px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    color: #94a3b8; margin-bottom: 6px;
+  }
+  .resumo-box div { font-size: 16px; font-weight: 800; }
+  .resumo-box.base div { color: #60a5fa; }
+  .resumo-box.port div { color: #a855f7; }
+  .resumo-box.reneg div { color: #fbbf24; }
+  .resumo-total {
+    display: flex; justify-content: space-between; align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.15);
+    padding-top: 16px;
+  }
+  .resumo-total .label {
+    font-size: 12px; font-weight: 700;
+    text-transform: uppercase; letter-spacing: 1px;
+    color: #94a3b8;
+  }
+  .resumo-total .value {
+    font-size: 26px; font-weight: 900; color: #38ef7d;
+    letter-spacing: -0.5px;
+  }
+
+  /* ASSINATURAS */
+  .assin {
+    margin-top: 50px; display: flex; justify-content: space-between;
+    gap: 60px; padding-top: 20px;
+  }
+  .assin .line {
+    flex: 1; border-top: 1px solid #cbd5e1;
+    padding-top: 8px; text-align: center;
+    font-size: 9px; color: #64748b; text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .footer {
+    margin-top: 30px; text-align: center;
+    font-size: 9px; color: #94a3b8;
+    border-top: 1px solid #e2e8f0; padding-top: 14px;
+  }
+  @media print { .no-print { display: none !important; } body { padding: 0; } }
+</style>
+</head>
+<body>
+
+  <div class="no-print" style="position:fixed;top:14px;right:14px;z-index:999;">
+    <button onclick="window.print()" style="padding:12px 22px;background:#1e3c72;color:white;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-size:12px;box-shadow:0 8px 24px rgba(30,60,114,0.3);">
+      🖨️ Imprimir / Salvar PDF
+    </button>
   </div>
-  <div class="head">
+
+  <!-- HEADER -->
+  <div class="header">
     <div>
-      <h1>E&E · EXTRATO DE COMISSÃO</h1>
-      <div style="font-size:11px;color:#64748b;margin-top:4px;">Consultor: <b>${consultor}</b></div>
+      ${logoUrl
+        ? `<img src="${logoUrl}" class="logo" alt="E&E">`
+        : `<div style="font-size:26px;font-weight:900;color:#1e3c72;">E&E</div>`}
     </div>
     <div class="meta">
-      <div><b>COMPETÊNCIA:</b> ${mesNome}/${ano}</div>
-      <div>Emitido em ${new Date().toLocaleDateString('pt-BR')}</div>
+      <div><strong>CONSULTOR:</strong> ${consultor}</div>
+      <div><strong>COMPETÊNCIA:</strong> ${mesNome}/${ano}</div>
+      <div><strong>EMISSÃO:</strong> ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
     </div>
   </div>
-  <table>
-    <thead><tr>
-      <th>Data Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th><th>Linha</th><th class="r">Valor</th>
-    </tr></thead>
-    <tbody>
-      ${vendas.map(v => `
-        <tr>
-          <td>${v.data || ''}</td>
-          <td>${v.cliente || ''}</td>
-          <td>${v.cnpj || ''}</td>
-          <td>${v.modalidade || ''}</td>
-          <td>${v.plano || ''}</td>
-          <td>${v.telefone || ''}</td>
-          <td class="r">R$ ${Number(v.valor || 0).toFixed(2).replace('.', ',')}</td>
-        </tr>`).join('')}
-    </tbody>
-  </table>
-  <div class="total">
-    <div class="l">Total do Faturamento</div>
-    <div class="v">${fmt(total)}</div>
+
+  <div class="title">Extrato de Comissão</div>
+
+  <!-- INFO LOJA -->
+  <div class="info-loj">
+    <strong>🏢 DESEMPENHO DA LOJA · ${mesNome}/${ano}</strong><br>
+    📊 Faturamento Total: <strong>R$ ${fmtBRL(loja.fat)}</strong> &nbsp;|&nbsp;
+    Meta Target: <strong>R$ ${fmtBRL(metaLoja.fat_target)}</strong> &nbsp;→&nbsp;
+    Faixa atingida: <strong>${faixaLabel(faixas.fat)}</strong><br>
+    🔄 Portabilidade: <strong>R$ ${fmtBRL(loja.port)}</strong> &nbsp;|&nbsp;
+    Meta Target: <strong>R$ ${fmtBRL(metaLoja.port_target)}</strong> &nbsp;→&nbsp;
+    Faixa: <strong>${faixaLabel(faixas.port)}</strong><br>
+    📱 Renegociações: <strong>${loja.reneg || 0} un</strong> &nbsp;|&nbsp;
+    Meta Target: <strong>${metaLoja.reneg_target || 0} un</strong> &nbsp;→&nbsp;
+    Faixa: <strong>${faixaLabel(faixas.reneg)}</strong>
   </div>
-  <p style="font-size:10px;color:#94a3b8;margin-top:20px;">Documento gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}</p>
+
+  <!-- KPIs DO CONSULTOR -->
+  <div class="kpis">
+    <div class="kpi">
+      <small>Sua Produção</small>
+      <div>R$ ${fmtBRL(realizado.fat)}</div>
+    </div>
+    <div class="kpi">
+      <small>Portabilidade</small>
+      <div>R$ ${fmtBRL(realizado.port)}</div>
+    </div>
+    <div class="kpi">
+      <small>Renegociações</small>
+      <div>${realizado.reneg || 0} un</div>
+    </div>
+    <div class="kpi destaque">
+      <small>Total a Receber</small>
+      <div>R$ ${fmtBRL(comissaoTotal)}</div>
+    </div>
+  </div>
+
+  <!-- METAS PESSOAIS -->
+  <div class="info-loj" style="background:#f5f3ff;border-color:#ddd6fe;color:#6d28d9;">
+    <strong>🎯 SUAS METAS PESSOAIS · ${mesNome}/${ano}</strong><br>
+    💰 Faturamento: R$ ${fmtBRL(metas.fat_min)} (mín) · R$ ${fmtBRL(metas.fat_target)} (target) · R$ ${fmtBRL(metas.fat_sup)} (sup) ${badgeMeta(bateu.fat)}<br>
+    🔄 Portabilidade: R$ ${fmtBRL(metas.port_min)} · R$ ${fmtBRL(metas.port_target)} · R$ ${fmtBRL(metas.port_sup)} ${badgeMeta(bateu.port)}<br>
+    📱 Renegociação: ${metas.reneg_min} un (mín) · ${metas.reneg_target} un (target) · ${metas.reneg_sup} un (sup) ${badgeMeta(bateu.reneg)}
+  </div>
+
+  <!-- SEÇÕES POR MODALIDADE -->
+  ${renderTabela('COMISSÃO FATURAMENTO', '💰', '#3b82f6', vendasFat, pct.fat, 'valor', totalFatValor, totalFatCom)}
+  ${renderTabela('BÔNUS PORTABILIDADE', '🔄', '#a855f7', vendasPort, pct.port, 'valor', totalPortValor, totalPortCom)}
+  ${renderTabela('BÔNUS RENEGOCIAÇÃO', '📱', '#f59e0b', vendasReneg, pct.reneg, 'unidade', totalRenegValor, totalRenegCom)}
+
+  <!-- RESUMO FINAL -->
+  <div class="resumo">
+    <h3>Resumo de Comissões a Receber</h3>
+    <div class="resumo-grid">
+      <div class="resumo-box base">
+        <small>Base Faturamento (${pct.fat}%)</small>
+        <div>R$ ${fmtBRL(totalFatCom)}</div>
+      </div>
+      <div class="resumo-box port">
+        <small>Portabilidade (${pct.port}%)</small>
+        <div>R$ ${fmtBRL(totalPortCom)}</div>
+      </div>
+      <div class="resumo-box reneg">
+        <small>Renegociação (${pct.reneg}%)</small>
+        <div>R$ ${fmtBRL(totalRenegCom)}</div>
+      </div>
+    </div>
+    <div class="resumo-total">
+      <span class="label">Total Líquido a Receber</span>
+      <span class="value">R$ ${fmtBRL(comissaoTotal)}</span>
+    </div>
+  </div>
+
+  <!-- ASSINATURAS -->
+  <div class="assin">
+    <div class="line">Consultor</div>
+    <div class="line">E&E · Departamento Financeiro</div>
+  </div>
+
+  <div class="footer">
+    Este extrato detalha as vendas validadas pelo Backoffice dentro do mês de referência.<br>
+    Gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}
+  </div>
+
 </body></html>`;
 
       const w = window.open('', '_blank', 'width=900,height=800');
@@ -848,10 +1139,9 @@
       w.document.close();
     } catch (e) {
       console.error(e);
-      toast('❌ ' + e.message, 'error');
+      toast('❌ ' + (e.message || e), 'error');
     }
   }
-
   // ═══════════════════════════════════════════════════════════
   // EXPORTA FUNÇÕES GLOBAIS (o HTML depende delas)
   // ═══════════════════════════════════════════════════════════
