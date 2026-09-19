@@ -175,11 +175,9 @@
 
   .mt-input-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
 
-  .mt-input-box {
-    position: relative;
-  }
+  .mt-input-box { position: relative; }
   .mt-input-box input {
-    width: 100%; padding: 12px 14px 12px 40px;
+    width: 100%; padding: 22px 14px 8px 40px;
     border-radius: 11px; border: 1.5px solid #e2e8f0;
     font-family: inherit; font-size: 13px; font-weight: 600;
     color: #0f172a; background: white; outline: none;
@@ -202,7 +200,6 @@
     color: #94a3b8; font-size: 14px;
     pointer-events: none;
   }
-  .mt-input-box input { padding-top: 22px; padding-bottom: 8px; }
   .mt-input-box.highlight input {
     background: linear-gradient(135deg, #fffbeb, #fef3c7);
     border-color: #fbbf24;
@@ -240,9 +237,7 @@
     border-bottom: 1px dashed #e2e8f0;
     gap: 10px; flex-wrap: wrap;
   }
-  .mt-vendedor-info {
-    display: flex; align-items: center; gap: 12px;
-  }
+  .mt-vendedor-info { display: flex; align-items: center; gap: 12px; }
   .mt-avatar {
     width: 42px; height: 42px; border-radius: 12px;
     background: linear-gradient(135deg, #3b82f6, #8b5cf6);
@@ -250,9 +245,7 @@
     color: white; font-weight: 800; font-size: 15px;
     flex-shrink: 0;
   }
-  .mt-vendedor-nome {
-    font-weight: 800; font-size: 14px; color: #0f172a;
-  }
+  .mt-vendedor-nome { font-weight: 800; font-size: 14px; color: #0f172a; }
   .mt-vendedor-cargo {
     font-size: 10px; font-weight: 700; color: #94a3b8;
     text-transform: uppercase; letter-spacing: 0.5px;
@@ -315,16 +308,9 @@
     background: linear-gradient(135deg, #f8fafc, #eff6ff);
     border-radius: 16px; border: 2px dashed #cbd5e1;
   }
-  .mt-empty .mt-empty-icon {
-    font-size: 56px; margin-bottom: 12px; opacity: 0.4;
-  }
-  .mt-empty h4 {
-    color: #475569; font-size: 16px; margin: 0 0 6px;
-    font-weight: 800;
-  }
-  .mt-empty p {
-    color: #94a3b8; font-size: 13px; margin: 0 0 18px;
-  }
+  .mt-empty .mt-empty-icon { font-size: 56px; margin-bottom: 12px; opacity: 0.4; }
+  .mt-empty h4 { color: #475569; font-size: 16px; margin: 0 0 6px; font-weight: 800; }
+  .mt-empty p { color: #94a3b8; font-size: 13px; margin: 0 0 18px; }
 
   /* ═══ MODAL ═══ */
   .mt-modal {
@@ -372,7 +358,101 @@
     background: #f8fafc; display: flex; justify-content: flex-end; gap: 10px;
   }
 
-  /* ═══ PREVIEW CANVAS ═══ */
+  /* ═══ PREVIEW ALTA RESOLUÇÃO ═══ */
+  .mt-canvas-loja { padding: 24px !important; }
+  .mt-canvas-frame {
+    width: 100%;
+    max-width: 480px;
+    background: #0f172a;
+    border-radius: 16px;
+    padding: 12px;
+    box-shadow: 0 20px 50px -12px rgba(15,23,42,0.4);
+    position: relative;
+  }
+  .mt-canvas-frame::before {
+    content: '1080 × 1350 px';
+    position: absolute;
+    top: 18px; right: 20px;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    color: rgba(255,255,255,0.5);
+    background: rgba(0,0,0,0.4);
+    padding: 3px 8px;
+    border-radius: 20px;
+    z-index: 2;
+    pointer-events: none;
+  }
+  .mt-canvas-frame canvas {
+    width: 100% !important;
+    height: auto !important;
+    border-radius: 10px;
+    display: block;
+    image-rendering: -webkit-optimize-contrast;
+    image-rendering: crisp-edges;
+  }
+  .mt-canvas-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 8px;
+  }
+
+  /* ═══ MODAL FULLSCREEN ═══ */
+  .mt-fullscreen {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    background: rgba(15,23,42,0.95) !important;
+    backdrop-filter: blur(12px) !important;
+    z-index: 2147483646 !important;
+    display: none !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 40px !important;
+    box-sizing: border-box !important;
+  }
+  .mt-fullscreen.active { display: flex !important; }
+  .mt-fullscreen-inner {
+    max-width: 90vw;
+    max-height: 90vh;
+    position: relative;
+    animation: mtModalIn 0.3s ease-out;
+  }
+  .mt-fullscreen-inner canvas {
+    max-width: 90vw;
+    max-height: 85vh;
+    width: auto;
+    height: auto;
+    border-radius: 16px;
+    box-shadow: 0 30px 80px -12px rgba(0,0,0,0.6);
+    display: block;
+  }
+  .mt-fullscreen-close {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.25);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .mt-fullscreen-close:hover {
+    background: rgba(255,255,255,0.3);
+    transform: rotate(90deg);
+  }
+
+  /* ═══ PREVIEW SECTION ═══ */
   .mt-preview-section {
     margin-top: 26px; padding-top: 26px; border-top: 1px solid #f1f5f9;
   }
@@ -403,6 +483,7 @@
   .mt-canvas-label {
     font-size: 11px; font-weight: 700; color: #64748b;
     text-transform: uppercase; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 6px;
   }
 
   /* ═══ HISTÓRICO ═══ */
@@ -420,9 +501,7 @@
   .mt-historico-item:hover {
     background: #eff6ff; border-color: #bfdbfe;
   }
-  .mt-historico-item strong {
-    color: #1e3c72; font-weight: 800; font-size: 12px;
-  }
+  .mt-historico-item strong { color: #1e3c72; font-weight: 800; font-size: 12px; }
 
   /* ═══ TOAST ═══ */
   .mt-toast-container {
@@ -444,9 +523,7 @@
   .mt-toast.error { border-left-color: #ef4444; }
   .mt-toast.warn { border-left-color: #f59e0b; }
   .mt-toast.info { border-left-color: #3b82f6; }
-  .mt-toast .mt-toast-icon {
-    font-size: 20px; flex-shrink: 0;
-  }
+  .mt-toast .mt-toast-icon { font-size: 20px; flex-shrink: 0; }
   .mt-toast.out { animation: mtToastOut 0.25s ease-in forwards; }
   @keyframes mtToastIn {
     from { opacity: 0; transform: translateX(120%); }
@@ -522,7 +599,6 @@
         <span class="mt-sub">Fev/2026 → Set/2026 cadastrados</span>
       </div>
 
-      <!-- Período -->
       <div class="mt-periodo">
         <div class="mt-field">
           <label>Mês de Referência</label>
@@ -552,8 +628,6 @@
       </div>
 
       <form id="form-metas" onsubmit="event.preventDefault(); MT.salvarLoja();">
-
-        <!-- Faturamento -->
         <div class="mt-input-group fat">
           <div class="mt-input-group-title">
             <span class="mt-dot"></span> 💰 Faturamento (R$)
@@ -574,7 +648,6 @@
           </div>
         </div>
 
-        <!-- Portabilidade -->
         <div class="mt-input-group port">
           <div class="mt-input-group-title">
             <span class="mt-dot"></span> 🔄 Portabilidade (R$)
@@ -595,7 +668,6 @@
           </div>
         </div>
 
-        <!-- Renegociação -->
         <div class="mt-input-group reneg">
           <div class="mt-input-group-title">
             <span class="mt-dot"></span> 📱 Renegociação MID (Qtd)
@@ -620,6 +692,29 @@
           <i class="fas fa-save"></i> Salvar Meta da Loja
         </button>
       </form>
+    </div>
+
+    <!-- ═══ PRÉVIA ALTA RESOLUÇÃO ═══ -->
+    <div class="mt-card mt-canvas-loja">
+      <div class="mt-card-head">
+        <h3><i class="fas fa-image"></i> Prévia da Arte</h3>
+        <span class="mt-sub">Alta resolução · 1080 × 1350 px</span>
+      </div>
+
+      <div style="display: flex; justify-content: center;">
+        <div class="mt-canvas-frame">
+          <canvas id="canvasMeta" width="1080" height="1350"></canvas>
+        </div>
+      </div>
+
+      <div class="mt-canvas-actions">
+        <button class="mt-btn mt-btn-primary" onclick="MT.imgLoja()">
+          <i class="fas fa-download"></i> Baixar Alta Resolução
+        </button>
+        <button class="mt-btn mt-btn-soft" onclick="MT.abrirPreviewLoja()">
+          <i class="fas fa-expand"></i> Ver em Tela Cheia
+        </button>
+      </div>
     </div>
 
     <!-- Histórico -->
@@ -649,7 +744,6 @@
         </div>
       </div>
 
-      <!-- Referência da meta da loja -->
       <div style="background: linear-gradient(135deg, #fef3c7, #fde68a); border: 1px solid #fbbf24; border-radius: 12px; padding: 14px 18px; margin-bottom: 18px; display: flex; flex-wrap: wrap; gap: 16px; align-items: center;">
         <div style="display:flex; align-items:center; gap:8px;">
           <i class="fas fa-store" style="color:#92400e; font-size:16px;"></i>
@@ -666,12 +760,10 @@
         </div>
       </div>
 
-      <!-- Lista -->
       <div class="mt-time-list" id="lista-time-vendedores">
         <div class="mt-loading"><div class="mt-spinner"></div> Carregando time...</div>
       </div>
 
-      <!-- Botões inferiores -->
       <div style="margin-top: 20px; display: flex; gap: 12px; justify-content: flex-end; flex-wrap: wrap;">
         <button class="mt-btn mt-btn-soft" onclick="MT.recarregar()">
           <i class="fas fa-sync-alt"></i> Recarregar Tudo
@@ -681,33 +773,23 @@
         </button>
       </div>
 
-      <!-- Status -->
       <div id="status-individual" style="display:none; margin-top: 16px; padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 600;"></div>
     </div>
 
-    <!-- Preview -->
+    <!-- Preview do Time -->
     <div class="mt-preview-section">
       <div class="mt-preview-head">
-        <h3><i class="fas fa-camera"></i> Pré-visualização</h3>
+        <h3><i class="fas fa-camera"></i> Prévia do Time</h3>
         <button class="mt-btn mt-btn-soft" onclick="MT.preview()">
           <i class="fas fa-sync-alt"></i> Atualizar Prévia
         </button>
       </div>
-      <div class="mt-preview-grid">
-        <div class="mt-canvas-box">
-          <div class="mt-canvas-label">Meta da Loja</div>
-          <canvas id="canvasMeta" width="400" height="400"></canvas>
-          <button class="mt-btn mt-btn-primary" onclick="MT.imgLoja()">
-            <i class="fas fa-download"></i> Baixar
-          </button>
-        </div>
-        <div class="mt-canvas-box">
-          <div class="mt-canvas-label">Prévia do Time</div>
-          <canvas id="canvasTimePreview" width="900" height="400"></canvas>
-          <button class="mt-btn mt-btn-success" onclick="MT.imgTime()">
-            <i class="fas fa-download"></i> Baixar Imagem do Time
-          </button>
-        </div>
+      <div class="mt-canvas-box" style="width:100%;">
+        <div class="mt-canvas-label">Metas Individuais do Time</div>
+        <canvas id="canvasTimePreview" width="900" height="400"></canvas>
+        <button class="mt-btn mt-btn-success" onclick="MT.imgTime()">
+          <i class="fas fa-download"></i> Baixar Imagem do Time
+        </button>
       </div>
     </div>
   </div>
@@ -737,6 +819,16 @@
         <i class="fas fa-check"></i> Adicionar
       </button>
     </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL FULLSCREEN · META DA LOJA ═══ -->
+<div class="mt-fullscreen" id="mt-fullscreen-loja">
+  <div class="mt-fullscreen-inner">
+    <button class="mt-fullscreen-close" onclick="MT.fecharPreviewLoja()">
+      <i class="fas fa-times"></i>
+    </button>
+    <canvas id="canvasMetaFull" width="1080" height="1350"></canvas>
   </div>
 </div>
 
@@ -783,7 +875,6 @@
   const $ = (id) => document.getElementById(id);
   const esc = (s) => String(s ?? '').replace(/[&<>"']/g, m =>
     ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
-  const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   function getSb() {
     if (window.sb) return window.sb;
@@ -819,7 +910,6 @@
       const { data } = await sb.rpc('get_my_tenant_id');
       if (data) { state.tenantId = data; return data; }
     } catch (e) {}
-    // fallback da sessão
     try {
       const sess = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
       if (sess.tenant_id) { state.tenantId = sess.tenant_id; return sess.tenant_id; }
@@ -840,7 +930,7 @@
         .from('LOGOMARCAS')
         .createSignedUrl('EEE-LOGO-TRANSPARENTE.png', 3600);
       if (error) throw error;
-      state.logoTim.onload = () => { try { preview(); } catch (e) {} };
+      state.logoTim.onload = () => { try { atualizarCanvasLoja(); preview(); } catch (e) {} };
       state.logoTim.src = data.signedUrl;
     } catch (e) {
       console.warn('⚠️ [METAS] logo:', e.message);
@@ -870,11 +960,8 @@
         .maybeSingle();
       if (error) throw error;
 
-      if (data) {
-        preencherFormLoja(data);
-      } else {
-        resetarFormLoja();
-      }
+      if (data) preencherFormLoja(data);
+      else resetarFormLoja();
     } catch (e) {
       console.error('[METAS] meta loja:', e);
       resetarFormLoja();
@@ -958,7 +1045,6 @@
 
       renderTime();
       preview();
-
     } catch (e) {
       console.error('[METAS] time:', e);
       state.timeAtual = [];
@@ -974,7 +1060,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════
-  // LOAD · VENDEDORES DISPONÍVEIS
+  // LOAD · VENDEDORES
   // ═══════════════════════════════════════════════════════════
   async function carregarVendedores() {
     const sb = getSb();
@@ -1005,7 +1091,6 @@
     const container = $('lista-time-vendedores');
     if (!container) return;
 
-    // referência da meta loja
     $('ref_fat_loja').textContent = (parseFloat($('m_fat_target').value) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
     $('ref_port_loja').textContent = (parseFloat($('m_port_target').value) || 0).toLocaleString('pt-BR', {minimumFractionDigits:2});
     $('ref_mid_loja').textContent = parseInt($('m_reneg_target').value) || 0;
@@ -1043,9 +1128,7 @@
 
           <div class="mt-vendedor-body">
             <div class="mt-meta-block fat">
-              <div class="mt-meta-block-label">
-                <i class="fas fa-coins"></i> Faturamento (R$)
-              </div>
+              <div class="mt-meta-block-label"><i class="fas fa-coins"></i> Faturamento (R$)</div>
               <div class="mt-meta-inputs">
                 <input type="number" id="fat_min_${esc(v.id)}" value="${v.meta.fat_min}" placeholder="Mín" oninput="MT.preview()">
                 <input type="number" id="fat_target_${esc(v.id)}" value="${v.meta.fat_target}" placeholder="Target" class="target" oninput="MT.preview()">
@@ -1054,9 +1137,7 @@
             </div>
 
             <div class="mt-meta-block port">
-              <div class="mt-meta-block-label">
-                <i class="fas fa-exchange-alt"></i> Portabilidade (R$)
-              </div>
+              <div class="mt-meta-block-label"><i class="fas fa-exchange-alt"></i> Portabilidade (R$)</div>
               <div class="mt-meta-inputs">
                 <input type="number" id="port_min_${esc(v.id)}" value="${v.meta.port_min}" placeholder="Mín" oninput="MT.preview()">
                 <input type="number" id="port_target_${esc(v.id)}" value="${v.meta.port_target}" placeholder="Target" class="target" oninput="MT.preview()">
@@ -1065,9 +1146,7 @@
             </div>
 
             <div class="mt-meta-block reneg">
-              <div class="mt-meta-block-label">
-                <i class="fas fa-sync"></i> Renegociação MID (Qtd)
-              </div>
+              <div class="mt-meta-block-label"><i class="fas fa-sync"></i> Renegociação MID (Qtd)</div>
               <div class="mt-meta-inputs">
                 <input type="number" id="mid_min_${esc(v.id)}" value="${v.meta.mid_min}" placeholder="Mín" oninput="MT.preview()">
                 <input type="number" id="mid_target_${esc(v.id)}" value="${v.meta.mid_target}" placeholder="Target" class="target" oninput="MT.preview()">
@@ -1135,7 +1214,6 @@
           btn.onclick = (e) => { e.stopPropagation(); confirmarExclusao(mesNome, item.ano_referencia); };
           div.appendChild(btn);
         }
-
         container.appendChild(div);
       });
     } catch (e) {
@@ -1221,7 +1299,6 @@
   async function salvarTime() {
     const sb = getSb();
     if (!sb) return toast('Supabase indisponível', 'error');
-
     if (state.timeAtual.length === 0) return toast('Adicione pelo menos 1 vendedor.', 'warn');
 
     const mesNome = $('m_referencia_mes').value;
@@ -1284,20 +1361,16 @@
   // ═══════════════════════════════════════════════════════════
   async function adicionar() {
     const sel = $('select-vendedor-disponivel');
-    const idsNoTime = new Set(state.timeAtual.map(v => v.id));
-    const disponiveis = state.todosVendedores.filter(v => !idsNoTime.has(v.id));
-
-    if (disponiveis.length === 0) {
+    if (!state.todosVendedores || state.todosVendedores.length === 0) {
       await carregarVendedores();
-      const disp2 = state.todosVendedores.filter(v => !idsNoTime.has(v.id));
-      if (disp2.length === 0) {
-        toast('Todos os vendedores já estão no time.', 'warn');
-        return;
-      }
     }
-
     const ids = new Set(state.timeAtual.map(v => v.id));
     const lista = state.todosVendedores.filter(v => !ids.has(v.id));
+
+    if (lista.length === 0) {
+      toast('Todos os vendedores já estão no time.', 'warn');
+      return;
+    }
 
     sel.innerHTML = '<option value="">-- Escolha um vendedor --</option>';
     lista.forEach(v => {
@@ -1322,9 +1395,7 @@
     if (state.timeAtual.find(x => x.id === id)) return toast('Vendedor já está no time.', 'warn');
 
     state.timeAtual.push({
-      id: v.id,
-      nome: v.nome,
-      cargo: v.cargo,
+      id: v.id, nome: v.nome, cargo: v.cargo,
       meta: { fat_min:0, fat_target:0, fat_sup:0, port_min:0, port_target:0, port_sup:0, mid_min:0, mid_target:0, mid_sup:0 }
     });
 
@@ -1374,7 +1445,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════
-  // CANVAS · META DA LOJA
+  // CANVAS UTILS
   // ═══════════════════════════════════════════════════════════
   function drawRoundedRect(ctx, x, y, w, h, r) {
     ctx.beginPath();
@@ -1390,90 +1461,245 @@
     ctx.closePath();
   }
 
-  function atualizarCanvasLoja() {
-    const canvas = $('canvasMeta');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const mes = $('m_referencia_mes').value;
-    const ano = $('m_referencia_ano').value;
-
-    canvas.width = 400;
-    canvas.height = 400;
-
-    const grad = ctx.createLinearGradient(0, 0, 400, 400);
-    grad.addColorStop(0, '#1e3c72');
-    grad.addColorStop(1, '#0f172a');
+  function drawGlow(ctx, x, y, radius, color, alpha) {
+    const grad = ctx.createRadialGradient(x, y, 0, x, y, radius);
+    grad.addColorStop(0, `rgba(${color}, ${alpha})`);
+    grad.addColorStop(1, `rgba(${color}, 0)`);
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, 400, 400);
-
-    // Logo
-    if (state.logoTim && state.logoTim.complete && state.logoTim.naturalWidth !== 0) {
-      ctx.drawImage(state.logoTim, 280, 20, 100, 55);
-    } else {
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 24px Poppins';
-      ctx.fillText('TIM', 320, 45);
-      ctx.font = 'bold 8px Poppins';
-      ctx.fillText('EMPRESAS', 320, 58);
-    }
-
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 14px Poppins';
-    ctx.fillText('TIM EMPRESAS - META', 20, 32);
-    ctx.font = 'bold 12px Poppins';
-    ctx.fillStyle = '#94a3b8';
-    ctx.fillText(`${mes} / ${ano}`, 20, 56);
-
-    // Card branco
-    ctx.fillStyle = 'white';
-    drawRoundedRect(ctx, 20, 80, 360, 300, 12);
+    ctx.beginPath();
+    ctx.arc(x, y, radius, 0, Math.PI * 2);
     ctx.fill();
-
-    desenharTabela(ctx, 'FATURAMENTO', 100, 'm_fat_min', 'm_fat_target', 'm_fat_sup', 'R$ ', '#3b82f6');
-    desenharTabela(ctx, 'PORTABILIDADE', 195, 'm_port_min', 'm_port_target', 'm_port_sup', 'R$ ', '#a855f7');
-    desenharTabela(ctx, 'RENEGOCIAÇÃO MID', 290, 'm_reneg_min', 'm_reneg_target', 'm_reneg_sup', '', '#f59e0b');
-  }
-
-  function desenharTabela(ctx, titulo, y, idMin, idTarget, idSup, prefixo, cor) {
-    const x = 35, w = 330;
-
-    ctx.fillStyle = cor;
-    ctx.fillRect(x, y, w, 22);
-    ctx.fillStyle = 'white';
-    ctx.font = 'bold 10px Poppins';
-    ctx.textAlign = 'center';
-    ctx.fillText(titulo, x + w/2, y + 15);
-    ctx.textAlign = 'left';
-
-    const rows = [
-      { label: 'MÍNIMO',   val: $(idMin)?.value || 0,    cor: '#1e3c72' },
-      { label: 'TARGET',   val: $(idTarget)?.value || 0, cor: '#3a60a8' },
-      { label: 'SUPERADO', val: $(idSup)?.value || 0,    cor: '#1e3c72' }
-    ];
-
-    rows.forEach((r, i) => {
-      const rowY = y + 22 + (i * 22);
-      ctx.fillStyle = r.cor;
-      ctx.fillRect(x, rowY, w, 22);
-      ctx.strokeStyle = 'white';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(x, rowY, w, 22);
-
-      ctx.fillStyle = 'white';
-      ctx.font = 'bold 9px Poppins';
-      ctx.fillText(r.label, x + 8, rowY + 15);
-
-      ctx.textAlign = 'right';
-      const valor = (prefixo === 'R$ ')
-        ? Number(r.val).toLocaleString('pt-BR', { minimumFractionDigits: 2 })
-        : Number(r.val).toString();
-      ctx.fillText(prefixo + valor, x + w - 8, rowY + 15);
-      ctx.textAlign = 'left';
-    });
   }
 
   // ═══════════════════════════════════════════════════════════
-  // CANVAS · TIME
+  // ARTE DA LOJA · 1080×1350
+  // ═══════════════════════════════════════════════════════════
+  function desenharArteLoja(canvas) {
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width;
+    const H = canvas.height;
+    const mes = $('m_referencia_mes').value;
+    const ano = $('m_referencia_ano').value;
+
+    // FUNDO
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#0f172a');
+    grad.addColorStop(0.5, '#1e3c72');
+    grad.addColorStop(1, '#0a1128');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // GLOWS
+    drawGlow(ctx, W * 0.15, H * 0.15, W * 0.5, '59, 130, 246', 0.28);
+    drawGlow(ctx, W * 0.9, H * 0.85, W * 0.55, '139, 92, 246', 0.22);
+    drawGlow(ctx, W * 0.5, H * 0.5, W * 0.4, '16, 185, 129', 0.08);
+
+    // GRADE
+    ctx.strokeStyle = 'rgba(255,255,255,0.025)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < W; i += 60) {
+      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke();
+    }
+    for (let j = 0; j < H; j += 60) {
+      ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(W, j); ctx.stroke();
+    }
+
+    // LOGO (TOPO DIREITO)
+    const logoW = 260, logoH = 120;
+    const logoX = W - logoW - 60;
+    const logoY = 50;
+
+    if (state.logoTim && state.logoTim.complete && state.logoTim.naturalWidth !== 0) {
+      const ratio = state.logoTim.naturalWidth / state.logoTim.naturalHeight;
+      let drawW = logoW;
+      let drawH = logoW / ratio;
+      if (drawH > logoH) { drawH = logoH; drawW = logoH * ratio; }
+      ctx.drawImage(state.logoTim, logoX + (logoW - drawW) / 2, logoY + (logoH - drawH) / 2, drawW, drawH);
+    } else {
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 56px Poppins, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText('E&E', logoX + logoW, logoY + 70);
+      ctx.font = 'bold 16px Poppins, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillText('TELECOM', logoX + logoW, logoY + 100);
+      ctx.textAlign = 'left';
+    }
+
+    // HEADER
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 64px Poppins, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('META DA LOJA', 60, 130);
+
+    ctx.font = 'bold 32px Poppins, sans-serif';
+    ctx.fillStyle = '#93c5fd';
+    ctx.fillText(`${mes} · ${ano}`, 60, 180);
+
+    // BADGE
+    ctx.font = 'bold 20px Poppins, sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.15)';
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 2;
+    const badgeW = 240, badgeH = 46;
+    drawRoundedRect(ctx, 60, 215, badgeW, badgeH, 23);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = 'white';
+    ctx.textAlign = 'center';
+    ctx.fillText('⚡ TIM EMPRESAS', 60 + badgeW / 2, 215 + 30);
+
+    // CARD BRANCO
+    const cardX = 60;
+    const cardY = 300;
+    const cardW = W - 120;
+    const cardH = H - cardY - 130;
+
+    ctx.shadowColor = 'rgba(0,0,0,0.4)';
+    ctx.shadowBlur = 40;
+    ctx.shadowOffsetY = 15;
+    ctx.fillStyle = 'white';
+    drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 32);
+    ctx.fill();
+    ctx.shadowColor = 'transparent';
+    ctx.shadowBlur = 0;
+    ctx.shadowOffsetY = 0;
+
+    // TÍTULO DENTRO DO CARD
+    ctx.fillStyle = '#0f172a';
+    ctx.font = 'bold 36px Poppins, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('META DO MÊS', cardX + cardW / 2, cardY + 70);
+
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cardX + 60, cardY + 100);
+    ctx.lineTo(cardX + cardW - 60, cardY + 100);
+    ctx.stroke();
+
+    // 3 BLOCOS
+    const blocoMarginY = 40;
+    const blocoStartY = cardY + 130;
+    const blocoW = cardW - 80;
+    const blocoH = (cardH - 180 - blocoMarginY * 2) / 3;
+
+    desenharBloco(ctx, cardX + 40, blocoStartY, blocoW, blocoH,
+      'FATURAMENTO', '💰', 'R$',
+      $('#m_fat_min').value, $('#m_fat_target').value, $('#m_fat_sup').value,
+      ['#3b82f6', '#1e40af']);
+
+    desenharBloco(ctx, cardX + 40, blocoStartY + blocoH + blocoMarginY, blocoW, blocoH,
+      'PORTABILIDADE', '🔄', 'R$',
+      $('#m_port_min').value, $('#m_port_target').value, $('#m_port_sup').value,
+      ['#a855f7', '#7c3aed']);
+
+    desenharBloco(ctx, cardX + 40, blocoStartY + (blocoH + blocoMarginY) * 2, blocoW, blocoH,
+      'RENEGOCIAÇÃO MID', '📱', '',
+      $('#m_reneg_min').value, $('#m_reneg_target').value, $('#m_reneg_sup').value,
+      ['#f59e0b', '#d97706']);
+
+    // RODAPÉ
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.font = '500 18px Poppins, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('VEXO Intelligent Management', 60, H - 60);
+
+    ctx.textAlign = 'right';
+    ctx.fillText(`Gerado em ${new Date().toLocaleString('pt-BR')}`, W - 60, H - 60);
+  }
+
+  function desenharBloco(ctx, x, y, w, h, titulo, emoji, prefixo, min, target, sup, cores) {
+    const grad = ctx.createLinearGradient(x, y, x + w, y + h);
+    grad.addColorStop(0, cores[0] + '15');
+    grad.addColorStop(1, cores[1] + '08');
+    ctx.fillStyle = grad;
+
+    ctx.strokeStyle = cores[0] + '30';
+    ctx.lineWidth = 2;
+    drawRoundedRect(ctx, x, y, w, h, 20);
+    ctx.fill();
+    ctx.stroke();
+
+    ctx.fillStyle = cores[0];
+    drawRoundedRect(ctx, x, y + 20, 6, h - 40, 3);
+    ctx.fill();
+
+    ctx.fillStyle = cores[0];
+    ctx.font = 'bold 24px Poppins, sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText(`${emoji} ${titulo}`, x + 30, y + 45);
+
+    const colY = y + 80;
+    const colsW = (w - 120) / 3;
+    const colStartX = x + 30;
+
+    ctx.font = 'bold 14px Poppins, sans-serif';
+    ctx.fillStyle = '#64748b';
+    ctx.textAlign = 'center';
+    ctx.fillText('MÍNIMO', colStartX + colsW / 2, colY + 16);
+    ctx.fillText('TARGET', colStartX + colsW + colsW / 2, colY + 16);
+    ctx.fillText('SUPERADO', colStartX + colsW * 2 + colsW / 2, colY + 16);
+
+    ctx.strokeStyle = '#e2e8f0';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(x + 30, colY + 28);
+    ctx.lineTo(x + w - 30, colY + 28);
+    ctx.stroke();
+
+    const valY = colY + 28 + 60;
+    ctx.font = 'bold 34px Poppins, sans-serif';
+
+    ctx.fillStyle = '#0f172a';
+    const vMin = prefixo === 'R$'
+      ? `R$ ${Number(min || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      : Number(min || 0).toString();
+    ctx.fillText(vMin, colStartX + colsW / 2, valY);
+
+    ctx.fillStyle = cores[0];
+    const vTarget = prefixo === 'R$'
+      ? `R$ ${Number(target || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      : Number(target || 0).toString();
+    ctx.fillText(vTarget, colStartX + colsW + colsW / 2, valY);
+
+    ctx.fillStyle = '#0f172a';
+    const vSup = prefixo === 'R$'
+      ? `R$ ${Number(sup || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
+      : Number(sup || 0).toString();
+    ctx.fillText(vSup, colStartX + colsW * 2 + colsW / 2, valY);
+
+    ctx.font = 'bold 12px Poppins, sans-serif';
+    ctx.fillStyle = '#94a3b8';
+    const unidade = prefixo === 'R$' ? 'reais' : 'unidades';
+    ctx.fillText(unidade, colStartX + colsW / 2, valY + 24);
+    ctx.fillText(unidade, colStartX + colsW + colsW / 2, valY + 24);
+    ctx.fillText(unidade, colStartX + colsW * 2 + colsW / 2, valY + 24);
+
+    ctx.textAlign = 'left';
+  }
+
+  function atualizarCanvasLoja() {
+    const preview = $('canvasMeta');
+    const full = $('canvasMetaFull');
+    if (preview) desenharArteLoja(preview);
+    if (full) desenharArteLoja(full);
+  }
+
+  function abrirPreviewLoja() {
+    atualizarCanvasLoja();
+    const modal = $('mt-fullscreen-loja');
+    if (modal) modal.classList.add('active');
+  }
+
+  function fecharPreviewLoja() {
+    const modal = $('mt-fullscreen-loja');
+    if (modal) modal.classList.remove('active');
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // CANVAS · TIME (mantido do original, com logo)
   // ═══════════════════════════════════════════════════════════
   function preview() {
     const canvas = $('canvasTimePreview');
@@ -1494,7 +1720,6 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Logo
     if (state.logoTim && state.logoTim.complete && state.logoTim.naturalWidth !== 0) {
       ctx.drawImage(state.logoTim, canvas.width - 190, 30, 150, 80);
     }
@@ -1502,7 +1727,6 @@
     ctx.fillStyle = 'white';
     ctx.font = 'bold 28px Poppins';
     ctx.fillText('METAS DO TIME', 40, 60);
-
     ctx.font = '20px Poppins';
     ctx.fillStyle = '#94a3b8';
     ctx.fillText(`${mes} / ${ano}`, 40, 100);
@@ -1545,7 +1769,6 @@
       ctx.font = 'bold 16px Poppins';
       ctx.fillText(`${idx+1}. ${v.nome}`, 50, y+28);
 
-      // Faturamento
       ctx.font = 'bold 10px Poppins';
       ctx.fillStyle = '#3b82f6';
       ctx.fillText('FATURAMENTO (R$)', 50, y+52);
@@ -1568,7 +1791,6 @@
       ctx.fillStyle = '#64748b';
       ctx.fillText('Superado', 370, y+92);
 
-      // Portabilidade
       ctx.font = 'bold 10px Poppins';
       ctx.fillStyle = '#a855f7';
       ctx.fillText('PORTABILIDADE (R$)', 50, y+118);
@@ -1580,7 +1802,6 @@
       ctx.fillStyle = '#1e293b';
       ctx.fillText(`R$ ${Number(portSup).toLocaleString('pt-BR',{minimumFractionDigits:2})}`, 490, y+118);
 
-      // MID
       ctx.font = 'bold 10px Poppins';
       ctx.fillStyle = '#f59e0b';
       ctx.fillText('MID (QTD)', 640, y+52);
@@ -1612,16 +1833,16 @@
   }
 
   // ═══════════════════════════════════════════════════════════
-  // IMAGENS
+  // DOWNLOAD IMAGENS
   // ═══════════════════════════════════════════════════════════
   function imgLoja() {
     atualizarCanvasLoja();
     const canvas = $('canvasMeta');
     const link = document.createElement('a');
-    link.download = `META_LOJA_${$('m_referencia_mes').value}_${$('m_referencia_ano').value}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.download = `META_LOJA_${$('m_referencia_mes').value}_${$('m_referencia_ano').value}_${Date.now()}.png`;
+    link.href = canvas.toDataURL('image/png', 1.0);
     link.click();
-    toast('Imagem da loja baixada.', 'success');
+    toast('Imagem em alta resolução baixada!', 'success');
   }
 
   function imgTime() {
@@ -1630,13 +1851,13 @@
     const canvas = $('canvasTimePreview');
     const link = document.createElement('a');
     link.download = `METAS_TIME_${$('m_referencia_mes').value}_${$('m_referencia_ano').value}.png`;
-    link.href = canvas.toDataURL('image/png');
+    link.href = canvas.toDataURL('image/png', 1.0);
     link.click();
     toast('Imagem do time baixada.', 'success');
   }
 
   // ═══════════════════════════════════════════════════════════
-  // TABS
+  // TABS · PERÍODO
   // ═══════════════════════════════════════════════════════════
   function tab(qual) {
     const isLoja = qual === 'loja';
@@ -1648,12 +1869,11 @@
     if (!isLoja) {
       renderTime();
       preview();
+    } else {
+      atualizarCanvasLoja();
     }
   }
 
-  // ═══════════════════════════════════════════════════════════
-  // PERÍODO
-  // ═══════════════════════════════════════════════════════════
   function periodo() {
     carregarMetaLoja();
     carregarTime();
@@ -1685,7 +1905,6 @@
     await carregarMetaLoja();
     await carregarTime();
 
-    // Preview inicial
     atualizarCanvasLoja();
     preview();
 
@@ -1711,8 +1930,15 @@
     salvarTime,
     imgLoja,
     imgTime,
-    carregarEstaMeta
+    carregarEstaMeta,
+    abrirPreviewLoja,
+    fecharPreviewLoja
   };
+
+  // Fecha modal com ESC
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') fecharPreviewLoja();
+  });
 
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
