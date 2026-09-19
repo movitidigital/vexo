@@ -322,49 +322,575 @@
 </div>
 
 <script>
- // ══════════════════════════════════════════════════════════════
-// 🔧 PATCH DE COMPATIBILIDADE — neutraliza resquícios do GAS
+// ══════════════════════════════════════════════════════════════
+// 🔧 PATCH DE COMPATIBILIDADE + IMPLEMENTAÇÃO SUPABASE · ABA GERAL
 // ══════════════════════════════════════════════════════════════
 (function neutralizarGAS() {
   'use strict';
 
-  // 1. Stub do google.script.run — absorve qualquer chamada antiga sem erro
+  // Stub do google.script.run
   if (!window.google) window.google = {};
   if (!window.google.script) window.google.script = {};
   if (!window.google.script.run) {
     const proxy = new Proxy(function () {}, {
-      get(target, prop) {
-        // Qualquer propriedade (metodo, withSuccessHandler, withFailureHandler) → retorna o próprio proxy
-        return function () { return proxy; };
-      },
+      get() { return function () { return proxy; }; },
       apply() { return proxy; }
     });
     window.google.script.run = proxy;
-    console.log('🔧 [PATCH] google.script.run neutralizado (modo stub)');
   }
 
-  // 2. Sobrescreve funções antigas que dependiam do GAS
+  // ─── No-ops para Parceiros (FinAdm cuida) ───
   window.carregarAbaParceiros = function () {
-    console.log('🔧 [PATCH] carregarAbaParceiros → redirecionando para FinAdm');
     if (window.FinAdm && typeof window.FinAdm.carregarParceiros === 'function') {
       window.FinAdm.carregarParceiros();
     }
   };
-
-  window.carregarListaParceiros = function () {
-    // no-op: agora é responsabilidade do FinAdm
-  };
-
-  window.carregarComissaoParceiro = function () {
-    // no-op: substituído por FinAdm.carregar()
-  };
-
-  window.carregarResumoConsolidado = function () {
-    // no-op: resumo consolidado foi substituído
-    console.log('ℹ️ [PATCH] carregarResumoConsolidado ignorado (função legada)');
-  };
+  window.carregarListaParceiros = function () {};
+  window.carregarComissaoParceiro = function () {};
 
   console.log('✅ [PATCH] Compatibilidade GAS ativa');
+})();
+
+// ══════════════════════════════════════════════════════════════
+// 🚀 IMPLEMENTAÇÃO · ABA GERAL (Painel de Comissões E&E)
+// ══════════════════════════════════════════════════════════════
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  function getSb() {
+    if (window.sb) return window.sb;
+    try { if (typeof sb !== 'undefined' && sb) return sb; } catch (e) {}
+    return null;
+  }
+
+  function toast(msg, tipo) {
+    const t = document.createElement('div');
+    t.style.cssText = `
+      position:fixed;bottom:24px;right:24px;z-index:99999;
+      padding:14px 22px;border-radius:12px;
+      font-family:Poppins,sans-serif;font-size:13px;font-weight:600;
+      background:white;color:#1e293b;
+      box-shadow:0 12px 32px -6px rgba(0,0,0,0.18);
+      border-left:4px solid ${tipo === 'error' ? '#ef4444' : '#10b981'};
+      animation:slideInToast 0.3s ease;
+    `;
+    t.textContent = msg;
+    document.body.appendChild(t);
+    setTimeout(() => t.remove(), 3500);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // RENDER · PAINEL CONSOLIDADO
+  // ═══════════════════════════════════════════════════════════
+  async function carregarResumoConsolidado() {
+    const sb = getSb();
+    if (!sb) return console.warn('⚠️ [ABA GERAL] sb ausente');
+
+    const tbody = $('tabela-consolidada');
+    if (!tbody) return;
+
+    const inputMes = $('filtro-mes-fin');
+    if (inputMes && !inputMes.value) {
+      const h = new Date();
+      const mes = String(h.getMonth() + 1).padStart(2, '0');
+      inputMes.value = `${h.getFullYear()}-${mes}`;
+    }
+    const [ano, mes] = (inputMes?.value || '').split('-');
+    const mesNum = parseInt(mes, 10);
+    const anoNum = parseInt(ano, 10);
+
+    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:#64748b;">
+      ⏳ Auditando liquidações de ${mes}/${ano}...
+    </td></tr>`;
+
+    try {
+      const { data, error } = await sb.rpc('admin_resumo_equipe', {
+        p_mes: mesNum, p_ano: anoNum
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro na RPC');
+
+      const t = data.totais || {};
+      const lista = data.lista || [];
+
+      // ─── Totais loja ───
+      const lojaFat = Number(t.loja_fat_real || 0);
+      const lojaPort = Number(t.loja_port_real || 0);
+      const lojaReneg = Number(t.loja_reneg_real || 0);
+      const cfgFat = t.cfg_fat || {};
+      const cfgPort = t.cfg_port || {};
+      const cfgReneg = t.cfg_reneg || {};
+
+      // Gross total = soma de linhas
+      const grossTotal = lista.reduce((a, c) => a + (Number(c.gross) || 0), 0);
+
+      // Comissão total a pagar
+      const comissaoTotal = lista.reduce((a, c) => {
+        return a + (Number(c.valor_fat) || 0) + (Number(c.valor_port) || 0) + (Number(c.valor_reneg) || 0);
+      }, 0);
+
+      if ($('card-receita')) $('card-receita').innerText = fmt(lojaFat);
+      if ($('card-gross-loja')) $('card-gross-loja').innerText = `${grossTotal} un`;
+      if ($('card-port')) $('card-port').innerText = fmt(lojaPort);
+      if ($('card-mid')) $('card-mid').innerHTML = `${lojaReneg} un`;
+      if ($('card-com-total')) $('card-com-total').innerText = fmt(comissaoTotal);
+
+      // ─── Painel de faixas aplicadas ───
+      let painel = $('painel-taxas-aplicadas');
+      if (!painel) {
+        const head = document.querySelector('#aba-geral .mt-card-head') || document.querySelector('#aba-geral h2');
+        painel = document.createElement('div');
+        painel.id = 'painel-taxas-aplicadas';
+        if (head && head.parentElement) head.parentElement.insertBefore(painel, head.nextSibling);
+      }
+      if (painel) {
+        const faixaLabel = {
+          'SUP': '🚀 SUPERADO',
+          'TARGET': '🎯 TARGET',
+          'MIN': '✅ MÍNIMO',
+          'PENALIDADE': '⚠️ PENALIDADE'
+        };
+        painel.innerHTML = `
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:20px 0;">
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:14px 18px;">
+              <div style="font-size:10px;font-weight:800;color:#1e40af;text-transform:uppercase;letter-spacing:0.5px;">💰 Faturamento</div>
+              <div style="font-size:12px;color:#1e40af;margin-top:4px;font-weight:700;">Faixa loja: ${faixaLabel[t.loja_faixa_fat] || t.loja_faixa_fat}</div>
+              <div style="font-size:11px;color:#64748b;margin-top:6px;">
+                Realizado: <b>${fmt(lojaFat)}</b> · Meta: ${fmt(t.meta_loja?.fat_target || 0)}
+              </div>
+              <div style="font-size:10px;color:#94a3b8;margin-top:4px;">
+                ${cfgFat.faixa_min || 0}% mín · ${cfgFat.faixa_target || 0}% target · ${cfgFat.faixa_sup || 0}% sup
+              </div>
+            </div>
+            <div style="background:#f5f3ff;border:1px solid #ddd6fe;border-radius:12px;padding:14px 18px;">
+              <div style="font-size:10px;font-weight:800;color:#6d28d9;text-transform:uppercase;letter-spacing:0.5px;">🔄 Portabilidade</div>
+              <div style="font-size:12px;color:#6d28d9;margin-top:4px;font-weight:700;">Faixa loja: ${faixaLabel[t.loja_faixa_port] || t.loja_faixa_port}</div>
+              <div style="font-size:11px;color:#64748b;margin-top:6px;">
+                Realizado: <b>${fmt(lojaPort)}</b> · Meta: ${fmt(t.meta_loja?.port_target || 0)}
+              </div>
+              <div style="font-size:10px;color:#94a3b8;margin-top:4px;">
+                ${cfgPort.faixa_min || 0}% mín · ${cfgPort.faixa_target || 0}% target · ${cfgPort.faixa_sup || 0}% sup
+              </div>
+            </div>
+            <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:14px 18px;">
+              <div style="font-size:10px;font-weight:800;color:#92400e;text-transform:uppercase;letter-spacing:0.5px;">📱 Renegociação MID</div>
+              <div style="font-size:12px;color:#92400e;margin-top:4px;font-weight:700;">Faixa loja: ${faixaLabel[t.loja_faixa_reneg] || t.loja_faixa_reneg}</div>
+              <div style="font-size:11px;color:#64748b;margin-top:6px;">
+                Realizado: <b>${lojaReneg} un</b> · Meta: ${t.meta_loja?.reneg_target || 0} un
+              </div>
+              <div style="font-size:10px;color:#94a3b8;margin-top:4px;">
+                ${cfgReneg.faixa_min || 0}% mín · ${cfgReneg.faixa_target || 0}% target · ${cfgReneg.faixa_sup || 0}% sup
+              </div>
+            </div>
+          </div>`;
+      }
+
+      // ─── Tabela ───
+      const cargo = (JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}').role || '').toUpperCase().trim();
+      const isAdmin = ['ADMINISTRADOR','ADMIN','BACKOFFICE'].includes(cargo);
+
+      if (!lista.length) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:60px;color:#94a3b8;">
+          Nenhum consultor com movimento em ${mes}/${ano}.
+        </td></tr>`;
+        return;
+      }
+
+      let html = '';
+      lista.forEach(c => {
+        const faturamento = Number(c.realizado_fat) || 0;
+        const portValor = Number(c.realizado_port) || 0;
+        const midQtd = Number(c.realizado_reneg_qtd) || 0;
+        const gross = Number(c.gross) || 0;
+
+        const valorFat = Number(c.valor_fat) || 0;
+        const valorPort = Number(c.valor_port) || 0;
+        const valorReneg = Number(c.valor_reneg) || 0;
+        const total = valorFat + valorPort + valorReneg;
+
+        const bateuFat = c.bateu_meta_fat;
+        const bateuPort = c.bateu_meta_port;
+        const bateuReneg = c.bateu_meta_reneg;
+
+        const badgeBateu = (b) => b
+          ? '<span style="background:#dcfce7;color:#166534;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;">✓ META</span>'
+          : '<span style="background:#fee2e2;color:#991b1b;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;">✕ META</span>';
+
+        const botaoBaixa = isAdmin
+          ? `<button onclick='confirmarPagamentoIndividual(${JSON.stringify(c.consultor)}, ${faturamento}, ${gross}, ${total}, ${portValor}, ${midQtd}, ${valorReneg}, ${valorFat})'
+                style="background:#10b981;color:white;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:700;">
+                💰 BAIXA
+             </button>`
+          : `<span style="font-size:10px;color:#94a3b8;background:#f1f5f9;padding:8px 12px;border-radius:8px;">🔒 Restrito</span>`;
+
+        html += `
+          <tr style="border-bottom:1px solid #f1f5f9;">
+            <td style="padding:15px 20px;">
+              <div style="font-weight:700;color:#1e293b;font-size:13px;">${c.consultor || '—'}</div>
+              <div style="display:flex;gap:4px;margin-top:6px;flex-wrap:wrap;">
+                ${badgeBateu(bateuFat)}
+                ${badgeBateu(bateuPort)}
+                ${badgeBateu(bateuReneg)}
+              </div>
+              <div style="font-size:9px;color:#94a3b8;margin-top:4px;">${c.matricula || ''}</div>
+            </td>
+            <td style="padding:15px;">
+              <div style="font-weight:600;color:#334155;">${fmt(faturamento)}</div>
+              <div style="font-size:10px;color:#3b82f6;font-weight:700;margin-top:2px;">${c.pct_fat}% → ${fmt(valorFat)}</div>
+            </td>
+            <td style="padding:15px;">
+              <span style="background:#dcfce7;color:#166534;padding:4px 10px;border-radius:20px;font-weight:700;font-size:11px;">${gross} un</span>
+            </td>
+            <td style="padding:15px;">
+              <div style="font-weight:600;color:#334155;">${fmt(portValor)}</div>
+              <div style="font-size:10px;color:#a855f7;font-weight:700;margin-top:2px;">${c.pct_port}% → ${fmt(valorPort)}</div>
+            </td>
+            <td style="padding:15px;">
+              <div style="font-weight:600;color:#334155;">${midQtd} un</div>
+              <div style="font-size:10px;color:#f59e0b;font-weight:700;margin-top:2px;">${c.pct_reneg}% → ${fmt(valorReneg)}</div>
+            </td>
+            <td style="padding:15px;text-align:center;">
+              <div style="background:rgba(30,60,114,0.05);border:1px solid rgba(30,60,114,0.15);padding:10px 15px;border-radius:12px;font-size:16px;font-weight:800;color:#1e3c72;">
+                ${fmt(total)}
+              </div>
+            </td>
+            <td style="padding:15px;text-align:center;">
+              <div style="display:flex;gap:8px;justify-content:flex-end;">
+                <button onclick='abrirExtratoDetalhado(${JSON.stringify(c.consultor)}, "${mes}", "${ano}")'
+                  style="border:1px solid #1e3c72;background:white;color:#1e3c72;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:700;">
+                  📄 EXTRATO
+                </button>
+                ${botaoBaixa}
+              </div>
+            </td>
+          </tr>`;
+      });
+      tbody.innerHTML = html;
+
+    } catch (e) {
+      console.error('[ABA GERAL]', e);
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;padding:20px;font-weight:600;">
+        ❌ Erro: ${e.message || e}
+      </td></tr>`;
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // CONFIGURAR FAIXAS (%)
+  // ═══════════════════════════════════════════════════════════
+  async function abrirModalConfig() {
+    const sb = getSb();
+    if (!sb) return;
+    const modal = $('modal-config-comissao');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    // Placeholder enquanto carrega
+    ['f_min','f_target','f_sup','p_min','p_target','p_sup','r_min','r_target','r_sup'].forEach(id => {
+      const el = $(id);
+      if (el) { el.value = ''; el.placeholder = '...'; }
+    });
+
+    try {
+      const { data, error } = await sb.rpc('admin_config_faixas_get');
+      if (error) throw error;
+      const faixas = data?.faixas || [];
+      const getFaixa = (mod) => faixas.find(f => f.modalidade === mod) || {};
+
+      const f = getFaixa('FATURAMENTO');
+      const p = getFaixa('PORTABILIDADE');
+      const r = getFaixa('RENEGOCIACAO');
+
+      $('f_min').value = f.faixa_min ?? 35;
+      $('f_target').value = f.faixa_target ?? 50;
+      $('f_sup').value = f.faixa_sup ?? 75;
+      $('p_min').value = p.faixa_min ?? 15;
+      $('p_target').value = p.faixa_target ?? 30;
+      $('p_sup').value = p.faixa_sup ?? 45;
+      $('r_min').value = r.faixa_min ?? 15;
+      $('r_target').value = r.faixa_target ?? 30;
+      $('r_sup').value = r.faixa_sup ?? 45;
+
+      ['f_min','f_target','f_sup','p_min','p_target','p_sup','r_min','r_target','r_sup'].forEach(id => {
+        const el = $(id); if (el) el.placeholder = '0';
+      });
+    } catch (e) {
+      console.error(e);
+      toast('❌ Erro ao carregar faixas: ' + e.message, 'error');
+    }
+  }
+
+  function fecharModalConfig() {
+    const modal = $('modal-config-comissao');
+    if (modal) modal.style.display = 'none';
+  }
+
+  async function salvarConfig() {
+    const sb = getSb();
+    if (!sb) return;
+    const btn = event?.target;
+    if (btn) { btn.disabled = true; btn.innerText = '⏳ Gravando...'; }
+
+    try {
+      const { data, error } = await sb.rpc('admin_config_faixas_set', {
+        p_fat_min: parseFloat($('f_min').value) || 0,
+        p_fat_target: parseFloat($('f_target').value) || 0,
+        p_fat_sup: parseFloat($('f_sup').value) || 0,
+        p_port_min: parseFloat($('p_min').value) || 0,
+        p_port_target: parseFloat($('p_target').value) || 0,
+        p_port_sup: parseFloat($('p_sup').value) || 0,
+        p_reneg_min: parseFloat($('r_min').value) || 0,
+        p_reneg_target: parseFloat($('r_target').value) || 0,
+        p_reneg_sup: parseFloat($('r_sup').value) || 0,
+        p_penalidade: 10
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+      toast('✅ Percentuais atualizados!', 'success');
+      fecharModalConfig();
+      setTimeout(carregarResumoConsolidado, 400);
+    } catch (e) {
+      toast('❌ ' + e.message, 'error');
+    } finally {
+      if (btn) { btn.disabled = false; btn.innerText = 'Salvar Alterações'; }
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // HISTÓRICO DE PAGAMENTOS
+  // ═══════════════════════════════════════════════════════════
+  async function abrirModalHistorico() {
+    const sb = getSb();
+    if (!sb) return;
+    const modal = $('modal-historico-pag');
+    if (!modal) return;
+    modal.style.display = 'flex';
+
+    const tbody = $('corpo-historico-pag');
+    if (tbody) tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;">⌛ Carregando...</td></tr>';
+
+    try {
+      const { data, error } = await sb.rpc('admin_historico_pagamentos');
+      if (error) throw error;
+      const lista = data?.pagamentos || [];
+      if (!tbody) return;
+
+      if (!lista.length) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:30px;color:#94a3b8;">Nenhum pagamento registrado.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = lista.map(p => `
+        <tr style="border-bottom:1px solid #f1f5f9;">
+          <td style="padding:12px;">${p.pago_em ? new Date(p.pago_em).toLocaleDateString('pt-BR') : '—'}</td>
+          <td style="padding:12px;font-weight:700;">${p.consultor_nome || '—'}</td>
+          <td style="padding:12px;">${String(p.mes_referencia).padStart(2,'0')}/${p.ano_referencia}</td>
+          <td style="padding:12px;">${fmt(p.valor_base)}</td>
+          <td style="padding:12px;color:#10b981;">${fmt(p.valor_port)}</td>
+          <td style="padding:12px;color:#f59e0b;">${fmt(p.valor_reneg)}</td>
+          <td style="padding:12px;font-weight:800;color:#1e3c72;background:#f0f7ff;">${fmt(p.total_pago)}</td>
+        </tr>`).join('');
+    } catch (e) {
+      if (tbody) tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;color:#ef4444;">❌ ${e.message}</td></tr>`;
+    }
+  }
+
+  function fecharModalHistorico() {
+    const modal = $('modal-historico-pag');
+    if (modal) modal.style.display = 'none';
+  }
+
+  function filtrarTabelaHistorico() {
+    const input = $('filtroNomeHistorico')?.value.toUpperCase() || '';
+    document.querySelectorAll('#corpo-historico-pag tr').forEach(tr => {
+      const td = tr.querySelectorAll('td')[1];
+      tr.style.display = (!td || td.textContent.toUpperCase().includes(input)) ? '' : 'none';
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // BAIXA INDIVIDUAL
+  // ═══════════════════════════════════════════════════════════
+  async function confirmarPagamentoIndividual(consultor, fat, gross, total, port, midQtd, valorReneg, valorFat) {
+    if (!confirm(`Confirmar pagamento para ${consultor}?\nValor: ${fmt(total)}`)) return;
+
+    const sb = getSb();
+    if (!sb) return;
+
+    const inputMes = $('filtro-mes-fin');
+    const [ano, mes] = (inputMes?.value || '').split('-');
+    const mesNum = parseInt(mes, 10);
+    const anoNum = parseInt(ano, 10);
+
+    // Acha o consultor_id
+    try {
+      const { data: prof } = await sb
+        .from('profiles')
+        .select('id, nome, sobrenome')
+        .or(`nome.ilike.%${consultor.split(' ')[0]}%`)
+        .limit(5);
+
+      const match = (prof || []).find(p => {
+        const nome = `${p.nome || ''} ${p.sobrenome || ''}`.trim().toUpperCase();
+        return nome === consultor.toUpperCase();
+      });
+
+      const { data, error } = await sb.rpc('admin_registrar_pagamento', {
+        p_consultor_id: match?.id || null,
+        p_consultor_nome: consultor,
+        p_mes: mesNum,
+        p_ano: anoNum,
+        p_receita: fat,
+        p_gross: gross,
+        p_port_valor: port,
+        p_mid_qtd: midQtd,
+        p_mid_valor: valorReneg,
+        p_valor_base: valorFat,
+        p_valor_port: 0,     // simplificado
+        p_valor_reneg: valorReneg,
+        p_faixa_aplicada: null,
+        p_observacao: 'Baixa registrada pelo painel'
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      toast(`✅ Pagamento de ${consultor} registrado!`, 'success');
+      carregarResumoConsolidado();
+    } catch (e) {
+      console.error(e);
+      toast('❌ ' + e.message, 'error');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // EXTRATO DETALHADO (por consultor)
+  // ═══════════════════════════════════════════════════════════
+  async function abrirExtratoDetalhado(consultor, mes, ano) {
+    const sb = getSb();
+    if (!sb) return;
+    toast(`⏳ Gerando extrato de ${consultor}...`, 'info');
+
+    try {
+      const { data, error } = await sb.rpc('admin_extrato_consultor', {
+        p_consultor_nome: consultor,
+        p_mes: parseInt(mes, 10),
+        p_ano: parseInt(ano, 10)
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      const vendas = data.vendas || [];
+      if (!vendas.length) {
+        toast('⚠️ Nenhuma venda encontrada.', 'warn');
+        return;
+      }
+
+      const mesNome = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][parseInt(mes, 10) - 1];
+      const total = vendas.reduce((a, v) => a + Number(v.valor || 0), 0);
+
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Extrato ${consultor}</title>
+<style>
+  body{font-family:Helvetica,Arial,sans-serif;padding:40px;color:#0f172a;}
+  h1{color:#1e3c72;margin:0;font-size:20px;}
+  .head{border-bottom:3px solid #1e3c72;padding-bottom:14px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:flex-end;}
+  .head .meta{text-align:right;font-size:11px;color:#64748b;}
+  table{width:100%;border-collapse:collapse;font-size:10px;margin-top:14px;}
+  th{background:#f1f5f9;text-align:left;padding:8px;font-size:9px;text-transform:uppercase;color:#475569;border-bottom:1px solid #cbd5e1;}
+  td{padding:8px;border-bottom:1px solid #f1f5f9;}
+  .r{text-align:right;font-weight:700;}
+  .total{margin-top:20px;background:#0f172a;color:white;padding:16px 22px;border-radius:10px;display:flex;justify-content:space-between;align-items:center;}
+  .total .l{font-size:10px;text-transform:uppercase;letter-spacing:1px;opacity:0.7;}
+  .total .v{font-size:22px;font-weight:800;}
+  @media print { .no-print { display: none; } }
+</style></head><body>
+  <div class="no-print" style="position:fixed;top:10px;right:10px;">
+    <button onclick="window.print()" style="padding:10px 20px;background:#1e3c72;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir</button>
+  </div>
+  <div class="head">
+    <div>
+      <h1>E&E · EXTRATO DE COMISSÃO</h1>
+      <div style="font-size:11px;color:#64748b;margin-top:4px;">Consultor: <b>${consultor}</b></div>
+    </div>
+    <div class="meta">
+      <div><b>COMPETÊNCIA:</b> ${mesNome}/${ano}</div>
+      <div>Emitido em ${new Date().toLocaleDateString('pt-BR')}</div>
+    </div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Data Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th><th>Linha</th><th class="r">Valor</th>
+    </tr></thead>
+    <tbody>
+      ${vendas.map(v => `
+        <tr>
+          <td>${v.data || ''}</td>
+          <td>${v.cliente || ''}</td>
+          <td>${v.cnpj || ''}</td>
+          <td>${v.modalidade || ''}</td>
+          <td>${v.plano || ''}</td>
+          <td>${v.telefone || ''}</td>
+          <td class="r">R$ ${Number(v.valor || 0).toFixed(2).replace('.', ',')}</td>
+        </tr>`).join('')}
+    </tbody>
+  </table>
+  <div class="total">
+    <div class="l">Total do Faturamento</div>
+    <div class="v">${fmt(total)}</div>
+  </div>
+  <p style="font-size:10px;color:#94a3b8;margin-top:20px;">Documento gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}</p>
+</body></html>`;
+
+      const w = window.open('', '_blank', 'width=900,height=800');
+      w.document.write(html);
+      w.document.close();
+    } catch (e) {
+      console.error(e);
+      toast('❌ ' + e.message, 'error');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // EXPORTA FUNÇÕES GLOBAIS (o HTML depende delas)
+  // ═══════════════════════════════════════════════════════════
+  window.carregarResumoConsolidado = carregarResumoConsolidado;
+  window.abrirModalConfig = abrirModalConfig;
+  window.fecharModalConfig = fecharModalConfig;
+  window.salvarConfig = salvarConfig;
+  window.abrirModalHistorico = abrirModalHistorico;
+  window.fecharModalHistorico = fecharModalHistorico;
+  window.filtrarTabelaHistorico = filtrarTabelaHistorico;
+  window.confirmarPagamentoIndividual = confirmarPagamentoIndividual;
+  window.abrirExtratoDetalhado = abrirExtratoDetalhado;
+  window.gerarDocumentoImpressao = () => {}; // não usado mais
+
+  // ═══════════════════════════════════════════════════════════
+  // INIT
+  // ═══════════════════════════════════════════════════════════
+  function init() {
+    // Preenche mês atual no input
+    const inputMes = $('filtro-mes-fin');
+    if (inputMes && !inputMes.value) {
+      const h = new Date();
+      inputMes.value = `${h.getFullYear()}-${String(h.getMonth() + 1).padStart(2, '0')}`;
+    }
+
+    // Bind do onchange (mantém o do HTML, mas garante)
+    if (inputMes) inputMes.onchange = carregarResumoConsolidado;
+
+    // Carrega resumo
+    carregarResumoConsolidado();
+
+    console.log('✅ [ABA GERAL] Painel de Comissões pronto');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 500);
+  }
 })();
 // ================================================================
 // 1. CARREGAMENTO DOS DADOS (Cards Loja + Tabela Vendedores)
