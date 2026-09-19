@@ -204,6 +204,9 @@
         <button onclick="carregarResumoConsolidado()" style="padding: 10px 18px; background: #1e3c72; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; color: white; font-size: 12px; transition: 0.3s; box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);">
           🔄 Atualizar
         </button>
+       <button onclick="abrirModalMetaGerencial()" style="background: white; color: #1e3c72; border: 1px solid #1e3c72; padding: 10px 18px; border-radius: 10px; cursor: pointer; font-weight: 600; font-size: 12px; display: flex; align-items: center; gap: 8px;">
+  🎯 Meta Gerencial
+</button>
       </div>
     </div>
 
@@ -250,6 +253,10 @@
         <tbody id="tabela-consolidada">
           <tr><td colspan="7" style="text-align: center; padding: 40px; color: #94a3b8;">Sincronizando faturamento da equipe...</td></tr>
         </tbody>
+       <!-- ═══ COMISSÕES DE CARGOS ═══ -->
+<div id="comissoes-cargos" style="margin-top: 30px; display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+  <!-- preenchido via JS -->
+</div>
       </table>
     </div>
   </div>
