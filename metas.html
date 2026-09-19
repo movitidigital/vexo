@@ -1479,8 +1479,12 @@
     const ctx = canvas.getContext('2d');
     const W = canvas.width;
     const H = canvas.height;
-    const mes = $('m_referencia_mes').value;
-    const ano = $('m_referencia_ano').value;
+
+    // Helper seguro pra ler inputs (nunca dá null)
+    const val = (id) => Number($(id)?.value || 0);
+
+    const mes = $('m_referencia_mes')?.value || '';
+    const ano = $('m_referencia_ano')?.value || '';
 
     // FUNDO
     const grad = ctx.createLinearGradient(0, 0, W, H);
@@ -1498,14 +1502,10 @@
     // GRADE
     ctx.strokeStyle = 'rgba(255,255,255,0.025)';
     ctx.lineWidth = 1;
-    for (let i = 0; i < W; i += 60) {
-      ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke();
-    }
-    for (let j = 0; j < H; j += 60) {
-      ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(W, j); ctx.stroke();
-    }
+    for (let i = 0; i < W; i += 60) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
+    for (let j = 0; j < H; j += 60) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(W, j); ctx.stroke(); }
 
-    // LOGO (TOPO DIREITO)
+    // LOGO
     const logoW = 260, logoH = 120;
     const logoX = W - logoW - 60;
     const logoY = 50;
@@ -1566,7 +1566,7 @@
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    // TÍTULO DENTRO DO CARD
+    // TÍTULO
     ctx.fillStyle = '#0f172a';
     ctx.font = 'bold 36px Poppins, sans-serif';
     ctx.textAlign = 'center';
@@ -1579,7 +1579,7 @@
     ctx.lineTo(cardX + cardW - 60, cardY + 100);
     ctx.stroke();
 
-    // 3 BLOCOS
+    // BLOCOS
     const blocoMarginY = 40;
     const blocoStartY = cardY + 130;
     const blocoW = cardW - 80;
@@ -1587,17 +1587,17 @@
 
     desenharBloco(ctx, cardX + 40, blocoStartY, blocoW, blocoH,
       'FATURAMENTO', '💰', 'R$',
-      $('#m_fat_min').value, $('#m_fat_target').value, $('#m_fat_sup').value,
+      val('m_fat_min'), val('m_fat_target'), val('m_fat_sup'),
       ['#3b82f6', '#1e40af']);
 
     desenharBloco(ctx, cardX + 40, blocoStartY + blocoH + blocoMarginY, blocoW, blocoH,
       'PORTABILIDADE', '🔄', 'R$',
-      $('#m_port_min').value, $('#m_port_target').value, $('#m_port_sup').value,
+      val('m_port_min'), val('m_port_target'), val('m_port_sup'),
       ['#a855f7', '#7c3aed']);
 
     desenharBloco(ctx, cardX + 40, blocoStartY + (blocoH + blocoMarginY) * 2, blocoW, blocoH,
       'RENEGOCIAÇÃO MID', '📱', '',
-      $('#m_reneg_min').value, $('#m_reneg_target').value, $('#m_reneg_sup').value,
+      val('m_reneg_min'), val('m_reneg_target'), val('m_reneg_sup'),
       ['#f59e0b', '#d97706']);
 
     // RODAPÉ
@@ -1609,8 +1609,9 @@
     ctx.textAlign = 'right';
     ctx.fillText(`Gerado em ${new Date().toLocaleString('pt-BR')}`, W - 60, H - 60);
   }
-
   function desenharBloco(ctx, x, y, w, h, titulo, emoji, prefixo, min, target, sup, cores) {
+    // ✅ os valores já vêm numéricos por conta do `val()` na chamada
+
     const grad = ctx.createLinearGradient(x, y, x + w, y + h);
     grad.addColorStop(0, cores[0] + '15');
     grad.addColorStop(1, cores[1] + '08');
@@ -1652,18 +1653,21 @@
     const valY = colY + 28 + 60;
     ctx.font = 'bold 34px Poppins, sans-serif';
 
+    // Mínimo
     ctx.fillStyle = '#0f172a';
     const vMin = prefixo === 'R$'
       ? `R$ ${Number(min || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
       : Number(min || 0).toString();
     ctx.fillText(vMin, colStartX + colsW / 2, valY);
 
+    // Target (destacado)
     ctx.fillStyle = cores[0];
     const vTarget = prefixo === 'R$'
       ? `R$ ${Number(target || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
       : Number(target || 0).toString();
     ctx.fillText(vTarget, colStartX + colsW + colsW / 2, valY);
 
+    // Superado
     ctx.fillStyle = '#0f172a';
     const vSup = prefixo === 'R$'
       ? `R$ ${Number(sup || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
