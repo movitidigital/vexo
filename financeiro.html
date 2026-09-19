@@ -618,10 +618,16 @@
               <span style="font-size:22px;font-weight:800;color:#38ef7d;">R$ ${num(d.total)}</span>
             </div>
 
-            <button onclick='confirmarPagamentoCargo(${JSON.stringify(d.cargo)}, ${d.total}, ${JSON.stringify(d)})'
-              style="width:100%;padding:12px;background:${cor};color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">
-              💰 Registrar Pagamento
-            </button>
+                       <div style="display:flex;gap:8px;">
+              <button onclick='abrirExtratoCargo(${JSON.stringify(d.cargo)}, "${mes}", "${ano}")'
+                style="flex:1;padding:12px;background:white;color:${cor};border:1.5px solid ${cor};border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">
+                📄 Extrato
+              </button>
+              <button onclick='confirmarPagamentoCargo(${JSON.stringify(d.cargo)}, ${d.total}, ${JSON.stringify(d)})'
+                style="flex:2;padding:12px;background:${cor};color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">
+                💰 Registrar Pagamento
+              </button>
+            </div>
           </div>`;
       };
 
@@ -1143,6 +1149,202 @@
     }
   }
 
+
+    // ═══════════════════════════════════════════════════════════
+  // EXTRATO DE CARGOS
+  // ═══════════════════════════════════════════════════════════
+  async function abrirExtratoCargo(cargo, mes, ano) {
+    const sb = getSb();
+    if (!sb) return;
+    toast(`⏳ Gerando extrato de ${cargo}...`, 'info');
+
+    try {
+      const { data, error } = await sb.rpc('admin_extrato_cargo', {
+        p_cargo: cargo, p_mes: parseInt(mes, 10), p_ano: parseInt(ano, 10)
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      const loja = data.loja || { vendas: [] };
+      const tbp = data.tbp || { vendas: [] };
+      const mg = data.meta_gerencial || {};
+      const metaLoja = data.meta_loja || {};
+
+      const mesNome = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][parseInt(mes,10) - 1];
+      const fmtBRL = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+      const faixaLabel = (f) => ({'SUP': '🚀 SUPERADO','TARGET': '🎯 TARGET','MIN': '✅ MÍNIMO','PENALIDADE': '⚠️ PENALIDADE'})[f] || f;
+
+      const nomeCargo = cargo === 'BACKOFFICE' ? 'Backoffice Comercial' : 'Gerente SMB';
+      const iconeCargo = cargo === 'BACKOFFICE' ? '🧑‍💼' : '👔';
+      const corCargo = cargo === 'BACKOFFICE' ? '#3b82f6' : '#8b5cf6';
+
+      let logoUrl = '';
+      try {
+        const { data: signed } = await sb.storage.from('LOGOMARCAS').createSignedUrl('EEE-LOGO-TRANSPARENTE.png', 3600);
+        logoUrl = signed?.signedUrl || '';
+      } catch (e) {}
+
+      const renderTabela = (titulo, emoji, cor, vendas, pctAplicado) => {
+        if (!vendas.length) {
+          return `<div class="sect" style="border-left:4px solid ${cor};">
+            <div class="sect-head" style="background:${cor};"><span>${emoji} ${titulo}</span><span>TAXA: ${pctAplicado}%</span></div>
+            <div style="padding:20px;text-align:center;color:#94a3b8;font-size:11px;background:#f8fafc;">Nenhuma venda nesta origem.</div>
+          </div>`;
+        }
+
+        let somaV = 0, somaC = 0;
+        const rows = vendas.map(v => {
+          const valor = Number(v.valor || 0);
+          const com = Number(v.comissao || 0);
+          somaV += valor; somaC += com;
+          return `<tr>
+            <td>${v.data || '—'}</td>
+            <td>${v.cliente || '—'}</td>
+            <td>${v.cnpj || '—'}</td>
+            <td>${v.modalidade || '—'}</td>
+            <td>${v.linha || '—'}</td>
+            <td class="r">R$ ${fmtBRL(valor)}</td>
+            <td class="r" style="color:${cor};font-weight:800;">R$ ${fmtBRL(com)}</td>
+          </tr>`;
+        }).join('');
+
+        return `<div class="sect" style="border-left:4px solid ${cor};">
+          <div class="sect-head" style="background:${cor};">
+            <span>${emoji} ${titulo}</span>
+            <span>TAXA APLICADA: ${pctAplicado}%</span>
+          </div>
+          <table>
+            <thead><tr>
+              <th>Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Linha</th>
+              <th class="r">Valor</th><th class="r">Comissão</th>
+            </tr></thead>
+            <tbody>
+              ${rows}
+              <tr class="subtotal">
+                <td colspan="5" class="r">SUBTOTAL:</td>
+                <td class="r">R$ ${fmtBRL(somaV)}</td>
+                <td class="r" style="color:${cor};">R$ ${fmtBRL(somaC)}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>`;
+      };
+
+      const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Extrato · ${nomeCargo}</title>
+<style>
+  @page { size: A4; margin: 15mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Helvetica', 'Arial', sans-serif; color: #0f172a; margin: 0; padding: 40px; font-size: 11px; line-height: 1.5; }
+  .header { display: flex; justify-content: space-between; align-items: center; padding-bottom: 20px; margin-bottom: 24px; border-bottom: 3px solid ${corCargo}; }
+  .header .logo { max-height: 70px; max-width: 250px; }
+  .header .meta { text-align: right; font-size: 11px; color: #475569; line-height: 1.7; }
+  .header .meta strong { color: ${corCargo}; }
+  .title { text-align: center; font-size: 20px; font-weight: 800; color: ${corCargo}; letter-spacing: 2px; text-transform: uppercase; padding: 14px 0; margin-bottom: 22px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
+  .title .sub { font-size: 13px; letter-spacing: 1px; color: #64748b; margin-top: 4px; font-weight: 600; }
+  .info-bloco { border-radius: 10px; padding: 14px 18px; margin-bottom: 18px; font-size: 11px; line-height: 1.7; }
+  .info-bloco strong { color: #1e293b; }
+  .info-loja { background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; }
+  .info-meta { background: ${mg.bateu ? '#ecfdf5' : '#fef3c7'}; border: 1px solid ${mg.bateu ? '#bbf7d0' : '#fde68a'}; color: ${mg.bateu ? '#065f46' : '#92400e'}; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 26px; }
+  .kpi { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; text-align: center; }
+  .kpi small { display: block; font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .kpi div { font-size: 15px; font-weight: 800; color: #1e3c72; }
+  .kpi.destaque { background: #0f172a; border-color: #0f172a; }
+  .kpi.destaque small { color: #94a3b8; }
+  .kpi.destaque div { color: #38ef7d; font-size: 18px; }
+  .sect { background: white; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 22px; overflow: hidden; }
+  .sect-head { color: white; padding: 10px 16px; font-weight: 800; font-size: 12px; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
+  .sect-head span:last-child { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 12px; font-size: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  th { background: #f8fafc; text-align: left; padding: 8px 12px; font-size: 9px; text-transform: uppercase; letter-spacing: 0.5px; color: #475569; border-bottom: 1px solid #cbd5e1; }
+  td { padding: 8px 12px; border-bottom: 1px solid #f1f5f9; }
+  .r { text-align: right; }
+  .subtotal td { background: #f8fafc; font-weight: 800; font-size: 11px; border-bottom: none; padding-top: 10px; padding-bottom: 10px; }
+  .resumo { background: #0f172a; color: white; padding: 22px 26px; border-radius: 12px; margin-top: 26px; }
+  .resumo h3 { margin: 0 0 16px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+  .resumo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+  .resumo-box { background: rgba(255,255,255,0.08); border-radius: 10px; padding: 14px; }
+  .resumo-box small { display: block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; margin-bottom: 6px; }
+  .resumo-box div { font-size: 16px; font-weight: 800; }
+  .resumo-box.loja div { color: #60a5fa; }
+  .resumo-box.tbp div { color: #34d399; }
+  .resumo-total { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(255,255,255,0.15); padding-top: 16px; }
+  .resumo-total .label { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #94a3b8; }
+  .resumo-total .value { font-size: 26px; font-weight: 900; color: #38ef7d; }
+  .assin { margin-top: 50px; display: flex; justify-content: space-between; gap: 60px; padding-top: 20px; }
+  .assin .line { flex: 1; border-top: 1px solid #cbd5e1; padding-top: 8px; text-align: center; font-size: 9px; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .footer { margin-top: 30px; text-align: center; font-size: 9px; color: #94a3b8; border-top: 1px solid #e2e8f0; padding-top: 14px; }
+  @media print { .no-print { display: none !important; } body { padding: 0; } }
+</style>
+</head>
+<body>
+  <div class="no-print" style="position:fixed;top:14px;right:14px;z-index:999;">
+    <button onclick="window.print()" style="padding:12px 22px;background:${corCargo};color:white;border:none;border-radius:10px;font-weight:800;cursor:pointer;font-size:12px;">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  <div class="header">
+    <div>${logoUrl ? `<img src="${logoUrl}" class="logo" alt="E&E">` : `<div style="font-size:26px;font-weight:900;color:${corCargo};">E&E</div>`}</div>
+    <div class="meta">
+      <div><strong>CARGO:</strong> ${nomeCargo}</div>
+      <div><strong>COMPETÊNCIA:</strong> ${mesNome}/${ano}</div>
+      <div><strong>EMISSÃO:</strong> ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}</div>
+    </div>
+  </div>
+  <div class="title">
+    ${iconeCargo} Extrato de Comissão
+    <div class="sub">${nomeCargo}</div>
+  </div>
+  ${cargo === 'BACKOFFICE' ? `
+    <div class="info-bloco info-loja">
+      <strong>🏢 FATURAMENTO DA LOJA · ${mesNome}/${ano}</strong><br>
+      Realizado: <strong>R$ ${fmtBRL(loja.faturamento)}</strong> em ${loja.qtd_linhas} linha(s)<br>
+      Meta Mínima: <strong>R$ ${fmtBRL(metaLoja.fat_min)}</strong> · Target: <strong>R$ ${fmtBRL(metaLoja.fat_target)}</strong> · Superado: <strong>R$ ${fmtBRL(metaLoja.fat_sup)}</strong><br>
+      Faixa atingida pela loja: <strong>${faixaLabel(loja.faixa)}</strong> → Comissão de <strong>${loja.percentual_aplicado}%</strong> aplicada
+    </div>
+  ` : `
+    <div class="info-bloco info-meta">
+      <strong>🎯 META GERENCIAL · ${mesNome}/${ano}</strong><br>
+      Meta: <strong>R$ ${fmtBRL(mg.valor_meta)}</strong> · Realizado total (Loja + TBPs): <strong>R$ ${fmtBRL(mg.faturamento_total)}</strong><br>
+      Status: <strong>${mg.bateu ? '✅ BATIDA — Gerente recebe faixa cheia' : '⏳ NÃO BATIDA — Gerente recebe faixa base'}</strong>
+    </div>
+  `}
+  <div class="kpis">
+    <div class="kpi"><small>Faturamento Loja</small><div>R$ ${fmtBRL(loja.faturamento)}</div></div>
+    <div class="kpi"><small>Faturamento TBPs</small><div>R$ ${fmtBRL(tbp.faturamento)}</div></div>
+    <div class="kpi"><small>Linhas (Loja + TBP)</small><div>${(loja.qtd_linhas || 0) + (tbp.qtd_linhas || 0)}</div></div>
+    <div class="kpi destaque"><small>Total a Receber</small><div>R$ ${fmtBRL(data.total)}</div></div>
+  </div>
+  ${renderTabela('LOJA · VENDAS INTERNAS', '🏢', '#3b82f6', loja.vendas || [], loja.percentual_aplicado)}
+  ${renderTabela('TBPs · ESCRITÓRIOS PARCEIROS', '🤝', '#10b981', tbp.vendas || [], tbp.percentual_aplicado)}
+  <div class="resumo">
+    <h3>Resumo de Comissões a Receber</h3>
+    <div class="resumo-grid">
+      <div class="resumo-box loja"><small>Comissão Loja (${loja.percentual_aplicado}%)</small><div>R$ ${fmtBRL(loja.comissao)}</div></div>
+      <div class="resumo-box tbp"><small>Comissão TBPs (${tbp.percentual_aplicado}%)</small><div>R$ ${fmtBRL(tbp.comissao)}</div></div>
+    </div>
+    <div class="resumo-total">
+      <span class="label">Total Líquido a Receber</span>
+      <span class="value">R$ ${fmtBRL(data.total)}</span>
+    </div>
+  </div>
+  <div class="assin">
+    <div class="line">${nomeCargo}</div>
+    <div class="line">E&E · Departamento Financeiro</div>
+  </div>
+  <div class="footer">
+    Este extrato considera vendas ativadas no sistema RADAR da TIM no mês de referência.<br>
+    Gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}
+  </div>
+</body></html>`;
+
+      const w = window.open('', '_blank', 'width=1000,height=800');
+      w.document.write(html);
+      w.document.close();
+    } catch (e) {
+      console.error(e);
+      toast('❌ ' + (e.message || e), 'error');
+    }
+  }
   // ═══════════════════════════════════════════════════════════
   // EXPORTS
   // ═══════════════════════════════════════════════════════════
@@ -1158,6 +1360,9 @@
   window.abrirModalMetaGerencial = abrirModalMetaGerencial;
   window.salvarMetaGerencial = salvarMetaGerencial;
   window.confirmarPagamentoCargo = confirmarPagamentoCargo;
+  window.abrirExtratoCargo = abrirExtratoCargo;
+
+  
 
   // ═══════════════════════════════════════════════════════════
   // INIT
