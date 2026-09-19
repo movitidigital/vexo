@@ -997,8 +997,8 @@ function filtrarTabelaHistorico() {
 // ================================================================
 // 7. MÓDULO PARCEIROS – VERSÃO CORRIGIDA
 // ================================================================
-let dadosParceiroAtual = null;
-let dadosTabelaAtuais = []; // Armazena os dados da tabela atual para atualizações parciais
+var dadosParceiroAtual = window.dadosParceiroAtual || null;
+var dadosTabelaAtuais = window.dadosTabelaAtuais || []; // Armazena os dados da tabela atual para atualizações parciais
 
 function carregarListaParceiros() {
   google.script.run
@@ -1211,9 +1211,9 @@ function atualizarLinhaTabela(chaveUnica, novoStatus, novaComissao) {
 // ============================================================
 // EDITAR COMISSÃO – MODAL
 // ============================================================
-let chaveUnicaEditando = null;
-let bancoIdEditando = null;
-let comissaoOriginalEditando = null;
+var chaveUnicaEditando = window.chaveUnicaEditando || null;
+var bancoIdEditando = window.bancoIdEditando || null;
+var comissaoOriginalEditando = window.comissaoOriginalEditando || null;
 
 function editarComissaoParceiro(chaveUnica, comissaoAtual, bancoId) {
   chaveUnicaEditando = chaveUnica;
@@ -1273,9 +1273,9 @@ function confirmarEditarComissao() {
 // ============================================================
 // APROVAR PAGAMENTO – MODAL
 // ============================================================
-let chaveUnicaAprovando = null;
-let bancoIdAprovando = null;
-let statusAtualAprovando = null;
+var chaveUnicaAprovando = window.chaveUnicaAprovando || null;
+var bancoIdAprovando = window.bancoIdAprovando || null;
+var statusAtualAprovando = window.statusAtualAprovando || null;
 
 function aprovarPagamentoParceiro(chaveUnica, statusAtual, bancoId) {
   chaveUnicaAprovando = chaveUnica;
