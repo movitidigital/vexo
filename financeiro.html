@@ -2616,4 +2616,202 @@ window.FinAdm = (function () {
 })();
  
 carregarResumoConsolidado();
+   // ═══════════════════════════════════════════════════════════
+  // COMISSÕES DE CARGOS · Backoffice + Gerente
+  // ═══════════════════════════════════════════════════════════
+  async function carregarComissoesCargos() {
+    const sb = getSb();
+    if (!sb) return;
+
+    const inputMes = $('filtro-mes-fin');
+    const [ano, mes] = (inputMes?.value || '').split('-');
+    const container = $('comissoes-cargos');
+    if (!container) return;
+
+    container.innerHTML = `
+      <div style="grid-column:1/-1;text-align:center;padding:30px;color:#94a3b8;font-size:12px;">
+        <div class="mt-spinner" style="margin:0 auto 8px;"></div>
+        Carregando comissões de cargos...
+      </div>`;
+
+    try {
+      const [rb, rg] = await Promise.all([
+        sb.rpc('admin_comissao_cargo', { p_cargo: 'BACKOFFICE', p_mes: parseInt(mes,10), p_ano: parseInt(ano,10) }),
+        sb.rpc('admin_comissao_cargo', { p_cargo: 'GERENTE',    p_mes: parseInt(mes,10), p_ano: parseInt(ano,10) })
+      ]);
+
+      if (rb.error) throw rb.error;
+      if (rg.error) throw rg.error;
+
+      const render = (d, cor, icone, titulo) => {
+        if (!d?.success) return `<div style="grid-column:1/-1;color:#ef4444;">Erro: ${d?.message}</div>`;
+        const l = d.loja || {};
+        const t = d.tbp || {};
+        const mg = d.meta_gerencial || {};
+
+        return `
+          <div style="background:white;border:1px solid #eef2f6;border-radius:16px;padding:22px 24px;box-shadow:0 2px 10px rgba(0,0,0,0.02);position:relative;overflow:hidden;">
+            <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:${cor};"></div>
+
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+              <div style="width:44px;height:44px;border-radius:12px;background:${cor}15;color:${cor};display:flex;align-items:center;justify-content:center;font-size:20px;">${icone}</div>
+              <div>
+                <div style="font-size:15px;font-weight:800;color:#0f172a;">${titulo}</div>
+                <div style="font-size:11px;color:#94a3b8;">Comissão do mês · ${String(mes).padStart(2,'0')}/${ano}</div>
+              </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+              <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
+                <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;">Loja · ${l.percentual_aplicado}%</div>
+                <div style="font-size:11px;color:#475569;margin-top:4px;">Faturamento: <b>R$ ${Number(l.faturamento||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</b></div>
+                <div style="font-size:16px;font-weight:800;color:${cor};margin-top:6px;">R$ ${Number(l.comissao||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+              </div>
+              <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
+                <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;">TBPs · ${t.percentual_aplicado}%</div>
+                <div style="font-size:11px;color:#475569;margin-top:4px;">${t.qtd_linhas} linhas · R$ ${Number(t.faturamento||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                <div style="font-size:16px;font-weight:800;color:${cor};margin-top:6px;">R$ ${Number(t.comissao||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+              </div>
+            </div>
+
+            ${mg.valor_meta > 0 ? `
+              <div style="background:${mg.bateu ? '#ecfdf5' : '#fef3c7'};border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:11px;font-weight:700;color:${mg.bateu ? '#065f46' : '#92400e'};">
+                🎯 Meta Gerencial: R$ ${Number(mg.valor_meta).toLocaleString('pt-BR',{minimumFractionDigits:2})} · Total: R$ ${Number(mg.faturamento_total).toLocaleString('pt-BR',{minimumFractionDigits:2})} · ${mg.bateu ? '✅ BATIDA' : '⏳ Não batida'}
+              </div>` : ''}
+
+            <div style="background:linear-gradient(135deg,#0f172a,#1e3c72);color:white;padding:16px 20px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+              <span style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:0.7;">Total a Pagar</span>
+              <span style="font-size:22px;font-weight:800;color:#38ef7d;">R$ ${Number(d.total||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</span>
+            </div>
+
+            <button onclick='confirmarPagamentoCargo(${JSON.stringify(d.cargo)}, ${d.total}, ${JSON.stringify(d)})'
+              style="width:100%;padding:12px;background:${cor};color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">
+              💰 Registrar Pagamento
+            </button>
+          </div>`;
+      };
+
+      container.innerHTML = 
+        render(rb.data, '#3b82f6', '🧑‍💼', 'Backoffice Comercial') +
+        render(rg.data, '#8b5cf6', '👔', 'Gerente SMB');
+
+    } catch (e) {
+      console.error('[CARGOS]', e);
+      container.innerHTML = `<div style="grid-column:1/-1;color:#ef4444;text-align:center;padding:20px;">❌ ${e.message}</div>`;
+    }
+  }
+
+  async function confirmarPagamentoCargo(cargo, total, detalhes) {
+    if (!confirm(`Registrar pagamento de ${cargo} no valor de R$ ${Number(total).toFixed(2)}?`)) return;
+    const sb = getSb();
+    const inputMes = $('filtro-mes-fin');
+    const [ano, mes] = (inputMes?.value || '').split('-');
+
+    try {
+      const { data, error } = await sb.rpc('admin_registrar_pagamento', {
+        p_consultor_id: null,
+        p_consultor_nome: `[${cargo}] ${cargo === 'BACKOFFICE' ? 'Backoffice Comercial' : 'Gerente SMB'}`,
+        p_mes: parseInt(mes, 10),
+        p_ano: parseInt(ano, 10),
+        p_receita: (detalhes.loja?.faturamento || 0) + (detalhes.tbp?.faturamento || 0),
+        p_gross: (detalhes.loja?.qtd_linhas || 0) + (detalhes.tbp?.qtd_linhas || 0),
+        p_port_valor: 0,
+        p_mid_qtd: 0,
+        p_mid_valor: 0,
+        p_valor_base: detalhes.loja?.comissao || 0,
+        p_valor_port: detalhes.tbp?.comissao || 0,
+        p_valor_reneg: 0,
+        p_faixa_aplicada: null,
+        p_observacao: `Pagamento de ${cargo}`
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message);
+      toast(`✅ Pagamento de ${cargo} registrado!`, 'success');
+      carregarResumoConsolidado();
+    } catch (e) {
+      toast('❌ ' + e.message, 'error');
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // MODAL · META GERENCIAL
+  // ═══════════════════════════════════════════════════════════
+  async function abrirModalMetaGerencial() {
+    const sb = getSb();
+    if (!sb) return;
+    const inputMes = $('filtro-mes-fin');
+    const [ano, mes] = (inputMes?.value || '').split('-');
+    const mesNum = parseInt(mes, 10);
+    const anoNum = parseInt(ano, 10);
+
+    let modal = $('modal-meta-gerencial');
+    if (!modal) {
+      modal = document.createElement('div');
+      modal.id = 'modal-meta-gerencial';
+      modal.style.cssText = `position:fixed;inset:0;background:rgba(15,23,42,0.75);backdrop-filter:blur(6px);z-index:2147483646;display:flex;align-items:center;justify-content:center;padding:20px;`;
+      modal.innerHTML = `
+        <div style="background:white;border-radius:20px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 25px 60px -12px rgba(0,0,0,0.4);">
+          <div style="padding:20px 24px;background:linear-gradient(135deg,#0f172a,#1e3c72);color:white;display:flex;justify-content:space-between;align-items:center;">
+            <h3 style="margin:0;font-size:16px;font-weight:800;">🎯 Meta Gerencial</h3>
+            <button onclick="document.getElementById('modal-meta-gerencial').remove()" style="background:rgba(255,255,255,0.15);border:none;width:32px;height:32px;border-radius:50%;color:white;font-size:16px;cursor:pointer;">✕</button>
+          </div>
+          <div style="padding:24px;">
+            <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:12px;color:#1e40af;">
+              <b>Competência:</b> ${String(mes).padStart(2,'0')}/${ano}<br>
+              A meta é medida sobre o <b>total de vendas</b> (Loja + TBPs).
+            </div>
+            <div style="margin-bottom:16px;">
+              <label style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;">Valor da Meta (R$)</label>
+              <input type="number" id="mg-valor" step="0.01" style="width:100%;padding:12px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:14px;margin-top:6px;font-weight:700;">
+            </div>
+            <div style="margin-bottom:22px;">
+              <label style="font-size:11px;font-weight:800;color:#475569;text-transform:uppercase;">Observação</label>
+              <textarea id="mg-obs" style="width:100%;padding:12px;border:1.5px solid #cbd5e1;border-radius:10px;font-size:13px;margin-top:6px;resize:vertical;" rows="2"></textarea>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;">
+              <button onclick="document.getElementById('modal-meta-gerencial').remove()" style="padding:11px 20px;background:#f1f5f9;color:#64748b;border:none;border-radius:10px;font-weight:700;cursor:pointer;">Cancelar</button>
+              <button onclick="salvarMetaGerencial(${mesNum}, ${anoNum})" style="padding:11px 24px;background:#1e3c72;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;">Salvar</button>
+            </div>
+          </div>
+        </div>`;
+      document.body.appendChild(modal);
+    } else {
+      modal.style.display = 'flex';
+    }
+
+    // Carrega valor atual
+    try {
+      const { data } = await sb.rpc('admin_meta_gerencial_get', { p_mes: mesNum, p_ano: anoNum });
+      if (data?.existe) {
+        $('mg-valor').value = data.meta_valor || '';
+        $('mg-obs').value = data.observacao || '';
+      }
+    } catch (e) {}
+  }
+
+  async function salvarMetaGerencial(mes, ano) {
+    const sb = getSb();
+    const valor = parseFloat($('mg-valor').value) || 0;
+    const obs = $('mg-obs').value.trim() || null;
+
+    try {
+      const { data, error } = await sb.rpc('admin_meta_gerencial_set', {
+        p_mes: mes, p_ano: ano, p_meta: valor, p_observacao: obs
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message);
+      toast('✅ Meta gerencial salva!', 'success');
+      $('modal-meta-gerencial').remove();
+      carregarComissoesCargos();
+    } catch (e) {
+      toast('❌ ' + e.message, 'error');
+    }
+  }
+
+  // Chamar a função na carga geral
+  const _carregarResumoOriginal = carregarResumoConsolidado;
+  carregarResumoConsolidado = async function() {
+    await _carregarResumoOriginal();
+    carregarComissoesCargos();
+  };
 </script>
