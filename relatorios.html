@@ -201,7 +201,7 @@
       descricao: 'Relatórios de vendas, ativações e performance comercial',
       relatorios: [
         { id: '2.1', titulo: 'Vendas Detalhado',  descricao: 'Relatório completo de vendas com filtros, KPIs e exportação', arquivo: 'relatorio_vendas_detalhado.html', status: 'disponivel', roles: ['BACKOFFICE','GERENTE'] },
-        { id: '2.2', titulo: 'Minhas Vendas',     descricao: 'Visão pessoal do consultor sobre suas vendas',                 arquivo: 'relatorio_minhas_vendas.html',    status: 'disponivel', roles: ['CONSULTOR','BACKOFFICE','GERENTE','FINANCEIRO'] },
+        { id: '2.2', titulo: 'Minhas Vendas',     descricao: 'Visão pessoal do consultor sobre suas vendas',                 arquivo: 'relatorio_minhas_vendas.html',    status: 'disponivel', roles: ['CONSULTOR DE VENDAS','BACKOFFICE','GERENTE','FINANCEIRO'] },
         { id: '2.3', titulo: 'Raio-X Backoffice', descricao: 'Análise de funil e gargalos do backoffice',                    arquivo: 'relatorio_raiox_backoffice.html', status: 'em_breve',   roles: ['BACKOFFICE'] }
       ]
     },
@@ -265,15 +265,27 @@
   /* ═══════════ PERMISSÕES ═══════════ */
   const ADMIN_ROLES = ['ADMINISTRADOR', 'ADMIN'];
 
-  function ehAdmin(role) {
-    return ADMIN_ROLES.includes(String(role || '').toUpperCase().trim());
-  }
+function ehAdmin(role) {
+  return ['ADMINISTRADOR', 'ADMIN'].includes(normalizarRole(role));
+}
 
-  function podeVer(relatorio, role) {
-    if (ehAdmin(role)) return true;              // Admin vê tudo
-    if (!relatorio.roles || relatorio.roles.length === 0) return false; // [] = só admin
-    return relatorio.roles.map(r => r.toUpperCase()).includes(String(role || '').toUpperCase().trim());
-  }
+function podeVer(relatorio, role) {
+  if (ehAdmin(role)) return true;
+  if (!relatorio.roles || relatorio.roles.length === 0) return false;
+
+  const roleUser = normalizarRole(role);
+  return relatorio.roles.some(r => normalizarRole(r) === roleUser);
+}
+
+function normalizarRole(r) {
+  return String(r || '')
+    .toUpperCase()
+    .trim()
+    // aceita variações:
+    .replace('CONSULTOR DE VENDAS', 'CONSULTOR')
+    .replace('GERENTE/SUPERVISOR', 'GERENTE')
+    .replace('SUPERVISOR', 'GERENTE');
+}
 
   function filtrarPastasPorRole(pastas, role) {
     return pastas.map(pasta => {
