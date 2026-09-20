@@ -394,20 +394,18 @@
     if (!DADOS_ATUAIS) return;
     const d = DADOS_ATUAIS;
 
-    const dados = (d.vendas || []).map(v => ({
-      'Data Ativação': v.data_ativacao || '',
-      'Data Venda': v.data_venda || '',
-      'Cliente': v.razao_social || '',
-      'CNPJ': v.cnpj || '',
-      'Modalidade': v.modalidade || '',
-      'Plano': v.plano || '',
-      'Linha': v.numero_linha || '',
-      'UF': v.uf || '',
-      'Cidade': v.cidade || '',
-      'Operadora Doadora': v.operadora_doadora || '',
-      'Valor': Number(v.valor_numeric) || 0,
-      'Status': v.status || ''
-    }));
+ const dados = (d.vendas || []).map(v => ({
+  'Data Ativação': v.data_ativacao || '',
+  'Data Venda': v.data_venda || '',
+  'Cliente': v.razao_social || '',
+  'CNPJ': v.cnpj || '',
+  'Modalidade': v.modalidade || '',
+  'Plano': v.plano || '',
+  'Linha': v.numero_linha || '',
+  'Origem': v.origem || '',
+  'Valor': Number(v.valor_numeric) || 0,
+  'Status': v.status || ''
+}));
 
     const ws = XLSX.utils.json_to_sheet(dados);
     ws['!cols'] = [
