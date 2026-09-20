@@ -260,15 +260,38 @@
     }
 
     // Fator de Renegociação
-    function fatorReneg(pacoteDados, atingimento, renegRatio) {
-      const c = String(pacoteDados||'').toUpperCase();
-      let base = 2.80; // HIGH
-      if (c.includes('300 MB') || c.includes('600 MB') || c.includes('1GB')
-          || c.includes('2GB') || c.includes('3GB') || c.includes('4GB')) base = 0.30;
-      else if (c.includes('5GB') || c.includes('6GB')) base = 1.80;
+      // Fator de Renegociação (baseado na Tabela A/B/C da política TIM)
+    // Fórmula Tabela A: base + (atingimento - 60) / 100
+    // Tabela B: 65% da A   |   Tabela C: 40% da A
+    function fatorReneg(plano, pacoteDados, atingimento, renegRatio) {
+      // Junta plano + pacote para detectar a categoria
+      const txt = (String(plano||'') + ' ' + String(pacoteDados||'')).toUpperCase();
 
+      let base = 2.80; // default HIGH
+
+      // ── Detecta categoria pelo pacote de dados (regra da política) ──
+      if (/300\s*MB|600\s*MB|PACOTE\s+DE\s+DADOS\s+1GB|PACOTE\s+DE\s+DADOS\s+2GB|PACOTE\s+DE\s+DADOS\s+3GB|PACOTE\s+DE\s+DADOS\s+4GB/i.test(txt)) {
+        base = 0.30; // LOW
+      } else if (/5GB|6GB|PACOTE\s+DE\s+DADOS\s+5GB|PACOTE\s+DE\s+DADOS\s+6GB/i.test(txt)) {
+        base = 1.80; // MID
+      } else if (/10GB|20GB|30GB|50GB|100GB/i.test(txt)) {
+        base = 2.80; // HIGH
+      } else {
+        // ── Se não achou pacote, tenta pelo nome do plano de voz ──
+        if (/LIBERTY\s+EMPRESA|TIM\s+EMPRESA\s+TARIFA\s+FLAT|TIM\s+BLACK/i.test(txt)) {
+          base = 0.30; // LOW
+        } else {
+          base = 2.80; // assume HIGH
+        }
+      }
+
+      // Abaixo de 60% não paga
       if (atingimento < 60) return 0;
+
+      // Fator Tabela A
       const fatorA = base + ((atingimento - 60) / 100);
+
+      // Aplica tabela conforme o Reneg/Meta Gross
       if (renegRatio <= 120) return fatorA;
       if (renegRatio <= 185) return fatorA * 0.65;
       return fatorA * 0.40;
