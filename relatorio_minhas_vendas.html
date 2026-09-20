@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+  .mv-wrap { font-family: 'Poppins', sans-serif; color: #0f172a; padding: 4px; }
+  .mv-filters {
+    background: white; border-radius: 14px; padding: 20px 22px;
+    border: 1px solid #e2e8f0; margin-bottom: 22px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .mv-field { display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
+  .mv-field label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .mv-field input, .mv-field select {
+    padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 9px;
+    font-family: inherit; font-size: 13px; outline: none; transition: 0.2s;
+  }
+  .mv-field input:focus, .mv-field select:focus { border-color: #0b1a3a; box-shadow: 0 0 0 3px rgba(11,26,58,0.08); }
+  .mv-btn { padding: 10px 20px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+  .mv-btn-primary { background: #0b1a3a; color: white; }
+  .mv-btn-primary:hover:not(:disabled) { background: #1a3060; }
+  .mv-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .mv-btn-soft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .mv-btn-soft:hover { background: #e2e8f0; }
+  .mv-btn-pdf { background: #dc2626; color: white; }
+  .mv-btn-pdf:hover:not(:disabled) { background: #b91c1c; }
+  .mv-btn-xls { background: #16a34a; color: white; }
+  .mv-btn-xls:hover:not(:disabled) { background: #15803d; }
+  .mv-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .mv-hello {
+    background: linear-gradient(135deg, #0f172a, #1e3a8a);
+    color: white; border-radius: 14px; padding: 20px 24px;
+    margin-bottom: 22px; display: flex; justify-content: space-between;
+    align-items: center; flex-wrap: wrap; gap: 12px;
+    box-shadow: 0 10px 25px rgba(30,58,138,0.22);
+  }
+  .mv-hello h2 { margin: 0 0 4px; font-size: 18px; font-weight: 800; }
+  .mv-hello small { opacity: 0.75; font-size: 11.5px; }
+  .mv-hello .badge-role {
+    background: rgba(255,255,255,0.12); padding: 6px 14px;
+    border-radius: 20px; font-size: 10px; font-weight: 800;
+    letter-spacing: 0.5px; text-transform: uppercase;
+  }
+
+  .mv-kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px; margin-bottom: 22px;
+  }
+  .mv-kpi {
+    background: white; border-radius: 14px; padding: 16px 18px;
+    border: 1px solid #e2e8f0; position: relative;
+  }
+  .mv-kpi::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 100%; border-radius: 14px 14px 0 0; background: var(--c, #0b1a3a); }
+  .mv-kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .mv-kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+  .mv-kpi-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  .mv-tabela { background: white; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; }
+  .mv-thead {
+    padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  }
+  .mv-thead h3 { margin: 0; font-size: 13px; font-weight: 800; color: #0b1a3a; }
+  .mv-thead span { font-size: 11px; color: #64748b; }
+
+  .mv-scroll { max-height: 620px; overflow-y: auto; }
+  .mv-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .mv-tab th {
+    text-align: left; padding: 10px 14px; background: #f8fafc;
+    color: #475569; font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 2;
+  }
+  .mv-tab td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+  .mv-tab tr:hover td { background: #f8fafc; }
+  .mv-tab td.r { text-align: right; font-weight: 700; }
+  .mv-tab td.mono { font-family: monospace; font-size: 11px; color: #1e3c72; }
+
+  .mv-badge {
+    display: inline-block; padding: 3px 9px; border-radius: 12px;
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+  }
+  .mv-badge.ativo   { background: #dcfce7; color: #166534; }
+  .mv-badge.pend    { background: #fef3c7; color: #92400e; }
+  .mv-badge.cancel  { background: #fee2e2; color: #991b1b; }
+  .mv-badge.outros  { background: #f1f5f9; color: #475569; }
+
+  .mv-vazio { padding: 60px; text-align: center; color: #94a3b8; }
+</style>
+
+<div class="mv-wrap">
+
+  <!-- SAUDAÇÃO PERSONALIZADA -->
+  <div class="mv-hello" id="mv-hello" style="display:none;">
+    <div>
+      <h2 id="mv-hello-nome">Olá! 👋</h2>
+      <small>Veja suas vendas, ativações e comissões estimadas no período selecionado</small>
+    </div>
+    <div class="badge-role" id="mv-hello-role">—</div>
+  </div>
+
+  <!-- FILTROS -->
+  <div class="mv-filters">
+    <div class="mv-field">
+      <label>Início</label>
+      <input type="date" id="mv-ini">
+    </div>
+    <div class="mv-field">
+      <label>Fim</label>
+      <input type="date" id="mv-fim">
+    </div>
+    <div class="mv-field">
+      <label>Modalidade</label>
+      <select id="mv-modalidade"><option value="">Todas</option></select>
+    </div>
+    <div class="mv-field">
+      <label>Status</label>
+      <select id="mv-status">
+        <option value="">Todos</option>
+        <option value="PENDENTE DE INPUT">Pendente</option>
+        <option value="1. INPUT REALIZADO">Input Realizado</option>
+        <option value="2. ANTIFRAUDE APROVADO">Antifraude</option>
+        <option value="3. DOCS VALIDADOS BOC">Docs BOC</option>
+        <option value="4. NOTA FISCAL EMITIDA">NF Emitida</option>
+        <option value="5. CONFIRMAÇÃO LOGÍSTICA">Logística</option>
+        <option value="6. ATIVADO">Ativado</option>
+      </select>
+    </div>
+    <button class="mv-btn mv-btn-primary" id="mv-btn-filtrar" onclick="MV.filtrar()">🔍 Filtrar</button>
+    <button class="mv-btn mv-btn-soft" onclick="MV.limpar()">Limpar</button>
+    <button class="mv-btn mv-btn-pdf" id="mv-btn-pdf" onclick="MV.exportarPDF()" disabled>📄 PDF</button>
+    <button class="mv-btn mv-btn-xls" id="mv-btn-xls" onclick="MV.exportarExcel()" disabled>📊 Excel</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="mv-kpis" id="mv-kpis"></div>
+
+  <!-- TABELA -->
+  <div class="mv-tabela">
+    <div class="mv-thead">
+      <h3>📋 Minhas Vendas</h3>
+      <span id="mv-info"></span>
+    </div>
+    <div class="mv-scroll">
+      <table class="mv-tab">
+        <thead>
+          <tr>
+            <th>Ativação</th>
+            <th>Venda</th>
+            <th>Cliente</th>
+            <th>CNPJ</th>
+            <th>Modalidade</th>
+            <th>Plano</th>
+            <th>Linha</th>
+            <th>UF</th>
+            <th class="r">Valor</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="mv-tbody">
+          <tr><td colspan="10" class="mv-vazio">Selecione o período e clique em Filtrar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let DADOS_ATUAIS = null;
+
+  function getSb() {
+    if (window.sb) return window.sb;
+    try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e) {}
+    return null;
+  }
+
+  function initDatas() {
+    const hoje = new Date();
+    const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    const toISO = (d) => d.toISOString().split('T')[0];
+    if (!$('mv-ini').value) $('mv-ini').value = toISO(ini);
+    if (!$('mv-fim').value) $('mv-fim').value = toISO(fim);
+  }
+
+  async function filtrar() {
+    const sb = getSb();
+    if (!sb) return alert('Supabase indisponível');
+
+    const ini = $('mv-ini').value;
+    const fim = $('mv-fim').value;
+    if (!ini || !fim) return alert('Selecione o período');
+
+    const btn = $('mv-btn-filtrar');
+    btn.disabled = true; btn.textContent = '⏳ Carregando...';
+    $('mv-tbody').innerHTML = `<tr><td colspan="10" class="mv-vazio">Carregando...</td></tr>`;
+
+    try {
+      const { data, error } = await sb.rpc('consultor_minhas_vendas', {
+        p_inicio: ini,
+        p_fim: fim,
+        p_modalidade: $('mv-modalidade').value || null,
+        p_status: $('mv-status').value || null
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      DADOS_ATUAIS = data;
+      render(data);
+
+      $('mv-btn-pdf').disabled = false;
+      $('mv-btn-xls').disabled = false;
+    } catch (e) {
+      console.error(e);
+      $('mv-tbody').innerHTML = `<tr><td colspan="10" class="mv-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '🔍 Filtrar';
+    }
+  }
+
+  function render(d) {
+    const t = d.totais || {};
+
+    // Saudação
+    if (d.consultor) {
+      $('mv-hello').style.display = 'flex';
+      $('mv-hello-nome').textContent = `Olá, ${d.consultor.split(' ')[0]}! 👋`;
+      $('mv-hello-role').textContent = d.role || '—';
+    }
+
+    // KPIs
+    $('mv-kpis').innerHTML = `
+      <div class="mv-kpi" style="--c:#0b1a3a;">
+        <div class="mv-kpi-label">Minhas Vendas</div>
+        <div class="mv-kpi-value">${fmtInt(t.qtd_total)}</div>
+        <div class="mv-kpi-sub">${fmt(t.valor_total)}</div>
+      </div>
+      <div class="mv-kpi" style="--c:#10b981;">
+        <div class="mv-kpi-label">Ativadas</div>
+        <div class="mv-kpi-value">${fmtInt(t.qtd_ativadas)}</div>
+        <div class="mv-kpi-sub">${fmt(t.valor_ativado)}</div>
+      </div>
+      <div class="mv-kpi" style="--c:#f59e0b;">
+        <div class="mv-kpi-label">Pendentes</div>
+        <div class="mv-kpi-value">${fmtInt(t.qtd_pendentes)}</div>
+        <div class="mv-kpi-sub">Aguardando ativação</div>
+      </div>
+      <div class="mv-kpi" style="--c:#a855f7;">
+        <div class="mv-kpi-label">Meu Ticket Médio</div>
+        <div class="mv-kpi-value">${fmt(t.valor_medio)}</div>
+        <div class="mv-kpi-sub">Por venda</div>
+      </div>
+      <div class="mv-kpi" style="--c:#3b82f6;">
+        <div class="mv-kpi-label">Minhas Portabilidades</div>
+        <div class="mv-kpi-value">${fmtInt(t.qtd_portabilidade)}</div>
+        <div class="mv-kpi-sub">Linhas portadas</div>
+      </div>
+      <div class="mv-kpi" style="--c:#ef4444;">
+        <div class="mv-kpi-label">Renegociações</div>
+        <div class="mv-kpi-value">${fmtInt(t.qtd_renegociacao)}</div>
+        <div class="mv-kpi-sub">Acordos</div>
+      </div>`;
+
+    // Filtros
+    popularFiltros(d.filtros_disponiveis || {});
+
+    // Tabela
+    const vendas = d.vendas || [];
+    $('mv-info').textContent = `${vendas.length} linha(s) · ${fmt(t.valor_total)}`;
+
+    if (vendas.length === 0) {
+      $('mv-tbody').innerHTML = '<tr><td colspan="10" class="mv-vazio">Nenhuma venda sua no período.</td></tr>';
+      return;
+    }
+
+    $('mv-tbody').innerHTML = vendas.map(v => {
+      const status = String(v.status || '').toUpperCase();
+      let badgeCls = 'outros';
+      if (v.status_etapa === 6) badgeCls = 'ativo';
+      else if (status.includes('CANCEL')) badgeCls = 'cancel';
+      else if (status.includes('PENDENTE') || v.status_etapa < 6) badgeCls = 'pend';
+
+      return `<tr>
+        <td>${esc(v.data_ativacao || '—')}</td>
+        <td>${esc(v.data_venda || '—')}</td>
+        <td><strong>${esc(v.razao_social || '—')}</strong></td>
+        <td class="mono">${esc(v.cnpj || '—')}</td>
+        <td>${esc(v.modalidade || '—')}</td>
+        <td>${esc(v.plano || '—')}</td>
+        <td class="mono">${esc(v.numero_linha || '—')}</td>
+        <td>${esc(v.uf || '—')}</td>
+        <td class="r">${fmt(v.valor_numeric)}</td>
+        <td><span class="mv-badge ${badgeCls}">${esc(v.status || '—')}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function popularFiltros(f) {
+    const opts = (arr, valorVazio) => `<option value="">${valorVazio}</option>` +
+      (arr||[]).filter(Boolean).sort().map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+    if ($('mv-modalidade').children.length <= 1) $('mv-modalidade').innerHTML = opts(f.modalidades, 'Todas');
+  }
+
+  function limpar() {
+    $('mv-modalidade').value = '';
+    $('mv-status').value = '';
+    initDatas();
+    filtrar();
+  }
+
+  function exportarPDF() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+    const t = d.totais || {};
+
+    const rows = (d.vendas || []).map(v => `
+      <tr>
+        <td>${esc(v.data_ativacao || '—')}</td>
+        <td>${esc(v.razao_social || '—')}</td>
+        <td>${esc(v.cnpj || '—')}</td>
+        <td>${esc(v.modalidade || '—')}</td>
+        <td>${esc(v.plano || '—')}</td>
+        <td>${esc(v.uf || '—')}</td>
+        <td class="r">${fmt(v.valor_numeric)}</td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Minhas Vendas</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; color: #0f172a; padding: 20px; }
+  .head { border-bottom: 3px solid #0b1a3a; padding-bottom: 12px; margin-bottom: 18px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .head h1 { margin: 0; font-size: 18px; color: #0b1a3a; }
+  .head .meta { text-align: right; font-size: 10px; color: #64748b; }
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 16px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+  .kpi small { font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .kpi strong { display: block; font-size: 14px; color: #0f172a; margin-top: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  th { background: #f1f5f9; text-align: left; padding: 6px 8px; border-bottom: 1px solid #cbd5e1; font-size: 8px; text-transform: uppercase; color: #475569; }
+  td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+  td.r { text-align: right; font-weight: 700; }
+  .foot { margin-top: 20px; font-size: 9px; color: #94a3b8; text-align: center; }
+  .no-print { text-align:center; margin-top:20px; }
+  @media print { .no-print { display:none; } body { padding: 0; } }
+</style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="padding:10px 24px;background:#0b1a3a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  <div class="head">
+    <div>
+      <h1>Minhas Vendas · ${esc(d.consultor || 'Consultor')}</h1>
+      <small style="color:#64748b;">Período: ${d.periodo.inicio} a ${d.periodo.fim}</small>
+    </div>
+    <div class="meta"><div>Emitido em ${new Date().toLocaleString('pt-BR')}</div></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small>Total</small><strong>${fmtInt(t.qtd_total)}</strong></div>
+    <div class="kpi"><small>Valor Total</small><strong>${fmt(t.valor_total)}</strong></div>
+    <div class="kpi"><small>Ativadas</small><strong>${fmtInt(t.qtd_ativadas)}</strong></div>
+    <div class="kpi"><small>Pendentes</small><strong>${fmtInt(t.qtd_pendentes)}</strong></div>
+    <div class="kpi"><small>Ticket Médio</small><strong>${fmt(t.valor_medio)}</strong></div>
+    <div class="kpi"><small>Portabilidade</small><strong>${fmtInt(t.qtd_portabilidade)}</strong></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th><th>UF</th><th class="r">Valor</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="foot">Gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}</div>
+</body></html>`;
+
+    const w = window.open('', '_blank', 'width=1200,height=800');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  function exportarExcel() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+
+    const dados = (d.vendas || []).map(v => ({
+      'Data Ativação': v.data_ativacao || '',
+      'Data Venda': v.data_venda || '',
+      'Cliente': v.razao_social || '',
+      'CNPJ': v.cnpj || '',
+      'Modalidade': v.modalidade || '',
+      'Plano': v.plano || '',
+      'Linha': v.numero_linha || '',
+      'UF': v.uf || '',
+      'Cidade': v.cidade || '',
+      'Operadora Doadora': v.operadora_doadora || '',
+      'Valor': Number(v.valor_numeric) || 0,
+      'Status': v.status || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dados);
+    ws['!cols'] = [
+      {wch:12},{wch:12},{wch:35},{wch:20},{wch:18},{wch:25},{wch:15},
+      {wch:5},{wch:18},{wch:18},{wch:12},{wch:22}
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Minhas Vendas');
+    XLSX.writeFile(wb, `minhas_vendas_${d.periodo.inicio}_a_${d.periodo.fim}.xlsx`);
+  }
+
+  function init() {
+    initDatas();
+    setTimeout(filtrar, 300);
+  }
+
+  window.MV = { filtrar, limpar, exportarPDF, exportarExcel };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else setTimeout(init, 100);
+})();
+</script>
+</body>
+</html>
