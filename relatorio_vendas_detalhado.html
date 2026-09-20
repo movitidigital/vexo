@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<style>
+  .rvd-wrap { font-family: 'Poppins', sans-serif; color: #0f172a; }
+  .rvd-filters {
+    background: white; border-radius: 14px; padding: 20px 22px;
+    border: 1px solid #e2e8f0; margin-bottom: 22px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .rvd-field { display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
+  .rvd-field label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .rvd-field input, .rvd-field select {
+    padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 9px;
+    font-family: inherit; font-size: 13px; outline: none; transition: 0.2s;
+  }
+  .rvd-field input:focus, .rvd-field select:focus { border-color: #0b1a3a; box-shadow: 0 0 0 3px rgba(11,26,58,0.08); }
+  .rvd-btn { padding: 10px 20px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+  .rvd-btn-primary { background: #0b1a3a; color: white; }
+  .rvd-btn-primary:hover:not(:disabled) { background: #1a3060; }
+  .rvd-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .rvd-btn-soft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .rvd-btn-soft:hover { background: #e2e8f0; }
+  .rvd-btn-pdf { background: #dc2626; color: white; }
+  .rvd-btn-pdf:hover:not(:disabled) { background: #b91c1c; }
+  .rvd-btn-xls { background: #16a34a; color: white; }
+  .rvd-btn-xls:hover:not(:disabled) { background: #15803d; }
+  .rvd-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .rvd-kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    gap: 14px; margin-bottom: 22px;
+  }
+  .rvd-kpi {
+    background: white; border-radius: 14px; padding: 16px 18px;
+    border: 1px solid #e2e8f0; position: relative;
+  }
+  .rvd-kpi::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 100%; border-radius: 14px 14px 0 0; background: var(--c, #0b1a3a); }
+  .rvd-kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .rvd-kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+  .rvd-kpi-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  .rvd-tabela { background: white; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; }
+  .rvd-thead {
+    padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  }
+  .rvd-thead h3 { margin: 0; font-size: 13px; font-weight: 800; color: #0b1a3a; }
+  .rvd-thead span { font-size: 11px; color: #64748b; }
+
+  .rvd-scroll { max-height: 620px; overflow-y: auto; }
+  .rvd-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .rvd-tab th {
+    text-align: left; padding: 10px 14px; background: #f8fafc;
+    color: #475569; font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 2;
+  }
+  .rvd-tab td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+  .rvd-tab tr:hover td { background: #f8fafc; }
+  .rvd-tab td.r { text-align: right; font-weight: 700; }
+  .rvd-tab td.mono { font-family: monospace; font-size: 11px; color: #1e3c72; }
+
+  .rvd-badge {
+    display: inline-block; padding: 3px 9px; border-radius: 12px;
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+  }
+  .rvd-badge.ativo   { background: #dcfce7; color: #166534; }
+  .rvd-badge.pend    { background: #fef3c7; color: #92400e; }
+  .rvd-badge.cancel  { background: #fee2e2; color: #991b1b; }
+  .rvd-badge.outros  { background: #f1f5f9; color: #475569; }
+
+  .rvd-vazio { padding: 60px; text-align: center; color: #94a3b8; }
+</style>
+
+<div class="rvd-wrap">
+
+  <!-- FILTROS -->
+  <div class="rvd-filters">
+    <div class="rvd-field">
+      <label>Início</label>
+      <input type="date" id="rvd-ini">
+    </div>
+    <div class="rvd-field">
+      <label>Fim</label>
+      <input type="date" id="rvd-fim">
+    </div>
+    <div class="rvd-field">
+      <label>Consultor</label>
+      <select id="rvd-consultor"><option value="">Todos</option></select>
+    </div>
+    <div class="rvd-field">
+      <label>Modalidade</label>
+      <select id="rvd-modalidade"><option value="">Todas</option></select>
+    </div>
+    <div class="rvd-field">
+      <label>UF</label>
+      <select id="rvd-uf"><option value="">Todas</option></select>
+    </div>
+    <div class="rvd-field">
+      <label>Status</label>
+      <select id="rvd-status">
+        <option value="">Todos</option>
+        <option value="PENDENTE DE INPUT">Pendente</option>
+        <option value="1. INPUT REALIZADO">Input Realizado</option>
+        <option value="2. ANTIFRAUDE APROVADO">Antifraude</option>
+        <option value="3. DOCS VALIDADOS BOC">Docs BOC</option>
+        <option value="4. NOTA FISCAL EMITIDA">NF Emitida</option>
+        <option value="5. CONFIRMAÇÃO LOGÍSTICA">Logística</option>
+        <option value="6. ATIVADO">Ativado</option>
+      </select>
+    </div>
+    <button class="rvd-btn rvd-btn-primary" id="rvd-btn-filtrar" onclick="RVD.filtrar()">🔍 Filtrar</button>
+    <button class="rvd-btn rvd-btn-soft" onclick="RVD.limpar()">Limpar</button>
+    <button class="rvd-btn rvd-btn-pdf" id="rvd-btn-pdf" onclick="RVD.exportarPDF()" disabled>📄 PDF</button>
+    <button class="rvd-btn rvd-btn-xls" id="rvd-btn-xls" onclick="RVD.exportarExcel()" disabled>📊 Excel</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="rvd-kpis" id="rvd-kpis"></div>
+
+  <!-- TABELA -->
+  <div class="rvd-tabela">
+    <div class="rvd-thead">
+      <h3>📋 Vendas Detalhadas</h3>
+      <span id="rvd-info"></span>
+    </div>
+    <div class="rvd-scroll">
+      <table class="rvd-tab" id="rvd-tabela">
+        <thead>
+          <tr>
+            <th>Ativação</th>
+            <th>Venda</th>
+            <th>Cliente</th>
+            <th>CNPJ</th>
+            <th>Modalidade</th>
+            <th>Plano</th>
+            <th>Linha</th>
+            <th>Consultor</th>
+            <th>UF</th>
+            <th class="r">Valor</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody id="rvd-tbody">
+          <tr><td colspan="11" class="rvd-vazio">Selecione o período e clique em Filtrar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let DADOS_ATUAIS = null;
+
+  function getSb() {
+    if (window.sb) return window.sb;
+    try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e) {}
+    return null;
+  }
+
+  // ─── Init padrão de datas (mês atual) ────────────────────────
+  function initDatas() {
+    const hoje = new Date();
+    const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    const toISO = (d) => d.toISOString().split('T')[0];
+    if (!$('rvd-ini').value) $('rvd-ini').value = toISO(ini);
+    if (!$('rvd-fim').value) $('rvd-fim').value = toISO(fim);
+  }
+
+  // ─── Filtrar ────────────────────────────────────────────────
+  async function filtrar() {
+    const sb = getSb();
+    if (!sb) return alert('Supabase indisponível');
+
+    const ini = $('rvd-ini').value;
+    const fim = $('rvd-fim').value;
+    if (!ini || !fim) return alert('Selecione o período');
+
+    const btn = $('rvd-btn-filtrar');
+    btn.disabled = true; btn.textContent = '⏳ Carregando...';
+
+    $('rvd-tbody').innerHTML = `<tr><td colspan="11" class="rvd-vazio">Carregando...</td></tr>`;
+
+    try {
+      const { data, error } = await sb.rpc('admin_relatorio_vendas_detalhado', {
+        p_inicio: ini,
+        p_fim: fim,
+        p_consultor: $('rvd-consultor').value || null,
+        p_modalidade: $('rvd-modalidade').value || null,
+        p_uf: $('rvd-uf').value || null,
+        p_status: $('rvd-status').value || null
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      DADOS_ATUAIS = data;
+      render(data);
+
+      // Habilita botões de exportação
+      $('rvd-btn-pdf').disabled = false;
+      $('rvd-btn-xls').disabled = false;
+    } catch (e) {
+      console.error(e);
+      $('rvd-tbody').innerHTML = `<tr><td colspan="11" class="rvd-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '🔍 Filtrar';
+    }
+  }
+
+  // ─── Renderizar ─────────────────────────────────────────────
+  function render(d) {
+    const t = d.totais || {};
+
+    // KPIs
+    $('rvd-kpis').innerHTML = `
+      <div class="rvd-kpi" style="--c:#0b1a3a;">
+        <div class="rvd-kpi-label">Total de Vendas</div>
+        <div class="rvd-kpi-value">${fmtInt(t.qtd_total)}</div>
+        <div class="rvd-kpi-sub">${fmt(t.valor_total)}</div>
+      </div>
+      <div class="rvd-kpi" style="--c:#10b981;">
+        <div class="rvd-kpi-label">Ativadas</div>
+        <div class="rvd-kpi-value">${fmtInt(t.qtd_ativadas)}</div>
+        <div class="rvd-kpi-sub">${fmt(t.valor_ativado)}</div>
+      </div>
+      <div class="rvd-kpi" style="--c:#f59e0b;">
+        <div class="rvd-kpi-label">Pendentes</div>
+        <div class="rvd-kpi-value">${fmtInt(t.qtd_pendentes)}</div>
+        <div class="rvd-kpi-sub">Aguardando ativação</div>
+      </div>
+      <div class="rvd-kpi" style="--c:#a855f7;">
+        <div class="rvd-kpi-label">Ticket Médio</div>
+        <div class="rvd-kpi-value">${fmt(t.valor_medio)}</div>
+        <div class="rvd-kpi-sub">Por venda</div>
+      </div>
+      <div class="rvd-kpi" style="--c:#3b82f6;">
+        <div class="rvd-kpi-label">Portabilidade</div>
+        <div class="rvd-kpi-value">${fmtInt(t.qtd_portabilidade)}</div>
+        <div class="rvd-kpi-sub">Linhas portadas</div>
+      </div>
+      <div class="rvd-kpi" style="--c:#ef4444;">
+        <div class="rvd-kpi-label">Renegociação</div>
+        <div class="rvd-kpi-value">${fmtInt(t.qtd_renegociacao)}</div>
+        <div class="rvd-kpi-sub">Acordos</div>
+      </div>`;
+
+    // Popula filtros se ainda não populados
+    popularFiltros(d.filtros_disponiveis || {});
+
+    // Tabela
+    const vendas = d.vendas || [];
+    $('rvd-info').textContent = `${vendas.length} linha(s) · ${fmt(t.valor_total)}`;
+
+    if (vendas.length === 0) {
+      $('rvd-tbody').innerHTML = '<tr><td colspan="11" class="rvd-vazio">Nenhuma venda encontrada no período.</td></tr>';
+      return;
+    }
+
+    $('rvd-tbody').innerHTML = vendas.map(v => {
+      const status = String(v.status || '').toUpperCase();
+      let badgeCls = 'outros';
+      if (v.status_etapa === 6) badgeCls = 'ativo';
+      else if (status.includes('CANCEL')) badgeCls = 'cancel';
+      else if (status.includes('PENDENTE') || v.status_etapa < 6) badgeCls = 'pend';
+
+      return `<tr>
+        <td>${esc(v.data_ativacao || '—')}</td>
+        <td>${esc(v.data_venda || '—')}</td>
+        <td><strong>${esc(v.razao_social || '—')}</strong></td>
+        <td class="mono">${esc(v.cnpj || '—')}</td>
+        <td>${esc(v.modalidade || '—')}</td>
+        <td>${esc(v.plano || '—')}</td>
+        <td class="mono">${esc(v.numero_linha || '—')}</td>
+        <td>${esc(v.consultor || '—')}</td>
+        <td>${esc(v.uf || '—')}</td>
+        <td class="r">${fmt(v.valor_numeric)}</td>
+        <td><span class="rvd-badge ${badgeCls}">${esc(v.status || '—')}</span></td>
+      </tr>`;
+    }).join('');
+  }
+
+  function popularFiltros(f) {
+    const opts = (arr, valorVazio) => `<option value="">${valorVazio}</option>` +
+      (arr||[]).filter(Boolean).sort().map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
+
+    if ($('rvd-consultor').children.length <= 1) $('rvd-consultor').innerHTML = opts(f.consultores, 'Todos');
+    if ($('rvd-modalidade').children.length <= 1) $('rvd-modalidade').innerHTML = opts(f.modalidades, 'Todas');
+    if ($('rvd-uf').children.length <= 1) $('rvd-uf').innerHTML = opts(f.ufs, 'Todas');
+  }
+
+  function limpar() {
+    $('rvd-consultor').value = '';
+    $('rvd-modalidade').value = '';
+    $('rvd-uf').value = '';
+    $('rvd-status').value = '';
+    initDatas();
+    filtrar();
+  }
+
+  // ─── Exportar PDF ───────────────────────────────────────────
+  function exportarPDF() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+    const t = d.totais || {};
+
+    const rows = (d.vendas || []).map(v => `
+      <tr>
+        <td>${esc(v.data_ativacao || '—')}</td>
+        <td>${esc(v.razao_social || '—')}</td>
+        <td>${esc(v.cnpj || '—')}</td>
+        <td>${esc(v.modalidade || '—')}</td>
+        <td>${esc(v.plano || '—')}</td>
+        <td>${esc(v.consultor || '—')}</td>
+        <td>${esc(v.uf || '—')}</td>
+        <td class="r">${fmt(v.valor_numeric)}</td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Relatório de Vendas</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; color: #0f172a; padding: 20px; }
+  .head { border-bottom: 3px solid #0b1a3a; padding-bottom: 12px; margin-bottom: 18px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .head h1 { margin: 0; font-size: 18px; color: #0b1a3a; }
+  .head .meta { text-align: right; font-size: 10px; color: #64748b; }
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 16px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+  .kpi small { font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .kpi strong { display: block; font-size: 14px; color: #0f172a; margin-top: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  th { background: #f1f5f9; text-align: left; padding: 6px 8px; border-bottom: 1px solid #cbd5e1; font-size: 8px; text-transform: uppercase; color: #475569; }
+  td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+  td.r { text-align: right; font-weight: 700; }
+  .foot { margin-top: 20px; font-size: 9px; color: #94a3b8; text-align: center; }
+  .no-print { text-align:center; margin-top:20px; }
+  @media print { .no-print { display:none; } body { padding: 0; } }
+</style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="padding:10px 24px;background:#0b1a3a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  <div class="head">
+    <div>
+      <h1>VEXO · Relatório Detalhado de Vendas</h1>
+      <small style="color:#64748b;">Período: ${d.periodo.inicio} a ${d.periodo.fim}</small>
+    </div>
+    <div class="meta">
+      <div>Emitido em ${new Date().toLocaleString('pt-BR')}</div>
+    </div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small>Total</small><strong>${fmtInt(t.qtd_total)}</strong></div>
+    <div class="kpi"><small>Valor Total</small><strong>${fmt(t.valor_total)}</strong></div>
+    <div class="kpi"><small>Ativadas</small><strong>${fmtInt(t.qtd_ativadas)}</strong></div>
+    <div class="kpi"><small>Pendentes</small><strong>${fmtInt(t.qtd_pendentes)}</strong></div>
+    <div class="kpi"><small>Ticket Médio</small><strong>${fmt(t.valor_medio)}</strong></div>
+    <div class="kpi"><small>Portabilidade</small><strong>${fmtInt(t.qtd_portabilidade)}</strong></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th><th>Consultor</th><th>UF</th><th class="r">Valor</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="foot">Gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}</div>
+</body></html>`;
+
+    const w = window.open('', '_blank', 'width=1200,height=800');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  // ─── Exportar Excel ─────────────────────────────────────────
+  function exportarExcel() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+
+    const dados = (d.vendas || []).map(v => ({
+      'Data Ativação': v.data_ativacao || '',
+      'Data Venda': v.data_venda || '',
+      'Cliente': v.razao_social || '',
+      'CNPJ': v.cnpj || '',
+      'Modalidade': v.modalidade || '',
+      'Plano': v.plano || '',
+      'Linha': v.numero_linha || '',
+      'Consultor': v.consultor || '',
+      'UF': v.uf || '',
+      'Cidade': v.cidade || '',
+      'Operadora Doadora': v.operadora_doadora || '',
+      'Valor': Number(v.valor_numeric) || 0,
+      'Status': v.status || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dados);
+    // Larguras
+    ws['!cols'] = [
+      {wch:12},{wch:12},{wch:35},{wch:20},{wch:18},{wch:25},{wch:15},
+      {wch:25},{wch:5},{wch:18},{wch:18},{wch:12},{wch:22}
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
+
+    const nome = `vendas_detalhado_${d.periodo.inicio}_a_${d.periodo.fim}.xlsx`;
+    XLSX.writeFile(wb, nome);
+  }
+
+  // ─── Init ───────────────────────────────────────────────────
+  function init() {
+    initDatas();
+    // Se o usuário já configurou, roda automaticamente
+    setTimeout(filtrar, 300);
+  }
+
+  window.RVD = { filtrar, limpar, exportarPDF, exportarExcel };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else setTimeout(init, 100);
+})();
+</script>
+</body>
+</html>
