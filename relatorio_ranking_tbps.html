@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+  .rtb-wrap { font-family: 'Poppins', sans-serif; color: #0f172a; padding: 4px; }
+  .rtb-filters {
+    background: white; border-radius: 14px; padding: 20px 22px;
+    border: 1px solid #e2e8f0; margin-bottom: 22px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .rtb-field { display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
+  .rtb-field label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .rtb-field input, .rtb-field select {
+    padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 9px;
+    font-family: inherit; font-size: 13px; outline: none; transition: 0.2s;
+  }
+  .rtb-field input:focus, .rtb-field select:focus { border-color: #0b1a3a; box-shadow: 0 0 0 3px rgba(11,26,58,0.08); }
+  .rtb-btn { padding: 10px 20px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+  .rtb-btn-primary { background: #0b1a3a; color: white; }
+  .rtb-btn-primary:hover:not(:disabled) { background: #1a3060; }
+  .rtb-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .rtb-btn-soft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .rtb-btn-soft:hover { background: #e2e8f0; }
+  .rtb-btn-pdf { background: #dc2626; color: white; }
+  .rtb-btn-pdf:hover:not(:disabled) { background: #b91c1c; }
+  .rtb-btn-xls { background: #16a34a; color: white; }
+  .rtb-btn-xls:hover:not(:disabled) { background: #15803d; }
+  .rtb-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* KPIs */
+  .rtb-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .rtb-kpi { background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; position: relative; }
+  .rtb-kpi::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 100%; border-radius: 14px 14px 0 0; background: var(--c, #0b1a3a); }
+  .rtb-kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .rtb-kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+  .rtb-kpi-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  /* PÓDIO */
+  .rtb-podio { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 26px; }
+  .rtb-pod-card {
+    background: white; border-radius: 16px; padding: 20px;
+    border: 2px solid #e2e8f0; text-align: center;
+    position: relative; transition: 0.2s;
+  }
+  .rtb-pod-card.pos-1 { border-color: #fbbf24; background: linear-gradient(180deg, #fffbeb 0%, #ffffff 40%); }
+  .rtb-pod-card.pos-2 { border-color: #cbd5e1; background: linear-gradient(180deg, #f8fafc 0%, #ffffff 40%); }
+  .rtb-pod-card.pos-3 { border-color: #d97706; background: linear-gradient(180deg, #fff7ed 0%, #ffffff 40%); }
+  .rtb-pod-medalha { font-size: 42px; line-height: 1; margin-bottom: 6px; }
+  .rtb-pod-tipo {
+    display: inline-block; font-size: 9px; font-weight: 800;
+    padding: 3px 8px; border-radius: 10px; text-transform: uppercase;
+    margin-bottom: 8px; letter-spacing: 0.5px;
+  }
+  .rtb-pod-tipo.terceiro  { background: #dbeafe; color: #1e40af; }
+  .rtb-pod-tipo.freelancer { background: #fce7f3; color: #9d174d; }
+  .rtb-pod-nome { font-size: 14px; font-weight: 800; color: #0f172a; margin: 0 0 4px; min-height: 36px; line-height: 1.25; }
+  .rtb-pod-cnpj { font-size: 10px; color: #64748b; font-family: monospace; margin-bottom: 10px; }
+  .rtb-pod-valor { font-size: 22px; font-weight: 900; color: #059669; margin-bottom: 4px; }
+  .rtb-pod-sub { font-size: 11px; color: #64748b; }
+
+  /* GRÁFICO */
+  .rtb-graf-box {
+    background: white; border-radius: 14px; border: 1px solid #e2e8f0;
+    padding: 20px 24px; margin-bottom: 22px;
+  }
+  .rtb-graf-box h3 { margin: 0 0 4px; font-size: 14px; font-weight: 800; color: #0b1a3a; }
+  .rtb-graf-box p { margin: 0 0 16px; font-size: 11px; color: #64748b; }
+  .rtb-graf-inner { position: relative; height: 320px; }
+
+  /* TABELA */
+  .rtb-tabela { background: white; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; }
+  .rtb-thead { padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .rtb-thead h3 { margin: 0; font-size: 13px; font-weight: 800; color: #0b1a3a; }
+  .rtb-thead span { font-size: 11px; color: #64748b; }
+  .rtb-scroll { max-height: 620px; overflow-y: auto; }
+  .rtb-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .rtb-tab th { text-align: left; padding: 10px 14px; background: #f8fafc; color: #475569; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 2; }
+  .rtb-tab td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+  .rtb-tab tr:hover td { background: #f8fafc; }
+  .rtb-tab td.r { text-align: right; font-weight: 700; }
+  .rtb-tab td.mono { font-family: monospace; font-size: 11px; color: #1e3c72; }
+  .rtb-tab td.c { text-align: center; }
+
+  .rtb-pos {
+    display: inline-block; width: 28px; height: 28px; line-height: 28px;
+    border-radius: 50%; text-align: center; font-weight: 800; font-size: 12px;
+    background: #f1f5f9; color: #475569;
+  }
+  .rtb-pos.p1 { background: #fef3c7; color: #92400e; }
+  .rtb-pos.p2 { background: #e2e8f0; color: #475569; }
+  .rtb-pos.p3 { background: #fed7aa; color: #9a3412; }
+
+  .rtb-badge { display: inline-block; padding: 3px 8px; border-radius: 10px; font-size: 9px; font-weight: 800; text-transform: uppercase; }
+  .rtb-badge.terceiro   { background: #dbeafe; color: #1e40af; }
+  .rtb-badge.freelancer { background: #fce7f3; color: #9d174d; }
+
+  .rtb-vazio { padding: 60px; text-align: center; color: #94a3b8; }
+</style>
+
+<div class="rtb-wrap">
+
+  <!-- FILTROS -->
+  <div class="rtb-filters">
+    <div class="rtb-field">
+      <label>Início</label>
+      <input type="date" id="rtb-ini">
+    </div>
+    <div class="rtb-field">
+      <label>Fim</label>
+      <input type="date" id="rtb-fim">
+    </div>
+    <div class="rtb-field">
+      <label>Tipo</label>
+      <select id="rtb-tipo">
+        <option value="">Todos</option>
+        <option value="TERCEIRO">Terceiros</option>
+        <option value="FREELANCER">Freelancers</option>
+      </select>
+    </div>
+    <div class="rtb-field">
+      <label>Modalidade</label>
+      <select id="rtb-modalidade">
+        <option value="">Todas</option>
+        <option value="PRIMEIRA ATIVAÇÃO">Primeira Ativação</option>
+        <option value="PORTABILIDADE">Portabilidade</option>
+        <option value="MIGRAÇÃO">Migração</option>
+        <option value="ADITIVO">Aditivo</option>
+        <option value="RENEG.">Renegociação</option>
+      </select>
+    </div>
+    <button class="rtb-btn rtb-btn-primary" id="rtb-btn-filtrar" onclick="RTB.filtrar()">🔍 Filtrar</button>
+    <button class="rtb-btn rtb-btn-soft" onclick="RTB.limpar()">Limpar</button>
+    <button class="rtb-btn rtb-btn-pdf" id="rtb-btn-pdf" onclick="RTB.exportarPDF()" disabled>📄 PDF</button>
+    <button class="rtb-btn rtb-btn-xls" id="rtb-btn-xls" onclick="RTB.exportarExcel()" disabled>📊 Excel</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="rtb-kpis" id="rtb-kpis"></div>
+
+  <!-- PÓDIO -->
+  <div class="rtb-podio" id="rtb-podio"></div>
+
+  <!-- GRÁFICO -->
+  <div class="rtb-graf-box" id="rtb-graf-box" style="display:none;">
+    <h3>📊 Top 10 TBPs por Valor Ativado</h3>
+    <p>Ranking dos parceiros com maior receita no período</p>
+    <div class="rtb-graf-inner">
+      <canvas id="rtb-grafico"></canvas>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="rtb-tabela">
+    <div class="rtb-thead">
+      <h3>🏆 Ranking Completo de TBPs</h3>
+      <span id="rtb-info"></span>
+    </div>
+    <div class="rtb-scroll">
+      <table class="rtb-tab">
+        <thead>
+          <tr>
+            <th style="width:50px;">#</th>
+            <th>TBP</th>
+            <th>Tipo</th>
+            <th>CNPJ/CPF</th>
+            <th>Cidade/UF</th>
+            <th class="c">Vendas</th>
+            <th class="c">Ativadas</th>
+            <th class="r">Valor Total</th>
+            <th class="r">Valor Ativado</th>
+            <th class="r">Ticket Médio</th>
+            <th class="c">Conversão</th>
+          </tr>
+        </thead>
+        <tbody id="rtb-tbody">
+          <tr><td colspan="11" class="rtb-vazio">Selecione o período e clique em Filtrar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const fmtPerc = (v) => Number(v || 0).toFixed(1) + '%';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let DADOS_ATUAIS = null;
+  let CHART_INSTANCIA = null;
+
+  function getSb() {
+    if (window.sb) return window.sb;
+    try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e) {}
+    return null;
+  }
+
+  function toISO(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+
+  function initDatas() {
+    const hoje = new Date();
+    const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    if (!$('rtb-ini').value) $('rtb-ini').value = toISO(ini);
+    if (!$('rtb-fim').value) $('rtb-fim').value = toISO(fim);
+  }
+
+  async function filtrar() {
+    const sb = getSb();
+    if (!sb) return alert('Supabase indisponível');
+
+    const ini = $('rtb-ini').value;
+    const fim = $('rtb-fim').value;
+    if (!ini || !fim) return alert('Selecione o período');
+
+    const btn = $('rtb-btn-filtrar');
+    btn.disabled = true; btn.textContent = '⏳ Carregando...';
+    $('rtb-tbody').innerHTML = `<tr><td colspan="11" class="rtb-vazio">Carregando...</td></tr>`;
+
+    try {
+      const { data, error } = await sb.rpc('gestao_ranking_tbps', {
+        p_inicio: ini,
+        p_fim: fim,
+        p_tipo: $('rtb-tipo').value || null,
+        p_modalidade: $('rtb-modalidade').value || null
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      DADOS_ATUAIS = data;
+      render(data);
+
+      $('rtb-btn-pdf').disabled = false;
+      $('rtb-btn-xls').disabled = false;
+    } catch (e) {
+      console.error(e);
+      $('rtb-tbody').innerHTML = `<tr><td colspan="11" class="rtb-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '🔍 Filtrar';
+    }
+  }
+
+  function render(d) {
+    const t = d.totais || {};
+    const ranking = d.ranking || [];
+
+    // KPIs
+    $('rtb-kpis').innerHTML = `
+      <div class="rtb-kpi" style="--c:#0b1a3a;">
+        <div class="rtb-kpi-label">TBPs com Venda</div>
+        <div class="rtb-kpi-value">${fmtInt(t.tbps_ativos)}</div>
+        <div class="rtb-kpi-sub">parceiros no período</div>
+      </div>
+      <div class="rtb-kpi" style="--c:#10b981;">
+        <div class="rtb-kpi-label">Valor Ativado</div>
+        <div class="rtb-kpi-value">${fmt(t.valor_ativado)}</div>
+        <div class="rtb-kpi-sub">${fmtInt(t.qtd_ativadas)} ativações</div>
+      </div>
+      <div class="rtb-kpi" style="--c:#3b82f6;">
+        <div class="rtb-kpi-label">Total Lançado</div>
+        <div class="rtb-kpi-value">${fmt(t.valor_total)}</div>
+        <div class="rtb-kpi-sub">${fmtInt(t.qtd_total)} vendas</div>
+      </div>
+      <div class="rtb-kpi" style="--c:#a855f7;">
+        <div class="rtb-kpi-label">Ticket Médio</div>
+        <div class="rtb-kpi-value">${fmt(t.ticket_medio)}</div>
+        <div class="rtb-kpi-sub">por venda</div>
+      </div>
+      <div class="rtb-kpi" style="--c:#c026d3;">
+        <div class="rtb-kpi-label">Portabilidades</div>
+        <div class="rtb-kpi-value">${fmtInt(t.qtd_portabilidade)}</div>
+        <div class="rtb-kpi-sub">linhas portadas</div>
+      </div>
+      <div class="rtb-kpi" style="--c:#f59e0b;">
+        <div class="rtb-kpi-label">Renegociações</div>
+        <div class="rtb-kpi-value">${fmtInt(t.qtd_renegociacao)}</div>
+        <div class="rtb-kpi-sub">acordos</div>
+      </div>`;
+
+    // PÓDIO
+    const podio = ranking.slice(0, 3);
+    if (podio.length > 0) {
+      const medalhas = ['🥇', '🥈', '🥉'];
+      $('rtb-podio').innerHTML = podio.map((r, i) => {
+        const tipoCls = (r.tipo || '').toLowerCase();
+        return `
+          <div class="rtb-pod-card pos-${i + 1}">
+            <div class="rtb-pod-medalha">${medalhas[i]}</div>
+            <div class="rtb-pod-tipo ${tipoCls}">${esc(r.tipo || '—')}</div>
+            <div class="rtb-pod-nome">${esc(r.nome_tbp || r.razao_social || '—')}</div>
+            <div class="rtb-pod-cnpj">${esc(r.cnpj_cpf || '—')}</div>
+            <div class="rtb-pod-valor">${fmt(r.valor_ativado)}</div>
+            <div class="rtb-pod-sub">
+              ${fmtInt(r.qtd_ativadas)} ativações · ${fmt(r.ticket_medio)} ticket
+            </div>
+          </div>`;
+      }).join('');
+    } else {
+      $('rtb-podio').innerHTML = '';
+    }
+
+    // GRÁFICO
+    renderizarGrafico(ranking.slice(0, 10));
+
+    // TABELA
+    $('rtb-info').textContent = `${ranking.length} TBP(s) · ${fmt(t.valor_ativado)} ativados`;
+
+    if (ranking.length === 0) {
+      $('rtb-tbody').innerHTML = '<tr><td colspan="11" class="rtb-vazio">Nenhum TBP com venda no período.</td></tr>';
+      return;
+    }
+
+    $('rtb-tbody').innerHTML = ranking.map(r => {
+      const pos = r.posicao;
+      const posCls = pos <= 3 ? `p${pos}` : '';
+      const tipoCls = (r.tipo || '').toLowerCase();
+      const conversao = r.qtd_total > 0 ? (r.qtd_ativadas / r.qtd_total) * 100 : 0;
+
+      return `<tr>
+        <td><span class="rtb-pos ${posCls}">${pos}</span></td>
+        <td><strong>${esc(r.nome_tbp || r.razao_social || '—')}</strong></td>
+        <td><span class="rtb-badge ${tipoCls}">${esc(r.tipo || '—')}</span></td>
+        <td class="mono">${esc(r.cnpj_cpf || '—')}</td>
+        <td>${esc(r.cidade || '—')}/${esc(r.uf || '—')}</td>
+        <td class="c">${fmtInt(r.qtd_total)}</td>
+        <td class="c" style="color:#059669;font-weight:700;">${fmtInt(r.qtd_ativadas)}</td>
+        <td class="r">${fmt(r.valor_total)}</td>
+        <td class="r" style="color:#059669;">${fmt(r.valor_ativado)}</td>
+        <td class="r">${fmt(r.ticket_medio)}</td>
+        <td class="c">${fmtPerc(conversao)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderizarGrafico(top10) {
+    const box = $('rtb-graf-box');
+    if (!top10 || top10.length === 0) {
+      box.style.display = 'none';
+      return;
+    }
+    box.style.display = 'block';
+
+    const ctx = $('rtb-grafico').getContext('2d');
+
+    // Destroi gráfico anterior se existir
+    if (CHART_INSTANCIA) CHART_INSTANCIA.destroy();
+
+    const labels = top10.map(r => {
+      const nome = r.nome_tbp || r.razao_social || '—';
+      return nome.length > 22 ? nome.substring(0, 20) + '…' : nome;
+    });
+
+    const valores = top10.map(r => Number(r.valor_ativado) || 0);
+
+    // Cores degradê (top 1 mais escuro)
+    const cores = top10.map((_, i) => {
+      const alpha = 1 - (i * 0.06);
+      return `rgba(30, 60, 114, ${Math.max(alpha, 0.35)})`;
+    });
+
+    CHART_INSTANCIA = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Valor Ativado',
+          data: valores,
+          backgroundColor: cores,
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (ctx) => 'Valor ativado: ' + fmt(ctx.parsed.x)
+            },
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            padding: 12,
+            titleFont: { size: 12, weight: '700' },
+            bodyFont: { size: 12 }
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: {
+              font: { size: 10 },
+              color: '#64748b',
+              callback: (v) => 'R$ ' + Number(v).toLocaleString('pt-BR')
+            }
+          },
+          y: {
+            grid: { display: false },
+            ticks: { font: { size: 11, weight: '600' }, color: '#0f172a' }
+          }
+        }
+      }
+    });
+  }
+
+  function limpar() {
+    $('rtb-tipo').value = '';
+    $('rtb-modalidade').value = '';
+    initDatas();
+    filtrar();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // EXPORTAR PDF
+  // ═══════════════════════════════════════════════════════════
+  function exportarPDF() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+    const t = d.totais || {};
+    const ranking = d.ranking || [];
+
+    const rows = ranking.map(r => {
+      const conversao = r.qtd_total > 0 ? (r.qtd_ativadas / r.qtd_total) * 100 : 0;
+      return `<tr>
+        <td style="text-align:center;">${r.posicao}</td>
+        <td>${esc(r.nome_tbp || r.razao_social || '—')}</td>
+        <td>${esc(r.tipo || '—')}</td>
+        <td>${esc(r.cnpj_cpf || '—')}</td>
+        <td>${esc(r.cidade || '—')}/${esc(r.uf || '—')}</td>
+        <td style="text-align:center;">${fmtInt(r.qtd_total)}</td>
+        <td style="text-align:center;">${fmtInt(r.qtd_ativadas)}</td>
+        <td style="text-align:right;">${fmt(r.valor_ativado)}</td>
+        <td style="text-align:right;">${fmt(r.ticket_medio)}</td>
+        <td style="text-align:center;">${fmtPerc(conversao)}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Ranking TBPs</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; color: #0f172a; padding: 20px; }
+  .head { border-bottom: 3px solid #0b1a3a; padding-bottom: 12px; margin-bottom: 18px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .head h1 { margin: 0; font-size: 18px; color: #0b1a3a; }
+  .head .meta { text-align: right; font-size: 10px; color: #64748b; }
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 16px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+  .kpi small { font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .kpi strong { display: block; font-size: 14px; color: #0f172a; margin-top: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  th { background: #f1f5f9; text-align: left; padding: 6px 8px; border-bottom: 1px solid #cbd5e1; font-size: 8px; text-transform: uppercase; color: #475569; }
+  td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+  .foot { margin-top: 20px; font-size: 9px; color: #94a3b8; text-align: center; }
+  .no-print { text-align:center; margin-top:20px; }
+  @media print { .no-print { display:none; } body { padding: 0; } }
+</style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="padding:10px 24px;background:#0b1a3a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  <div class="head">
+    <div>
+      <h1>VEXO · Ranking de TBPs</h1>
+      <small style="color:#64748b;">Período: ${d.periodo.inicio} a ${d.periodo.fim}</small>
+    </div>
+    <div class="meta"><div>Emitido em ${new Date().toLocaleString('pt-BR')}</div></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small>TBPs</small><strong>${fmtInt(t.tbps_ativos)}</strong></div>
+    <div class="kpi"><small>Vendas</small><strong>${fmtInt(t.qtd_total)}</strong></div>
+    <div class="kpi"><small>Ativadas</small><strong>${fmtInt(t.qtd_ativadas)}</strong></div>
+    <div class="kpi"><small>Valor Ativado</small><strong>${fmt(t.valor_ativado)}</strong></div>
+    <div class="kpi"><small>Ticket Médio</small><strong>${fmt(t.ticket_medio)}</strong></div>
+    <div class="kpi"><small>Portab.</small><strong>${fmtInt(t.qtd_portabilidade)}</strong></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>#</th><th>TBP</th><th>Tipo</th><th>CNPJ/CPF</th><th>Cidade/UF</th>
+      <th>Vendas</th><th>Ativadas</th><th>Valor Ativado</th><th>Ticket</th><th>Conv.</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="foot">Gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}</div>
+</body></html>`;
+
+    const w = window.open('', '_blank', 'width=1200,height=800');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // EXPORTAR EXCEL
+  // ═══════════════════════════════════════════════════════════
+  function exportarExcel() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+
+    const dados = (d.ranking || []).map(r => {
+      const conversao = r.qtd_total > 0 ? (r.qtd_ativadas / r.qtd_total) * 100 : 0;
+      return {
+        'Posição': r.posicao,
+        'TBP': r.nome_tbp || r.razao_social || '',
+        'Razão Social': r.razao_social || '',
+        'Tipo': r.tipo || '',
+        'CNPJ/CPF': r.cnpj_cpf || '',
+        'Cidade': r.cidade || '',
+        'UF': r.uf || '',
+        'Total de Vendas': r.qtd_total,
+        'Ativadas': r.qtd_ativadas,
+        'Pendentes': r.qtd_pendentes,
+        'Valor Total': Number(r.valor_total) || 0,
+        'Valor Ativado': Number(r.valor_ativado) || 0,
+        'Ticket Médio': Number(r.ticket_medio) || 0,
+        'Portabilidades': r.qtd_portabilidade,
+        'Renegociações': r.qtd_renegociacao,
+        'Novas Ativações': r.qtd_novas,
+        'Migrações': r.qtd_migracao,
+        'Aditivos': r.qtd_aditivo,
+        'Conversão %': Number(conversao.toFixed(1))
+      };
+    });
+
+    const ws = XLSX.utils.json_to_sheet(dados);
+    ws['!cols'] = [
+      {wch:8},{wch:32},{wch:32},{wch:12},{wch:22},{wch:14},{wch:5},
+      {wch:14},{wch:11},{wch:11},{wch:14},{wch:14},{wch:13},
+      {wch:14},{wch:14},{wch:14},{wch:12},{wch:10},{wch:12}
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Ranking TBPs');
+    XLSX.writeFile(wb, `ranking_tbps_${d.periodo.inicio}_a_${d.periodo.fim}.xlsx`);
+  }
+
+  function init() {
+    initDatas();
+    setTimeout(filtrar, 300);
+  }
+
+  window.RTB = { filtrar, limpar, exportarPDF, exportarExcel };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else setTimeout(init, 100);
+})();
+</script>
+</body>
+</html>
