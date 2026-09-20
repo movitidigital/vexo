@@ -2,588 +2,485 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VEXO · Central de Relatórios</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="supabase-client.js"></script>
 <style>
-  .vx-rel { font-family: 'Poppins', sans-serif; padding: 8px; color: #0f172a; }
-  .vx-rel h2 { margin: 0; }
-  .vx-rel .btn-primary { background:#1e3c72; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:700; cursor:pointer; }
-  .vx-rel .btn-primary:hover { background:#152c56; }
-  .vx-rel .btn-primary:disabled { opacity:0.5; cursor:not-allowed; }
-  .vx-rel .kpi { padding:15px; border-radius:12px; text-align:center; border-bottom:3px solid #1e3c72; }
-  .vx-rel .empty { padding: 40px; text-align:center; color:#94a3b8; }
-  .vx-rel table { width:100%; border-collapse:collapse; font-size:12px; }
-  .vx-rel th { text-align:left; padding:10px; color:#64748b; border-bottom:2px solid #e2e8f0; }
-  .vx-rel td { padding:10px; border-bottom:1px solid #f1f5f9; }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0;
+    font-family: 'Poppins', sans-serif;
+    background: #ffffff; color: #0f172a;
+    min-height: 100vh;
+  }
+
+  /* ═══════════ TOPBAR (estilo TIM S3) ═══════════ */
+  .vx-topbar {
+    background: #0a0e27;
+    color: white;
+    padding: 14px 32px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    border-bottom: 3px solid #1e3c72;
+  }
+  .vx-topbar .vx-mark {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    font-size: 17px;
+    color: #ffffff;
+  }
+  .vx-topbar .vx-mark .bars {
+    display: inline-flex;
+    gap: 3px;
+    align-items: center;
+  }
+  .vx-topbar .vx-mark .bars span {
+    display: inline-block; width: 4px; height: 18px;
+    background: #e11d2e; border-radius: 1px;
+  }
+  .vx-topbar .vx-mark .bars span:nth-child(2) { height: 22px; }
+  .vx-topbar .vx-mark .bars span:nth-child(3) { height: 14px; }
+  .vx-topbar h1 {
+    margin: 0; font-size: 16px; font-weight: 500;
+    letter-spacing: 0.2px; color: #cbd5e1;
+  }
+  .vx-topbar .spacer { flex: 1; }
+  .vx-topbar .vx-user { font-size: 11px; color: #94a3b8; }
+
+  /* ═══════════ BREADCRUMB ═══════════ */
+  .vx-crumbs {
+    padding: 16px 32px 0;
+    font-size: 12.5px; color: #64748b;
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .vx-crumbs a {
+    color: #0b1a3a; text-decoration: none;
+    font-weight: 600; cursor: pointer;
+  }
+  .vx-crumbs a:hover { text-decoration: underline; }
+  .vx-crumbs .sep { color: #cbd5e1; }
+  .vx-crumbs .atual { color: #0f172a; font-weight: 700; }
+
+  /* ═══════════ PÁGINA ═══════════ */
+  .vx-page {
+    padding: 20px 32px 60px;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .vx-page-title {
+    font-size: 24px; font-weight: 800;
+    color: #0a0e27; margin: 4px 0 4px;
+    letter-spacing: -0.3px;
+  }
+  .vx-page-sub {
+    color: #64748b; font-size: 12.5px;
+    margin: 0 0 28px;
+  }
+
+  /* ═══════════ GRID DE CARDS ═══════════ */
+  .vx-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+  }
+  .vx-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 24px 24px 20px;
+    cursor: pointer;
+    transition: all 0.18s ease;
+    display: flex; flex-direction: column;
+    gap: 6px;
+    text-align: left;
+    font-family: inherit;
+    position: relative;
+  }
+  .vx-card:hover {
+    border-color: #0a0e27;
+    box-shadow: 0 14px 34px -10px rgba(10, 14, 39, 0.15);
+    transform: translateY(-2px);
+  }
+  .vx-card-icon {
+    font-size: 28px; line-height: 1;
+    margin-bottom: 6px;
+  }
+  .vx-card-title {
+    font-size: 17px; font-weight: 700;
+    color: #0a0e27; letter-spacing: -0.2px;
+  }
+  .vx-card-desc {
+    font-size: 12px; color: #64748b;
+    line-height: 1.5;
+  }
+  .vx-card-foot {
+    margin-top: 10px; padding-top: 12px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 10.5px; font-weight: 700;
+    color: #94a3b8; text-transform: uppercase;
+    letter-spacing: 0.4px;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .vx-card-foot .qtd-disp { color: #166534; }
+  .vx-card-foot .qtd-breve { color: #92400e; }
+
+  /* Badge de status */
+  .vx-card-badge {
+    position: absolute; top: 14px; right: 14px;
+    font-size: 9px; font-weight: 800;
+    padding: 3px 8px; border-radius: 10px;
+    text-transform: uppercase; letter-spacing: 0.4px;
+  }
+  .vx-card-badge.disp { background: #dcfce7; color: #166534; }
+  .vx-card-badge.em_breve { background: #fef3c7; color: #92400e; }
+
+  /* Card em breve — sem hover */
+  .vx-card[data-status="em_breve"] { opacity: 0.72; }
+  .vx-card[data-status="em_breve"]:hover {
+    transform: none; box-shadow: none;
+    border-color: #e2e8f0; cursor: default;
+  }
+
+  /* ═══════════ VIEW DO RELATÓRIO (iframe) ═══════════ */
+  .vx-report-frame {
+    width: 100%;
+    height: calc(100vh - 180px);
+    min-height: 680px;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    background: white;
+    display: block;
+    box-shadow: 0 4px 16px -8px rgba(10, 14, 39, 0.08);
+  }
+
+  /* ═══════════ VIEWS ═══════════ */
+  .vx-view { display: none; }
+  .vx-view.active { display: block; }
+
+  /* ═══════════ RESPONSIVO ═══════════ */
+  @media (max-width: 640px) {
+    .vx-topbar { padding: 12px 16px; gap: 12px; }
+    .vx-topbar h1 { font-size: 13px; }
+    .vx-topbar .vx-user { display: none; }
+    .vx-page { padding: 16px 16px 40px; }
+    .vx-crumbs { padding: 12px 16px 0; }
+    .vx-grid { grid-template-columns: 1fr; gap: 14px; }
+  }
 </style>
 </head>
 <body>
 
-<div class="vx-rel">
-  <!-- HEADER -->
-  <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #f0f2f5; padding-bottom:15px; margin-bottom:25px; flex-wrap:wrap; gap:12px;">
-    <div>
-      <h2 style="color:#1e3c72;">📈 Inteligência de Dados VEXO</h2>
-      <p style="margin:0; font-size:11px; color:#64748b;">Análise de Receita TIM · Restrito ao Administrador</p>
-    </div>
-    <div id="vx-controles" style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
-      <div>
-        <label style="font-size:9px; font-weight:800; color:#888; display:block;">META LOJA (R$)</label>
-        <input type="number" id="rel_meta_loja" value="2000" style="padding:6px; border-radius:6px; border:1px solid #ddd; width:120px;">
-      </div>
-            <div>
-        <label style="font-size:9px; font-weight:800; color:#888; display:block;">CLT AUDITADOS</label>
-        <input type="number" id="rel_clt" value="0" style="padding:6px; border-radius:6px; border:1px solid #ddd; width:90px;" onchange="RelVexo.salvarClt()">
-      </div>
-      <div>
-        <label style="font-size:9px; font-weight:800; color:#888; display:block;">INÍCIO</label>
-        <input type="date" id="rel_data_inicio" style="padding:6px; border-radius:6px; border:1px solid #ddd;">
-      </div>
-      <div>
-        <label style="font-size:9px; font-weight:800; color:#888; display:block;">FIM</label>
-        <input type="date" id="rel_data_fim" style="padding:6px; border-radius:6px; border:1px solid #ddd;">
-      </div>
-      <button class="btn-primary" id="btn-gerar-rel" onclick="RelVexo.gerar()">Filtrar</button>
-    </div>
+<!-- ═══════════ TOPBAR ═══════════ -->
+<div class="vx-topbar">
+  <div class="vx-mark">
+    <span class="bars"><span></span><span></span><span></span></span>
+    VEXO
   </div>
+  <h1>Central de Relatórios</h1>
+  <div class="spacer"></div>
+  <div class="vx-user" id="vx-user-info">—</div>
+</div>
 
-  <!-- AVISO SEM ACESSO -->
-  <div id="vx-sem-acesso" style="display:none; padding:60px 20px; text-align:center;">
-    <div style="font-size:56px;">🔒</div>
-    <h3 style="color:#991b1b; margin:10px 0 6px;">Acesso Restrito</h3>
-    <p style="color:#64748b;">Esta tela é exclusiva para Administradores.</p>
+<!-- ═══════════ VIEW 1: HOME (PASTAS) ═══════════ -->
+<div class="vx-view active" id="view-home">
+  <div class="vx-crumbs">
+    <span class="atual">📁 Relatórios</span>
   </div>
+  <div class="vx-page">
+    <h2 class="vx-page-title">Central de Relatórios</h2>
+    <p class="vx-page-sub">Selecione uma pasta para visualizar os relatórios disponíveis</p>
+    <div class="vx-grid" id="grid-pastas"></div>
+  </div>
+</div>
 
-  <!-- CONTEÚDO -->
-  <div id="vx-conteudo" style="display:none;">
-    <!-- KPIs -->
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:15px; margin-bottom:30px;">
-      <div class="kpi" style="background:#f0f7ff;">
-        <span style="font-size:10px; color:#1e3c72; font-weight:800;">RECEITA ATIVADA LÍQUIDA</span>
-        <h3 id="kpi-receita" style="margin:5px 0 0; font-size:20px; color:#1e3c72;">R$ 0,00</h3>
-      </div>
-      <div class="kpi" style="background:#fdf2f2; border-bottom-color:#dc2626;">
-        <span style="font-size:10px; color:#dc2626; font-weight:800;">ATINGIMENTO META</span>
-        <h3 id="kpi-atingimento" style="margin:5px 0 0; font-size:20px; color:#dc2626;">0%</h3>
-      </div>
-      <div class="kpi" style="background:#fff9f0; border-bottom-color:#e65100;">
-        <span style="font-size:10px; color:#e65100; font-weight:800;">ATIVAÇÕES (NOVAS)</span>
-        <h3 id="kpi-ativacoes" style="margin:5px 0 0; font-size:20px; color:#e65100;">0</h3>
-      </div>
-    </div>
+<!-- ═══════════ VIEW 2: PASTA ═══════════ -->
+<div class="vx-view" id="view-pasta">
+  <div class="vx-crumbs">
+    <a onclick="Rel.showHome()">📁 Relatórios</a>
+    <span class="sep">›</span>
+    <span class="atual" id="crumb-pasta">—</span>
+  </div>
+  <div class="vx-page">
+    <h2 class="vx-page-title" id="titulo-pasta">—</h2>
+    <p class="vx-page-sub" id="sub-pasta">—</p>
+    <div class="vx-grid" id="grid-relatorios"></div>
+  </div>
+</div>
 
-    <!-- TOTALIZADOR -->
-    <div id="painel-total-tim"></div>
-
-    <!-- TBP -->
-    <div id="painel-tbp"></div>
-
-    <!-- CORPORATE ESTRUTURA -->
-    <div id="painel-corporate" style="display:none; border:1px solid #e2e8f0; padding:25px; border-radius:12px; background:#fff; margin-bottom:25px;">
-      <h4 style="margin:0 0 15px; color:#1e3c72; font-size:14px;">🛡️ Subsídio Estrutura Corporate</h4>
-      <div id="lista-corporate"></div>
-    </div>
-
-    <!-- BÔNUS RECEITA CORPORATE -->
-    <div id="painel-produto-movel" style="display:none; border:1px solid #e2e8f0; padding:25px; border-radius:12px; background:#fff; margin-bottom:25px;">
-      <h4 style="margin:0 0 15px; color:#1e3c72; font-size:14px;">📱 Bônus Receita Corporate</h4>
-      <div id="lista-produto-movel"></div>
-    </div>
-
-    <!-- PERMANÊNCIA -->
-    <div id="painel-permanencia" style="display:none; border:1px solid #e2e8f0; padding:25px; border-radius:12px; background:#fff; margin-bottom:25px;">
-      <h4 style="margin:0 0 15px; color:#0f766e; font-size:14px;">⏳ Bônus Permanência (M7 e M14)</h4>
-      <div id="lista-permanencia"></div>
-    </div>
-
-    <!-- PORTABILIDADE -->
-    <div id="painel-portabilidade" style="display:none; border:1px solid #e2e8f0; padding:25px; border-radius:12px; background:#fff;">
-      <h4 style="margin:0 0 15px; color:#1e3c72; font-size:14px;">🔄 Bônus Portabilidade (M-1)</h4>
-      <div id="lista-portabilidade"></div>
-    </div>
+<!-- ═══════════ VIEW 3: RELATÓRIO ═══════════ -->
+<div class="vx-view" id="view-relatorio">
+  <div class="vx-crumbs">
+    <a onclick="Rel.showHome()">📁 Relatórios</a>
+    <span class="sep">›</span>
+    <a id="crumb-pasta-link" onclick="Rel.voltarPasta()">—</a>
+    <span class="sep">›</span>
+    <span class="atual" id="crumb-relatorio">—</span>
+  </div>
+  <div class="vx-page">
+    <iframe class="vx-report-frame" id="iframe-relatorio" src="about:blank"
+            allow="clipboard-read; clipboard-write"></iframe>
   </div>
 </div>
 
 <script>
 (function () {
   'use strict';
-  if (window._vxRelLoaded) return;
-  window._vxRelLoaded = true;
 
+  /* ═══════════════════════════════════════════════════════════════
+     CONFIGURAÇÃO DAS PASTAS E RELATÓRIOS
+     Para adicionar um novo relatório basta:
+       1. Criar o arquivo .html no mesmo diretório
+       2. Adicionar uma entrada abaixo com status: 'disponivel'
+  ═══════════════════════════════════════════════════════════════ */
+  const PASTAS = [
+    {
+      id: 'vendas',
+      icone: '📈',
+      titulo: 'Vendas & Performance',
+      descricao: 'Relatórios de vendas, ativações e performance comercial',
+      relatorios: [
+        { id: '2.1', titulo: 'Vendas Detalhado',   descricao: 'Relatório completo de vendas com filtros, KPIs e exportação',  arquivo: 'relatorio_vendas_detalhado.html', status: 'disponivel' },
+        { id: '2.2', titulo: 'Minhas Vendas',      descricao: 'Visão pessoal do consultor sobre suas vendas',                  arquivo: 'relatorio_minhas_vendas.html',    status: 'em_breve' },
+        { id: '2.3', titulo: 'Raio-X Backoffice',  descricao: 'Análise de funil e gargalos do backoffice',                      arquivo: 'relatorio_raiox_backoffice.html', status: 'em_breve' }
+      ]
+    },
+    {
+      id: 'comissoes',
+      icone: '💰',
+      titulo: 'Comissões & Financeiro',
+      descricao: 'Extratos de comissão, faturas e histórico de pagamentos',
+      relatorios: [
+        { id: '3.1', titulo: 'Extrato por Consultor',    descricao: 'Detalhamento de comissões por consultor',         arquivo: 'relatorio_extrato_consultor.html', status: 'em_breve' },
+        { id: '3.2', titulo: 'Consolidado da Loja',      descricao: 'Consolidação mensal da loja',                     arquivo: 'relatorio_consolidado_loja.html',  status: 'em_breve' },
+        { id: '3.3', titulo: 'Comissões de Cargos',      descricao: 'Comissões por cargo e função',                     arquivo: 'relatorio_comissoes_cargos.html',  status: 'em_breve' },
+        { id: '3.4', titulo: 'Relatório de Faturas',     descricao: 'Faturas emitidas e status de pagamento',           arquivo: 'relatorio_faturas.html',           status: 'em_breve' },
+        { id: '3.5', titulo: 'Histórico de Pagamentos',  descricao: 'Histórico completo de pagamentos realizados',      arquivo: 'relatorio_hist_pagamentos.html',   status: 'em_breve' }
+      ]
+    },
+    {
+      id: 'crm',
+      icone: '📞',
+      titulo: 'Clientes & CRM',
+      descricao: 'Carteira de clientes, reincidência e análise de base',
+      relatorios: [
+        { id: '6.1', titulo: 'Carteira Ativa',       descricao: 'Clientes ativos e status da carteira',                   arquivo: 'relatorio_carteira_ativa.html',    status: 'em_breve' },
+        { id: '6.2', titulo: 'Reincidência',         descricao: 'Análise de clientes reincidentes',                       arquivo: 'relatorio_reincidencia.html',      status: 'em_breve' },
+        { id: '6.3', titulo: 'Operadora Doadora',    descricao: 'Distribuição por operadora doadora (portabilidade)',    arquivo: 'relatorio_operadora_doadora.html', status: 'em_breve' }
+      ]
+    },
+    {
+      id: 'inteligencia',
+      icone: '📊',
+      titulo: 'Inteligência TIM',
+      descricao: 'Cálculos de remuneração, bônus e regras TIM',
+      relatorios: [
+        { id: 'TIM', titulo: 'Inteligência de Receita TIM', descricao: 'Remuneração básica, bônus corporate, renegociação, permanência e portabilidade', arquivo: 'relatorio_tim.html', status: 'disponivel' }
+      ]
+    },
+    {
+      id: 'gestao',
+      icone: '🏆',
+      titulo: 'Gestão & Diretoria',
+      descricao: 'Rankings, previsões e visão executiva',
+      relatorios: [
+        { id: '7.1', titulo: 'Ranking de TBPs',          descricao: 'Ranking de parceiros por performance',              arquivo: 'relatorio_ranking_tbps.html',     status: 'em_breve' },
+        { id: '7.2', titulo: 'Previsão de Fechamento',   descricao: 'Projeção de fechamento do mês',                     arquivo: 'relatorio_previsao_fech.html',    status: 'em_breve' },
+        { id: '7.3', titulo: 'Resumo Executivo',         descricao: 'Visão executiva consolidada para diretoria',         arquivo: 'relatorio_resumo_executivo.html', status: 'em_breve' }
+      ]
+    }
+  ];
+
+  /* ═══════════ HELPERS ═══════════ */
   const $ = (id) => document.getElementById(id);
-  const fmt = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
-  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]
+  ));
 
-  function getSb() {
-    if (window.sb) return window.sb;
-    try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e) {}
-    return null;
+  let pastaAtual = null;
+  let relatorioAtual = null;
+
+  /* ═══════════ NAVEGAÇÃO ═══════════ */
+  function showHome() {
+    $('view-home').classList.add('active');
+    $('view-pasta').classList.remove('active');
+    $('view-relatorio').classList.remove('active');
+    $('iframe-relatorio').src = 'about:blank';
+    pastaAtual = null;
+    relatorioAtual = null;
+    renderHome();
   }
 
-  function toast(msg, tipo) {
-    const t = document.createElement('div');
-    t.style.cssText = `
-      position:fixed;bottom:24px;right:24px;z-index:99999;
-      padding:14px 22px;border-radius:12px;font-family:Poppins,sans-serif;
-      font-size:13px;font-weight:600;background:white;color:#1e293b;
-      box-shadow:0 12px 32px -6px rgba(0,0,0,0.18);
-      border-left:4px solid ${tipo === 'error' ? '#ef4444' : '#10b981'};
-    `;
-    t.textContent = msg;
-    document.body.appendChild(t);
-    setTimeout(() => t.remove(), 3500);
+  function abrirPasta(idPasta) {
+    const pasta = PASTAS.find(p => p.id === idPasta);
+    if (!pasta) return;
+    pastaAtual = pasta;
+
+    $('view-home').classList.remove('active');
+    $('view-pasta').classList.add('active');
+    $('view-relatorio').classList.remove('active');
+
+    $('crumb-pasta').textContent = pasta.titulo;
+    $('titulo-pasta').textContent = pasta.icone + '  ' + pasta.titulo;
+    $('sub-pasta').textContent = pasta.descricao;
+
+    renderRelatorios(pasta);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ─── Verifica se é ADMIN ─────────────────────────────────────────
-  async function checarAdmin() {
-    const sb = getSb();
-    if (!sb) return false;
-    try {
-      const { data: { user } } = await sb.auth.getUser();
-      if (!user) return false;
-      const { data: prof } = await sb.from('profiles').select('role').eq('id', user.id).maybeSingle();
-      const role = (prof?.role || '').toUpperCase().trim();
-      return role === 'ADMINISTRADOR' || role === 'ADMIN';
-    } catch(e) { return false; }
+  function abrirRelatorio(idPasta, idRel) {
+    const pasta = PASTAS.find(p => p.id === idPasta);
+    if (!pasta) return;
+    const rel = pasta.relatorios.find(r => r.id === idRel);
+    if (!rel || rel.status !== 'disponivel') return;
+
+    pastaAtual = pasta;
+    relatorioAtual = rel;
+
+    $('view-home').classList.remove('active');
+    $('view-pasta').classList.remove('active');
+    $('view-relatorio').classList.add('active');
+
+    $('crumb-pasta-link').textContent = pasta.titulo;
+    $('crumb-relatorio').textContent = rel.titulo;
+
+    const frame = $('iframe-relatorio');
+    frame.src = rel.arquivo;
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  // ─── Init ────────────────────────────────────────────────────────
+  function voltarPasta() {
+    if (pastaAtual) abrirPasta(pastaAtual.id);
+  }
+
+  /* ═══════════ RENDER — HOME (PASTAS) ═══════════ */
+  function renderHome() {
+    $('grid-pastas').innerHTML = PASTAS.map(p => {
+      const disp  = p.relatorios.filter(r => r.status === 'disponivel').length;
+      const total = p.relatorios.length;
+
+      let qtdHtml;
+      if (disp === 0) {
+        qtdHtml = `<span class="qtd-breve">● ${total} relatório${total > 1 ? 's' : ''} · em breve</span>`;
+      } else if (disp === total) {
+        qtdHtml = `<span class="qtd-disp">● ${disp} disponível${disp > 1 ? 'is' : ''}</span>`;
+      } else {
+        qtdHtml = `<span class="qtd-disp">● ${disp} de ${total} disponíveis</span>`;
+      }
+
+      return `
+        <div class="vx-card" onclick="Rel.abrirPasta('${p.id}')">
+          <div class="vx-card-icon">${p.icone}</div>
+          <div class="vx-card-title">${esc(p.titulo)}</div>
+          <div class="vx-card-desc">${esc(p.descricao)}</div>
+          <div class="vx-card-foot">
+            ${qtdHtml}
+            <span>›</span>
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  /* ═══════════ RENDER — RELATÓRIOS DA PASTA ═══════════ */
+  function renderRelatorios(pasta) {
+    $('grid-relatorios').innerHTML = pasta.relatorios.map(r => {
+      const isDisp = r.status === 'disponivel';
+      const badge  = isDisp
+        ? '<span class="vx-card-badge disp">Disponível</span>'
+        : '<span class="vx-card-badge em_breve">Em breve</span>';
+      const onclick = isDisp
+        ? `onclick="Rel.abrirRelatorio('${pasta.id}','${r.id}')"`
+        : '';
+
+      return `
+        <div class="vx-card" data-status="${r.status}" ${onclick}>
+          ${badge}
+          <div class="vx-card-icon">${isDisp ? '📄' : '🔒'}</div>
+          <div class="vx-card-title">${esc(r.titulo)}</div>
+          <div class="vx-card-desc">${esc(r.descricao)}</div>
+          <div class="vx-card-foot">
+            <span>Relatório ${esc(r.id)}</span>
+            ${isDisp ? '<span>›</span>' : ''}
+          </div>
+        </div>`;
+    }).join('');
+  }
+
+  /* ═══════════ INJEÇÃO DO SUPABASE NO IFRAME ═══════════
+     Garante que o relatório carregado no iframe tenha acesso
+     ao client do Supabase (caso ele não carregue o próprio).
+  ═══════════════════════════════════════════════════════ */
+  function configurarIframe() {
+    const frame = $('iframe-relatorio');
+    frame.addEventListener('load', () => {
+      try {
+        const w = frame.contentWindow;
+        if (!w) return;
+        // Injeta sb se o relatório não tiver o próprio
+        if (!w.sb && window.sb) w.sb = window.sb;
+        // Ajusta altura dinamicamente (mesma origem)
+        setTimeout(() => {
+          try {
+            const h = w.document.documentElement.scrollHeight;
+            if (h && h > 400) frame.style.height = Math.max(680, h + 40) + 'px';
+          } catch(e) {}
+        }, 400);
+      } catch(e) {
+        console.warn('[Central] Não foi possível injetar sb no iframe:', e.message);
+      }
+    });
+  }
+
+  /* ═══════════ ESC = VOLTAR ═══════════ */
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if ($('view-relatorio').classList.contains('active')) voltarPasta();
+    else if ($('view-pasta').classList.contains('active')) showHome();
+  });
+
+  /* ═══════════ INIT ═══════════ */
   async function init() {
-    const liberado = await checarAdmin();
-    if (!liberado) {
-      $('vx-sem-acesso').style.display = 'block';
-      $('vx-controles').style.display = 'none';
-      return;
-    }
-    $('vx-sem-acesso').style.display = 'none';
-    $('vx-conteudo').style.display = 'block';
-
-    // Datas default: mês atual
-    const hoje = new Date();
-    const mesIni = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
-    const mesFim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-    const toISO = (d) => d.toISOString().split('T')[0];
-    if (!$('rel_data_inicio').value) $('rel_data_inicio').value = toISO(mesIni);
-    if (!$('rel_data_fim').value)    $('rel_data_fim').value    = toISO(mesFim);
-    await carregarCltDoMes();
-
-    // Pré-carrega config da meta padrão
+    // Info do usuário logado
     try {
-      const sb = getSb();
-      const { data } = await sb.rpc('admin_relatorio_tim', { p_inicio: toISO(mesIni), p_fim: toISO(mesFim) });
-      if (data?.success && data.config?.meta_loja_padrao) {
-        $('rel_meta_loja').value = data.config.meta_loja_padrao;
+      const sb = window.sb;
+      if (sb) {
+        const { data: { user } } = await sb.auth.getUser();
+        if (user) {
+          const { data: prof } = await sb
+            .from('profiles')
+            .select('nome,role')
+            .eq('id', user.id)
+            .maybeSingle();
+          const nome = prof?.nome || user.email || '';
+          const role = prof?.role ? ` · ${prof.role}` : '';
+          $('vx-user-info').textContent = nome + role;
+        }
       }
-    } catch(e) {}
+    } catch(e) { /* silencioso */ }
 
-    gerar();
+    configurarIframe();
+    renderHome();
   }
 
-  // ─── Gerar relatório ─────────────────────────────────────────────
-  async function gerar() {
-    const sb = getSb();
-    if (!sb) return toast('Supabase indisponível', 'error');
+  /* ═══════════ API PÚBLICA ═══════════ */
+  window.Rel = {
+    showHome,
+    abrirPasta,
+    abrirRelatorio,
+    voltarPasta
+  };
 
-    const ini = $('rel_data_inicio').value;
-    const fim = $('rel_data_fim').value;
-    if (!ini || !fim) return toast('Selecione o período', 'warn');
-
-    const btn = $('btn-gerar-rel');
-    btn.disabled = true; btn.textContent = '⏳ Analisando...';
-
-    try {
-      const { data, error } = await sb.rpc('admin_relatorio_tim', {
-        p_inicio: ini, p_fim: fim
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.message || 'Erro');
-
-      processar(data);
-    } catch(e) {
-      console.error(e);
-      toast(e.message || 'Erro', 'error');
-            // Atualiza CLT do mês selecionado
-      await carregarCltDoMes();
-    } finally {
-      btn.disabled = false; btn.textContent = 'Filtrar';
-    }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 80);
   }
-
-  // ─── Processa e renderiza ────────────────────────────────────────
-  function processar(d) {
-    const cfg = d.config;
-    const k   = d.kpis;
-    const classif = (d.classificacao || 'SILVER').toUpperCase();
-    const metaLoja = parseFloat($('rel_meta_loja').value) || cfg.meta_loja_padrao || 2000;
-    const atingPercent = (k.receita_ativada / metaLoja) * 100;
-    const atingiuMeta = atingPercent >= 100;
-
-    // ── CLT AUDITADOS (vem do input do header) ────────────────────
-    const qtdClt = parseInt($('rel_clt')?.value) || 0;
-
-    // ═══════════════════════════════════════════════════════════════
-    // HELPERS DAS TABELAS TIM
-    // ═══════════════════════════════════════════════════════════════
-
-    // ── Fator de Remuneração Básica (por classificação) ───────────
-    function fatorRemBasica(modalidade, plano, valor) {
-      const m = String(modalidade || '').toUpperCase();
-      const p = String(plano || '').toUpperCase();
-
-      // Identifica o produto
-      let prod = 'VOZ';
-      if (m.includes('M2M')) prod = 'M2M';
-      else if (m.includes('MIGRA')) prod = 'MIGRACAO';
-      else if (m.includes('ADITIVO') || m.includes('UPGRADE')) prod = 'ADITIVO';
-      else if (m.includes('WEB') || m.includes('WTTX')) prod = 'WEB';
-      else if (m.includes('VAS') || p.includes('DEEZER')) prod = 'VAS';
-      else if (m.includes('FIXO') || p.includes('OFFICE FIXO')) prod = 'FIXO';
-
-      // Classificação atual (default SILVER)
-      const classMap = {
-        'SUPER BLACK': { web: 4.8, m2m: 4.8, fixo: 4.8, migracao: 5.8, aditivo: 4.8, voz: 5.8, vas: 2.0, base_nao_fid: 0.3 },
-        'BLACK':       { web: 4.8, m2m: 4.8, fixo: 4.8, migracao: 5.8, aditivo: 4.8, voz: 5.8, vas: 2.0, base_nao_fid: 0.3 },
-        'PLATINUM':    { web: 4.0, m2m: 4.0, fixo: 4.0, migracao: 5.0, aditivo: 4.0, voz: 5.0, vas: 2.0, base_nao_fid: 0.3 },
-        'SILVER':      { web: 3.5, m2m: 3.5, fixo: 3.5, migracao: 4.5, aditivo: 3.5, voz: 4.5, vas: 2.0, base_nao_fid: 0.3 },
-        'BLUE':        { web: 3.0, m2m: 3.0, fixo: 3.0, migracao: 4.0, aditivo: 3.0, voz: 4.0, vas: 2.0, base_nao_fid: 0.3 }
-      };
-      const ct = classMap[classif] || classMap['SILVER'];
-
-      // WEB, M2M, FIXO, VAS — independente de atingimento
-      if (prod === 'WEB')  return ct.web;
-      if (prod === 'M2M')  return ct.m2m;
-      if (prod === 'FIXO') return ct.fixo;
-      if (prod === 'VAS')  return ct.vas;
-
-      // MIGRAÇÃO — usa tabela A/B por faixa
-      if (prod === 'MIGRACAO') {
-        if (atingiuMeta) return ct.migracao;
-        if (valor >= 29.99) return ct.migracao;
-        if (valor >= 25)    return ct.migracao - 0.9;
-        if (valor >= 20)    return ct.migracao - 1.3;
-        if (valor >= 10)    return ct.migracao - 1.7;
-        return ct.migracao - 2.1;
-      }
-
-      // ADITIVO — usa tabela C
-      if (prod === 'ADITIVO') {
-        if (atingiuMeta) return ct.aditivo;
-        if (valor >= 29.99) return ct.aditivo;
-        if (valor >= 25)    return ct.aditivo - 0.3;
-        if (valor >= 20)    return ct.aditivo - 0.7;
-        if (valor >= 10)    return ct.aditivo - 1.0;
-        return ct.aditivo - 1.4;
-      }
-
-      // VOZ NOVO — usa tabela B
-      if (atingiuMeta) return ct.voz;
-      if (valor >= 29.99) return ct.voz;
-      if (valor >= 25)    return ct.voz - 0.4;
-      if (valor >= 20)    return ct.voz - 0.9;
-      if (valor >= 10)    return ct.voz - 1.3;
-      return ct.voz - 1.8;
-    }
-
-    // ── Fator de Renegociação (Tabela A/B/C) ──────────────────────
-    function fatorReneg(plano, pacoteDados, atingimento, renegRatio) {
-      const txt = (String(plano || '') + ' ' + String(pacoteDados || '')).toUpperCase();
-
-      // Categorização HIGH/MID/LOW pelo pacote de dados
-      let base = 2.80; // default HIGH (10GB+)
-      if (/300\s*MB|600\s*MB|1GB\b|2GB\b|3GB\b|4GB\b/i.test(txt) &&
-          !/10GB|20GB|30GB|50GB|100GB/i.test(txt)) {
-        base = 0.30; // LOW
-      } else if (/5GB\b|6GB\b/i.test(txt)) {
-        base = 1.80; // MID
-      }
-
-      // Se não achou pacote, tenta pelo nome do plano de voz
-      if (base === 2.80 && /LIBERTY\s+EMPRESA|TIM\s+EMPRESA\s+TARIFA\s+FLAT|TIM\s+BLACK/i.test(txt)) {
-        base = 0.30; // LOW
-      }
-
-      if (atingimento < 60) return 0;
-
-      // Fator Tabela A: base + (atingimento - 60) / 100
-      const fatorA = base + ((atingimento - 60) / 100);
-
-      // Aplica tabela conforme o Reneg/Meta Gross
-      if (renegRatio <= 120)  return fatorA;
-      if (renegRatio <= 185)  return fatorA * 0.65;
-      return fatorA * 0.40;
-    }
-
-    // ═══════════════════════════════════════════════════════════════
-    // 1) REMUNERAÇÃO BÁSICA + BÔNUS PORTABILIDADE (linha a linha)
-    // ═══════════════════════════════════════════════════════════════
-    let remunBasicaTotal = 0;
-    let portabilidadeTotal = 0;
-    const rankingProduto = {}; // { vendedor: { ativado, ganho } }
-
-    (d.vendas_periodo || []).forEach(v => {
-      const mod   = String(v.modalidade || '').toUpperCase();
-      const valor = Number(v.valor || 0);
-      const nome  = v.consultor || 'Sem Nome';
-
-      // Renegociação é calculada em outro bloco
-      if (mod.includes('RENEG')) return;
-
-      // Remuneração Básica
-      const fator = fatorRemBasica(v.modalidade, v.plano, valor);
-      remunBasicaTotal += valor * fator;
-
-      // Bônus Portabilidade (1.25×)
-      if (mod.includes('PORT') || mod.includes('MNP')) {
-        portabilidadeTotal += valor * (cfg.fator_portabilidade || 1.25);
-      }
-
-      // Acumula para Bônus Receita Corporate
-      if (/PRIMEIR|NOVA|PORT|ADITIVO|MIGRA/.test(mod) && !mod.includes('RENEG')) {
-        if (!rankingProduto[nome]) rankingProduto[nome] = { ativado: 0, ganho: 0 };
-        rankingProduto[nome].ativado += valor;
-      }
-    });
-
-    // ═══════════════════════════════════════════════════════════════
-    // 2) BÔNUS RECEITA CORPORATE (curva de atingimento)
-    // ═══════════════════════════════════════════════════════════════
-    const fatorCurva = atingPercent >= 60
-      ? Math.min(Math.floor(atingPercent), 110) / 100
-      : 0;
-
-    let somaBonusCorporate = 0;
-    Object.entries(rankingProduto).forEach(([nome, info]) => {
-      info.ganho = info.ativado * fatorCurva;
-      somaBonusCorporate += info.ganho;
-    });
-
-    // ═══════════════════════════════════════════════════════════════
-    // 3) RENEGOCIAÇÃO (Tabela A/B/C)
-    // ═══════════════════════════════════════════════════════════════
-    let somaReneg = 0;
-    const totalGrossLoja = k.gross_total || 0;
-    const totalRenegLancadas = (d.vendas_periodo || [])
-      .filter(v => /RENEG/i.test(v.modalidade || '')).length;
-    const renegRatio = totalGrossLoja > 0 ? (totalRenegLancadas / totalGrossLoja) * 100 : 0;
-
-    (d.vendas_periodo || []).forEach(v => {
-      const mod = String(v.modalidade || '').toUpperCase();
-      if (!mod.includes('RENEG')) return;
-      const valor = Number(v.valor || 0);
-      const fator = fatorReneg(v.plano, v.pacote || '', atingPercent, renegRatio);
-      somaReneg += valor * fator;
-    });
-
-    // ═══════════════════════════════════════════════════════════════
-    // 4) BÔNUS ESTRUTURA CORPORATE (usa CLT auditados)
-    // ═══════════════════════════════════════════════════════════════
-    const valorPorClt = (classif === 'SUPER BLACK') ? 2100 : 2000;
-    const limiteTarget = ({
-      'SUPER BLACK': 300000,
-      'BLACK':       100000,
-      'PLATINUM':     50000,
-      'SILVER':       20000,
-      'BLUE':          5000
-    }[classif] || 20000);
-
-    const targetBruto    = qtdClt * valorPorClt;
-    const targetAplicado = Math.min(targetBruto, limiteTarget);
-    const curvaEstrutura = (atingPercent >= 60 && k.receita_ativada >= 2000) ? fatorCurva : 0;
-    const valorEstrutura = targetAplicado * curvaEstrutura;
-
-    // ═══════════════════════════════════════════════════════════════
-    // 5) BÔNUS PERMANÊNCIA M7 / M14
-    // ═══════════════════════════════════════════════════════════════
-    const elegivelPerm = (d.gross_m1 || 0) >= 30;
-    const receitaM7  = (d.safra_m7  || []).reduce((a, v) => a + Number(v.valor || 0), 0);
-    const receitaM14 = (d.safra_m14 || []).reduce((a, v) => a + Number(v.valor || 0), 0);
-    const ganhoM7    = elegivelPerm ? receitaM7  * cfg.fator_m7  : 0;
-    const ganhoM14   = elegivelPerm ? receitaM14 * cfg.fator_m14 : 0;
-    const totalPermanencia = ganhoM7 + ganhoM14;
-
-    // ═══════════════════════════════════════════════════════════════
-    // 6) TOTAL GERAL
-    // ═══════════════════════════════════════════════════════════════
-    const totalGeralTIM = remunBasicaTotal
-                        + somaBonusCorporate
-                        + somaReneg
-                        + valorEstrutura
-                        + portabilidadeTotal
-                        + totalPermanencia;
-
-    // ═══════════════════════════════════════════════════════════════
-    // RENDERIZAÇÃO
-    // ═══════════════════════════════════════════════════════════════
-    $('kpi-receita').textContent     = fmt(k.receita_ativada);
-    $('kpi-atingimento').textContent = atingPercent.toFixed(2) + '%';
-    $('kpi-ativacoes').textContent   = fmtInt(k.ativacoes_novas);
-
-    // ── Totalizador ───────────────────────────────────────────────
-    $('painel-total-tim').innerHTML = `
-      <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;border-radius:16px;padding:25px;margin-bottom:25px;box-shadow:0 10px 25px rgba(30,58,138,0.25);">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-          <div>
-            <div style="font-size:11px;font-weight:800;color:#93c5fd;text-transform:uppercase;letter-spacing:1.5px;">💰 PREVISÃO DE PAGAMENTO TIM</div>
-            <div style="font-size:42px;font-weight:900;color:#10b981;margin:8px 0;">${fmt(totalGeralTIM)}</div>
-            <small style="opacity:0.75;">Classificação: <b>${classif}</b> · Atingimento: <b>${atingPercent.toFixed(2)}%</b> · CLTs: <b>${qtdClt}</b></small>
-          </div>
-          <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:15px 20px;font-size:12px;min-width:280px;">
-            <div>1. Remun. Básica: <b>${fmt(remunBasicaTotal)}</b></div>
-            <div>2. Bônus Receita Corporate: <b>${fmt(somaBonusCorporate)}</b></div>
-            <div>3. Renegociação: <b>${fmt(somaReneg)}</b></div>
-            <div>4. Estrutura Corporate: <b>${fmt(valorEstrutura)}</b></div>
-            <div>5. Portabilidade: <b>${fmt(portabilidadeTotal)}</b></div>
-            <div>6. Permanência M7/M14: <b>${fmt(totalPermanencia)}</b></div>
-          </div>
-        </div>
-      </div>`;
-
-    // ── Painel TBP ────────────────────────────────────────────────
-    $('painel-tbp').innerHTML = `
-      <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-bottom:25px;">
-        <h3 style="color:#1e3a8a;margin:0 0 15px;font-size:14px;font-weight:800;">🔍 CONFERÊNCIA ESPELHO TIM (TBP)</h3>
-        <div style="background:white;padding:15px;border-radius:8px;border-left:4px solid #3b82f6;">
-          <small style="color:#64748b;font-weight:700;font-size:10px;">REMUNERAÇÃO BÁSICA (tabela ${classif})</small>
-          <div style="font-size:24px;font-weight:800;color:#1d4ed8;margin-top:5px;">${fmt(remunBasicaTotal)}</div>
-        </div>
-      </div>`;
-
-    // ── Estrutura Corporate ───────────────────────────────────────
-    $('painel-corporate').style.display = 'block';
-    let msgE = '';
-    if (k.receita_ativada < 2000) msgE = '<span style="color:#fca5a5;">⚠️ Receita abaixo de R$ 2.000</span>';
-    else if (atingPercent < 60)   msgE = '<span style="color:#fca5a5;">⚠️ Atingimento abaixo de 60%</span>';
-    else if (targetBruto >= limiteTarget) msgE = `<span style="color:#86efac;">✅ Teto de ${classif} atingido (${fmt(limiteTarget)})</span>`;
-    else msgE = '<span style="color:#86efac;">✅ Estrutura elegível</span>';
-
-  $('lista-corporate').innerHTML = `
-      <div style="background:#0f172a;color:white;padding:20px;border-radius:12px;border-left:5px solid #3b82f6;">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-          <div>
-            <small style="opacity:0.7;font-weight:800;">🏢 Bônus Estrutura Corporate</small>
-            <div style="font-size:28px;font-weight:800;margin:5px 0;">${fmt(valorEstrutura)}</div>
-            <div>${msgE}</div>
-          </div>
-          <div style="text-align:right;font-size:11px;background:rgba(255,255,255,0.08);padding:10px;border-radius:8px;">
-            <div>CLTs auditados: <b>${qtdClt}</b></div>
-            <div>Valor por CLT: ${fmt(valorPorClt)}</div>
-            <div>Target bruto: ${fmt(targetBruto)}</div>
-            <div>Limitador: ${fmt(limiteTarget)}</div>
-            <div>Target aplicado: <b>${fmt(targetAplicado)}</b></div>
-            <div>Curva: <b>${(curvaEstrutura*100).toFixed(1)}%</b></div>
-          </div>
-        </div>
-      </div>`;
-
-    // ── Bônus Receita Corporate ───────────────────────────────────
-    $('painel-produto-movel').style.display = 'block';
-    let linhasProd = '';
-    Object.entries(rankingProduto).forEach(([nome, info]) => {
-      linhasProd += `<tr><td>${esc(nome)}</td><td>${fmt(info.ativado)}</td><td style="color:#059669;font-weight:800;">${fmt(info.ganho)}</td></tr>`;
-    });
-    $('lista-produto-movel').innerHTML = `
-      <div style="background:#f8fafc;border-left:5px solid #1e3c72;padding:20px;border-radius:0 12px 12px 0;margin-bottom:15px;">
-        <small style="font-size:10px;color:#64748b;font-weight:800;">📱 Bônus Receita Corporate (fator ${fatorCurva.toFixed(2)}×)</small>
-        <div style="font-size:28px;font-weight:800;color:#1e3c72;margin:5px 0;">${fmt(somaBonusCorporate)}</div>
-      </div>
-      <table>
-        <thead><tr><th>VENDEDOR</th><th>RECEITA ATIVADA</th><th>BÔNUS</th></tr></thead>
-        <tbody>${linhasProd || '<tr><td colspan="3" class="empty">Nenhuma ativação.</td></tr>'}</tbody>
-      </table>`;
-
-    // ── Renegociação ──────────────────────────────────────────────
-    $('painel-permanencia').style.display = 'block';
-    $('lista-permanencia').innerHTML = `
-      <div style="background:#fef3c7;border:1px solid #fde68a;border-left:5px solid #d97706;padding:20px;border-radius:8px;">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
-          <div>
-            <small style="font-size:10px;color:#92400e;font-weight:800;text-transform:uppercase;">🤝 Renegociação</small>
-            <div style="font-size:28px;font-weight:800;color:#b45309;margin:5px 0;">${fmt(somaReneg)}</div>
-            <small style="color:#78350f;">Reneg/Meta Gross: <b>${renegRatio.toFixed(1)}%</b> · Tabela: <b>${renegRatio <= 120 ? 'A' : (renegRatio <= 185 ? 'B' : 'C')}</b></small>
-          </div>
-          <div style="text-align:right;font-size:11px;color:#78350f;">
-            <div>Gross M-1: <b>${d.gross_m1}</b></div>
-            <div>Permanência M7: <b>${fmt(ganhoM7)}</b></div>
-            <div>Permanência M14: <b>${fmt(ganhoM14)}</b></div>
-          </div>
-        </div>
-      </div>`;
-
-    // ── Portabilidade ─────────────────────────────────────────────
-    $('painel-portabilidade').style.display = 'block';
-    let linhasPort = '';
-    const rankingPorta = {};
-    (d.portabilidades_m1 || []).forEach(v => {
-      const nome = v.consultor || 'Sem Nome';
-      const valor = Number(v.valor || 0);
-      if (!rankingPorta[nome]) rankingPorta[nome] = { qtd: 0, receita: 0, ganho: 0 };
-      rankingPorta[nome].qtd++;
-      rankingPorta[nome].receita += valor;
-      rankingPorta[nome].ganho   += valor * (cfg.fator_portabilidade || 1.25);
-    });
-    Object.entries(rankingPorta).forEach(([nome, info]) => {
-      linhasPort += `<tr><td>${esc(nome)}</td><td style="text-align:center;">${info.qtd}</td><td>${fmt(info.receita)}</td><td style="color:#c026d3;font-weight:800;">${fmt(info.ganho)}</td></tr>`;
-    });
-    $('lista-portabilidade').innerHTML = `
-      <div style="background:#fdf4ff;border:1px solid #f5d0fe;border-left:5px solid #c026d3;padding:20px;border-radius:8px;margin-bottom:15px;">
-        <small style="font-size:10px;color:#a21caf;font-weight:800;">Bônus Portabilidade (M-1) — Fator 1,25×</small>
-        <div style="font-size:28px;font-weight:800;color:#86198f;margin:5px 0;">${fmt(portabilidadeTotal)}</div>
-        <small style="color:#a21caf;">${(d.portabilidades_m1 || []).length} linha(s) em M-1</small>
-      </div>
-      <table>
-        <thead><tr><th>VENDEDOR</th><th style="text-align:center;">QTD</th><th>RECEITA</th><th>BÔNUS</th></tr></thead>
-        <tbody>${linhasPort || '<tr><td colspan="4" class="empty">Sem portabilidades.</td></tr>'}</tbody>
-      </table>`;
-  }
-
-  // ═══════════════════════════════════════════════════════════
-  // CLT AUDITADOS (salva por mês)
-  // ═══════════════════════════════════════════════════════════
-  async function carregarCltDoMes() {
-    const sb = getSb();
-    if (!sb) return;
-    const ini = $('rel_data_inicio').value;
-    if (!ini) return;
-    const [ano, mes] = ini.split('-').map(Number);
-    try {
-      const { data, error } = await sb.rpc('admin_auditoria_clt_get', { p_mes: mes, p_ano: ano });
-      if (error) throw error;
-      if (data?.success) $('rel_clt').value = data.qtd_clt || 0;
-    } catch (e) { console.warn('CLT get:', e.message); }
-  }
-
-  async function salvarClt() {
-    const sb = getSb();
-    if (!sb) return;
-    const ini = $('rel_data_inicio').value;
-    if (!ini) return;
-    const [ano, mes] = ini.split('-').map(Number);
-    const qtd = parseInt($('rel_clt').value) || 0;
-    try {
-      const { data, error } = await sb.rpc('admin_auditoria_clt_set', {
-        p_mes: mes, p_ano: ano, p_qtd: qtd, p_obs: null
-      });
-      if (error) throw error;
-      if (data?.success) {
-        toast(`CLT auditados salvos: ${qtd}`, 'success');
-        gerar(); // recalcula
-      }
-    } catch (e) {
-      toast('Erro: ' + e.message, 'error');
-    }
-  }
-
-  // ─── Chamar carregarCltDoMes() no init e no gerar() ───
-  
-  // API pública
-  window.RelVexo = { gerar };
-
-  // Boot
-  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
-  else setTimeout(init, 300);
-
-  console.log('✅ [RELATORIOS] Script carregado');
 })();
 </script>
 </body>
