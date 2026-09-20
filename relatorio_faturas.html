@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+  .rf-wrap { font-family: 'Poppins', sans-serif; color: #0f172a; padding: 4px; }
+  .rf-filters {
+    background: white; border-radius: 14px; padding: 20px 22px;
+    border: 1px solid #e2e8f0; margin-bottom: 22px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .rf-field { display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
+  .rf-field label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .rf-field input, .rf-field select {
+    padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 9px;
+    font-family: inherit; font-size: 13px; outline: none; transition: 0.2s;
+  }
+  .rf-field input:focus, .rf-field select:focus { border-color: #0b1a3a; box-shadow: 0 0 0 3px rgba(11,26,58,0.08); }
+  .rf-btn { padding: 10px 20px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+  .rf-btn-primary { background: #0b1a3a; color: white; }
+  .rf-btn-primary:hover:not(:disabled) { background: #1a3060; }
+  .rf-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .rf-btn-soft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .rf-btn-soft:hover { background: #e2e8f0; }
+  .rf-btn-pdf { background: #dc2626; color: white; }
+  .rf-btn-pdf:hover:not(:disabled) { background: #b91c1c; }
+  .rf-btn-xls { background: #16a34a; color: white; }
+  .rf-btn-xls:hover:not(:disabled) { background: #15803d; }
+  .rf-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .rf-toggle { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #fef2f2; border: 1.5px solid #fecaca; border-radius: 10px; cursor: pointer; font-size: 12px; font-weight: 700; color: #991b1b; user-select: none; transition: 0.2s; }
+  .rf-toggle input { accent-color: #dc2626; width: 16px; height: 16px; cursor: pointer; }
+  .rf-toggle:hover { background: #fee2e2; }
+
+  .rf-kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 14px; margin-bottom: 22px; }
+  .rf-kpi { background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; position: relative; }
+  .rf-kpi::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 100%; border-radius: 14px 14px 0 0; background: var(--c, #0b1a3a); }
+  .rf-kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .rf-kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+  .rf-kpi-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  /* AGING */
+  .rf-aging { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 22px; }
+  .rf-age-card { padding: 16px 18px; border-radius: 12px; border: 1px solid; }
+  .rf-age-1 { background: #fef9c3; border-color: #fde68a; }
+  .rf-age-2 { background: #fed7aa; border-color: #fdba74; }
+  .rf-age-3 { background: #fecaca; border-color: #fca5a5; }
+  .rf-age-4 { background: #fecdd3; border-color: #fb7185; }
+  .rf-age-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+  .rf-age-1 .rf-age-title { color: #854d0e; }
+  .rf-age-2 .rf-age-title { color: #9a3412; }
+  .rf-age-3 .rf-age-title { color: #991b1b; }
+  .rf-age-4 .rf-age-title { color: #881337; }
+  .rf-age-qtd { font-size: 12px; color: #475569; font-weight: 600; }
+  .rf-age-valor { font-size: 18px; font-weight: 900; margin-top: 4px; }
+  .rf-age-1 .rf-age-valor { color: #a16207; }
+  .rf-age-2 .rf-age-valor { color: #c2410c; }
+  .rf-age-3 .rf-age-valor { color: #b91c1c; }
+  .rf-age-4 .rf-age-valor { color: #9f1239; }
+
+  .rf-graf-box { background: white; border-radius: 14px; border: 1px solid #e2e8f0; padding: 20px 24px; margin-bottom: 22px; }
+  .rf-graf-box h3 { margin: 0 0 4px; font-size: 14px; font-weight: 800; color: #0b1a3a; }
+  .rf-graf-box p { margin: 0 0 16px; font-size: 11px; color: #64748b; }
+
+  .rf-tabela { background: white; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; }
+  .rf-thead { padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .rf-thead h3 { margin: 0; font-size: 13px; font-weight: 800; color: #0b1a3a; }
+  .rf-thead span { font-size: 11px; color: #64748b; }
+  .rf-scroll { max-height: 620px; overflow-y: auto; }
+  .rf-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .rf-tab th { text-align: left; padding: 10px 14px; background: #f8fafc; color: #475569; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 2; }
+  .rf-tab td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+  .rf-tab tr:hover td { background: #f8fafc; }
+  .rf-tab td.r { text-align: right; font-weight: 700; }
+  .rf-tab td.mono { font-family: monospace; font-size: 11px; color: #1e3c72; }
+  .rf-tab td.c { text-align: center; }
+
+  .rf-badge { display: inline-block; padding: 3px 9px; border-radius: 12px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+  .rf-badge.paga    { background: #dcfce7; color: #166534; }
+  .rf-badge.a_vencer{ background: #fef3c7; color: #92400e; }
+  .rf-badge.vencida { background: #fee2e2; color: #991b1b; }
+
+  .rf-wpp {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; background: #25D366; color: white;
+    border-radius: 8px; font-size: 10px; font-weight: 800;
+    text-decoration: none; transition: 0.2s;
+  }
+  .rf-wpp:hover { background: #1da851; transform: translateY(-1px); }
+  .rf-wpp-off { background: #e2e8f0; color: #94a3b8; cursor: not-allowed; }
+
+  .rf-vazio { padding: 60px; text-align: center; color: #94a3b8; }
+  .rf-semvalor { color: #dc2626; font-size: 10px; font-weight: 700; }
+</style>
+
+<div class="rf-wrap">
+
+  <!-- FILTROS -->
+  <div class="rf-filters">
+    <div class="rf-field">
+      <label>Vencimento - Início</label>
+      <input type="date" id="rf-ini">
+    </div>
+    <div class="rf-field">
+      <label>Vencimento - Fim</label>
+      <input type="date" id="rf-fim">
+    </div>
+    <div class="rf-field" style="min-width:200px;">
+      <label>Cliente</label>
+      <input type="text" id="rf-cliente" placeholder="Buscar por nome...">
+    </div>
+    <div class="rf-field">
+      <label>Status</label>
+      <select id="rf-status">
+        <option value="">Todos</option>
+        <option value="PAGA">✅ Pagas</option>
+        <option value="A_VENCER">🟡 A vencer</option>
+        <option value="VENCIDA">🔴 Vencidas</option>
+      </select>
+    </div>
+    <label class="rf-toggle">
+      <input type="checkbox" id="rf-somente-vencidas">
+      🚨 Só vencidas
+    </label>
+    <button class="rf-btn rf-btn-primary" id="rf-btn-filtrar" onclick="RF.filtrar()">🔍 Filtrar</button>
+    <button class="rf-btn rf-btn-soft" onclick="RF.limpar()">Limpar</button>
+    <button class="rf-btn rf-btn-pdf" id="rf-btn-pdf" onclick="RF.exportarPDF()" disabled>📄 PDF</button>
+    <button class="rf-btn rf-btn-xls" id="rf-btn-xls" onclick="RF.exportarExcel()" disabled>📊 Excel</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="rf-kpis" id="rf-kpis"></div>
+
+  <!-- AGING -->
+  <div class="rf-aging" id="rf-aging"></div>
+
+  <!-- GRÁFICO TOP DEVEDORES -->
+  <div class="rf-graf-box" id="rf-graf-box" style="display:none;">
+    <h3>🚨 Top 10 Clientes Devedores</h3>
+    <p>Clientes com maior valor em atraso no período</p>
+    <div style="position:relative; height:340px;">
+      <canvas id="rf-grafico"></canvas>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="rf-tabela">
+    <div class="rf-thead">
+      <h3>📋 Extrato de Faturas</h3>
+      <span id="rf-info"></span>
+    </div>
+    <div class="rf-scroll">
+      <table class="rf-tab">
+        <thead>
+          <tr>
+            <th>Vencimento</th>
+            <th>Cliente</th>
+            <th>CNPJ/CPF</th>
+            <th>Plano</th>
+            <th>Linha</th>
+            <th class="c">Parcela</th>
+            <th class="r">Valor</th>
+            <th>Status</th>
+            <th class="c">Atraso</th>
+            <th class="c">Cobrar</th>
+          </tr>
+        </thead>
+        <tbody id="rf-tbody">
+          <tr><td colspan="10" class="rf-vazio">Selecione o período e clique em Filtrar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const fmtPerc = (v) => Number(v || 0).toFixed(1) + '%';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let DADOS_ATUAIS = null;
+  let CHART_INSTANCIA = null;
+
+  function getSb() {
+    if (window.sb) return window.sb;
+    try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e) {}
+    return null;
+  }
+
+  function toISO(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+
+  function initDatas() {
+    const hoje = new Date();
+    // Por padrão: mês passado até o fim do mês atual (pega atrasos + mês corrente)
+    const ini = new Date(hoje.getFullYear(), hoje.getMonth() - 1, 1);
+    const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
+    if (!$('rf-ini').value) $('rf-ini').value = toISO(ini);
+    if (!$('rf-fim').value) $('rf-fim').value = toISO(fim);
+  }
+
+  // Formata telefone pra wa.me
+  function formatarFone(fone) {
+    if (!fone) return null;
+    const nums = String(fone).replace(/\D/g, '');
+    if (nums.length < 10) return null;
+    return '55' + nums;
+  }
+
+  function gerarLinkWhatsApp(f) {
+    const fone = formatarFone(f.contato_final || f.numero_linha);
+    if (!fone) return null;
+    const msg = encodeURIComponent(
+      `Olá${f.responsavel ? ' ' + f.responsavel.split(' ')[0] : ''}! ` +
+      `Identificamos uma fatura em aberto referente ao plano ${f.nome_do_plano || ''} ` +
+      `(parcela ${f.parcela}) com vencimento em ${f.vencimento} no valor de ${fmt(f.valor)}. ` +
+      `Podemos ajudar com o pagamento?`
+    );
+    return `https://wa.me/${fone}?text=${msg}`;
+  }
+
+  async function filtrar() {
+    const sb = getSb();
+    if (!sb) return alert('Supabase indisponível');
+
+    const ini = $('rf-ini').value;
+    const fim = $('rf-fim').value;
+    if (!ini || !fim) return alert('Selecione o período');
+
+    const btn = $('rf-btn-filtrar');
+    btn.disabled = true; btn.textContent = '⏳ Carregando...';
+    $('rf-tbody').innerHTML = `<tr><td colspan="10" class="rf-vazio">Carregando...</td></tr>`;
+
+    try {
+      const { data, error } = await sb.rpc('gestao_faturas_clientes', {
+        p_inicio: ini,
+        p_fim: fim,
+        p_status: $('rf-status').value || null,
+        p_cliente: $('rf-cliente').value.trim() || null,
+        p_somente_vencidas: $('rf-somente-vencidas').checked
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      DADOS_ATUAIS = data;
+      render(data);
+
+      $('rf-btn-pdf').disabled = false;
+      $('rf-btn-xls').disabled = false;
+    } catch (e) {
+      console.error(e);
+      $('rf-tbody').innerHTML = `<tr><td colspan="10" class="rf-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '🔍 Filtrar';
+    }
+  }
+
+  function render(d) {
+    const t = d.totais || {};
+    const aging = d.aging || {};
+
+    // KPIs
+    $('rf-kpis').innerHTML = `
+      <div class="rf-kpi" style="--c:#0b1a3a;">
+        <div class="rf-kpi-label">Total Faturado</div>
+        <div class="rf-kpi-value">${fmt(t.valor_total)}</div>
+        <div class="rf-kpi-sub">${fmtInt(t.qtd_total)} faturas</div>
+      </div>
+      <div class="rf-kpi" style="--c:#10b981;">
+        <div class="rf-kpi-label">✅ Recebido</div>
+        <div class="rf-kpi-value" style="color:#166534;">${fmt(t.valor_recebido)}</div>
+        <div class="rf-kpi-sub">${fmtInt(t.qtd_pagas)} faturas pagas</div>
+      </div>
+      <div class="rf-kpi" style="--c:#f59e0b;">
+        <div class="rf-kpi-label">🟡 A Vencer</div>
+        <div class="rf-kpi-value" style="color:#92400e;">${fmt(t.valor_a_vencer)}</div>
+        <div class="rf-kpi-sub">${fmtInt(t.qtd_a_vencer)} faturas</div>
+      </div>
+      <div class="rf-kpi" style="--c:#dc2626;">
+        <div class="rf-kpi-label">🔴 Vencido</div>
+        <div class="rf-kpi-value" style="color:#991b1b;">${fmt(t.valor_vencido)}</div>
+        <div class="rf-kpi-sub">${fmtInt(t.qtd_vencidas)} faturas</div>
+      </div>
+      <div class="rf-kpi" style="--c:#a855f7;">
+        <div class="rf-kpi-label">Taxa Inadimplência</div>
+        <div class="rf-kpi-value" style="color:#86198f;">${fmtPerc(t.taxa_inadimplencia)}</div>
+        <div class="rf-kpi-sub">${fmtInt(t.clientes_inadimpl)} clientes devendo</div>
+      </div>
+      <div class="rf-kpi" style="--c:#3b82f6;">
+        <div class="rf-kpi-label">Ticket Médio</div>
+        <div class="rf-kpi-value">${fmt(t.ticket_medio)}</div>
+        <div class="rf-kpi-sub">${fmtInt(t.clientes_unicos)} clientes ativos</div>
+      </div>`;
+
+    // AGING
+    $('rf-aging').innerHTML = `
+      <div class="rf-age-card rf-age-1">
+        <div class="rf-age-title">🟡 1 a 30 dias</div>
+        <div class="rf-age-qtd">${fmtInt(aging.b1_30?.qtd)} faturas</div>
+        <div class="rf-age-valor">${fmt(aging.b1_30?.valor)}</div>
+      </div>
+      <div class="rf-age-card rf-age-2">
+        <div class="rf-age-title">🟠 31 a 60 dias</div>
+        <div class="rf-age-qtd">${fmtInt(aging.b31_60?.qtd)} faturas</div>
+        <div class="rf-age-valor">${fmt(aging.b31_60?.valor)}</div>
+      </div>
+      <div class="rf-age-card rf-age-3">
+        <div class="rf-age-title">🔴 61 a 90 dias</div>
+        <div class="rf-age-qtd">${fmtInt(aging.b61_90?.qtd)} faturas</div>
+        <div class="rf-age-valor">${fmt(aging.b61_90?.valor)}</div>
+      </div>
+      <div class="rf-age-card rf-age-4">
+        <div class="rf-age-title">💀 +90 dias</div>
+        <div class="rf-age-qtd">${fmtInt(aging.b90mais?.qtd)} faturas</div>
+        <div class="rf-age-valor">${fmt(aging.b90mais?.valor)}</div>
+      </div>`;
+
+    // GRÁFICO TOP DEVEDORES
+    renderizarGrafico(d.top_devedores || []);
+
+    // TABELA
+    const faturas = d.faturas || [];
+    $('rf-info').textContent = `${faturas.length} fatura(s) · ${fmt(t.valor_total)}`;
+
+    if (faturas.length === 0) {
+      $('rf-tbody').innerHTML = '<tr><td colspan="10" class="rf-vazio">Nenhuma fatura encontrada com os filtros atuais.</td></tr>';
+      return;
+    }
+
+    $('rf-tbody').innerHTML = faturas.map(f => {
+      const st = (f.status_efetivo || '').toLowerCase();
+      const badgeLabel = st === 'paga' ? '✅ PAGA' : (st === 'vencida' ? '🔴 VENCIDA' : '🟡 A VENCER');
+      const wpp = gerarLinkWhatsApp(f);
+      const wppBtn = wpp
+        ? `<a href="${wpp}" target="_blank" class="rf-wpp">💬 Cobrar</a>`
+        : `<span class="rf-wpp rf-wpp-off">Sem fone</span>`;
+      const atraso = Number(f.dias_atraso) > 0 ? `${fmtInt(f.dias_atraso)}d` : '—';
+      const atrasoCor = Number(f.dias_atraso) > 90 ? '#991b1b' : (Number(f.dias_atraso) > 30 ? '#c2410c' : '#854d0e');
+
+      return `<tr>
+        <td>${esc(f.vencimento || '—')}</td>
+        <td><strong>${esc(f.nome_cliente || '—')}</strong></td>
+        <td class="mono">${esc(f.cpf_cnpj || '—')}</td>
+        <td style="font-size:11px;">${esc(f.nome_do_plano || '—')}</td>
+        <td class="mono">${esc(f.numero_linha || '—')}</td>
+        <td class="c">${esc(f.parcela || '—')}</td>
+        <td class="r">${f.valor != null ? fmt(f.valor) : '<span class="rf-semvalor">Sem valor</span>'}</td>
+        <td><span class="rf-badge ${st}">${badgeLabel}</span></td>
+        <td class="c" style="color:${atrasoCor};font-weight:800;">${atraso}</td>
+        <td class="c">${wppBtn}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderizarGrafico(top) {
+    const box = $('rf-graf-box');
+    if (!top || top.length === 0) {
+      box.style.display = 'none';
+      if (CHART_INSTANCIA) { CHART_INSTANCIA.destroy(); CHART_INSTANCIA = null; }
+      return;
+    }
+    box.style.display = 'block';
+
+    const ctx = $('rf-grafico').getContext('2d');
+    if (CHART_INSTANCIA) CHART_INSTANCIA.destroy();
+
+    const labels = top.map(r => {
+      const n = r.nome_cliente || '—';
+      return n.length > 24 ? n.substring(0, 22) + '…' : n;
+    });
+    const valores = top.map(r => Number(r.valor_total) || 0);
+
+    const cores = top.map((_, i) => {
+      const alpha = 1 - (i * 0.07);
+      return `rgba(220, 38, 38, ${Math.max(alpha, 0.4)})`;
+    });
+
+    CHART_INSTANCIA = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [{
+          label: 'Valor em atraso',
+          data: valores,
+          backgroundColor: cores,
+          borderRadius: 6,
+          borderSkipped: false
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        indexAxis: 'y',
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: (c) => 'Em atraso: ' + fmt(c.parsed.x)
+            },
+            backgroundColor: 'rgba(15, 23, 42, 0.95)',
+            padding: 12
+          }
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: {
+              font: { size: 10 }, color: '#64748b',
+              callback: (v) => 'R$ ' + Number(v).toLocaleString('pt-BR')
+            }
+          },
+          y: { grid: { display: false }, ticks: { font: { size: 11, weight: '600' }, color: '#0f172a' } }
+        }
+      }
+    });
+  }
+
+  function limpar() {
+    $('rf-status').value = '';
+    $('rf-cliente').value = '';
+    $('rf-somente-vencidas').checked = false;
+    initDatas();
+    filtrar();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // PDF
+  // ═══════════════════════════════════════════════════════════
+  function exportarPDF() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+    const t = d.totais || {};
+    const aging = d.aging || {};
+
+    const rows = (d.faturas || []).map(f => {
+      const st = (f.status_efetivo || '').toLowerCase();
+      const badge = st === 'paga' ? '✅ PAGA' : (st === 'vencida' ? '🔴 VENCIDA' : '🟡 A VENCER');
+      const atraso = Number(f.dias_atraso) > 0 ? `${f.dias_atraso}d` : '—';
+      return `<tr>
+        <td>${esc(f.vencimento || '—')}</td>
+        <td>${esc(f.nome_cliente || '—')}</td>
+        <td>${esc(f.cpf_cnpj || '—')}</td>
+        <td>${esc(f.nome_do_plano || '—')}</td>
+        <td style="text-align:center;">${esc(f.parcela || '—')}</td>
+        <td style="text-align:right;">${f.valor != null ? fmt(f.valor) : '—'}</td>
+        <td style="text-align:center;">${badge}</td>
+        <td style="text-align:center;">${atraso}</td>
+      </tr>`;
+    }).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Faturas dos Clientes</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; color: #0f172a; padding: 20px; }
+  .head { border-bottom: 3px solid #0b1a3a; padding-bottom: 12px; margin-bottom: 18px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .head h1 { margin: 0; font-size: 18px; color: #0b1a3a; }
+  .head .meta { text-align: right; font-size: 10px; color: #64748b; }
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 12px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+  .kpi small { font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .kpi strong { display: block; font-size: 13px; color: #0f172a; margin-top: 3px; }
+  .aging { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .ag { border-radius: 8px; padding: 8px 10px; border: 1px solid; }
+  .ag small { font-size: 8px; font-weight: 800; display: block; }
+  .ag b { font-size: 12px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  th { background: #f1f5f9; text-align: left; padding: 6px 8px; border-bottom: 1px solid #cbd5e1; font-size: 8px; text-transform: uppercase; color: #475569; }
+  td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+  .foot { margin-top: 20px; font-size: 9px; color: #94a3b8; text-align: center; }
+  .no-print { text-align:center; margin-top:20px; }
+  @media print { .no-print { display:none; } body { padding: 0; } }
+</style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="padding:10px 24px;background:#0b1a3a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  <div class="head">
+    <div>
+      <h1>VEXO · Relatório de Faturas dos Clientes</h1>
+      <small style="color:#64748b;">Período: ${d.periodo.inicio} a ${d.periodo.fim}</small>
+    </div>
+    <div class="meta"><div>Emitido em ${new Date().toLocaleString('pt-BR')}</div></div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small>Total Faturado</small><strong>${fmt(t.valor_total)}</strong></div>
+    <div class="kpi"><small>Recebido</small><strong>${fmt(t.valor_recebido)}</strong></div>
+    <div class="kpi"><small>A Vencer</small><strong>${fmt(t.valor_a_vencer)}</strong></div>
+    <div class="kpi"><small>Vencido</small><strong>${fmt(t.valor_vencido)}</strong></div>
+    <div class="kpi"><small>Inadimplência</small><strong>${fmtPerc(t.taxa_inadimplencia)}</strong></div>
+    <div class="kpi"><small>Ticket Médio</small><strong>${fmt(t.ticket_medio)}</strong></div>
+  </div>
+  <div class="aging">
+    <div class="ag" style="background:#fef9c3;border-color:#fde68a;"><small style="color:#854d0e;">1-30 dias</small><b>${fmt(aging.b1_30?.valor)}</b></div>
+    <div class="ag" style="background:#fed7aa;border-color:#fdba74;"><small style="color:#9a3412;">31-60 dias</small><b>${fmt(aging.b31_60?.valor)}</b></div>
+    <div class="ag" style="background:#fecaca;border-color:#fca5a5;"><small style="color:#991b1b;">61-90 dias</small><b>${fmt(aging.b61_90?.valor)}</b></div>
+    <div class="ag" style="background:#fecdd3;border-color:#fb7185;"><small style="color:#881337;">+90 dias</small><b>${fmt(aging.b90mais?.valor)}</b></div>
+  </div>
+  <table>
+    <thead><tr>
+      <th>Vencimento</th><th>Cliente</th><th>CNPJ/CPF</th><th>Plano</th>
+      <th>Parcela</th><th>Valor</th><th>Status</th><th>Atraso</th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="foot">Gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}</div>
+</body></html>`;
+
+    const w = window.open('', '_blank', 'width=1200,height=800');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // EXCEL
+  // ═══════════════════════════════════════════════════════════
+  function exportarExcel() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+
+    const dados = (d.faturas || []).map(f => ({
+      'Vencimento': f.vencimento || '',
+      'Cliente': f.nome_cliente || '',
+      'Código Cliente': f.codigo_cliente || '',
+      'CNPJ/CPF': f.cpf_cnpj || '',
+      'Responsável': f.responsavel || '',
+      'Plano': f.nome_do_plano || '',
+      'Linha': f.numero_linha || '',
+      'Parcela': f.parcela || '',
+      'Valor': Number(f.valor) || 0,
+      'Status': f.status_efetivo || '',
+      'Data Pagamento': f.data_pagamento ? new Date(f.data_pagamento).toLocaleDateString('pt-BR') : '',
+      'Dias em Atraso': f.dias_atraso || 0,
+      'Contato': f.contato_final || '',
+      'Email': f.email || '',
+      'Origem': f.origem || ''
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dados);
+    ws['!cols'] = [
+      {wch:12},{wch:35},{wch:14},{wch:18},{wch:25},{wch:28},{wch:15},
+      {wch:9},{wch:12},{wch:11},{wch:14},{wch:13},{wch:18},{wch:25},{wch:15}
+    ];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Faturas');
+
+    XLSX.writeFile(wb, `faturas_clientes_${d.periodo.inicio}_a_${d.periodo.fim}.xlsx`);
+  }
+
+  function init() {
+    initDatas();
+    setTimeout(filtrar, 300);
+  }
+
+  window.RF = { filtrar, limpar, exportarPDF, exportarExcel };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else setTimeout(init, 100);
+})();
+</script>
+</body>
+</html>
