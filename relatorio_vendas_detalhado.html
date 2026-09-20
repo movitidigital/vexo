@@ -3,6 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
 <style>
   .rvd-wrap { font-family: 'Poppins', sans-serif; color: #0f172a; }
   .rvd-filters {
@@ -140,7 +142,7 @@
           </tr>
         </thead>
         <tbody id="rvd-tbody">
-          <tr><td colspan="11" class="rvd-vazio">Selecione o período e clique em Filtrar.</td></tr>
+          <tr><td colspan="10" class="rvd-vazio">Selecione o período e clique em Filtrar.</td></tr>
         </tbody>
       </table>
     </div>
@@ -165,17 +167,22 @@
     return null;
   }
 
-  // ─── Init padrão de datas (mês atual) ────────────────────────
+  // Fix timezone: usa data local
+  function toISO(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+
   function initDatas() {
     const hoje = new Date();
     const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-    const toISO = (d) => d.toISOString().split('T')[0];
     if (!$('rvd-ini').value) $('rvd-ini').value = toISO(ini);
     if (!$('rvd-fim').value) $('rvd-fim').value = toISO(fim);
   }
 
-  // ─── Filtrar ────────────────────────────────────────────────
   async function filtrar() {
     const sb = getSb();
     if (!sb) return alert('Supabase indisponível');
@@ -187,7 +194,7 @@
     const btn = $('rvd-btn-filtrar');
     btn.disabled = true; btn.textContent = '⏳ Carregando...';
 
-    $('rvd-tbody').innerHTML = `<tr><td colspan="11" class="rvd-vazio">Carregando...</td></tr>`;
+    $('rvd-tbody').innerHTML = `<tr><td colspan="10" class="rvd-vazio">Carregando...</td></tr>`;
 
     try {
       const { data, error } = await sb.rpc('admin_relatorio_vendas_detalhado', {
@@ -204,18 +211,16 @@
       DADOS_ATUAIS = data;
       render(data);
 
-      // Habilita botões de exportação
       $('rvd-btn-pdf').disabled = false;
       $('rvd-btn-xls').disabled = false;
     } catch (e) {
       console.error(e);
-      $('rvd-tbody').innerHTML = `<tr><td colspan="11" class="rvd-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
+      $('rvd-tbody').innerHTML = `<tr><td colspan="10" class="rvd-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
     } finally {
       btn.disabled = false; btn.textContent = '🔍 Filtrar';
     }
   }
 
-  // ─── Renderizar ─────────────────────────────────────────────
   function render(d) {
     const t = d.totais || {};
 
@@ -252,7 +257,7 @@
         <div class="rvd-kpi-sub">Acordos</div>
       </div>`;
 
-    // Popula filtros se ainda não populados
+    // Popula filtros (blindado contra elementos ausentes)
     popularFiltros(d.filtros_disponiveis || {});
 
     // Tabela
@@ -260,7 +265,7 @@
     $('rvd-info').textContent = `${vendas.length} linha(s) · ${fmt(t.valor_total)}`;
 
     if (vendas.length === 0) {
-      $('rvd-tbody').innerHTML = '<tr><td colspan="11" class="rvd-vazio">Nenhuma venda encontrada no período.</td></tr>';
+      $('rvd-tbody').innerHTML = '<tr><td colspan="10" class="rvd-vazio">Nenhuma venda encontrada no período.</td></tr>';
       return;
     }
 
@@ -269,7 +274,7 @@
       let badgeCls = 'outros';
       if (v.status_etapa === 6) badgeCls = 'ativo';
       else if (status.includes('CANCEL')) badgeCls = 'cancel';
-      else if (status.includes('PENDENTE') || v.status_etapa < 6) badgeCls = 'pend';
+      else if (status.includes('PENDENTE') || (v.status_etapa != null && v.status_etapa < 6)) badgeCls = 'pend';
 
       return `<tr>
         <td>${esc(v.data_ativacao || '—')}</td>
@@ -286,20 +291,32 @@
     }).join('');
   }
 
+  // 🔒 Blindado: só mexe nos selects que existem
   function popularFiltros(f) {
     const opts = (arr, valorVazio) => `<option value="">${valorVazio}</option>` +
       (arr||[]).filter(Boolean).sort().map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
 
-    if ($('rvd-consultor').children.length <= 1) $('rvd-consultor').innerHTML = opts(f.consultores, 'Todos');
-    if ($('rvd-modalidade').children.length <= 1) $('rvd-modalidade').innerHTML = opts(f.modalidades, 'Todas');
-    if ($('rvd-uf').children.length <= 1) $('rvd-uf').innerHTML = opts(f.ufs, 'Todas');
+    const elConsultor = $('rvd-consultor');
+    if (elConsultor && elConsultor.children.length <= 1) {
+      elConsultor.innerHTML = opts(f.consultores, 'Todos');
+    }
+
+    const elMod = $('rvd-modalidade');
+    if (elMod && elMod.children.length <= 1) {
+      elMod.innerHTML = opts(f.modalidades, 'Todas');
+    }
+
+    const elUf = $('rvd-uf');
+    if (elUf && elUf.children.length <= 1) {
+      elUf.innerHTML = opts(f.ufs, 'Todas');
+    }
   }
 
   function limpar() {
-    $('rvd-consultor').value = '';
-    $('rvd-modalidade').value = '';
-    $('rvd-uf').value = '';
-    $('rvd-status').value = '';
+    if ($('rvd-consultor')) $('rvd-consultor').value = '';
+    if ($('rvd-modalidade')) $('rvd-modalidade').value = '';
+    if ($('rvd-uf')) $('rvd-uf').value = '';
+    if ($('rvd-status')) $('rvd-status').value = '';
     initDatas();
     filtrar();
   }
@@ -318,7 +335,6 @@
         <td>${esc(v.modalidade || '—')}</td>
         <td>${esc(v.plano || '—')}</td>
         <td>${esc(v.consultor || '—')}</td>
-        <td>${esc(v.uf || '—')}</td>
         <td class="r">${fmt(v.valor_numeric)}</td>
       </tr>`).join('');
 
@@ -364,7 +380,7 @@
   </div>
   <table>
     <thead><tr>
-      <th>Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th><th>Consultor</th><th>UF</th><th class="r">Valor</th>
+      <th>Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th><th>Consultor</th><th class="r">Valor</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>
@@ -390,15 +406,15 @@
       'Plano': v.plano || '',
       'Linha': v.numero_linha || '',
       'Consultor': v.consultor || '',
+      'Origem': v.origem || '',
       'Valor': Number(v.valor_numeric) || 0,
       'Status': v.status || ''
     }));
 
     const ws = XLSX.utils.json_to_sheet(dados);
-    // Larguras
     ws['!cols'] = [
       {wch:12},{wch:12},{wch:35},{wch:20},{wch:18},{wch:25},{wch:15},
-      {wch:25},{wch:5},{wch:18},{wch:18},{wch:12},{wch:22}
+      {wch:25},{wch:14},{wch:12},{wch:22}
     ];
 
     const wb = XLSX.utils.book_new();
@@ -411,7 +427,6 @@
   // ─── Init ───────────────────────────────────────────────────
   function init() {
     initDatas();
-    // Se o usuário já configurou, roda automaticamente
     setTimeout(filtrar, 300);
   }
 
