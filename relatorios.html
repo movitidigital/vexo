@@ -207,200 +207,263 @@
   function processar(d) {
     const cfg = d.config;
     const k   = d.kpis;
+    const classif = (d.classificacao || 'SILVER').toUpperCase();
     const metaLoja = parseFloat($('rel_meta_loja').value) || cfg.meta_loja_padrao || 2000;
-
-    // KPIs
-    $('kpi-receita').textContent    = fmt(k.receita_ativada);
-    $('kpi-atingimento').textContent = ((k.receita_ativada / metaLoja) * 100).toFixed(1) + '%';
-    $('kpi-ativacoes').textContent   = fmtInt(k.ativacoes_novas);
-
-    // Vendas válidas no período (para corporate)
-    const vendasValidas = (d.vendas_periodo || []).filter(v =>
-      /PRIMEIR|NOVA|PORT|ADITIVO|MIGRA/i.test(v.modalidade) && !/RENEG/i.test(v.modalidade)
-    );
-
-    // ── 1) Receita Corporate ────────────────────────────────────────
     const atingPercent = (k.receita_ativada / metaLoja) * 100;
-    let fatorCurvaCorporate = 0;
-    if (atingPercent >= 60) {
-      fatorCurvaCorporate = atingPercent / 100;
-      if (fatorCurvaCorporate > 1.10) fatorCurvaCorporate = 1.10;
+    const atingiuMeta = atingPercent >= 100;
+
+    // ─── Helpers das tabelas TIM ─────────────────────────
+    // Fator de Remuneração Básica (Silver)
+    function fatorRemBasica(modalidade, plano, valor) {
+      const m = String(modalidade||'').toUpperCase();
+      const p = String(plano||'').toUpperCase();
+
+      let prod = 'VOZ';
+      if (m.includes('M2M')) prod = 'M2M';
+      else if (m.includes('MIGRA')) prod = 'MIGRACAO';
+      else if (m.includes('ADITIVO') || m.includes('UPGRADE')) prod = 'ADITIVO';
+      else if (m.includes('WEB') || m.includes('WTTX')) prod = 'WEB';
+      else if (m.includes('VAS') || p.includes('DEEZER')) prod = 'VAS';
+      else if (m.includes('FIXO') || p.includes('OFFICE FIXO')) prod = 'FIXO';
+
+      if (classif !== 'SILVER') {
+        // Fallback genérico (outras classificações)
+        return 3.5;
+      }
+
+      if (prod === 'WEB' || prod === 'M2M' || prod === 'FIXO') return 3.5;
+      if (prod === 'VAS') return 2.0;
+
+      if (prod === 'MIGRACAO') {
+        if (atingiuMeta) return 4.5;
+        if (valor >= 29.99) return 4.5;
+        if (valor >= 25)    return 3.6;
+        if (valor >= 20)    return 3.2;
+        if (valor >= 10)    return 2.8;
+        return 2.4;
+      }
+      if (prod === 'ADITIVO') {
+        if (atingiuMeta) return 3.5;
+        if (valor >= 29.99) return 3.5;
+        if (valor >= 25)    return 3.2;
+        if (valor >= 20)    return 2.8;
+        if (valor >= 10)    return 2.5;
+        return 2.1;
+      }
+      // VOZ NOVO
+      if (atingiuMeta) return 4.5;
+      if (valor >= 29.99) return 4.5;
+      if (valor >= 25)    return 4.1;
+      if (valor >= 20)    return 3.6;
+      if (valor >= 10)    return 3.2;
+      return 2.7;
     }
 
-    const rankingProduto = {};
-    let somaRealCorporate = 0;
-    vendasValidas.forEach(v => {
+    // Fator de Renegociação
+    function fatorReneg(pacoteDados, atingimento, renegRatio) {
+      const c = String(pacoteDados||'').toUpperCase();
+      let base = 2.80; // HIGH
+      if (c.includes('300 MB') || c.includes('600 MB') || c.includes('1GB')
+          || c.includes('2GB') || c.includes('3GB') || c.includes('4GB')) base = 0.30;
+      else if (c.includes('5GB') || c.includes('6GB')) base = 1.80;
+
+      if (atingimento < 60) return 0;
+      const fatorA = base + ((atingimento - 60) / 100);
+      if (renegRatio <= 120) return fatorA;
+      if (renegRatio <= 185) return fatorA * 0.65;
+      return fatorA * 0.40;
+    }
+
+    // ─── 1) Remuneração Básica: calcula venda a venda ────
+    let remunBasicaTotal = 0;
+    let portabilidadeTotal = 0;
+    const rankingProduto = {};   // para Bônus Receita Corporate
+
+    (d.vendas_periodo || []).forEach(v => {
+      const mod = String(v.modalidade || '').toUpperCase();
       const valor = Number(v.valor || 0);
       const nome  = v.consultor || 'Sem Nome';
-      const ganho = valor * fatorCurvaCorporate;
-      somaRealCorporate += ganho;
-      if (!rankingProduto[nome]) rankingProduto[nome] = { ativado: 0, ganho: 0 };
-      rankingProduto[nome].ativado += valor;
-      rankingProduto[nome].ganho   += ganho;
+
+      // Ignora Renegociação aqui (ela é calculada depois, com regra própria)
+      if (mod.includes('RENEG')) return;
+
+      // Ignora Migração (usa fator de migração, não de Voz NOVO)
+      // (já está dentro do fatorRemBasica)
+
+      // 1a) Remuneração Básica
+      const fator = fatorRemBasica(v.modalidade, v.plano, valor);
+      remunBasicaTotal += valor * fator;
+
+      // 1b) Bônus Portabilidade (1.25× se for porta)
+      if (mod.includes('PORT') || mod.includes('MNP')) {
+        portabilidadeTotal += valor * (cfg.fator_portabilidade || 1.25);
+      }
+
+      // Acumula para o Bônus Receita Corporate (faturamento por vendedor)
+      if (/PRIMEIR|NOVA|PORT|ADITIVO|MIGRA/.test(mod) && !mod.includes('RENEG')) {
+        if (!rankingProduto[nome]) rankingProduto[nome] = { ativado: 0, ganho: 0 };
+        rankingProduto[nome].ativado += valor;
+      }
     });
 
-    // ── 2) Estrutura Corporate ──────────────────────────────────────
-    const cpfsValidos    = Object.keys(rankingProduto).length;
-    const targetBruto    = cpfsValidos * cfg.target_estrutura_cpf;
-    const targetAplicado = Math.min(targetBruto, cfg.limite_estrutura_silver);
-    let curvaEstrutura   = 0;
-    if (atingPercent >= 60 && k.receita_ativada >= 2000) {
-      curvaEstrutura = fatorCurvaCorporate;
-    }
+    // ─── 2) Bônus Receita Corporate (curva) ──────────────
+    const fatorCurva = atingPercent >= 60
+      ? Math.min(Math.floor(atingPercent), 110) / 100
+      : 0;
+
+    let somaBonusCorporate = 0;
+    Object.entries(rankingProduto).forEach(([nome, info]) => {
+      info.ganho = info.ativado * fatorCurva;
+      somaBonusCorporate += info.ganho;
+    });
+
+    // ─── 3) Renegociação ─────────────────────────────────
+    let somaReneg = 0;
+    const totalGrossLoja = k.gross_total || 0;
+    (d.vendas_periodo || []).forEach(v => {
+      const mod = String(v.modalidade || '').toUpperCase();
+      if (!mod.includes('RENEG')) return;
+      const valor = Number(v.valor || 0);
+      const renegRatio = totalGrossLoja > 0 ? 100 : 0;
+      const fator = fatorReneg(v.plano, atingPercent, renegRatio);
+      somaReneg += valor * fator;
+    });
+
+    // ─── 4) Estrutura Corporate ──────────────────────────
+    const cpfsValidos = Object.keys(rankingProduto).length;
+    const targetAplicado = Math.min(cpfsValidos * cfg.target_estrutura_cpf, cfg.limite_estrutura_silver);
+    const curvaEstrutura = (atingPercent >= 60 && k.receita_ativada >= 2000) ? fatorCurva : 0;
     const valorEstrutura = targetAplicado * curvaEstrutura;
 
-    // ── 3) Portabilidade M-1 ────────────────────────────────────────
-    const F_PORTA = cfg.fator_portabilidade;
-    let somaRealPortabilidade = 0;
-    const rankingPorta = {};
-    (d.portabilidades_m1 || []).forEach(v => {
-      const valor = Number(v.valor || 0);
-      const nome  = v.consultor || 'Sem Nome';
-      const ganho = valor * F_PORTA;
-      somaRealPortabilidade += ganho;
-      if (!rankingPorta[nome]) rankingPorta[nome] = { qtd: 0, receita: 0, ganho: 0 };
-      rankingPorta[nome].qtd++;
-      rankingPorta[nome].receita += valor;
-      rankingPorta[nome].ganho   += ganho;
-    });
-
-    // ── 4) Permanência M7 / M14 ─────────────────────────────────────
-    const elegivel = (d.gross_m1 || 0) >= 30;
-    const F_M7  = cfg.fator_m7;
-    const F_M14 = cfg.fator_m14;
-
-    const receitaSafraM7  = (d.safra_m7  || []).reduce((a, v) => a + Number(v.valor || 0), 0);
-    const receitaSafraM14 = (d.safra_m14 || []).reduce((a, v) => a + Number(v.valor || 0), 0);
-    const ganhoM7  = elegivel ? receitaSafraM7  * F_M7  : 0;
-    const ganhoM14 = elegivel ? receitaSafraM14 * F_M14 : 0;
+    // ─── 5) Permanência M7/M14 ───────────────────────────
+    const elegivelPerm = (d.gross_m1 || 0) >= 30;
+    const receitaM7  = (d.safra_m7  || []).reduce((a, v) => a + Number(v.valor||0), 0);
+    const receitaM14 = (d.safra_m14 || []).reduce((a, v) => a + Number(v.valor||0), 0);
+    const ganhoM7  = elegivelPerm ? receitaM7  * cfg.fator_m7  : 0;
+    const ganhoM14 = elegivelPerm ? receitaM14 * cfg.fator_m14 : 0;
     const totalPermanencia = ganhoM7 + ganhoM14;
 
-    // ── 5) Total Geral TIM ──────────────────────────────────────────
-    const totalGeralTIM = k.remuneracao_tbp + somaRealCorporate + valorEstrutura
-                        + somaRealPortabilidade + totalPermanencia;
+    // ─── 6) Total geral ──────────────────────────────────
+    const totalGeralTIM = remunBasicaTotal + somaBonusCorporate
+                        + somaReneg + valorEstrutura
+                        + portabilidadeTotal + totalPermanencia;
 
     // ═══════════════ RENDERIZAÇÃO ═══════════════
+    $('kpi-receita').textContent    = fmt(k.receita_ativada);
+    $('kpi-atingimento').textContent = atingPercent.toFixed(2) + '%';
+    $('kpi-ativacoes').textContent   = fmtInt(k.ativacoes_novas);
 
     // TOTALIZADOR
     $('painel-total-tim').innerHTML = `
       <div style="background:linear-gradient(135deg,#0f172a,#1e3a8a);color:#fff;border-radius:16px;padding:25px;margin-bottom:25px;box-shadow:0 10px 25px rgba(30,58,138,0.25);">
-        <div style="font-size:11px;font-weight:800;color:#93c5fd;text-transform:uppercase;letter-spacing:1.5px;">💰 PREVISÃO DE PAGAMENTO TIM</div>
-        <div style="font-size:42px;font-weight:900;color:#10b981;margin:8px 0;text-shadow:0 0 20px rgba(16,185,129,0.3);">${fmt(totalGeralTIM)}</div>
-        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:18px;font-size:12px;">
-          <div>1. Remun. Básica TBP: <b>${fmt(k.remuneracao_tbp)}</b></div>
-          <div>2. Estrutura Corporate: <b>${fmt(valorEstrutura)}</b></div>
-          <div>3. Receita Corporate: <b>${fmt(somaRealCorporate)}</b></div>
-          <div>4. Portabilidade (M-1): <b>${fmt(somaRealPortabilidade)}</b></div>
-          <div>5. Permanência M7/M14: <b>${fmt(totalPermanencia)}</b></div>
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
+          <div>
+            <div style="font-size:11px;font-weight:800;color:#93c5fd;text-transform:uppercase;letter-spacing:1.5px;">💰 PREVISÃO DE PAGAMENTO TIM</div>
+            <div style="font-size:42px;font-weight:900;color:#10b981;margin:8px 0;">${fmt(totalGeralTIM)}</div>
+            <small style="opacity:0.75;">Classificação: <b>${classif}</b> · Atingimento: <b>${atingPercent.toFixed(2)}%</b></small>
+          </div>
+          <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:15px 20px;font-size:12px;min-width:280px;">
+            <div>1. Remun. Básica: <b>${fmt(remunBasicaTotal)}</b></div>
+            <div>2. Bônus Receita Corporate: <b>${fmt(somaBonusCorporate)}</b></div>
+            <div>3. Renegociação: <b>${fmt(somaReneg)}</b></div>
+            <div>4. Estrutura Corporate: <b>${fmt(valorEstrutura)}</b></div>
+            <div>5. Portabilidade: <b>${fmt(portabilidadeTotal)}</b></div>
+            <div>6. Permanência M7/M14: <b>${fmt(totalPermanencia)}</b></div>
+          </div>
         </div>
       </div>`;
 
-    // TBP
+    // TBP (remuneração básica)
     $('painel-tbp').innerHTML = `
       <div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:12px;padding:20px;margin-bottom:25px;">
         <h3 style="color:#1e3a8a;margin:0 0 15px;font-size:14px;font-weight:800;">🔍 CONFERÊNCIA ESPELHO TIM (TBP)</h3>
         <div style="background:white;padding:15px;border-radius:8px;border-left:4px solid #3b82f6;">
-          <small style="color:#64748b;font-weight:700;font-size:10px;">REMUNERAÇÃO BÁSICA (Base: ${cfg.fator_base}× / Aditivo: ${cfg.fator_aditivo}×)</small>
-          <div style="font-size:24px;font-weight:800;color:#1d4ed8;margin-top:5px;">${fmt(k.remuneracao_tbp)}</div>
+          <small style="color:#64748b;font-weight:700;font-size:10px;">REMUNERAÇÃO BÁSICA (tabela Silver)</small>
+          <div style="font-size:24px;font-weight:800;color:#1d4ed8;margin-top:5px;">${fmt(remunBasicaTotal)}</div>
         </div>
       </div>`;
 
-    // ESTRUTURA CORPORATE
+    // Estrutura Corporate
     $('painel-corporate').style.display = 'block';
-    let msgEstrut = '';
-    if (k.receita_ativada < 2000) {
-      msgEstrut = `<span style="font-size:11px;font-weight:700;color:#9a3412;background:#ffedd5;padding:4px 8px;border-radius:10px;">⚠️ Inelegível: Receita < R$ 2.000</span>`;
-    } else if (atingPercent < 60) {
-      msgEstrut = `<span style="font-size:11px;font-weight:700;color:#b45309;background:#fef3c7;padding:4px 8px;border-radius:10px;">⚠️ Inelegível: Meta abaixo de 60%</span>`;
-    } else if (targetBruto > cfg.limite_estrutura_silver) {
-      msgEstrut = `<span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#dbeafe;padding:4px 8px;border-radius:10px;">✅ Teto atingido</span>`;
-    } else {
-      msgEstrut = `<span style="font-size:11px;font-weight:700;color:#166534;background:#dcfce7;padding:4px 8px;border-radius:10px;">✅ Estrutura Elegível</span>`;
-    }
+    let msgE = '';
+    if (k.receita_ativada < 2000) msgE = '⚠️ Receita < R$ 2.000';
+    else if (atingPercent < 60)   msgE = '⚠️ Atingimento < 60%';
+    else if (targetAplicado >= cfg.limite_estrutura_silver) msgE = '✅ Teto atingido';
+    else msgE = '✅ Elegível';
+
     $('lista-corporate').innerHTML = `
       <div style="background:#0f172a;color:white;padding:20px;border-radius:12px;border-left:5px solid #3b82f6;">
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:12px;">
           <div>
-            <small style="opacity:0.7;font-weight:800;text-transform:uppercase;">🏢 Bônus Estrutura Corporate</small>
+            <small style="opacity:0.7;font-weight:800;">🏢 Bônus Estrutura Corporate</small>
             <div style="font-size:28px;font-weight:800;margin:5px 0;">${fmt(valorEstrutura)}</div>
-            <div style="margin-top:8px;">${msgEstrut}</div>
+            <div>${msgE}</div>
           </div>
-          <div style="text-align:right;font-size:11px;opacity:0.85;background:rgba(255,255,255,0.08);padding:10px;border-radius:8px;">
-            <div><strong>Base:</strong> ${cpfsValidos} CPF(s)</div>
-            <div><strong>Target:</strong> ${fmt(targetAplicado)}</div>
-            <div><strong>Fator:</strong> ${(curvaEstrutura * 100).toFixed(1)}%</div>
+          <div style="text-align:right;font-size:11px;background:rgba(255,255,255,0.08);padding:10px;border-radius:8px;">
+            <div>Base: ${cpfsValidos} CPF(s)</div>
+            <div>Target: ${fmt(targetAplicado)}</div>
+            <div>Fator: ${(curvaEstrutura*100).toFixed(1)}%</div>
           </div>
         </div>
       </div>`;
 
-    // BÔNUS RECEITA CORPORATE
+    // Bônus Receita Corporate
     $('painel-produto-movel').style.display = 'block';
-    let statusCurva = '';
-    if (atingPercent >= 110) {
-      statusCurva = `<span style="font-size:11px;font-weight:700;color:#166534;background:#dcfce7;padding:4px 8px;border-radius:10px;">🏆 Teto máximo 1.10×</span>`;
-    } else if (atingPercent >= 60) {
-      statusCurva = `<span style="font-size:11px;font-weight:700;color:#1d4ed8;background:#dbeafe;padding:4px 8px;border-radius:10px;">✅ Fator: ${fatorCurvaCorporate.toFixed(2)}×</span>`;
-    } else {
-      statusCurva = `<span style="font-size:11px;font-weight:700;color:#b45309;background:#fef3c7;padding:4px 8px;border-radius:10px;">⚠️ Loja precisa 60%</span>`;
-    }
     let linhasProd = '';
     Object.entries(rankingProduto).forEach(([nome, info]) => {
       linhasProd += `<tr><td>${esc(nome)}</td><td>${fmt(info.ativado)}</td><td style="color:#059669;font-weight:800;">${fmt(info.ganho)}</td></tr>`;
     });
     $('lista-produto-movel').innerHTML = `
       <div style="background:#f8fafc;border-left:5px solid #1e3c72;padding:20px;border-radius:0 12px 12px 0;margin-bottom:15px;">
-        <small style="font-size:10px;color:#64748b;font-weight:800;text-transform:uppercase;">📱 Bônus Receita Corporate</small>
-        <div style="font-size:28px;font-weight:800;color:#1e3c72;margin:5px 0;">${fmt(somaRealCorporate)}</div>
-        <div style="margin-top:8px;">${statusCurva}</div>
+        <small style="font-size:10px;color:#64748b;font-weight:800;">📱 Bônus Receita Corporate (fator ${fatorCurva.toFixed(2)}×)</small>
+        <div style="font-size:28px;font-weight:800;color:#1e3c72;margin:5px 0;">${fmt(somaBonusCorporate)}</div>
       </div>
       <table>
-        <thead><tr><th>VENDEDOR</th><th>RECEITA ATIVADA</th><th>BÔNUS (FATOR ${fatorCurvaCorporate.toFixed(2)})</th></tr></thead>
-        <tbody>${linhasProd || '<tr><td colspan="3" class="empty">Nenhuma ativação válida.</td></tr>'}</tbody>
+        <thead><tr><th>VENDEDOR</th><th>RECEITA ATIVADA</th><th>BÔNUS</th></tr></thead>
+        <tbody>${linhasProd || '<tr><td colspan="3" class="empty">Nenhuma ativação.</td></tr>'}</tbody>
       </table>`;
 
-    // PERMANÊNCIA
+    // Renegociação
     $('painel-permanencia').style.display = 'block';
     $('lista-permanencia').innerHTML = `
-      <div style="background:#f0fdf4;border:1px solid #ccfbf1;border-left:5px solid #0f766e;padding:20px;border-radius:8px;">
-        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:15px;">
+      <div style="background:#fef3c7;border:1px solid #fde68a;border-left:5px solid #d97706;padding:20px;border-radius:8px;">
+        <div style="display:flex;justify-content:space-between;flex-wrap:wrap;">
           <div>
-            <small style="font-size:10px;color:#115e59;font-weight:800;text-transform:uppercase;">Valor Creditado</small>
-            <div style="font-size:28px;font-weight:800;color:#0f766e;margin:5px 0;">${fmt(totalPermanencia)}</div>
-            ${elegivel
-              ? `<span style="font-size:11px;font-weight:700;color:#166534;background:#dcfce7;padding:4px 8px;border-radius:10px;">✅ Loja Qualificada: ${d.gross_m1} gross em M-1</span>`
-              : `<span style="font-size:11px;font-weight:700;color:#9a3412;background:#ffedd5;padding:4px 8px;border-radius:10px;">⚠️ Inelegível: ${d.gross_m1}/30 gross em M-1</span>`
-            }
+            <small style="font-size:10px;color:#92400e;font-weight:800;">🤝 RENEGOCIAÇÃO</small>
+            <div style="font-size:28px;font-weight:800;color:#b45309;margin:5px 0;">${fmt(somaReneg)}</div>
           </div>
-          <div style="text-align:right;display:flex;flex-direction:column;gap:8px;">
-            <div style="background:white;padding:10px 15px;border-radius:8px;border:1px solid #ccfbf1;">
-              <small style="color:#0f766e;font-size:10px;font-weight:800;">M7 (Safra ${d.periodo.mes_m8_ini} a ${d.periodo.mes_m8_fim})</small><br>
-              <small style="color:#64748b;font-size:9px;">Base: ${fmt(receitaSafraM7)}</small>
-              <div style="font-weight:800;color:#115e59;">${fmt(ganhoM7)}</div>
-            </div>
-            <div style="background:white;padding:10px 15px;border-radius:8px;border:1px solid #ccfbf1;">
-              <small style="color:#0f766e;font-size:10px;font-weight:800;">M14 (Safra ${d.periodo.mes_m15_ini} a ${d.periodo.mes_m15_fim})</small><br>
-              <small style="color:#64748b;font-size:9px;">Base: ${fmt(receitaSafraM14)}</small>
-              <div style="font-weight:800;color:#115e59;">${fmt(ganhoM14)}</div>
-            </div>
+          <div style="text-align:right;font-size:11px;color:#78350f;">
+            <div>Gross M-1: <b>${d.gross_m1}</b></div>
+            <div>Permanência M7: <b>${fmt(ganhoM7)}</b></div>
+            <div>Permanência M14: <b>${fmt(ganhoM14)}</b></div>
           </div>
         </div>
       </div>`;
 
-    // PORTABILIDADE
+    // Portabilidade
     $('painel-portabilidade').style.display = 'block';
     let linhasPort = '';
+    const rankingPorta = {};
+    (d.portabilidades_m1 || []).forEach(v => {
+      const nome = v.consultor || 'Sem Nome';
+      const valor = Number(v.valor || 0);
+      if (!rankingPorta[nome]) rankingPorta[nome] = { qtd: 0, receita: 0, ganho: 0 };
+      rankingPorta[nome].qtd++;
+      rankingPorta[nome].receita += valor;
+      rankingPorta[nome].ganho   += valor * (cfg.fator_portabilidade || 1.25);
+    });
     Object.entries(rankingPorta).forEach(([nome, info]) => {
       linhasPort += `<tr><td>${esc(nome)}</td><td style="text-align:center;">${info.qtd}</td><td>${fmt(info.receita)}</td><td style="color:#c026d3;font-weight:800;">${fmt(info.ganho)}</td></tr>`;
     });
     $('lista-portabilidade').innerHTML = `
       <div style="background:#fdf4ff;border:1px solid #f5d0fe;border-left:5px solid #c026d3;padding:20px;border-radius:8px;margin-bottom:15px;">
-        <small style="font-size:10px;color:#a21caf;font-weight:800;text-transform:uppercase;">Valor Creditado (M-1)</small>
-        <div style="font-size:28px;font-weight:800;color:#86198f;margin:5px 0;">${fmt(somaRealPortabilidade)}</div>
-        <small style="color:#a21caf;font-weight:700;">${(d.portabilidades_m1 || []).length} linhas portadas em M-1 (Fator ${(F_PORTA * 100).toFixed(2)}%)</small>
+        <small style="font-size:10px;color:#a21caf;font-weight:800;">Bônus Portabilidade (M-1) — Fator 1,25×</small>
+        <div style="font-size:28px;font-weight:800;color:#86198f;margin:5px 0;">${fmt(portabilidadeTotal)}</div>
+        <small style="color:#a21caf;">${(d.portabilidades_m1 || []).length} linha(s) em M-1</small>
       </div>
       <table>
-        <thead><tr><th>VENDEDOR</th><th style="text-align:center;">QTD</th><th>RECEITA PORTADA</th><th>BÔNUS</th></tr></thead>
-        <tbody>${linhasPort || '<tr><td colspan="4" class="empty">Nenhuma portabilidade em M-1.</td></tr>'}</tbody>
+        <thead><tr><th>VENDEDOR</th><th style="text-align:center;">QTD</th><th>RECEITA</th><th>BÔNUS</th></tr></thead>
+        <tbody>${linhasPort || '<tr><td colspan="4" class="empty">Sem portabilidades.</td></tr>'}</tbody>
       </table>`;
   }
 
