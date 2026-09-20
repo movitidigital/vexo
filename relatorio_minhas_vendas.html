@@ -82,6 +82,22 @@
   .mv-tab td.r { text-align: right; font-weight: 700; }
   .mv-tab td.mono { font-family: monospace; font-size: 11px; color: #1e3c72; }
 
+  /* Link WhatsApp na coluna Linha */
+  .mv-linha-wpp {
+    display: inline-flex; align-items: center; gap: 4px;
+    color: #0f172a; text-decoration: none; font-family: monospace;
+    font-size: 11px; font-weight: 700;
+    padding: 3px 7px; border-radius: 6px;
+    background: #f0fdf4; border: 1px solid #bbf7d0;
+    transition: 0.15s;
+  }
+  .mv-linha-wpp:hover {
+    background: #25D366; color: white; border-color: #25D366;
+    transform: translateY(-1px);
+    box-shadow: 0 3px 8px rgba(37, 211, 102, 0.3);
+  }
+  .mv-linha-sem-fone { color: #94a3b8; font-family: monospace; font-size: 11px; }
+
   /* Coluna Consultor — só aparece para gestão */
   .mv-col-consultor { display: none !important; }
   .mv-wrap.show-consultor .mv-col-consultor { display: table-cell !important; }
@@ -312,6 +328,14 @@
     return `${y}-${m}-${dd}`;
   }
 
+  // Helper: monta link do WhatsApp a partir do número da linha
+  function getWhatsAppLink(numeroLinha) {
+    if (!numeroLinha) return null;
+    const nums = String(numeroLinha).replace(/\D/g, '');
+    if (nums.length < 10) return null;
+    return 'https://wa.me/55' + nums;
+  }
+
   /* ═══════════════════════════════════════════════════════════
      MVMulti — Multi-select customizado (v3)
      ═══════════════════════════════════════════════════════════ */
@@ -344,7 +368,6 @@
 
       const abrindo = !painel.classList.contains('aberto');
 
-      // Fecha todos primeiro
       ['consultor','modalidade','status'].forEach(t => {
         const p = document.getElementById('mv-painel-' + t);
         const tr = document.querySelector('#mv-multi-' + t + ' .mv-multi-trigger');
@@ -458,11 +481,7 @@
       });
     }
 
-    // ═══════════════════════════════════════════════════════════
-    // BIND DE EVENTOS (substitui onclick inline)
-    // ═══════════════════════════════════════════════════════════
     function initTriggers() {
-      // Trigger (abre/fecha painel)
       document.querySelectorAll('.mv-multi-trigger').forEach(trigger => {
         if (trigger.dataset.bind) return;
         trigger.dataset.bind = '1';
@@ -472,13 +491,10 @@
         });
       });
 
-      // Checkboxes dentro da lista
       document.querySelectorAll('.mv-multi-lista').forEach(lista => {
         if (lista.dataset.bind) return;
         lista.dataset.bind = '1';
-        lista.addEventListener('click', (e) => {
-          e.stopPropagation();
-        });
+        lista.addEventListener('click', (e) => e.stopPropagation());
         lista.addEventListener('change', (e) => {
           const input = e.target;
           if (input.matches('input[type="checkbox"][data-item-tipo]')) {
@@ -487,7 +503,6 @@
         });
       });
 
-      // Botões Limpar/Aplicar
       document.querySelectorAll('.mv-multi-rodape button').forEach(btn => {
         if (btn.dataset.bind) return;
         btn.dataset.bind = '1';
@@ -500,7 +515,6 @@
         });
       });
 
-      // Campo de busca
       document.querySelectorAll('input[data-busca-tipo]').forEach(input => {
         if (input.dataset.bind) return;
         input.dataset.bind = '1';
@@ -510,7 +524,6 @@
         });
       });
 
-      // Clique fora — fecha todos
       if (!window._mvMultiGlobalBind) {
         window._mvMultiGlobalBind = true;
         document.addEventListener('click', (e) => {
@@ -670,6 +683,12 @@
         ? `<td class="mv-col-consultor">${esc(v.consultor || '—')}</td>`
         : '';
 
+      // 🔥 Coluna Linha com link WhatsApp
+      const wppLink = getWhatsAppLink(v.numero_linha);
+      const tdLinha = wppLink
+        ? `<td><a class="mv-linha-wpp" href="${wppLink}" target="_blank" title="Abrir WhatsApp">💬 ${esc(v.numero_linha)}</a></td>`
+        : `<td><span class="mv-linha-sem-fone">${esc(v.numero_linha || '—')}</span></td>`;
+
       return `<tr>
         <td>${esc(v.data_ativacao || '—')}</td>
         <td>${esc(v.data_venda || '—')}</td>
@@ -677,7 +696,7 @@
         <td class="mono">${esc(v.cnpj || '—')}</td>
         <td>${esc(v.modalidade || '—')}</td>
         <td>${esc(v.plano || '—')}</td>
-        <td class="mono">${esc(v.numero_linha || '—')}</td>
+        ${tdLinha}
         ${tdConsultor}
         <td class="r">${fmt(v.valor_numeric)}</td>
         <td><span class="mv-badge ${badgeCls}">${esc(v.status || '—')}</span></td>
@@ -714,6 +733,7 @@
         <td>${esc(v.cnpj || '—')}</td>
         <td>${esc(v.modalidade || '—')}</td>
         <td>${esc(v.plano || '—')}</td>
+        <td>${esc(v.numero_linha || '—')}</td>
         ${isGestao ? `<td>${esc(v.consultor || '—')}</td>` : ''}
         <td class="r">${fmt(v.valor_numeric)}</td>
       </tr>`).join('');
@@ -764,7 +784,7 @@
   </div>
   <table>
     <thead><tr>
-      <th>Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th>
+      <th>Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th><th>Linha</th>
       ${thConsultor}
       <th class="r">Valor</th>
     </tr></thead>
@@ -821,7 +841,6 @@
 
   function init() {
     initDatas();
-    // 🔥 Bind dos eventos do multi-select DEPOIS que o DOM tá pronto
     MVMulti.initTriggers();
     setTimeout(filtrar, 300);
   }
