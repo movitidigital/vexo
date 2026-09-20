@@ -200,27 +200,62 @@
       <label>Fim</label>
       <input type="date" id="mv-fim">
     </div>
-    <div class="mv-field" id="mv-field-consultor" style="display:none;">
-      <label>Consultor</label>
-      <select id="mv-consultor"><option value="">Todos</option></select>
+   <div class="mv-field" id="mv-field-consultor" style="display:none;">
+  <label>Consultores</label>
+  <div class="mv-multi" id="mv-multi-consultor">
+    <div class="mv-multi-trigger" onclick="MVMulti.toggle('consultor')">
+      <span class="mv-multi-label vazio" id="mv-label-consultor">Todos</span>
+      <span class="mv-multi-seta">▼</span>
     </div>
-    <div class="mv-field">
-      <label>Modalidade</label>
-      <select id="mv-modalidade"><option value="">Todas</option></select>
+    <div class="mv-multi-painel" id="mv-painel-consultor">
+      <div class="mv-multi-busca">
+        <input type="text" placeholder="🔍 Buscar consultor..." oninput="MVMulti.filtrarBusca('consultor', this.value)">
+      </div>
+      <div class="mv-multi-lista" id="mv-lista-consultor"></div>
+      <div class="mv-multi-rodape">
+        <button class="mv-multi-limpar" onclick="MVMulti.limpar('consultor')">Limpar</button>
+        <button class="mv-multi-aplicar" onclick="MVMulti.aplicar('consultor')">Aplicar</button>
+      </div>
     </div>
-    <div class="mv-field">
-      <label>Status</label>
-      <select id="mv-status">
-        <option value="">Todos</option>
-        <option value="PENDENTE DE INPUT">Pendente</option>
-        <option value="1. INPUT REALIZADO">Input Realizado</option>
-        <option value="2. ANTIFRAUDE APROVADO">Antifraude</option>
-        <option value="3. DOCS VALIDADOS BOC">Docs BOC</option>
-        <option value="4. NOTA FISCAL EMITIDA">NF Emitida</option>
-        <option value="5. CONFIRMAÇÃO LOGÍSTICA">Logística</option>
-        <option value="6. ATIVADO">Ativado</option>
-      </select>
+  </div>
+</div>
+
+<div class="mv-field">
+  <label>Modalidades</label>
+  <div class="mv-multi" id="mv-multi-modalidade">
+    <div class="mv-multi-trigger" onclick="MVMulti.toggle('modalidade')">
+      <span class="mv-multi-label vazio" id="mv-label-modalidade">Todas</span>
+      <span class="mv-multi-seta">▼</span>
     </div>
+    <div class="mv-multi-painel" id="mv-painel-modalidade">
+      <div class="mv-multi-busca">
+        <input type="text" placeholder="🔍 Buscar modalidade..." oninput="MVMulti.filtrarBusca('modalidade', this.value)">
+      </div>
+      <div class="mv-multi-lista" id="mv-lista-modalidade"></div>
+      <div class="mv-multi-rodape">
+        <button class="mv-multi-limpar" onclick="MVMulti.limpar('modalidade')">Limpar</button>
+        <button class="mv-multi-aplicar" onclick="MVMulti.aplicar('modalidade')">Aplicar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="mv-field">
+  <label>Status</label>
+  <div class="mv-multi" id="mv-multi-status">
+    <div class="mv-multi-trigger" onclick="MVMulti.toggle('status')">
+      <span class="mv-multi-label vazio" id="mv-label-status">Todos</span>
+      <span class="mv-multi-seta">▼</span>
+    </div>
+    <div class="mv-multi-painel" id="mv-painel-status">
+      <div class="mv-multi-lista" id="mv-lista-status"></div>
+      <div class="mv-multi-rodape">
+        <button class="mv-multi-limpar" onclick="MVMulti.limpar('status')">Limpar</button>
+        <button class="mv-multi-aplicar" onclick="MVMulti.aplicar('status')">Aplicar</button>
+      </div>
+    </div>
+  </div>
+</div>
     <button class="mv-btn mv-btn-primary" id="mv-btn-filtrar" onclick="MV.filtrar()">🔍 Filtrar</button>
     <button class="mv-btn mv-btn-soft" onclick="MV.limpar()">Limpar</button>
     <button class="mv-btn mv-btn-pdf" id="mv-btn-pdf" onclick="MV.exportarPDF()" disabled>📄 PDF</button>
@@ -285,7 +320,172 @@
     const dd = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${dd}`;
   }
+/* ═══════════════════════════════════════════════════════════
+   MVMulti — Multi-select customizado
+   ═══════════════════════════════════════════════════════════ */
+const MVMulti = (function() {
+  // Estado interno: valores SELECIONADOS (aplicados) e TEMP (checkboxes abertos)
+  const estado = {
+    consultor:  { aplicados: new Set(), temp: new Set(), opcoes: [] },
+    modalidade: { aplicados: new Set(), temp: new Set(), opcoes: [] },
+    status:     { aplicados: new Set(), temp: new Set(), opcoes: [] }
+  };
 
+  const STATUS_OPCOES = [
+    { valor: 'PENDENTE DE INPUT',      label: 'Pendente' },
+    { valor: '1. INPUT REALIZADO',     label: 'Input Realizado' },
+    { valor: '2. ANTIFRAUDE APROVADO', label: 'Antifraude' },
+    { valor: '3. DOCS VALIDADOS BOC',  label: 'Docs BOC' },
+    { valor: '4. NOTA FISCAL EMITIDA', label: 'NF Emitida' },
+    { valor: '5. CONFIRMAÇÃO LOGÍSTICA', label: 'Logística' },
+    { valor: '6. ATIVADO',             label: 'Ativado' }
+  ];
+
+  // Fecha todos os painéis ao clicar fora
+  document.addEventListener('click', (e) => {
+    ['consultor','modalidade','status'].forEach(tipo => {
+      const box = document.getElementById('mv-multi-' + tipo);
+      if (box && !box.contains(e.target)) {
+        fechar(tipo);
+      }
+    });
+  });
+
+  function getTipo(tipo) {
+    if (tipo === 'status') return STATUS_OPCOES;
+    return estado[tipo].opcoes;
+  }
+
+  function toggle(tipo) {
+    // Fecha os outros
+    ['consultor','modalidade','status'].forEach(t => {
+      if (t !== tipo) fechar(t);
+    });
+    const painel = document.getElementById('mv-painel-' + tipo);
+    const trigger = document.querySelector('#mv-multi-' + tipo + ' .mv-multi-trigger');
+    if (!painel) return;
+
+    const abrindo = !painel.classList.contains('aberto');
+    painel.classList.toggle('aberto', abrindo);
+    trigger.classList.toggle('aberto', abrindo);
+
+    if (abrindo) {
+      // Sincroniza temp com aplicados
+      estado[tipo].temp = new Set(estado[tipo].aplicados);
+      renderLista(tipo);
+      // Foca no campo de busca
+      const busca = painel.querySelector('input');
+      if (busca) setTimeout(() => busca.focus(), 50);
+    }
+  }
+
+  function fechar(tipo) {
+    const painel = document.getElementById('mv-painel-' + tipo);
+    const trigger = document.querySelector('#mv-multi-' + tipo + ' .mv-multi-trigger');
+    if (painel) painel.classList.remove('aberto');
+    if (trigger) trigger.classList.remove('aberto');
+  }
+
+  function renderLista(tipo) {
+    const lista = document.getElementById('mv-lista-' + tipo);
+    if (!lista) return;
+    const opcoes = getTipo(tipo);
+
+    if (opcoes.length === 0) {
+      lista.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px;">Nenhuma opção disponível</div>';
+      return;
+    }
+
+    lista.innerHTML = opcoes.map(op => {
+      const valor = typeof op === 'string' ? op : op.valor;
+      const label = typeof op === 'string' ? op : op.label;
+      const marcado = estado[tipo].temp.has(valor);
+      return `<label class="mv-multi-opt" data-valor="${esc(valor)}" data-busca="${esc(label.toLowerCase())}">
+        <input type="checkbox" ${marcado ? 'checked' : ''} onchange="MVMulti.toggleItem('${tipo}','${esc(valor).replace(/'/g,"\\'")}')">
+        <span>${esc(label)}</span>
+      </label>`;
+    }).join('');
+  }
+
+  function toggleItem(tipo, valor) {
+    if (estado[tipo].temp.has(valor)) estado[tipo].temp.delete(valor);
+    else estado[tipo].temp.add(valor);
+  }
+
+  function limpar(tipo) {
+    estado[tipo].temp.clear();
+    renderLista(tipo);
+  }
+
+  function aplicar(tipo) {
+    estado[tipo].aplicados = new Set(estado[tipo].temp);
+    atualizarLabel(tipo);
+    fechar(tipo);
+    // Chama filtrar automaticamente
+    if (typeof MV !== 'undefined' && MV.filtrar) MV.filtrar();
+  }
+
+  function atualizarLabel(tipo) {
+    const label = document.getElementById('mv-label-' + tipo);
+    if (!label) return;
+    const sel = Array.from(estado[tipo].aplicados);
+
+    if (sel.length === 0) {
+      const padrao = tipo === 'status' ? 'Todos' : (tipo === 'consultor' ? 'Todos' : 'Todas');
+      label.textContent = padrao;
+      label.classList.add('vazio');
+    } else if (sel.length === 1) {
+      // Mostra label bonito se for status
+      const opcoes = getTipo(tipo);
+      const op = opcoes.find(o => (typeof o === 'string' ? o : o.valor) === sel[0]);
+      label.textContent = typeof op === 'string' ? op : (op?.label || sel[0]);
+      label.classList.remove('vazio');
+    } else {
+      label.textContent = `${sel.length} selecionados`;
+      label.classList.remove('vazio');
+    }
+  }
+
+  function filtrarBusca(tipo, termo) {
+    const lista = document.getElementById('mv-lista-' + tipo);
+    if (!lista) return;
+    const t = termo.toLowerCase().trim();
+    lista.querySelectorAll('.mv-multi-opt').forEach(el => {
+      const busca = el.dataset.busca || '';
+      el.classList.toggle('escondido', t && !busca.includes(t));
+    });
+  }
+
+  // API: define opções de um tipo
+  function setOpcoes(tipo, arr) {
+    estado[tipo].opcoes = (arr || []).filter(Boolean).map(String).sort((a,b) => 
+      a.localeCompare(b, 'pt-BR')
+    );
+    // Se estava aberto, re-renderiza
+    const painel = document.getElementById('mv-painel-' + tipo);
+    if (painel && painel.classList.contains('aberto')) renderLista(tipo);
+  }
+
+  // API: pega valores aplicados (retorna array ou null se vazio = "todos")
+  function getValores(tipo) {
+    const arr = Array.from(estado[tipo].aplicados);
+    return arr.length === 0 ? null : arr;
+  }
+
+  // API: limpa tudo
+  function limparTudo() {
+    ['consultor','modalidade','status'].forEach(t => {
+      estado[t].aplicados.clear();
+      estado[t].temp.clear();
+      atualizarLabel(t);
+    });
+  }
+
+  return {
+    toggle, toggleItem, limpar, aplicar, filtrarBusca,
+    setOpcoes, getValores, limparTudo, atualizarLabel
+  };
+})();
   function initDatas() {
     const hoje = new Date();
     const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
@@ -295,41 +495,46 @@
   }
 
   async function filtrar() {
-    const sb = getSb();
-    if (!sb) return alert('Supabase indisponível');
+  const sb = getSb();
+  if (!sb) return alert('Supabase indisponível');
 
-    const ini = $('mv-ini').value;
-    const fim = $('mv-fim').value;
-    if (!ini || !fim) return alert('Selecione o período');
+  const ini = $('mv-ini').value;
+  const fim = $('mv-fim').value;
+  if (!ini || !fim) return alert('Selecione o período');
 
-    const btn = $('mv-btn-filtrar');
-    btn.disabled = true; btn.textContent = '⏳ Carregando...';
-    $('mv-tbody').innerHTML = `<tr><td colspan="10" class="mv-vazio">Carregando...</td></tr>`;
+  const btn = $('mv-btn-filtrar');
+  btn.disabled = true; btn.textContent = '⏳ Carregando...';
+  $('mv-tbody').innerHTML = `<tr><td colspan="10" class="mv-vazio">Carregando...</td></tr>`;
 
-    try {
-      const { data, error } = await sb.rpc('consultor_minhas_vendas', {
-        p_inicio: ini,
-        p_fim: fim,
-        p_modalidade: $('mv-modalidade').value || null,
-        p_status: $('mv-status').value || null,
-        p_consultor_filtro: $('mv-consultor')?.value || null
-      });
+  // 🔥 Multi-select: pega arrays (ou null se nada marcado = "todos")
+  const modalidades = MVMulti.getValores('modalidade');
+  const statuses    = MVMulti.getValores('status');
+  const consultores = MVMulti.getValores('consultor');
 
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.message || 'Erro');
+  try {
+    const { data, error } = await sb.rpc('consultor_minhas_vendas', {
+      p_inicio: ini,
+      p_fim: fim,
+      p_modalidades: modalidades,
+      p_statuses: statuses,
+      p_consultores: consultores
+    });
 
-      DADOS_ATUAIS = data;
-      render(data);
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.message || 'Erro');
 
-      $('mv-btn-pdf').disabled = false;
-      $('mv-btn-xls').disabled = false;
-    } catch (e) {
-      console.error(e);
-      $('mv-tbody').innerHTML = `<tr><td colspan="10" class="mv-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
-    } finally {
-      btn.disabled = false; btn.textContent = '🔍 Filtrar';
-    }
+    DADOS_ATUAIS = data;
+    render(data);
+
+    $('mv-btn-pdf').disabled = false;
+    $('mv-btn-xls').disabled = false;
+  } catch (e) {
+    console.error(e);
+    $('mv-tbody').innerHTML = `<tr><td colspan="10" class="mv-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
+  } finally {
+    btn.disabled = false; btn.textContent = '🔍 Filtrar';
   }
+}
 
   function render(d) {
     const t = d.totais || {};
@@ -441,28 +646,18 @@
     }).join('');
   }
 
-  function popularFiltros(f, isGestao) {
-    const opts = (arr, valorVazio) => `<option value="">${valorVazio}</option>` +
-      (arr||[]).filter(Boolean).sort().map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
-
-    if ($('mv-modalidade').children.length <= 1) {
-      $('mv-modalidade').innerHTML = opts(f.modalidades, 'Todas');
-    }
-
-    if (isGestao && $('mv-consultor')) {
-      const atual = $('mv-consultor').value;
-      $('mv-consultor').innerHTML = opts(f.consultores, 'Todos');
-      if (atual) $('mv-consultor').value = atual; // preserva seleção
-    }
+function popularFiltros(f, isGestao) {
+  if (isGestao) {
+    MVMulti.setOpcoes('consultor', f.consultores || []);
   }
+  MVMulti.setOpcoes('modalidade', f.modalidades || []);
+}
 
-  function limpar() {
-    $('mv-modalidade').value = '';
-    $('mv-status').value = '';
-    if ($('mv-consultor')) $('mv-consultor').value = '';
-    initDatas();
-    filtrar();
-  }
+function limpar() {
+  MVMulti.limparTudo();
+  initDatas();
+  filtrar();
+}
 
   // ═══════════════════════════════════════════════════════════
   // EXPORTAR PDF
