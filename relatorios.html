@@ -16,122 +16,71 @@
     min-height: 100vh;
   }
 
-  /* ═══════════ TOPBAR (estilo TIM S3) ═══════════ */
   .vx-topbar {
-    background: #0a0e27;
-    color: white;
-    padding: 14px 32px;
-    display: flex;
-    align-items: center;
-    gap: 18px;
+    background: #0a0e27; color: white; padding: 14px 32px;
+    display: flex; align-items: center; gap: 18px;
     border-bottom: 3px solid #1e3c72;
   }
   .vx-topbar .vx-mark {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-weight: 800;
-    letter-spacing: 0.5px;
-    font-size: 17px;
-    color: #ffffff;
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; letter-spacing: 0.5px; font-size: 17px; color: #ffffff;
   }
-  .vx-topbar .vx-mark .bars {
-    display: inline-flex;
-    gap: 3px;
-    align-items: center;
-  }
+  .vx-topbar .vx-mark .bars { display: inline-flex; gap: 3px; align-items: center; }
   .vx-topbar .vx-mark .bars span {
     display: inline-block; width: 4px; height: 18px;
     background: #e11d2e; border-radius: 1px;
   }
   .vx-topbar .vx-mark .bars span:nth-child(2) { height: 22px; }
   .vx-topbar .vx-mark .bars span:nth-child(3) { height: 14px; }
-  .vx-topbar h1 {
-    margin: 0; font-size: 16px; font-weight: 500;
-    letter-spacing: 0.2px; color: #cbd5e1;
-  }
+  .vx-topbar h1 { margin: 0; font-size: 16px; font-weight: 500; letter-spacing: 0.2px; color: #cbd5e1; }
   .vx-topbar .spacer { flex: 1; }
   .vx-topbar .vx-user { font-size: 11px; color: #94a3b8; }
+  .vx-topbar .vx-role-badge {
+    background: rgba(255,255,255,0.1); padding: 5px 12px;
+    border-radius: 20px; font-size: 10px; font-weight: 800;
+    letter-spacing: 0.5px; text-transform: uppercase;
+    color: #93c5fd; margin-left: 8px;
+  }
 
-  /* ═══════════ BREADCRUMB ═══════════ */
   .vx-crumbs {
-    padding: 16px 32px 0;
-    font-size: 12.5px; color: #64748b;
-    display: flex; align-items: center; gap: 8px;
-    flex-wrap: wrap;
+    padding: 16px 32px 0; font-size: 12.5px; color: #64748b;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
   }
-  .vx-crumbs a {
-    color: #0b1a3a; text-decoration: none;
-    font-weight: 600; cursor: pointer;
-  }
+  .vx-crumbs a { color: #0b1a3a; text-decoration: none; font-weight: 600; cursor: pointer; }
   .vx-crumbs a:hover { text-decoration: underline; }
   .vx-crumbs .sep { color: #cbd5e1; }
   .vx-crumbs .atual { color: #0f172a; font-weight: 700; }
 
-  /* ═══════════ PÁGINA ═══════════ */
-  .vx-page {
-    padding: 20px 32px 60px;
-    max-width: 1280px;
-    margin: 0 auto;
-  }
-  .vx-page-title {
-    font-size: 24px; font-weight: 800;
-    color: #0a0e27; margin: 4px 0 4px;
-    letter-spacing: -0.3px;
-  }
-  .vx-page-sub {
-    color: #64748b; font-size: 12.5px;
-    margin: 0 0 28px;
-  }
+  .vx-page { padding: 20px 32px 60px; max-width: 1280px; margin: 0 auto; }
+  .vx-page-title { font-size: 24px; font-weight: 800; color: #0a0e27; margin: 4px 0 4px; letter-spacing: -0.3px; }
+  .vx-page-sub { color: #64748b; font-size: 12.5px; margin: 0 0 28px; }
 
-  /* ═══════════ GRID DE CARDS ═══════════ */
   .vx-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-    gap: 20px;
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;
   }
   .vx-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 10px;
-    padding: 24px 24px 20px;
-    cursor: pointer;
-    transition: all 0.18s ease;
-    display: flex; flex-direction: column;
-    gap: 6px;
-    text-align: left;
-    font-family: inherit;
-    position: relative;
+    background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px;
+    padding: 24px 24px 20px; cursor: pointer; transition: all 0.18s ease;
+    display: flex; flex-direction: column; gap: 6px;
+    text-align: left; font-family: inherit; position: relative;
   }
   .vx-card:hover {
     border-color: #0a0e27;
     box-shadow: 0 14px 34px -10px rgba(10, 14, 39, 0.15);
     transform: translateY(-2px);
   }
-  .vx-card-icon {
-    font-size: 28px; line-height: 1;
-    margin-bottom: 6px;
-  }
-  .vx-card-title {
-    font-size: 17px; font-weight: 700;
-    color: #0a0e27; letter-spacing: -0.2px;
-  }
-  .vx-card-desc {
-    font-size: 12px; color: #64748b;
-    line-height: 1.5;
-  }
+  .vx-card-icon { font-size: 28px; line-height: 1; margin-bottom: 6px; }
+  .vx-card-title { font-size: 17px; font-weight: 700; color: #0a0e27; letter-spacing: -0.2px; }
+  .vx-card-desc { font-size: 12px; color: #64748b; line-height: 1.5; }
   .vx-card-foot {
-    margin-top: 10px; padding-top: 12px;
-    border-top: 1px dashed #e2e8f0;
-    font-size: 10.5px; font-weight: 700;
-    color: #94a3b8; text-transform: uppercase;
-    letter-spacing: 0.4px;
+    margin-top: 10px; padding-top: 12px; border-top: 1px dashed #e2e8f0;
+    font-size: 10.5px; font-weight: 700; color: #94a3b8;
+    text-transform: uppercase; letter-spacing: 0.4px;
     display: flex; justify-content: space-between; align-items: center;
   }
   .vx-card-foot .qtd-disp { color: #166534; }
   .vx-card-foot .qtd-breve { color: #92400e; }
 
-  /* Badge de status */
   .vx-card-badge {
     position: absolute; top: 14px; right: 14px;
     font-size: 9px; font-weight: 800;
@@ -141,30 +90,27 @@
   .vx-card-badge.disp { background: #dcfce7; color: #166534; }
   .vx-card-badge.em_breve { background: #fef3c7; color: #92400e; }
 
-  /* Card em breve — sem hover */
   .vx-card[data-status="em_breve"] { opacity: 0.72; }
-  .vx-card[data-status="em_breve"]:hover {
-    transform: none; box-shadow: none;
-    border-color: #e2e8f0; cursor: default;
-  }
+  .vx-card[data-status="em_breve"]:hover { transform: none; box-shadow: none; border-color: #e2e8f0; cursor: default; }
 
-  /* ═══════════ VIEW DO RELATÓRIO (iframe) ═══════════ */
   .vx-report-frame {
-    width: 100%;
-    height: calc(100vh - 180px);
-    min-height: 680px;
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    background: white;
-    display: block;
-    box-shadow: 0 4px 16px -8px rgba(10, 14, 39, 0.08);
+    width: 100%; height: calc(100vh - 180px); min-height: 680px;
+    border: 1px solid #e2e8f0; border-radius: 12px; background: white;
+    display: block; box-shadow: 0 4px 16px -8px rgba(10, 14, 39, 0.08);
   }
 
-  /* ═══════════ VIEWS ═══════════ */
   .vx-view { display: none; }
   .vx-view.active { display: block; }
 
-  /* ═══════════ RESPONSIVO ═══════════ */
+  /* Estado de carregamento / sem acesso */
+  .vx-loading { padding: 80px 20px; text-align: center; color: #94a3b8; font-size: 14px; }
+  .vx-acesso-negado {
+    padding: 80px 20px; text-align: center;
+  }
+  .vx-acesso-negado .icon { font-size: 56px; margin-bottom: 12px; }
+  .vx-acesso-negado h3 { color: #991b1b; margin: 0 0 8px; font-size: 20px; }
+  .vx-acesso-negado p { color: #64748b; font-size: 13px; margin: 0; }
+
   @media (max-width: 640px) {
     .vx-topbar { padding: 12px 16px; gap: 12px; }
     .vx-topbar h1 { font-size: 13px; }
@@ -186,6 +132,7 @@
   <h1>Central de Relatórios</h1>
   <div class="spacer"></div>
   <div class="vx-user" id="vx-user-info">—</div>
+  <div class="vx-role-badge" id="vx-user-role" style="display:none;">—</div>
 </div>
 
 <!-- ═══════════ VIEW 1: HOME (PASTAS) ═══════════ -->
@@ -196,7 +143,9 @@
   <div class="vx-page">
     <h2 class="vx-page-title">Central de Relatórios</h2>
     <p class="vx-page-sub">Selecione uma pasta para visualizar os relatórios disponíveis</p>
-    <div class="vx-grid" id="grid-pastas"></div>
+    <div id="home-conteudo">
+      <div class="vx-loading">⏳ Carregando permissões...</div>
+    </div>
   </div>
 </div>
 
@@ -235,9 +184,14 @@
 
   /* ═══════════════════════════════════════════════════════════════
      CONFIGURAÇÃO DAS PASTAS E RELATÓRIOS
-     Para adicionar um novo relatório basta:
-       1. Criar o arquivo .html no mesmo diretório
-       2. Adicionar uma entrada abaixo com status: 'disponivel'
+     ─────────────────────────────────────────────────────────────
+     Cada relatório tem um array `roles` com quem PODE ver.
+     Roles válidos: CONSULTOR, BACKOFFICE, GERENTE, FINANCEIRO,
+                    ADMINISTRADOR, ADMIN, DIRETORIA
+     Regras:
+       - Um relatório só aparece se o role do usuário estiver na lista
+       - Uma pasta só aparece se tiver pelo menos 1 relatório visível
+       - Admin vê tudo automaticamente (não precisa listar)
   ═══════════════════════════════════════════════════════════════ */
   const PASTAS = [
     {
@@ -246,9 +200,9 @@
       titulo: 'Vendas & Performance',
       descricao: 'Relatórios de vendas, ativações e performance comercial',
       relatorios: [
-        { id: '2.1', titulo: 'Vendas Detalhado',   descricao: 'Relatório completo de vendas com filtros, KPIs e exportação',  arquivo: 'relatorio_vendas_detalhado.html', status: 'disponivel' },
-        { id: '2.2', titulo: 'Minhas Vendas',      descricao: 'Visão pessoal do consultor sobre suas vendas',                  arquivo: 'relatorio_minhas_vendas.html',    status: 'disponivel' },
-        { id: '2.3', titulo: 'Raio-X Backoffice',  descricao: 'Análise de funil e gargalos do backoffice',                      arquivo: 'relatorio_raiox_backoffice.html', status: 'em_breve' }
+        { id: '2.1', titulo: 'Vendas Detalhado',  descricao: 'Relatório completo de vendas com filtros, KPIs e exportação', arquivo: 'relatorio_vendas_detalhado.html', status: 'disponivel', roles: ['BACKOFFICE','GERENTE'] },
+        { id: '2.2', titulo: 'Minhas Vendas',     descricao: 'Visão pessoal do consultor sobre suas vendas',                 arquivo: 'relatorio_minhas_vendas.html',    status: 'disponivel', roles: ['CONSULTOR','BACKOFFICE','GERENTE','FINANCEIRO'] },
+        { id: '2.3', titulo: 'Raio-X Backoffice', descricao: 'Análise de funil e gargalos do backoffice',                    arquivo: 'relatorio_raiox_backoffice.html', status: 'em_breve',   roles: ['BACKOFFICE'] }
       ]
     },
     {
@@ -257,11 +211,11 @@
       titulo: 'Comissões & Financeiro',
       descricao: 'Extratos de comissão, faturas e histórico de pagamentos',
       relatorios: [
-        { id: '3.1', titulo: 'Extrato por Consultor',    descricao: 'Detalhamento de comissões por consultor',         arquivo: 'relatorio_extrato_consultor.html', status: 'em_breve' },
-        { id: '3.2', titulo: 'Consolidado da Loja',      descricao: 'Consolidação mensal da loja',                     arquivo: 'relatorio_consolidado_loja.html',  status: 'em_breve' },
-        { id: '3.3', titulo: 'Comissões de Cargos',      descricao: 'Comissões por cargo e função',                     arquivo: 'relatorio_comissoes_cargos.html',  status: 'em_breve' },
-        { id: '3.4', titulo: 'Relatório de Faturas',     descricao: 'Faturas emitidas e status de pagamento',           arquivo: 'relatorio_faturas.html',           status: 'em_breve' },
-        { id: '3.5', titulo: 'Histórico de Pagamentos',  descricao: 'Histórico completo de pagamentos realizados',      arquivo: 'relatorio_hist_pagamentos.html',   status: 'em_breve' }
+        { id: '3.1', titulo: 'Extrato por Consultor',    descricao: 'Detalhamento de comissões por consultor',      arquivo: 'relatorio_extrato_consultor.html', status: 'em_breve', roles: ['GERENTE'] },
+        { id: '3.2', titulo: 'Consolidado da Loja',      descricao: 'Consolidação mensal da loja',                  arquivo: 'relatorio_consolidado_loja.html',  status: 'em_breve', roles: ['GERENTE','DIRETORIA'] },
+        { id: '3.3', titulo: 'Comissões de Cargos',      descricao: 'Comissões por cargo e função',                  arquivo: 'relatorio_comissoes_cargos.html',  status: 'em_breve', roles: [] },
+        { id: '3.4', titulo: 'Relatório de Faturas',     descricao: 'Faturas emitidas e status de pagamento',        arquivo: 'relatorio_faturas.html',           status: 'em_breve', roles: ['FINANCEIRO','DIRETORIA'] },
+        { id: '3.5', titulo: 'Histórico de Pagamentos',  descricao: 'Histórico completo de pagamentos realizados',   arquivo: 'relatorio_hist_pagamentos.html',   status: 'em_breve', roles: ['DIRETORIA'] }
       ]
     },
     {
@@ -270,9 +224,9 @@
       titulo: 'Clientes & CRM',
       descricao: 'Carteira de clientes, reincidência e análise de base',
       relatorios: [
-        { id: '6.1', titulo: 'Carteira Ativa',       descricao: 'Clientes ativos e status da carteira',                   arquivo: 'relatorio_carteira_ativa.html',    status: 'em_breve' },
-        { id: '6.2', titulo: 'Reincidência',         descricao: 'Análise de clientes reincidentes',                       arquivo: 'relatorio_reincidencia.html',      status: 'em_breve' },
-        { id: '6.3', titulo: 'Operadora Doadora',    descricao: 'Distribuição por operadora doadora (portabilidade)',    arquivo: 'relatorio_operadora_doadora.html', status: 'em_breve' }
+        { id: '6.1', titulo: 'Carteira Ativa',    descricao: 'Clientes ativos e status da carteira',                arquivo: 'relatorio_carteira_ativa.html',    status: 'em_breve', roles: ['BACKOFFICE','GERENTE'] },
+        { id: '6.2', titulo: 'Reincidência',      descricao: 'Análise de clientes reincidentes',                    arquivo: 'relatorio_reincidencia.html',      status: 'em_breve', roles: ['GERENTE'] },
+        { id: '6.3', titulo: 'Operadora Doadora', descricao: 'Distribuição por operadora doadora (portabilidade)', arquivo: 'relatorio_operadora_doadora.html', status: 'em_breve', roles: ['GERENTE','DIRETORIA'] }
       ]
     },
     {
@@ -281,7 +235,7 @@
       titulo: 'Inteligência TIM',
       descricao: 'Cálculos de remuneração, bônus e regras TIM',
       relatorios: [
-        { id: 'TIM', titulo: 'Inteligência de Receita TIM', descricao: 'Remuneração básica, bônus corporate, renegociação, permanência e portabilidade', arquivo: 'relatorio_tim.html', status: 'disponivel' }
+        { id: 'TIM', titulo: 'Inteligência de Receita TIM', descricao: 'Remuneração básica, bônus corporate, renegociação, permanência e portabilidade', arquivo: 'relatorio_tim.html', status: 'disponivel', roles: ['DIRETORIA'] }
       ]
     },
     {
@@ -290,9 +244,9 @@
       titulo: 'Gestão & Diretoria',
       descricao: 'Rankings, previsões e visão executiva',
       relatorios: [
-        { id: '7.1', titulo: 'Ranking de TBPs',          descricao: 'Ranking de parceiros por performance',              arquivo: 'relatorio_ranking_tbps.html',     status: 'em_breve' },
-        { id: '7.2', titulo: 'Previsão de Fechamento',   descricao: 'Projeção de fechamento do mês',                     arquivo: 'relatorio_previsao_fech.html',    status: 'em_breve' },
-        { id: '7.3', titulo: 'Resumo Executivo',         descricao: 'Visão executiva consolidada para diretoria',         arquivo: 'relatorio_resumo_executivo.html', status: 'em_breve' }
+        { id: '7.1', titulo: 'Ranking de TBPs',        descricao: 'Ranking de parceiros por performance',            arquivo: 'relatorio_ranking_tbps.html',     status: 'em_breve', roles: ['GERENTE','DIRETORIA'] },
+        { id: '7.2', titulo: 'Previsão de Fechamento', descricao: 'Projeção de fechamento do mês',                   arquivo: 'relatorio_previsao_fech.html',    status: 'em_breve', roles: ['GERENTE','DIRETORIA'] },
+        { id: '7.3', titulo: 'Resumo Executivo',       descricao: 'Visão executiva consolidada para diretoria',       arquivo: 'relatorio_resumo_executivo.html', status: 'em_breve', roles: ['DIRETORIA'] }
       ]
     }
   ];
@@ -303,8 +257,30 @@
     { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]
   ));
 
+  let USER_ROLE = null;
+  let USER_NOME = null;
   let pastaAtual = null;
   let relatorioAtual = null;
+
+  /* ═══════════ PERMISSÕES ═══════════ */
+  const ADMIN_ROLES = ['ADMINISTRADOR', 'ADMIN'];
+
+  function ehAdmin(role) {
+    return ADMIN_ROLES.includes(String(role || '').toUpperCase().trim());
+  }
+
+  function podeVer(relatorio, role) {
+    if (ehAdmin(role)) return true;              // Admin vê tudo
+    if (!relatorio.roles || relatorio.roles.length === 0) return false; // [] = só admin
+    return relatorio.roles.map(r => r.toUpperCase()).includes(String(role || '').toUpperCase().trim());
+  }
+
+  function filtrarPastasPorRole(pastas, role) {
+    return pastas.map(pasta => {
+      const relatoriosVisiveis = pasta.relatorios.filter(r => podeVer(r, role));
+      return { ...pasta, relatorios: relatoriosVisiveis };
+    }).filter(pasta => pasta.relatorios.length > 0);
+  }
 
   /* ═══════════ NAVEGAÇÃO ═══════════ */
   function showHome() {
@@ -318,7 +294,8 @@
   }
 
   function abrirPasta(idPasta) {
-    const pasta = PASTAS.find(p => p.id === idPasta);
+    const pastasVisiveis = filtrarPastasPorRole(PASTAS, USER_ROLE);
+    const pasta = pastasVisiveis.find(p => p.id === idPasta);
     if (!pasta) return;
     pastaAtual = pasta;
 
@@ -335,7 +312,8 @@
   }
 
   function abrirRelatorio(idPasta, idRel) {
-    const pasta = PASTAS.find(p => p.id === idPasta);
+    const pastasVisiveis = filtrarPastasPorRole(PASTAS, USER_ROLE);
+    const pasta = pastasVisiveis.find(p => p.id === idPasta);
     if (!pasta) return;
     const rel = pasta.relatorios.find(r => r.id === idRel);
     if (!rel || rel.status !== 'disponivel') return;
@@ -359,9 +337,23 @@
     if (pastaAtual) abrirPasta(pastaAtual.id);
   }
 
-  /* ═══════════ RENDER — HOME (PASTAS) ═══════════ */
+  /* ═══════════ RENDER — HOME ═══════════ */
   function renderHome() {
-    $('grid-pastas').innerHTML = PASTAS.map(p => {
+    const pastasVisiveis = filtrarPastasPorRole(PASTAS, USER_ROLE);
+    const container = $('home-conteudo');
+
+    if (pastasVisiveis.length === 0) {
+      container.innerHTML = `
+        <div class="vx-acesso-negado">
+          <div class="icon">🔒</div>
+          <h3>Sem relatórios disponíveis</h3>
+          <p>Seu perfil (<b>${esc(USER_ROLE || '—')}</b>) não tem acesso a nenhum relatório no momento.<br>
+             Fale com o administrador se acha que isso é um engano.</p>
+        </div>`;
+      return;
+    }
+
+    container.innerHTML = `<div class="vx-grid">${pastasVisiveis.map(p => {
       const disp  = p.relatorios.filter(r => r.status === 'disponivel').length;
       const total = p.relatorios.length;
 
@@ -384,7 +376,7 @@
             <span>›</span>
           </div>
         </div>`;
-    }).join('');
+    }).join('')}</div>`;
   }
 
   /* ═══════════ RENDER — RELATÓRIOS DA PASTA ═══════════ */
@@ -412,19 +404,14 @@
     }).join('');
   }
 
-  /* ═══════════ INJEÇÃO DO SUPABASE NO IFRAME ═══════════
-     Garante que o relatório carregado no iframe tenha acesso
-     ao client do Supabase (caso ele não carregue o próprio).
-  ═══════════════════════════════════════════════════════ */
+  /* ═══════════ INJEÇÃO DO SUPABASE NO IFRAME ═══════════ */
   function configurarIframe() {
     const frame = $('iframe-relatorio');
     frame.addEventListener('load', () => {
       try {
         const w = frame.contentWindow;
         if (!w) return;
-        // Injeta sb se o relatório não tiver o próprio
         if (!w.sb && window.sb) w.sb = window.sb;
-        // Ajusta altura dinamicamente (mesma origem)
         setTimeout(() => {
           try {
             const h = w.document.documentElement.scrollHeight;
@@ -446,41 +433,55 @@
 
   /* ═══════════ INIT ═══════════ */
   async function init() {
-    // Info do usuário logado
     try {
       const sb = window.sb;
-      if (sb) {
-        const { data: { user } } = await sb.auth.getUser();
-        if (user) {
-          const { data: prof } = await sb
-            .from('profiles')
-            .select('nome,role')
-            .eq('id', user.id)
-            .maybeSingle();
-          const nome = prof?.nome || user.email || '';
-          const role = prof?.role ? ` · ${prof.role}` : '';
-          $('vx-user-info').textContent = nome + role;
-        }
+      if (!sb) throw new Error('Supabase não carregado');
+
+      const { data: { user } } = await sb.auth.getUser();
+      if (!user) {
+        $('home-conteudo').innerHTML = `
+          <div class="vx-acesso-negado">
+            <div class="icon">🔒</div>
+            <h3>Não autenticado</h3>
+            <p>Faça login para acessar a Central de Relatórios.</p>
+          </div>`;
+        return;
       }
-    } catch(e) { /* silencioso */ }
+
+      const { data: prof } = await sb
+        .from('profiles')
+        .select('nome, role')
+        .eq('id', user.id)
+        .maybeSingle();
+
+      USER_NOME = prof?.nome || user.email || '';
+      USER_ROLE = (prof?.role || '').toUpperCase().trim() || 'DESCONHECIDO';
+
+      // Atualiza header
+      $('vx-user-info').textContent = USER_NOME;
+      const roleBadge = $('vx-user-role');
+      roleBadge.textContent = USER_ROLE;
+      roleBadge.style.display = 'inline-block';
+    } catch(e) {
+      console.error('[Central] Erro no init:', e);
+      $('home-conteudo').innerHTML = `
+        <div class="vx-acesso-negado">
+          <div class="icon">⚠️</div>
+          <h3>Erro ao carregar</h3>
+          <p>${esc(e.message || 'Erro desconhecido')}</p>
+        </div>`;
+      return;
+    }
 
     configurarIframe();
     renderHome();
   }
 
   /* ═══════════ API PÚBLICA ═══════════ */
-  window.Rel = {
-    showHome,
-    abrirPasta,
-    abrirRelatorio,
-    voltarPasta
-  };
+  window.Rel = { showHome, abrirPasta, abrirRelatorio, voltarPasta };
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-  } else {
-    setTimeout(init, 80);
-  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else setTimeout(init, 80);
 })();
 </script>
 </body>
