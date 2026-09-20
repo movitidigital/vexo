@@ -96,10 +96,6 @@
       <select id="rvd-modalidade"><option value="">Todas</option></select>
     </div>
     <div class="rvd-field">
-      <label>UF</label>
-      <select id="rvd-uf"><option value="">Todas</option></select>
-    </div>
-    <div class="rvd-field">
       <label>Status</label>
       <select id="rvd-status">
         <option value="">Todos</option>
@@ -139,7 +135,6 @@
             <th>Plano</th>
             <th>Linha</th>
             <th>Consultor</th>
-            <th>UF</th>
             <th class="r">Valor</th>
             <th>Status</th>
           </tr>
@@ -200,7 +195,6 @@
         p_fim: fim,
         p_consultor: $('rvd-consultor').value || null,
         p_modalidade: $('rvd-modalidade').value || null,
-        p_uf: $('rvd-uf').value || null,
         p_status: $('rvd-status').value || null
       });
 
@@ -286,7 +280,6 @@
         <td>${esc(v.plano || '—')}</td>
         <td class="mono">${esc(v.numero_linha || '—')}</td>
         <td>${esc(v.consultor || '—')}</td>
-        <td>${esc(v.uf || '—')}</td>
         <td class="r">${fmt(v.valor_numeric)}</td>
         <td><span class="rvd-badge ${badgeCls}">${esc(v.status || '—')}</span></td>
       </tr>`;
@@ -397,9 +390,6 @@
       'Plano': v.plano || '',
       'Linha': v.numero_linha || '',
       'Consultor': v.consultor || '',
-      'UF': v.uf || '',
-      'Cidade': v.cidade || '',
-      'Operadora Doadora': v.operadora_doadora || '',
       'Valor': Number(v.valor_numeric) || 0,
       'Status': v.status || ''
     }));
