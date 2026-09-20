@@ -44,7 +44,9 @@
     background: rgba(255,255,255,0.12); padding: 6px 14px;
     border-radius: 20px; font-size: 10px; font-weight: 800;
     letter-spacing: 0.5px; text-transform: uppercase;
+    text-align: right;
   }
+  .mv-hello .badge-role b { color: #93c5fd; }
 
   .mv-kpis {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
@@ -80,6 +82,12 @@
   .mv-tab td.r { text-align: right; font-weight: 700; }
   .mv-tab td.mono { font-family: monospace; font-size: 11px; color: #1e3c72; }
 
+  /* Coluna Consultor — só aparece para gestão */
+  .mv-col-consultor { display: none !important; }
+  .mv-wrap.show-consultor .mv-col-consultor { display: table-cell !important; }
+  .mv-tab thead .mv-col-consultor { display: none !important; }
+  .mv-wrap.show-consultor .mv-tab thead .mv-col-consultor { display: table-cell !important; }
+
   .mv-badge {
     display: inline-block; padding: 3px 9px; border-radius: 12px;
     font-size: 10px; font-weight: 800; text-transform: uppercase;
@@ -92,13 +100,13 @@
   .mv-vazio { padding: 60px; text-align: center; color: #94a3b8; }
 </style>
 
-<div class="mv-wrap">
+<div class="mv-wrap" id="mv-wrap">
 
   <!-- SAUDAÇÃO PERSONALIZADA -->
   <div class="mv-hello" id="mv-hello" style="display:none;">
     <div>
       <h2 id="mv-hello-nome">Olá! 👋</h2>
-      <small>Veja suas vendas, ativações e comissões estimadas no período selecionado</small>
+      <small id="mv-hello-sub">Veja suas vendas, ativações e comissões estimadas no período selecionado</small>
     </div>
     <div class="badge-role" id="mv-hello-role">—</div>
   </div>
@@ -112,6 +120,10 @@
     <div class="mv-field">
       <label>Fim</label>
       <input type="date" id="mv-fim">
+    </div>
+    <div class="mv-field" id="mv-field-consultor" style="display:none;">
+      <label>Consultor</label>
+      <select id="mv-consultor"><option value="">Todos</option></select>
     </div>
     <div class="mv-field">
       <label>Modalidade</label>
@@ -142,7 +154,7 @@
   <!-- TABELA -->
   <div class="mv-tabela">
     <div class="mv-thead">
-      <h3>📋 Minhas Vendas</h3>
+      <h3 id="mv-titulo-tabela">📋 Minhas Vendas</h3>
       <span id="mv-info"></span>
     </div>
     <div class="mv-scroll">
@@ -156,7 +168,7 @@
             <th>Modalidade</th>
             <th>Plano</th>
             <th>Linha</th>
-            <th>UF</th>
+            <th class="mv-col-consultor">Consultor</th>
             <th class="r">Valor</th>
             <th>Status</th>
           </tr>
@@ -187,11 +199,18 @@
     return null;
   }
 
+  // Fix timezone: usa data local em vez de UTC
+  function toISO(d) {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const dd = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${dd}`;
+  }
+
   function initDatas() {
     const hoje = new Date();
     const ini = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
     const fim = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 0);
-    const toISO = (d) => d.toISOString().split('T')[0];
     if (!$('mv-ini').value) $('mv-ini').value = toISO(ini);
     if (!$('mv-fim').value) $('mv-fim').value = toISO(fim);
   }
@@ -213,7 +232,8 @@
         p_inicio: ini,
         p_fim: fim,
         p_modalidade: $('mv-modalidade').value || null,
-        p_status: $('mv-status').value || null
+        p_status: $('mv-status').value || null,
+        p_consultor_filtro: $('mv-consultor')?.value || null
       });
 
       if (error) throw error;
@@ -234,18 +254,45 @@
 
   function render(d) {
     const t = d.totais || {};
+    const isGestao = !!d.is_gestao;
 
-    // Saudação
+    // ── Saudação personalizada ─────────────────────────────────
     if (d.consultor) {
       $('mv-hello').style.display = 'flex';
       $('mv-hello-nome').textContent = `Olá, ${d.consultor.split(' ')[0]}! 👋`;
-      $('mv-hello-role').textContent = d.role || '—';
+
+      if (isGestao) {
+        $('mv-hello-sub').textContent = 'Visualize as vendas consolidadas da operação no período selecionado';
+        const alvo = d.consultor_alvo
+          ? `Vendo: <b>${esc(d.consultor_alvo)}</b>`
+          : 'Vendo vendas de <b>todos os consultores</b>';
+        $('mv-hello-role').innerHTML = `${esc(d.role)} · ${alvo}`;
+      } else {
+        $('mv-hello-sub').textContent = 'Veja suas vendas, ativações e comissões estimadas no período selecionado';
+        $('mv-hello-role').textContent = d.role || '—';
+      }
     }
 
-    // KPIs
+    // ── Mostra/esconde filtro e coluna de consultor ───────────
+    const fieldConsultor = $('mv-field-consultor');
+    if (fieldConsultor) fieldConsultor.style.display = isGestao ? 'flex' : 'none';
+
+    const wrap = $('mv-wrap');
+    if (isGestao) wrap.classList.add('show-consultor');
+    else wrap.classList.remove('show-consultor');
+
+    // Título da tabela
+    $('mv-titulo-tabela').textContent = isGestao
+      ? '📋 Vendas' + (d.consultor_alvo ? ` — ${d.consultor_alvo}` : ' — Todos os Consultores')
+      : '📋 Minhas Vendas';
+
+    // ── KPIs ──────────────────────────────────────────────────
+    const lblTotal = isGestao ? 'Total de Vendas' : 'Minhas Vendas';
+    const lblPort  = isGestao ? 'Portabilidades' : 'Minhas Portabilidades';
+
     $('mv-kpis').innerHTML = `
       <div class="mv-kpi" style="--c:#0b1a3a;">
-        <div class="mv-kpi-label">Minhas Vendas</div>
+        <div class="mv-kpi-label">${lblTotal}</div>
         <div class="mv-kpi-value">${fmtInt(t.qtd_total)}</div>
         <div class="mv-kpi-sub">${fmt(t.valor_total)}</div>
       </div>
@@ -260,12 +307,12 @@
         <div class="mv-kpi-sub">Aguardando ativação</div>
       </div>
       <div class="mv-kpi" style="--c:#a855f7;">
-        <div class="mv-kpi-label">Meu Ticket Médio</div>
+        <div class="mv-kpi-label">Ticket Médio</div>
         <div class="mv-kpi-value">${fmt(t.valor_medio)}</div>
         <div class="mv-kpi-sub">Por venda</div>
       </div>
       <div class="mv-kpi" style="--c:#3b82f6;">
-        <div class="mv-kpi-label">Minhas Portabilidades</div>
+        <div class="mv-kpi-label">${lblPort}</div>
         <div class="mv-kpi-value">${fmtInt(t.qtd_portabilidade)}</div>
         <div class="mv-kpi-sub">Linhas portadas</div>
       </div>
@@ -275,15 +322,17 @@
         <div class="mv-kpi-sub">Acordos</div>
       </div>`;
 
-    // Filtros
-    popularFiltros(d.filtros_disponiveis || {});
+    // ── Filtros ───────────────────────────────────────────────
+    popularFiltros(d.filtros_disponiveis || {}, isGestao);
 
-    // Tabela
+    // ── Tabela ────────────────────────────────────────────────
     const vendas = d.vendas || [];
     $('mv-info').textContent = `${vendas.length} linha(s) · ${fmt(t.valor_total)}`;
 
+    const colspan = isGestao ? 11 : 10;
+
     if (vendas.length === 0) {
-      $('mv-tbody').innerHTML = '<tr><td colspan="10" class="mv-vazio">Nenhuma venda sua no período.</td></tr>';
+      $('mv-tbody').innerHTML = `<tr><td colspan="${colspan}" class="mv-vazio">Nenhuma venda ${isGestao ? 'no período' : 'sua no período'}.</td></tr>`;
       return;
     }
 
@@ -292,7 +341,11 @@
       let badgeCls = 'outros';
       if (v.status_etapa === 6) badgeCls = 'ativo';
       else if (status.includes('CANCEL')) badgeCls = 'cancel';
-      else if (status.includes('PENDENTE') || v.status_etapa < 6) badgeCls = 'pend';
+      else if (status.includes('PENDENTE') || (v.status_etapa != null && v.status_etapa < 6)) badgeCls = 'pend';
+
+      const tdConsultor = isGestao
+        ? `<td class="mv-col-consultor">${esc(v.consultor || '—')}</td>`
+        : '';
 
       return `<tr>
         <td>${esc(v.data_ativacao || '—')}</td>
@@ -302,30 +355,44 @@
         <td>${esc(v.modalidade || '—')}</td>
         <td>${esc(v.plano || '—')}</td>
         <td class="mono">${esc(v.numero_linha || '—')}</td>
-        <td>${esc(v.uf || '—')}</td>
+        ${tdConsultor}
         <td class="r">${fmt(v.valor_numeric)}</td>
         <td><span class="mv-badge ${badgeCls}">${esc(v.status || '—')}</span></td>
       </tr>`;
     }).join('');
   }
 
-  function popularFiltros(f) {
+  function popularFiltros(f, isGestao) {
     const opts = (arr, valorVazio) => `<option value="">${valorVazio}</option>` +
       (arr||[]).filter(Boolean).sort().map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
-    if ($('mv-modalidade').children.length <= 1) $('mv-modalidade').innerHTML = opts(f.modalidades, 'Todas');
+
+    if ($('mv-modalidade').children.length <= 1) {
+      $('mv-modalidade').innerHTML = opts(f.modalidades, 'Todas');
+    }
+
+    if (isGestao && $('mv-consultor')) {
+      const atual = $('mv-consultor').value;
+      $('mv-consultor').innerHTML = opts(f.consultores, 'Todos');
+      if (atual) $('mv-consultor').value = atual; // preserva seleção
+    }
   }
 
   function limpar() {
     $('mv-modalidade').value = '';
     $('mv-status').value = '';
+    if ($('mv-consultor')) $('mv-consultor').value = '';
     initDatas();
     filtrar();
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // EXPORTAR PDF
+  // ═══════════════════════════════════════════════════════════
   function exportarPDF() {
     if (!DADOS_ATUAIS) return;
     const d = DADOS_ATUAIS;
     const t = d.totais || {};
+    const isGestao = !!d.is_gestao;
 
     const rows = (d.vendas || []).map(v => `
       <tr>
@@ -334,11 +401,17 @@
         <td>${esc(v.cnpj || '—')}</td>
         <td>${esc(v.modalidade || '—')}</td>
         <td>${esc(v.plano || '—')}</td>
-        <td>${esc(v.uf || '—')}</td>
+        ${isGestao ? `<td>${esc(v.consultor || '—')}</td>` : ''}
         <td class="r">${fmt(v.valor_numeric)}</td>
       </tr>`).join('');
 
-    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Minhas Vendas</title>
+    const titulo = isGestao
+      ? `Vendas ${d.consultor_alvo ? '· ' + esc(d.consultor_alvo) : '· Todos os Consultores'}`
+      : `Minhas Vendas · ${esc(d.consultor || 'Consultor')}`;
+
+    const thConsultor = isGestao ? '<th>Consultor</th>' : '';
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Vendas</title>
 <style>
   @page { size: A4 landscape; margin: 12mm; }
   * { box-sizing: border-box; }
@@ -363,7 +436,7 @@
   </div>
   <div class="head">
     <div>
-      <h1>Minhas Vendas · ${esc(d.consultor || 'Consultor')}</h1>
+      <h1>${titulo}</h1>
       <small style="color:#64748b;">Período: ${d.periodo.inicio} a ${d.periodo.fim}</small>
     </div>
     <div class="meta"><div>Emitido em ${new Date().toLocaleString('pt-BR')}</div></div>
@@ -378,7 +451,9 @@
   </div>
   <table>
     <thead><tr>
-      <th>Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th><th>UF</th><th class="r">Valor</th>
+      <th>Ativação</th><th>Cliente</th><th>CNPJ</th><th>Modalidade</th><th>Plano</th>
+      ${thConsultor}
+      <th class="r">Valor</th>
     </tr></thead>
     <tbody>${rows}</tbody>
   </table>
@@ -390,31 +465,46 @@
     w.document.close();
   }
 
+  // ═══════════════════════════════════════════════════════════
+  // EXPORTAR EXCEL
+  // ═══════════════════════════════════════════════════════════
   function exportarExcel() {
     if (!DADOS_ATUAIS) return;
     const d = DADOS_ATUAIS;
+    const isGestao = !!d.is_gestao;
 
- const dados = (d.vendas || []).map(v => ({
-  'Data Ativação': v.data_ativacao || '',
-  'Data Venda': v.data_venda || '',
-  'Cliente': v.razao_social || '',
-  'CNPJ': v.cnpj || '',
-  'Modalidade': v.modalidade || '',
-  'Plano': v.plano || '',
-  'Linha': v.numero_linha || '',
-  'Origem': v.origem || '',
-  'Valor': Number(v.valor_numeric) || 0,
-  'Status': v.status || ''
-}));
+    const dados = (d.vendas || []).map(v => {
+      const base = {
+        'Data Ativação': v.data_ativacao || '',
+        'Data Venda': v.data_venda || '',
+        'Cliente': v.razao_social || '',
+        'CNPJ': v.cnpj || '',
+        'Modalidade': v.modalidade || '',
+        'Plano': v.plano || '',
+        'Linha': v.numero_linha || '',
+        'Origem': v.origem || '',
+        'Valor': Number(v.valor_numeric) || 0,
+        'Status': v.status || ''
+      };
+      if (isGestao) base['Consultor'] = v.consultor || '';
+      return base;
+    });
 
     const ws = XLSX.utils.json_to_sheet(dados);
-    ws['!cols'] = [
-      {wch:12},{wch:12},{wch:35},{wch:20},{wch:18},{wch:25},{wch:15},
-      {wch:5},{wch:18},{wch:18},{wch:12},{wch:22}
-    ];
+
+    // Larguras dinâmicas conforme colunas
+    ws['!cols'] = isGestao
+      ? [{wch:12},{wch:12},{wch:35},{wch:20},{wch:18},{wch:25},{wch:15},{wch:14},{wch:25},{wch:12},{wch:22}]
+      : [{wch:12},{wch:12},{wch:35},{wch:20},{wch:18},{wch:25},{wch:15},{wch:14},{wch:12},{wch:22}];
+
     const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, 'Minhas Vendas');
-    XLSX.writeFile(wb, `minhas_vendas_${d.periodo.inicio}_a_${d.periodo.fim}.xlsx`);
+    XLSX.utils.book_append_sheet(wb, ws, 'Vendas');
+
+    const sufixo = isGestao
+      ? (d.consultor_alvo ? `_${d.consultor_alvo.replace(/\s+/g,'_')}` : '_todos')
+      : '';
+
+    XLSX.writeFile(wb, `vendas_${d.periodo.inicio}_a_${d.periodo.fim}${sufixo}.xlsx`);
   }
 
   function init() {
