@@ -2335,10 +2335,53 @@ async function sincronizarPerfil() {
   aplicarMenuPorCargo(profile.role);
 }
 
-// Mostra/oculta itens do menu conforme o cargo
-function aplicarMenuPorCargo(role) {
+// Mostra/oculta itens do menu conforme o cargo OU permissões customizadas
+function aplicarMenuPorCargo(role, permissoes) {
   const cargo = String(role || '').toUpperCase().trim();
+  const permissoesArr = Array.isArray(permissoes) ? permissoes.map(p => String(p).toLowerCase()) : [];
 
+  // Mapa: nome da permissão (badge na tela de time) → ID do item no menu
+  const MAPA_PERMISSOES = {
+    'vendas':       'side-vendas',
+    'agenda':       'side-agenda',
+    'clientes':     'side-clientes',
+    'prospeccao':   'side-prospeccao',
+    'pedidos':      'side-gestao-pedidos',
+    'gestao_pedidos': 'side-gestao-pedidos',
+    'ofertas':      'side-ofertas',
+    'faturas':      'side-faturas',
+    'metas':        'side-metas',
+    'usuarios':     'side-usuarios',
+    'financeiro':   'side-financeiro',
+    'relatorios':   'side-relatorios',
+    'suporte':      'side-suporte'
+  };
+
+  // Lista de todos os IDs de menu que podemos gerenciar
+  const TODOS_IDS = Object.values(MAPA_PERMISSOES);
+
+  // 🟢 Se tem permissões customizadas (array não vazio), usa elas
+  if (permissoesArr.length > 0) {
+    // Esconde TUDO primeiro
+    TODOS_IDS.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+
+    // Mostra só o que tá marcado
+    permissoesArr.forEach(perm => {
+      const id = MAPA_PERMISSOES[perm];
+      if (id) {
+        const el = document.getElementById(id);
+        if (el) el.style.display = 'flex';
+      }
+    });
+
+    console.log(`✅ [MENU] Permissões customizadas aplicadas (${permissoesArr.length} itens)`);
+    return;
+  }
+
+  // 🟡 Fallback: sem permissões customizadas → usa regras por role (código antigo)
   const regras = {
     'side-gestao-pedidos': ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR', 'CONSULTOR DE VENDAS'],
     'side-metas':          ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR'],
@@ -2354,6 +2397,8 @@ function aplicarMenuPorCargo(role) {
     if (!el) return;
     el.style.display = cargos.includes(cargo) ? 'flex' : 'none';
   });
+
+  console.log(`✅ [MENU] Regras por role aplicadas (${cargo})`);
 }
 
 
