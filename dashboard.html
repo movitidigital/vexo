@@ -2309,20 +2309,16 @@ let labelsMesesVexo = [];
 // 👤 SINCRONIZAR PERFIL (Supabase)
 // ============================================================
 async function sincronizarPerfil() {
-  // getProfile() vem do supabase-client.js — se não logado, redireciona pro login
   const profile = await getProfile();
   if (!profile) return;
 
   console.log('👤 Perfil carregado:', profile);
 
-  // Nome
   const nomeCompleto = [profile.nome, profile.sobrenome].filter(Boolean).join(' ').toUpperCase() || profile.email;
 
-  // Foto
   const foto = profile.photo_url ||
     `https://ui-avatars.com/api/?background=0f172a&color=fff&name=${encodeURIComponent(nomeCompleto)}`;
 
-  // Aplica no header
   const elNome = document.getElementById('display-name');
   const elRole = document.getElementById('display-role');
   const elFoto = document.getElementById('display-photo');
@@ -2331,8 +2327,8 @@ async function sincronizarPerfil() {
   if (elRole) elRole.innerText = profile.role || 'USUÁRIO';
   if (elFoto) elFoto.src = foto;
 
-  // Ajusta o menu por cargo
-  aplicarMenuPorCargo(profile.role);
+  // 🔥 PASSA AS PERMISSÕES CUSTOMIZADAS TAMBÉM
+  aplicarMenuPorCargo(profile.role, profile.permissoes);
 }
 
 // Mostra/oculta itens do menu conforme o cargo OU permissões customizadas
