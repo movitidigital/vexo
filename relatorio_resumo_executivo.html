@@ -1,0 +1,1074 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+  .re-wrap { font-family: 'Poppins', sans-serif; color: #0f172a; padding: 4px; }
+
+  /* FILTROS */
+  .re-filters {
+    background: white; border-radius: 14px; padding: 18px 22px;
+    border: 1px solid #e2e8f0; margin-bottom: 22px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .re-field { display: flex; flex-direction: column; gap: 5px; min-width: 130px; }
+  .re-field label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .re-field input, .re-field select {
+    padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 9px;
+    font-family: inherit; font-size: 13px; outline: none; transition: 0.2s; background: white;
+  }
+  .re-field input:focus, .re-field select:focus { border-color: #0b1a3a; box-shadow: 0 0 0 3px rgba(11,26,58,0.08); }
+  .re-btn { padding: 10px 20px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+  .re-btn-primary { background: #0b1a3a; color: white; }
+  .re-btn-primary:hover:not(:disabled) { background: #1a3060; }
+  .re-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .re-btn-soft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .re-btn-soft:hover { background: #e2e8f0; }
+  .re-btn-pdf { background: #dc2626; color: white; }
+  .re-btn-pdf:hover:not(:disabled) { background: #b91c1c; }
+  .re-btn-xls { background: #16a34a; color: white; }
+  .re-btn-xls:hover:not(:disabled) { background: #15803d; }
+  .re-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* HERO STATUS GERAL */
+  .re-hero {
+    border-radius: 18px; padding: 26px 30px; margin-bottom: 22px;
+    color: white; position: relative; overflow: hidden;
+  }
+  .re-hero.otimo  { background: linear-gradient(135deg, #059669, #10b981); }
+  .re-hero.bom    { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+  .re-hero.atencao{ background: linear-gradient(135deg, #d97706, #f59e0b); }
+  .re-hero.critico{ background: linear-gradient(135deg, #b91c1c, #dc2626); }
+
+  .re-hero-header {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 20px; margin-bottom: 22px;
+  }
+  .re-hero-badge {
+    font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    background: rgba(255,255,255,0.15); padding: 5px 14px; border-radius: 20px;
+    display: inline-block;
+  }
+  .re-hero-titulo { font-size: 24px; font-weight: 800; margin: 8px 0 4px; }
+  .re-hero-sub { font-size: 13px; opacity: 0.9; }
+
+  .re-hero-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+  }
+  .re-hero-kpi {
+    background: rgba(255,255,255,0.12); border-radius: 12px;
+    padding: 14px 16px; backdrop-filter: blur(8px);
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .re-hero-kpi-lbl { font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.85; letter-spacing: 0.5px; }
+  .re-hero-kpi-val { font-size: 24px; font-weight: 900; margin: 4px 0 2px; line-height: 1.1; }
+  .re-hero-kpi-sub { font-size: 10px; opacity: 0.8; }
+
+  /* GRID DE ÁREAS */
+  .re-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 20px; margin-bottom: 22px;
+  }
+  .re-card {
+    background: white; border-radius: 14px; border: 1px solid #e2e8f0;
+    padding: 20px 22px;
+  }
+  .re-card-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 16px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9;
+  }
+  .re-card-title {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 14px; font-weight: 800; color: #0b1a3a; margin: 0;
+  }
+  .re-card-emoji { font-size: 20px; }
+  .re-card-badge {
+    font-size: 9px; font-weight: 800; padding: 3px 8px;
+    border-radius: 10px; text-transform: uppercase;
+    background: #f1f5f9; color: #475569;
+  }
+  .re-card-badge.green { background: #dcfce7; color: #166534; }
+  .re-card-badge.yellow { background: #fef3c7; color: #92400e; }
+  .re-card-badge.red { background: #fee2e2; color: #991b1b; }
+
+  /* KPIs INTERNOS DO CARD */
+  .re-mini-kpis {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px;
+  }
+  .re-mini-kpi {
+    background: #f8fafc; border-radius: 10px; padding: 10px 12px;
+  }
+  .re-mini-kpi-lbl { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 800; letter-spacing: 0.3px; }
+  .re-mini-kpi-val { font-size: 16px; font-weight: 800; margin-top: 3px; }
+  .re-mini-kpi-sub { font-size: 9px; color: #94a3b8; margin-top: 1px; }
+
+  /* TOP LIST */
+  .re-top-list { display: flex; flex-direction: column; gap: 6px; }
+  .re-top-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px; border-radius: 8px; background: #f8fafc;
+    border-left: 3px solid var(--cor, #64748b);
+  }
+  .re-top-pos {
+    width: 22px; height: 22px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 800; background: white;
+    color: #475569; border: 1.5px solid #cbd5e1; flex-shrink: 0;
+  }
+  .re-top-pos.p1 { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
+  .re-top-pos.p2 { background: #e2e8f0; color: #475569; border-color: #cbd5e1; }
+  .re-top-pos.p3 { background: #fed7aa; color: #9a3412; border-color: #d97706; }
+  .re-top-nome { flex: 1; font-weight: 700; font-size: 12px; color: #0f172a; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .re-top-val { font-weight: 800; font-size: 12px; color: #059669; }
+
+  /* ALERTAS */
+  .re-alertas {
+    background: white; border-radius: 14px; border: 1px solid #e2e8f0;
+    padding: 20px 22px; margin-bottom: 22px;
+  }
+  .re-alertas h3 { margin: 0 0 16px; font-size: 14px; font-weight: 800; color: #0b1a3a; display: flex; align-items: center; gap: 8px; }
+  .re-alerta-list { display: flex; flex-direction: column; gap: 10px; }
+  .re-alerta {
+    display: flex; align-items: flex-start; gap: 12px;
+    padding: 12px 16px; border-radius: 10px;
+    border-left: 4px solid;
+    font-size: 13px;
+  }
+  .re-alerta.ok    { background: #f0fdf4; border-color: #10b981; }
+  .re-alerta.warn  { background: #fffbeb; border-color: #f59e0b; }
+  .re-alerta.err   { background: #fef2f2; border-color: #dc2626; }
+  .re-alerta.info  { background: #eff6ff; border-color: #3b82f6; }
+  .re-alerta-emoji { font-size: 18px; flex-shrink: 0; }
+  .re-alerta-titulo { font-weight: 800; margin-bottom: 2px; color: #0f172a; }
+  .re-alerta-titulo.ok    { color: #166534; }
+  .re-alerta-titulo.warn  { color: #92400e; }
+  .re-alerta-titulo.err   { color: #991b1b; }
+  .re-alerta-titulo.info  { color: #1e40af; }
+  .re-alerta-desc { color: #475569; font-size: 12px; line-height: 1.4; }
+
+  /* GRÁFICO */
+  .re-graf-box {
+    background: white; border-radius: 14px; border: 1px solid #e2e8f0;
+    padding: 20px 24px; margin-bottom: 22px;
+  }
+  .re-graf-box h3 { margin: 0 0 4px; font-size: 14px; font-weight: 800; color: #0b1a3a; }
+  .re-graf-box p { margin: 0 0 16px; font-size: 11px; color: #64748b; }
+  .re-graf-inner { position: relative; height: 340px; }
+
+  /* EMPTY */
+  .re-vazio { padding: 60px; text-align: center; color: #94a3b8; }
+
+  .re-loading {
+    text-align: center; padding: 80px 20px; color: #94a3b8;
+  }
+  .re-spinner {
+    width: 40px; height: 40px; border: 3px solid #e2e8f0;
+    border-top-color: #0b1a3a; border-radius: 50%;
+    margin: 0 auto 16px; animation: respin 0.9s linear infinite;
+  }
+  @keyframes respin { to { transform: rotate(360deg); } }
+</style>
+
+<div class="re-wrap" id="re-wrap">
+
+  <!-- FILTROS -->
+  <div class="re-filters">
+    <div class="re-field">
+      <label>Mês</label>
+      <select id="re-mes">
+        <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+        <option value="3">Março</option><option value="4">Abril</option>
+        <option value="5">Maio</option><option value="6">Junho</option>
+        <option value="7">Julho</option><option value="8">Agosto</option>
+        <option value="9">Setembro</option><option value="10">Outubro</option>
+        <option value="11">Novembro</option><option value="12">Dezembro</option>
+      </select>
+    </div>
+    <div class="re-field">
+      <label>Ano</label>
+      <select id="re-ano">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+    <div class="re-field">
+      <label>Início (opcional)</label>
+      <input type="date" id="re-ini">
+    </div>
+    <div class="re-field">
+      <label>Fim (opcional)</label>
+      <input type="date" id="re-fim">
+    </div>
+    <button class="re-btn re-btn-primary" id="re-btn-filtrar" onclick="RE.gerar()">📊 Gerar Resumo</button>
+    <button class="re-btn re-btn-soft" onclick="RE.limpar()">Limpar</button>
+    <button class="re-btn re-btn-pdf" id="re-btn-pdf" onclick="RE.exportarPDF()" disabled>📄 PDF</button>
+    <button class="re-btn re-btn-xls" id="re-btn-xls" onclick="RE.exportarExcel()" disabled>📊 Excel</button>
+  </div>
+
+  <!-- CONTEÚDO -->
+  <div id="re-conteudo">
+    <div class="re-loading">
+      <div class="re-spinner"></div>
+      Selecione o período e clique em <b>Gerar Resumo</b>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const fmtPerc = (v) => Number(v || 0).toFixed(1) + '%';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let DADOS = null;
+  let CHART = null;
+
+  function getSb() {
+    if (window.sb) return window.sb;
+    try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e) {}
+    return null;
+  }
+
+  function initMesAno() {
+    const hoje = new Date();
+    $('re-mes').value = String(hoje.getMonth() + 1);
+    $('re-ano').value = String(hoje.getFullYear());
+  }
+
+  function setLoading(msg) {
+    $('re-conteudo').innerHTML = `
+      <div class="re-loading">
+        <div class="re-spinner"></div>
+        ${esc(msg || 'Carregando...')}
+      </div>`;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // DISPARA AS 4 RPCs EM PARALELO
+  // ═══════════════════════════════════════════════════════════
+  async function gerar() {
+    const sb = getSb();
+    if (!sb) return alert('Supabase indisponível');
+
+    const btn = $('re-btn-filtrar');
+    btn.disabled = true; btn.textContent = '⏳ Consolidando...';
+    setLoading('Consolidando dados de todas as áreas...');
+
+    const mes = parseInt($('re-mes').value);
+    const ano = parseInt($('re-ano').value);
+    const ini = $('re-ini').value || null;
+    const fim = $('re-fim').value || null;
+
+    // Calcula período pra faturas (que aceita range)
+    let fatIni = ini, fatFim = fim;
+    if (!fatIni || !fatFim) {
+      const ultimoDia = new Date(ano, mes, 0).getDate();
+      fatIni = `${ano}-${String(mes).padStart(2,'0')}-01`;
+      fatFim = `${ano}-${String(mes).padStart(2,'0')}-${String(ultimoDia).padStart(2,'0')}`;
+    }
+
+    try {
+      // Dispara as 4 em paralelo
+      const [loja, parceiros, operadoras, faturas] = await Promise.all([
+        sb.rpc('gestao_consolidado_loja', {
+          p_mes: mes, p_ano: ano, p_inicio: ini, p_fim: fim,
+          p_modalidades: null, p_statuses: null
+        }),
+        sb.rpc('gestao_consolidado_parceiros', {
+          p_mes: mes, p_ano: ano, p_inicio: ini, p_fim: fim,
+          p_tipo: null, p_modalidades: null, p_statuses: null
+        }),
+        sb.rpc('gestao_operadora_doadora', {
+          p_mes: mes, p_ano: ano, p_inicio: ini, p_fim: fim,
+          p_tipo: null, p_modalidades: null, p_operadoras: null
+        }),
+        sb.rpc('gestao_faturas_clientes', {
+          p_inicio: fatIni, p_fim: fatFim,
+          p_status: null, p_cliente: null, p_somente_vencidas: false
+        })
+      ]);
+
+      // Valida erros
+      const erros = [];
+      if (loja.error) erros.push('Loja: ' + loja.error.message);
+      if (parceiros.error) erros.push('Parceiros: ' + parceiros.error.message);
+      if (operadoras.error) erros.push('Operadoras: ' + operadoras.error.message);
+      if (faturas.error) erros.push('Faturas: ' + faturas.error.message);
+
+      if (erros.length > 0) throw new Error(erros.join(' | '));
+
+      DADOS = {
+        loja: loja.data || {},
+        parceiros: parceiros.data || {},
+        operadoras: operadoras.data || {},
+        faturas: faturas.data || {},
+        periodo: { mes, ano, ini, fim }
+      };
+
+      render(DADOS);
+
+      $('re-btn-pdf').disabled = false;
+      $('re-btn-xls').disabled = false;
+    } catch (e) {
+      console.error(e);
+      $('re-conteudo').innerHTML = `
+        <div class="re-loading" style="color:#ef4444;">
+          <div style="font-size:48px;margin-bottom:12px;">❌</div>
+          <div style="font-weight:700;margin-bottom:6px;">Erro ao consolidar</div>
+          <div style="font-size:12px;">${esc(e.message || e)}</div>
+        </div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '📊 Gerar Resumo';
+    }
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // CONSOLIDA E RENDERIZA
+  // ═══════════════════════════════════════════════════════════
+  function render(d) {
+    const loja = d.loja;
+    const parc = d.parceiros;
+    const op = d.operadoras;
+    const fat = d.faturas;
+
+    // ── CONSOLIDA KPIs ────────────────────────────────────
+    const tLoja = loja.totais || {};
+    const tParc = parc.totais || {};
+    const tOp = op.totais || {};
+    const tFat = fat.totais || {};
+    const metaLoja = loja.meta_loja || {};
+    const perLoja = loja.periodo || {};
+    const perParc = parc.periodo || {};
+
+    const faturamentoTotal = (Number(tLoja.valor_ativado) || 0) + (Number(tParc.valor_ativado) || 0);
+    const ativacoesTotal = (Number(tLoja.qtd_ativadas) || 0) + (Number(tParc.qtd_ativadas) || 0);
+    const metaTotal = Number(metaLoja.fat_target) || 0;
+    const percMeta = metaTotal > 0 ? (faturamentoTotal / metaTotal) * 100 : 0;
+
+    // Comissão total dos parceiros
+    const comissaoTotal = (parc.por_tbp || []).reduce((s, r) => s + Number(r.comissao_estimada || 0), 0);
+
+    // Inadimplência
+    const taxaInadimpl = Number(tFat.taxa_inadimplencia) || 0;
+
+    // Status geral (cor do hero)
+    let statusGeral = 'bom';
+    if (percMeta >= 100) statusGeral = 'otimo';
+    else if (percMeta >= 85) statusGeral = 'bom';
+    else if (percMeta >= 60) statusGeral = 'atencao';
+    else statusGeral = 'critico';
+
+    // ── RENDER CONTEÚDO ───────────────────────────────────
+    const mesAno = `${perLoja.mes_nome || ''}/${perLoja.ano || ''}`;
+    const dataStr = new Date().toLocaleString('pt-BR');
+
+    $('re-conteudo').innerHTML = `
+      <!-- HERO -->
+      <div class="re-hero ${statusGeral}">
+        <div class="re-hero-header">
+          <div>
+            <span class="re-hero-badge">📊 Resumo Executivo · ${esc(mesAno)}</span>
+            <h2 class="re-hero-titulo">${getEmojiHero(statusGeral)} ${getTituloHero(statusGeral)}</h2>
+            <p class="re-hero-sub">Visão consolidada de Loja, Parceiros, Operadoras e Financeiro</p>
+          </div>
+          <div style="text-align:right;">
+            <div style="font-size:11px;opacity:0.85;text-transform:uppercase;font-weight:700;letter-spacing:0.5px;">Faturamento Consolidado</div>
+            <div style="font-size:34px;font-weight:900;margin-top:4px;">${fmt(faturamentoTotal)}</div>
+          </div>
+        </div>
+        <div class="re-hero-grid">
+          <div class="re-hero-kpi">
+            <div class="re-hero-kpi-lbl">🎯 Meta Loja</div>
+            <div class="re-hero-kpi-val">${fmtPerc(percMeta)}</div>
+            <div class="re-hero-kpi-sub">alvo: ${fmt(metaTotal)}</div>
+          </div>
+          <div class="re-hero-kpi">
+            <div class="re-hero-kpi-lbl">📱 Ativações</div>
+            <div class="re-hero-kpi-val">${fmtInt(ativacoesTotal)}</div>
+            <div class="re-hero-kpi-sub">loja + parceiros</div>
+          </div>
+          <div class="re-hero-kpi">
+            <div class="re-hero-kpi-lbl">💰 Comissões a Pagar</div>
+            <div class="re-hero-kpi-val">${fmt(comissaoTotal)}</div>
+            <div class="re-hero-kpi-sub">${fmtInt(tParc.tbps_ativos || 0)} TBPs ativos</div>
+          </div>
+          <div class="re-hero-kpi">
+            <div class="re-hero-kpi-lbl">🚨 Inadimplência</div>
+            <div class="re-hero-kpi-val">${fmtPerc(taxaInadimpl)}</div>
+            <div class="re-hero-kpi-sub">${fmt(tFat.valor_vencido || 0)} vencido</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GRID DE ÁREAS -->
+      <div class="re-grid">
+        ${renderCardLoja(loja)}
+        ${renderCardParceiros(parc)}
+        ${renderCardOperadoras(op)}
+        ${renderCardFaturas(fat)}
+      </div>
+
+      <!-- GRÁFICO COMBINADO -->
+      <div class="re-graf-box">
+        <h3>📈 Evolução 12 Meses (Combinado)</h3>
+        <p>Faturamento ativado: Loja + Parceiros/Freelancers mês a mês</p>
+        <div class="re-graf-inner">
+          <canvas id="re-grafico"></canvas>
+        </div>
+      </div>
+
+      <!-- ALERTAS -->
+      <div class="re-alertas">
+        <h3>🚨 Alertas Automáticos</h3>
+        <div class="re-alerta-list">
+          ${renderAlertas(d)}
+        </div>
+      </div>
+    `;
+
+    // Gráfico (depois do HTML no DOM)
+    setTimeout(() => renderGrafico(loja, parc), 100);
+  }
+
+  function getEmojiHero(s) {
+    return { otimo: '🎉', bom: '✅', atencao: '⚠️', critico: '🚨' }[s] || '📊';
+  }
+  function getTituloHero(s) {
+    return {
+      otimo:   'Excelente! Meta superada',
+      bom:     'Bom ritmo, no caminho certo',
+      atencao: 'Atenção! Ritmo abaixo do ideal',
+      critico: 'Crítico! Muito abaixo da meta'
+    }[s] || 'Resumo do mês';
+  }
+
+  // ── CARD LOJA ────────────────────────────────────────────
+  function renderCardLoja(d) {
+    const t = d.totais || {};
+    const meta = d.meta_loja || {};
+    const cons = d.por_consultor || [];
+    const top3 = cons.slice(0, 3);
+    const percMeta = meta.fat_target > 0 ? (t.valor_ativado / meta.fat_target) * 100 : 0;
+    const badgeCls = percMeta >= 100 ? 'green' : (percMeta >= 85 ? 'yellow' : 'red');
+
+    return `
+      <div class="re-card">
+        <div class="re-card-head">
+          <h3 class="re-card-title"><span class="re-card-emoji">🏢</span> Loja Interna</h3>
+          <span class="re-card-badge ${badgeCls}">${fmtPerc(percMeta)} da meta</span>
+        </div>
+        <div class="re-mini-kpis">
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">Faturamento</div>
+            <div class="re-mini-kpi-val" style="color:#1e40af;">${fmt(t.valor_ativado)}</div>
+            <div class="re-mini-kpi-sub">${fmtInt(t.qtd_ativadas)} ativações</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">Ticket Médio</div>
+            <div class="re-mini-kpi-val">${fmt(t.ticket_medio)}</div>
+            <div class="re-mini-kpi-sub">por venda</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">Portabilidade</div>
+            <div class="re-mini-kpi-val">${fmtInt(t.qtd_portabilidade)}</div>
+            <div class="re-mini-kpi-sub">meta: ${fmtInt(meta.port_target || 0)}</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">Renegociações</div>
+            <div class="re-mini-kpi-val">${fmtInt(t.qtd_renegociacao)}</div>
+            <div class="re-mini-kpi-sub">meta: ${fmtInt(meta.reneg_target || 0)}</div>
+          </div>
+        </div>
+        ${top3.length > 0 ? `
+          <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">🏆 Top Consultores</div>
+          <div class="re-top-list">
+            ${top3.map((c, i) => `
+              <div class="re-top-row" style="--cor:#3b82f6;">
+                <div class="re-top-pos p${i+1}">${i+1}</div>
+                <div class="re-top-nome">${esc(c.nome_completo || c.consultor || '—')}</div>
+                <div class="re-top-val">${fmt(c.valor_ativado)}</div>
+              </div>
+            `).join('')}
+          </div>
+        ` : '<div style="text-align:center;color:#94a3b8;font-size:12px;padding:20px;">Sem vendas no período</div>'}
+      </div>`;
+  }
+
+  // ── CARD PARCEIROS ───────────────────────────────────────
+  function renderCardParceiros(d) {
+    const t = d.totais || {};
+    const tb = d.por_tbp || [];
+    const top3 = tb.slice(0, 3);
+    const comissaoTotal = tb.reduce((s, r) => s + Number(r.comissao_estimada || 0), 0);
+
+    return `
+      <div class="re-card">
+        <div class="re-card-head">
+          <h3 class="re-card-title"><span class="re-card-emoji">🤝</span> Parceiros & Freelancers</h3>
+          <span class="re-card-badge">${fmtInt(t.tbps_ativos || 0)} TBPs</span>
+        </div>
+        <div class="re-mini-kpis">
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">Faturamento</div>
+            <div class="re-mini-kpi-val" style="color:#059669;">${fmt(t.valor_ativado)}</div>
+            <div class="re-mini-kpi-sub">${fmtInt(t.qtd_ativadas)} ativações</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">💰 Comissão Total</div>
+            <div class="re-mini-kpi-val" style="color:#991b1b;">${fmt(comissaoTotal)}</div>
+            <div class="re-mini-kpi-sub">a pagar no período</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">Terceiros</div>
+            <div class="re-mini-kpi-val">${fmtInt(t.qtd_terceiros || 0)}</div>
+            <div class="re-mini-kpi-sub">empresas</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">Freelancers</div>
+            <div class="re-mini-kpi-val">${fmtInt(t.qtd_freelancers || 0)}</div>
+            <div class="re-mini-kpi-sub">autônomos</div>
+          </div>
+        </div>
+        ${top3.length > 0 ? `
+          <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">🏆 Top TBPs</div>
+          <div class="re-top-list">
+            ${top3.map((c, i) => `
+              <div class="re-top-row" style="--cor:#10b981;">
+                <div class="re-top-pos p${i+1}">${i+1}</div>
+                <div class="re-top-nome">${esc(c.nome_tbp || c.razao_social || '—')}</div>
+                <div class="re-top-val">${fmt(c.valor_ativado)}</div>
+              </div>
+            `).join('')}
+          </div>
+        ` : '<div style="text-align:center;color:#94a3b8;font-size:12px;padding:20px;">Sem vendas no período</div>'}
+      </div>`;
+  }
+
+  // ── CARD OPERADORAS ──────────────────────────────────────
+  function renderCardOperadoras(d) {
+    const t = d.totais || {};
+    const ops = d.por_operadora || [];
+    const top3 = ops.slice(0, 3);
+
+    return `
+      <div class="re-card">
+        <div class="re-card-head">
+          <h3 class="re-card-title"><span class="re-card-emoji">📞</span> Operadoras Doadoras</h3>
+          <span class="re-card-badge">${fmtInt(t.operadoras_distintas || 0)} op.</span>
+        </div>
+        <div class="re-mini-kpis">
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">Total Portabilidades</div>
+            <div class="re-mini-kpi-val" style="color:#86198f;">${fmtInt(t.qtd_total || 0)}</div>
+            <div class="re-mini-kpi-sub">${fmtInt(t.qtd_ativadas || 0)} ativadas</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">Valor Ativado</div>
+            <div class="re-mini-kpi-val" style="color:#059669;">${fmt(t.valor_ativado)}</div>
+            <div class="re-mini-kpi-sub">ticket ${fmt(t.ticket_medio)}</div>
+          </div>
+        </div>
+        ${top3.length > 0 ? `
+          <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">🏆 Top Operadoras</div>
+          <div class="re-top-list">
+            ${top3.map((c, i) => {
+              const cor = getCorOperadora(c.operadora);
+              return `
+                <div class="re-top-row" style="--cor:${cor};">
+                  <div class="re-top-pos p${i+1}">${i+1}</div>
+                  <div class="re-top-nome">${esc(c.operadora)}</div>
+                  <div class="re-top-val" style="color:${cor};">${fmtInt(c.qtd_total)} · ${fmtPerc(c.perc_qtd)}</div>
+                </div>
+              `;
+            }).join('')}
+          </div>
+        ` : '<div style="text-align:center;color:#94a3b8;font-size:12px;padding:20px;">Sem portabilidades</div>'}
+      </div>`;
+  }
+
+  function getCorOperadora(op) {
+    const n = String(op || '').toUpperCase();
+    return { 'VIVO':'#7c3aed','CLARO':'#dc2626','OI':'#f59e0b','TIM':'#2563eb','ALGAR':'#10b981' }[n] || '#94a3b8';
+  }
+
+  // ── CARD FATURAS ─────────────────────────────────────────
+  function renderCardFaturas(d) {
+    const t = d.totais || {};
+    const aging = d.aging || {};
+    const percInad = Number(t.taxa_inadimplencia) || 0;
+    const badgeCls = percInad < 5 ? 'green' : (percInad < 10 ? 'yellow' : 'red');
+
+    return `
+      <div class="re-card">
+        <div class="re-card-head">
+          <h3 class="re-card-title"><span class="re-card-emoji">💰</span> Faturas & Inadimplência</h3>
+          <span class="re-card-badge ${badgeCls}">${fmtPerc(percInad)} inadimpl.</span>
+        </div>
+        <div class="re-mini-kpis">
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">✅ Recebido</div>
+            <div class="re-mini-kpi-val" style="color:#059669;">${fmt(t.valor_recebido)}</div>
+            <div class="re-mini-kpi-sub">${fmtInt(t.qtd_pagas)} pagas</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">🟡 A Vencer</div>
+            <div class="re-mini-kpi-val" style="color:#92400e;">${fmt(t.valor_a_vencer)}</div>
+            <div class="re-mini-kpi-sub">${fmtInt(t.qtd_a_vencer)} faturas</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">🔴 Vencido</div>
+            <div class="re-mini-kpi-val" style="color:#991b1b;">${fmt(t.valor_vencido)}</div>
+            <div class="re-mini-kpi-sub">${fmtInt(t.qtd_vencidas)} faturas</div>
+          </div>
+          <div class="re-mini-kpi">
+            <div class="re-mini-kpi-lbl">👥 Clientes Devedores</div>
+            <div class="re-mini-kpi-val">${fmtInt(t.clientes_inadimpl)}</div>
+            <div class="re-mini-kpi-sub">de ${fmtInt(t.clientes_unicos)} ativos</div>
+          </div>
+        </div>
+        <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;">📊 Aging das Vencidas</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          ${renderAgingItem('1-30 dias', aging.b1_30, '#fef9c3', '#854d0e')}
+          ${renderAgingItem('31-60 dias', aging.b31_60, '#fed7aa', '#9a3412')}
+          ${renderAgingItem('61-90 dias', aging.b61_90, '#fecaca', '#991b1b')}
+          ${renderAgingItem('+90 dias', aging.b90mais, '#fecdd3', '#881337')}
+        </div>
+      </div>`;
+  }
+
+  function renderAgingItem(label, data, bg, cor) {
+    const v = data?.valor || 0;
+    const q = data?.qtd || 0;
+    return `<div style="background:${bg};padding:8px 10px;border-radius:8px;">
+      <div style="font-size:9px;font-weight:800;color:${cor};text-transform:uppercase;">${label}</div>
+      <div style="font-size:13px;font-weight:800;color:${cor};margin-top:2px;">${fmt(v)}</div>
+      <div style="font-size:9px;color:${cor};opacity:0.75;">${q} faturas</div>
+    </div>`;
+  }
+
+  // ── GRÁFICO COMBINADO ────────────────────────────────────
+  function renderGrafico(loja, parc) {
+    const ctx = $('re-grafico');
+    if (!ctx) return;
+    const ctx2d = ctx.getContext('2d');
+    if (CHART) CHART.destroy();
+
+    const evoLoja = loja.evolucao_12m || [];
+    const evoParc = parc.evolucao_12m || [];
+
+    // Consolida por label (mesmo tamanho, mesma ordem)
+    const labels = evoLoja.map(e => e.label);
+    const lojaVals = evoLoja.map(e => Number(e.valor_ativado) || 0);
+    const parcVals = evoParc.map(e => Number(e.valor_ativado) || 0);
+    const totalVals = labels.map((_, i) => (lojaVals[i] || 0) + (parcVals[i] || 0));
+
+    CHART = new Chart(ctx2d, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: '🏢 Loja',
+            data: lojaVals,
+            backgroundColor: '#3b82f6',
+            borderRadius: 6, borderSkipped: false, stack: 'stack1'
+          },
+          {
+            label: '🤝 Parceiros',
+            data: parcVals,
+            backgroundColor: '#10b981',
+            borderRadius: 6, borderSkipped: false, stack: 'stack1'
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11, weight: '600' }, boxWidth: 12, padding: 10 } },
+          tooltip: {
+            backgroundColor: 'rgba(15,23,42,0.95)', padding: 12,
+            callbacks: {
+              label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)}`,
+              footer: (items) => {
+                const total = items.reduce((s, it) => s + (it.parsed.y || 0), 0);
+                return 'Total: ' + fmt(total);
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            stacked: true,
+            grid: { display: false },
+            ticks: { font: { size: 10, weight: '600' }, color: '#475569' }
+          },
+          y: {
+            stacked: true,
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { font: { size: 10 }, color: '#64748b', callback: (v) => 'R$ ' + Number(v).toLocaleString('pt-BR') }
+          }
+        }
+      }
+    });
+  }
+
+  // ── ALERTAS AUTOMÁTICOS ──────────────────────────────────
+  function renderAlertas(d) {
+    const alertas = [];
+    const loja = d.loja;
+    const parc = d.parceiros;
+    const fat = d.faturas;
+    const tLoja = loja.totais || {};
+    const tParc = parc.totais || {};
+    const tFat = fat.totais || {};
+    const meta = loja.meta_loja || {};
+
+    // 1. Meta loja
+    const percMeta = meta.fat_target > 0 ? (tLoja.valor_ativado / meta.fat_target) * 100 : 0;
+    if (meta.fat_target > 0) {
+      if (percMeta >= 100) {
+        alertas.push({
+          tipo: 'ok', emoji: '🏆',
+          titulo: 'Meta da loja batida!',
+          desc: `Faturamento de ${fmt(tLoja.valor_ativado)} atingiu ${fmtPerc(percMeta)} da meta (${fmt(meta.fat_target)}).`
+        });
+      } else if (percMeta >= 85) {
+        alertas.push({
+          tipo: 'warn', emoji: '⚠️',
+          titulo: 'Meta da loja em risco',
+          desc: `Atingiu ${fmtPerc(percMeta)} da meta. Faltam ${fmt(meta.fat_target - tLoja.valor_ativado)}.`
+        });
+      } else {
+        alertas.push({
+          tipo: 'err', emoji: '🚨',
+          titulo: 'Meta da loja crítica',
+          desc: `Apenas ${fmtPerc(percMeta)} atingido. Faltam ${fmt(meta.fat_target - tLoja.valor_ativado)} para bater.`
+        });
+      }
+    }
+
+    // 2. Inadimplência
+    const percInad = Number(tFat.taxa_inadimplencia) || 0;
+    if (percInad > 0) {
+      if (percInad < 5) {
+        alertas.push({
+          tipo: 'ok', emoji: '✅',
+          titulo: 'Inadimplência sob controle',
+          desc: `Taxa de ${fmtPerc(percInad)} está saudável (${fmt(tFat.valor_vencido)} em atraso).`
+        });
+      } else if (percInad < 10) {
+        alertas.push({
+          tipo: 'warn', emoji: '⚠️',
+          titulo: 'Inadimplência moderada',
+          desc: `Taxa de ${fmtPerc(percInad)} — ${fmt(tFat.valor_vencido)} vencidos. Acompanhar cobrança.`
+        });
+      } else {
+        alertas.push({
+          tipo: 'err', emoji: '🚨',
+          titulo: 'Inadimplência elevada',
+          desc: `Taxa de ${fmtPerc(percInad)} — ${fmt(tFat.valor_vencido)} em atraso. Ação imediata recomendada.`
+        });
+      }
+    }
+
+    // 3. Top TBP
+    const topTbp = (parc.por_tbp || [])[0];
+    if (topTbp) {
+      const percTbp = tParc.valor_ativado > 0 
+        ? (Number(topTbp.valor_ativado) / Number(tParc.valor_ativado)) * 100 
+        : 0;
+      alertas.push({
+        tipo: 'info', emoji: '🤝',
+        titulo: `TBP destaque: ${topTbp.nome_tbp || topTbp.razao_social}`,
+        desc: `Responsável por ${fmtPerc(percTbp)} do faturamento dos parceiros (${fmt(topTbp.valor_ativado)}).`
+      });
+    }
+
+    // 4. Top operadora
+    const topOp = (d.operadoras.por_operadora || [])[0];
+    if (topOp) {
+      alertas.push({
+        tipo: 'info', emoji: '📞',
+        titulo: `Operadora líder: ${topOp.operadora}`,
+        desc: `Concentra ${fmtPerc(topOp.perc_qtd)} das portabilidades (${topOp.qtd_total} vendas).`
+      });
+    }
+
+    // 5. Comissão a pagar
+    const comissaoTotal = (parc.por_tbp || []).reduce((s, r) => s + Number(r.comissao_estimada || 0), 0);
+    if (comissaoTotal > 0) {
+      alertas.push({
+        tipo: 'info', emoji: '💰',
+        titulo: 'Comissões a pagar',
+        desc: `Total de ${fmt(comissaoTotal)} distribuídas entre ${fmtInt(tParc.tbps_ativos || 0)} parceiros/freelancers.`
+      });
+    }
+
+    // 6. Renegociações > Portabilidade (alerta de qualidade)
+    const tOp = d.operadoras.totais || {};
+    if (tOp.qtd_total > 0 && tParc.qtd_renegociacao > tParc.qtd_portabilidade) {
+      alertas.push({
+        tipo: 'warn', emoji: '⚠️',
+        titulo: 'Renegociações superam Portabilidades',
+        desc: `Proporção desfavorável: ${fmtInt(tParc.qtd_renegociacao)} reneg vs ${fmtInt(tParc.qtd_portabilidade)} portab. Foco em captação.`
+      });
+    }
+
+    if (alertas.length === 0) {
+      return '<div style="text-align:center;color:#94a3b8;padding:20px;">Sem alertas no período</div>';
+    }
+
+    return alertas.map(a => `
+      <div class="re-alerta ${a.tipo}">
+        <div class="re-alerta-emoji">${a.emoji}</div>
+        <div>
+          <div class="re-alerta-titulo ${a.tipo}">${esc(a.titulo)}</div>
+          <div class="re-alerta-desc">${esc(a.desc)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function limpar() {
+    initMesAno();
+    $('re-ini').value = '';
+    $('re-fim').value = '';
+    DADOS = null;
+    $('re-conteudo').innerHTML = `
+      <div class="re-loading">
+        <div class="re-spinner"></div>
+        Selecione o período e clique em <b>Gerar Resumo</b>
+      </div>`;
+    $('re-btn-pdf').disabled = true;
+    $('re-btn-xls').disabled = true;
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // PDF EXECUTIVO
+  // ═══════════════════════════════════════════════════════════
+  function exportarPDF() {
+    if (!DADOS) return;
+    const d = DADOS;
+    const loja = d.loja, parc = d.parceiros, op = d.operadoras, fat = d.faturas;
+    const tLoja = loja.totais || {}, tParc = parc.totais || {};
+    const tOp = op.totais || {}, tFat = fat.totais || {};
+    const meta = loja.meta_loja || {};
+
+    const fatTotal = (Number(tLoja.valor_ativado) || 0) + (Number(tParc.valor_ativado) || 0);
+    const ativTotal = (Number(tLoja.qtd_ativadas) || 0) + (Number(tParc.qtd_ativadas) || 0);
+    const percMeta = meta.fat_target > 0 ? (tLoja.valor_ativado / meta.fat_target) * 100 : 0;
+    const comissaoTotal = (parc.por_tbp || []).reduce((s, r) => s + Number(r.comissao_estimada || 0), 0);
+
+    const topCons = (loja.por_consultor || []).slice(0, 5);
+    const topTbp = (parc.por_tbp || []).slice(0, 5);
+    const topOp = (op.por_operadora || []).slice(0, 5);
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Resumo Executivo</title>
+<style>
+  @page { size: A4 portrait; margin: 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; color: #0f172a; padding: 20px; }
+  .head { border-bottom: 3px solid #0b1a3a; padding-bottom: 12px; margin-bottom: 20px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .head h1 { margin: 0; font-size: 20px; color: #0b1a3a; }
+  .hero { background: linear-gradient(135deg, #0b1a3a, #1e40af); color: white; border-radius: 12px; padding: 20px; margin-bottom: 16px; }
+  .hero h2 { margin: 0 0 6px; font-size: 22px; }
+  .hero p { margin: 0; opacity: 0.9; font-size: 12px; }
+  .hero-val { font-size: 34px; font-weight: 900; margin-top: 12px; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 16px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
+  .kpi small { font-size: 9px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .kpi strong { display: block; font-size: 16px; color: #0f172a; margin-top: 4px; }
+  .kpi span { font-size: 9px; color: #94a3b8; }
+  h3 { font-size: 13px; color: #0b1a3a; margin: 20px 0 10px; border-left: 3px solid #3b82f6; padding-left: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  th { background: #f1f5f9; text-align: left; padding: 7px 9px; border-bottom: 1px solid #cbd5e1; font-size: 9px; text-transform: uppercase; color: #475569; }
+  td { padding: 6px 9px; border-bottom: 1px solid #f1f5f9; }
+  td.r { text-align: right; font-weight: 700; }
+  td.c { text-align: center; }
+  .foot { margin-top: 24px; font-size: 9px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+  .no-print { text-align:center; margin-top:16px; }
+  @media print { .no-print { display:none; } body { padding: 0; } }
+</style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="padding:10px 24px;background:#0b1a3a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  <div class="head">
+    <div>
+      <h1>VEXO · Resumo Executivo</h1>
+      <small style="color:#64748b;">${loja.periodo?.mes_nome || ''}/${loja.periodo?.ano || ''} · ${loja.periodo?.inicio || ''} a ${loja.periodo?.fim || ''}</small>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#64748b;">
+      Emitido em ${new Date().toLocaleString('pt-BR')}
+    </div>
+  </div>
+
+  <div class="hero">
+    <h2>📊 Faturamento Consolidado</h2>
+    <p>Loja + Parceiros/Freelancers</p>
+    <div class="hero-val">${fmt(fatTotal)}</div>
+    <div style="margin-top:10px;font-size:11px;opacity:0.85;">
+      ${fmtInt(ativTotal)} ativações · Meta Loja: ${fmtPerc(percMeta)} · Comissões: ${fmt(comissaoTotal)}
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><small>🏢 Loja</small><strong>${fmt(tLoja.valor_ativado)}</strong><span>${fmtInt(tLoja.qtd_ativadas)} ativ</span></div>
+    <div class="kpi"><small>🤝 Parceiros</small><strong>${fmt(tParc.valor_ativado)}</strong><span>${fmtInt(tParc.tbps_ativos || 0)} TBPs</span></div>
+    <div class="kpi"><small>💰 Recebido</small><strong>${fmt(tFat.valor_recebido)}</strong><span>${fmtInt(tFat.qtd_pagas)} pagas</span></div>
+    <div class="kpi"><small>🚨 Inadimplência</small><strong>${fmtPerc(tFat.taxa_inadimplencia || 0)}</strong><span>${fmt(tFat.valor_vencido)} vencido</span></div>
+  </div>
+
+  <h3>🏆 Top 5 Consultores</h3>
+  <table>
+    <thead><tr><th>#</th><th>Consultor</th><th>Ativadas</th><th>Valor Ativado</th><th>% Meta</th></tr></thead>
+    <tbody>
+      ${topCons.map((c, i) => `<tr>
+        <td class="c">${i+1}</td>
+        <td>${esc(c.nome_completo || c.consultor || '—')}</td>
+        <td class="c">${fmtInt(c.qtd_ativadas)}</td>
+        <td class="r">${fmt(c.valor_ativado)}</td>
+        <td class="c">${fmtPerc(c.perc_fat || 0)}</td>
+      </tr>`).join('') || '<tr><td colspan="5" class="c">Sem dados</td></tr>'}
+    </tbody>
+  </table>
+
+  <h3>🤝 Top 5 TBPs (Parceiros & Freelancers)</h3>
+  <table>
+    <thead><tr><th>#</th><th>TBP</th><th>Tipo</th><th>Ativadas</th><th>Valor Ativado</th><th>Comissão</th></tr></thead>
+    <tbody>
+      ${topTbp.map((c, i) => `<tr>
+        <td class="c">${i+1}</td>
+        <td>${esc(c.nome_tbp || c.razao_social || '—')}</td>
+        <td class="c">${esc(c.tipo || '—')}</td>
+        <td class="c">${fmtInt(c.qtd_ativadas)}</td>
+        <td class="r">${fmt(c.valor_ativado)}</td>
+        <td class="r">${fmt(c.comissao_estimada)}</td>
+      </tr>`).join('') || '<tr><td colspan="6" class="c">Sem dados</td></tr>'}
+    </tbody>
+  </table>
+
+  <h3>📞 Top 5 Operadoras Doadoras</h3>
+  <table>
+    <thead><tr><th>#</th><th>Operadora</th><th>Quantidade</th><th>Valor Ativado</th><th>% Bolo</th></tr></thead>
+    <tbody>
+      ${topOp.map((c, i) => `<tr>
+        <td class="c">${i+1}</td>
+        <td>${esc(c.operadora)}</td>
+        <td class="c">${fmtInt(c.qtd_total)}</td>
+        <td class="r">${fmt(c.valor_ativado)}</td>
+        <td class="c">${fmtPerc(c.perc_qtd)}</td>
+      </tr>`).join('') || '<tr><td colspan="5" class="c">Sem dados</td></tr>'}
+    </tbody>
+  </table>
+
+  <div class="foot">
+    VEXO Intelligent Management · Resumo gerado em ${new Date().toLocaleString('pt-BR')}
+  </div>
+</body></html>`;
+
+    const w = window.open('', '_blank', 'width=900,height=1100');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // EXCEL RESUMIDO
+  // ═══════════════════════════════════════════════════════════
+  function exportarExcel() {
+    if (!DADOS) return;
+    const d = DADOS;
+    const loja = d.loja, parc = d.parceiros, op = d.operadoras, fat = d.faturas;
+    const tLoja = loja.totais || {}, tParc = parc.totais || {};
+    const tOp = op.totais || {}, tFat = fat.totais || {};
+    const meta = loja.meta_loja || {};
+
+    const fatTotal = (Number(tLoja.valor_ativado) || 0) + (Number(tParc.valor_ativado) || 0);
+    const ativTotal = (Number(tLoja.qtd_ativadas) || 0) + (Number(tParc.qtd_ativadas) || 0);
+    const percMeta = meta.fat_target > 0 ? (tLoja.valor_ativado / meta.fat_target) * 100 : 0;
+    const comissaoTotal = (parc.por_tbp || []).reduce((s, r) => s + Number(r.comissao_estimada || 0), 0);
+
+    const wb = XLSX.utils.book_new();
+
+    // Aba 1 — Resumo Geral
+    const resumo = [
+      { 'Indicador': 'Período', 'Valor': `${loja.periodo?.mes_nome || ''}/${loja.periodo?.ano || ''}` },
+      { 'Indicador': 'Faturamento Total', 'Valor': fatTotal },
+      { 'Indicador': 'Faturamento Loja', 'Valor': Number(tLoja.valor_ativado) || 0 },
+      { 'Indicador': 'Faturamento Parceiros', 'Valor': Number(tParc.valor_ativado) || 0 },
+      { 'Indicador': 'Ativações Totais', 'Valor': ativTotal },
+      { 'Indicador': 'Meta Loja', 'Valor': Number(meta.fat_target) || 0 },
+      { 'Indicador': '% Meta Loja', 'Valor': Number(percMeta.toFixed(1)) },
+      { 'Indicador': 'Comissões a Pagar', 'Valor': comissaoTotal },
+      { 'Indicador': 'TBPs Ativos', 'Valor': tParc.tbps_ativos || 0 },
+      { 'Indicador': 'Portabilidades Totais', 'Valor': tOp.qtd_total || 0 },
+      { 'Indicador': 'Valor Recebido', 'Valor': Number(tFat.valor_recebido) || 0 },
+      { 'Indicador': 'Valor A Vencer', 'Valor': Number(tFat.valor_a_vencer) || 0 },
+      { 'Indicador': 'Valor Vencido', 'Valor': Number(tFat.valor_vencido) || 0 },
+      { 'Indicador': 'Taxa Inadimplência %', 'Valor': Number((tFat.taxa_inadimplencia || 0).toFixed(2)) }
+    ];
+    const ws1 = XLSX.utils.json_to_sheet(resumo);
+    ws1['!cols'] = [{wch:30},{wch:20}];
+    XLSX.utils.book_append_sheet(wb, ws1, 'Resumo Geral');
+
+    // Aba 2 — Consultores
+    const ws2 = XLSX.utils.json_to_sheet((loja.por_consultor || []).map(c => ({
+      'Consultor': c.nome_completo || c.consultor,
+      'Matrícula': c.matricula,
+      'Ativadas': c.qtd_ativadas,
+      'Valor Ativado': Number(c.valor_ativado) || 0,
+      'Meta': Number(c.meta_target_fat) || 0,
+      '% Atingimento': Number((c.perc_fat || 0).toFixed(1))
+    })));
+    ws2['!cols'] = [{wch:30},{wch:12},{wch:10},{wch:14},{wch:14},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, ws2, 'Consultores');
+
+    // Aba 3 — TBPs
+    const ws3 = XLSX.utils.json_to_sheet((parc.por_tbp || []).map(c => ({
+      'TBP': c.nome_tbp || c.razao_social,
+      'Tipo': c.tipo,
+      'Ativadas': c.qtd_ativadas,
+      'Valor Ativado': Number(c.valor_ativado) || 0,
+      'Comissão Estimada': Number(c.comissao_estimada) || 0
+    })));
+    ws3['!cols'] = [{wch:32},{wch:12},{wch:10},{wch:14},{wch:16}];
+    XLSX.utils.book_append_sheet(wb, ws3, 'Parceiros');
+
+    // Aba 4 — Operadoras
+    const ws4 = XLSX.utils.json_to_sheet((op.por_operadora || []).map(c => ({
+      'Operadora': c.operadora,
+      'Qtd': c.qtd_total,
+      'Ativadas': c.qtd_ativadas,
+      'Valor Ativado': Number(c.valor_ativado) || 0,
+      '% Bolo': Number((c.perc_qtd || 0).toFixed(2))
+    })));
+    ws4['!cols'] = [{wch:20},{wch:10},{wch:10},{wch:14},{wch:12}];
+    XLSX.utils.book_append_sheet(wb, ws4, 'Operadoras');
+
+    XLSX.writeFile(wb, `resumo_executivo_${loja.periodo?.mes_nome || ''}_${loja.periodo?.ano || ''}.xlsx`);
+  }
+
+  function init() {
+    initMesAno();
+  }
+
+  window.RE = { gerar, limpar, exportarPDF, exportarExcel };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else setTimeout(init, 100);
+})();
+</script>
+</body>
+</html>
