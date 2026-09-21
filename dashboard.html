@@ -2332,17 +2332,29 @@ async function sincronizarPerfil() {
 }
 
 // Mostra/oculta itens do menu conforme o cargo OU permissões customizadas
-// 🚨 ADMINISTRADOR vê TUDO — ignora permissões customizadas
+// 🚨 ADMINISTRADOR/DIRETORIA veem TUDO
+// 🎯 BACKOFFICE vê tudo menos Gestão de Time
 function aplicarMenuPorCargo(role, permissoes) {
   const cargo = String(role || '').toUpperCase().trim();
   
-  // 🔥 FIX: ADMIN vê tudo sempre
+  // 🔥 ADMIN e DIRETORIA veem TUDO
   if (cargo === 'ADMINISTRADOR' || cargo === 'ADMIN' || cargo === 'DIRETORIA') {
-    // Mostra TODOS os itens da sidebar
     document.querySelectorAll('.sidebar-item').forEach(el => {
       el.style.display = 'flex';
     });
-    console.log(`✅ [MENU] ${cargo} — todos os itens visíveis (ignora permissões customizadas)`);
+    console.log(`✅ [MENU] ${cargo} — todos os itens visíveis`);
+    return;
+  }
+
+  // 🔥 BACKOFFICE vê tudo EXCETO Gestão de Time (side-usuarios)
+  if (cargo === 'BACKOFFICE') {
+    document.querySelectorAll('.sidebar-item').forEach(el => {
+      el.style.display = 'flex';
+    });
+    // Esconde só Gestão de Time
+    const elUsuarios = document.getElementById('side-usuarios');
+    if (elUsuarios) elUsuarios.style.display = 'none';
+    console.log('✅ [MENU] BACKOFFICE — todos visíveis, exceto Gestão de Time');
     return;
   }
 
