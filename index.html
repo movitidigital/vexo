@@ -106,15 +106,7 @@
 
     #status { margin-top: 20px; font-size: 13px; font-weight: 500; text-align: center; min-height: 20px; }
 
-    .assinatura { 
-      margin-top: 30px;
-      text-align: center; 
-      border-top: 1px solid #f1f5f9; 
-      padding-top: 15px; 
-    }
-    .assinatura span { font-size: 10px; color: #94a3b8; letter-spacing: 1px; font-weight: 500; text-transform: uppercase;}
-    .assinatura b { color: #1e3c72; font-size: 11px; margin-left: 5px; font-weight: 700; letter-spacing: 0.5px; }
-
+   
     .brand-side {
       width: 50%;
       background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%);
@@ -160,6 +152,7 @@
   border-top: 1px solid #f1f5f9;
   padding-top: 15px;
 }
+
 .assinatura span {
   font-size: 10px;
   color: #94a3b8;
@@ -167,12 +160,33 @@
   font-weight: 500;
   text-transform: uppercase;
 }
-/* 🔥 NOVO: estilo da logo SVG */
+
+/* 🔥 NOVO: logo Moviti com link */
+.assinatura .logo-moviti-link {
+  display: inline-block;
+  margin-top: 10px;
+  text-decoration: none;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
+
+.assinatura .logo-moviti-link:hover {
+  transform: scale(1.05);
+  opacity: 0.85;
+}
+
 .assinatura .logo-moviti {
   display: block;
-  height: 32px;
+  height: 36px;
   width: auto;
-  margin: 10px auto 0;
+  object-fit: contain;
+}
+
+/* Fallback caso a imagem não carregue */
+.assinatura .logo-moviti-link b {
+  color: #1e40af;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 1px;
 }
   </style>
 </head>
@@ -220,50 +234,18 @@
       
       <div id="status"></div>
 
-     <div class="assinatura">
+<div class="assinatura">
   <span>Desenvolvido por</span>
-  <svg class="logo-moviti" viewBox="0 0 800 200" xmlns="http://www.w3.org/2000/svg" aria-label="Moviti Digital">
-    <defs>
-      <linearGradient id="mvBlue" x1="0%" y1="100%" x2="30%" y2="0%">
-        <stop offset="0%" stop-color="#00c4ff"/>
-        <stop offset="100%" stop-color="#1e40af"/>
-      </linearGradient>
-      <linearGradient id="mvPurple" x1="50%" y1="0%" x2="100%" y2="100%">
-        <stop offset="0%" stop-color="#7c3aed"/>
-        <stop offset="100%" stop-color="#c026d3"/>
-      </linearGradient>
-    </defs>
-
-    <!-- Símbolo M -->
-    <g transform="translate(15, 15)">
-      <!-- Loop azul (esquerda) -->
-      <path d="M 75,30 
-               C 105,30 120,60 120,95 
-               C 120,130 100,150 75,150 
-               C 50,150 30,130 30,95 
-               C 30,60 45,30 75,30 Z" 
-            fill="none" stroke="url(#mvBlue)" stroke-width="22" stroke-linecap="round"/>
-      <!-- Loop roxo (direita) — entrelaça -->
-      <path d="M 105,30 
-               C 75,30 60,60 60,95 
-               C 60,130 80,150 105,150 
-               C 130,150 150,130 150,95 
-               C 150,60 135,30 105,30 Z" 
-            fill="none" stroke="url(#mvPurple)" stroke-width="22" stroke-linecap="round"/>
-    </g>
-
-    <!-- Texto MOVITI. -->
-    <text x="220" y="115" 
-          font-family="Poppins, Arial, sans-serif" 
-          font-weight="900" font-size="98" fill="#1e40af" 
-          letter-spacing="-3">MOVITI.</text>
-
-    <!-- Texto DIGITAL -->
-    <text x="235" y="175" 
-          font-family="Poppins, Arial, sans-serif" 
-          font-weight="700" font-size="46" fill="#00c4ff" 
-          letter-spacing="18">DIGITAL</text>
-  </svg>
+  <a href="https://moviti-digital-site.vercel.app/" 
+     target="_blank" 
+     rel="noopener noreferrer" 
+     class="logo-moviti-link"
+     title="Visitar site da Moviti Digital">
+    <img src="https://moviti-digital-site.vercel.app/LOGOMOVITIDIGITALmenor.png" 
+         alt="Moviti Digital" 
+         class="logo-moviti"
+         onerror="this.style.display='none'; this.parentElement.innerHTML='<b>MOVITI DIGITAL</b>';">
+  </a>
 </div>
     </div>
 
