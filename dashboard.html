@@ -2332,39 +2332,47 @@ async function sincronizarPerfil() {
 }
 
 // Mostra/oculta itens do menu conforme o cargo OU permissões customizadas
+// 🚨 ADMINISTRADOR vê TUDO — ignora permissões customizadas
 function aplicarMenuPorCargo(role, permissoes) {
   const cargo = String(role || '').toUpperCase().trim();
+  
+  // 🔥 FIX: ADMIN vê tudo sempre
+  if (cargo === 'ADMINISTRADOR' || cargo === 'ADMIN' || cargo === 'DIRETORIA') {
+    // Mostra TODOS os itens da sidebar
+    document.querySelectorAll('.sidebar-item').forEach(el => {
+      el.style.display = 'flex';
+    });
+    console.log(`✅ [MENU] ${cargo} — todos os itens visíveis (ignora permissões customizadas)`);
+    return;
+  }
+
   const permissoesArr = Array.isArray(permissoes) ? permissoes.map(p => String(p).toLowerCase()) : [];
 
-  // Mapa: nome da permissão (badge na tela de time) → ID do item no menu
   const MAPA_PERMISSOES = {
-    'vendas':       'side-vendas',
-    'agenda':       'side-agenda',
-    'clientes':     'side-clientes',
-    'prospeccao':   'side-prospeccao',
-    'pedidos':      'side-gestao-pedidos',
+    'vendas':         'side-vendas',
+    'agenda':         'side-agenda',
+    'clientes':       'side-clientes',
+    'prospeccao':     'side-prospeccao',
+    'pedidos':        'side-gestao-pedidos',
     'gestao_pedidos': 'side-gestao-pedidos',
-    'ofertas':      'side-ofertas',
-    'faturas':      'side-faturas',
-    'metas':        'side-metas',
-    'usuarios':     'side-usuarios',
-    'financeiro':   'side-financeiro',
-    'relatorios':   'side-relatorios',
-    'suporte':      'side-suporte'
+    'ofertas':        'side-ofertas',
+    'faturas':        'side-faturas',
+    'metas':          'side-metas',
+    'usuarios':       'side-usuarios',
+    'financeiro':     'side-financeiro',
+    'relatorios':     'side-relatorios',
+    'suporte':        'side-suporte'
   };
 
-  // Lista de todos os IDs de menu que podemos gerenciar
   const TODOS_IDS = Object.values(MAPA_PERMISSOES);
 
   // 🟢 Se tem permissões customizadas (array não vazio), usa elas
   if (permissoesArr.length > 0) {
-    // Esconde TUDO primeiro
     TODOS_IDS.forEach(id => {
       const el = document.getElementById(id);
       if (el) el.style.display = 'none';
     });
 
-    // Mostra só o que tá marcado
     permissoesArr.forEach(perm => {
       const id = MAPA_PERMISSOES[perm];
       if (id) {
@@ -2377,7 +2385,7 @@ function aplicarMenuPorCargo(role, permissoes) {
     return;
   }
 
-  // 🟡 Fallback: sem permissões customizadas → usa regras por role (código antigo)
+  // 🟡 Fallback: sem permissões customizadas → usa regras por role
   const regras = {
     'side-gestao-pedidos': ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR', 'CONSULTOR DE VENDAS'],
     'side-metas':          ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR'],
