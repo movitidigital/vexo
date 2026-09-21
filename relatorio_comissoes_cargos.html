@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+  .cc-wrap { font-family: 'Poppins', sans-serif; color: #0f172a; padding: 4px; }
+  .cc-filters {
+    background: white; border-radius: 14px; padding: 20px 22px;
+    border: 1px solid #e2e8f0; margin-bottom: 22px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .cc-field { display: flex; flex-direction: column; gap: 5px; min-width: 130px; }
+  .cc-field label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .cc-field select { padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 9px; font-family: inherit; font-size: 13px; outline: none; background: white; }
+  .cc-field select:focus { border-color: #0b1a3a; box-shadow: 0 0 0 3px rgba(11,26,58,0.08); }
+  .cc-btn { padding: 10px 20px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+  .cc-btn-primary { background: #0b1a3a; color: white; }
+  .cc-btn-primary:hover:not(:disabled) { background: #1a3060; }
+  .cc-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .cc-btn-soft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .cc-btn-pdf { background: #dc2626; color: white; }
+  .cc-btn-xls { background: #16a34a; color: white; }
+  .cc-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* HERO */
+  .cc-hero {
+    background: linear-gradient(135deg, #0b1a3a, #1e40af);
+    color: white; border-radius: 18px; padding: 24px 28px; margin-bottom: 22px;
+  }
+  .cc-hero-top {
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 16px; margin-bottom: 20px;
+  }
+  .cc-hero-title { font-size: 22px; font-weight: 800; margin: 0 0 4px; }
+  .cc-hero-sub { font-size: 12px; opacity: 0.85; margin: 0; }
+  .cc-hero-badge {
+    font-size: 11px; font-weight: 800; padding: 6px 14px; border-radius: 20px;
+    background: rgba(255,255,255,0.15); text-transform: uppercase; letter-spacing: 0.5px;
+  }
+  .cc-hero-badge.ok { background: rgba(16, 185, 129, 0.3); }
+  .cc-hero-badge.warn { background: rgba(245, 158, 11, 0.3); }
+  .cc-hero-badge.err { background: rgba(220, 38, 38, 0.3); }
+
+  .cc-hero-faixas {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px; margin-bottom: 18px;
+  }
+  .cc-faixa-card {
+    background: rgba(255,255,255,0.1); border-radius: 12px; padding: 12px 16px;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  .cc-faixa-label { font-size: 10px; font-weight: 800; text-transform: uppercase; opacity: 0.85; }
+  .cc-faixa-val { font-size: 18px; font-weight: 900; margin-top: 4px; }
+  .cc-faixa-info { font-size: 10px; opacity: 0.8; margin-top: 2px; }
+
+  /* KPIs */
+  .cc-kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px; margin-bottom: 22px;
+  }
+  .cc-kpi { background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; position: relative; }
+  .cc-kpi::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 100%; border-radius: 14px 14px 0 0; background: var(--c, #0b1a3a); }
+  .cc-kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .cc-kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+  .cc-kpi-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  /* TOGGLE */
+  .cc-tabs {
+    display: inline-flex; background: #f1f5f9; border-radius: 14px; padding: 4px;
+    gap: 4px; margin-bottom: 20px; border: 1px solid #e2e8f0;
+  }
+  .cc-tab {
+    padding: 11px 22px; border: none; background: transparent; font-family: inherit;
+    font-size: 13px; font-weight: 700; color: #64748b; cursor: pointer;
+    border-radius: 10px; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s;
+  }
+  .cc-tab:hover { color: #0f172a; }
+  .cc-tab.ativo { background: white; color: #0b1a3a; box-shadow: 0 2px 8px rgba(11,26,58,0.12); }
+  .cc-tab-count {
+    font-size: 10px; padding: 2px 8px; border-radius: 10px;
+    background: #e2e8f0; font-weight: 800;
+  }
+  .cc-tab.ativo .cc-tab-count { background: #dbeafe; color: #1e40af; }
+
+  /* TABELA */
+  .cc-tabela { background: white; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; }
+  .cc-thead { padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .cc-thead h3 { margin: 0; font-size: 13px; font-weight: 800; color: #0b1a3a; }
+  .cc-thead span { font-size: 11px; color: #64748b; }
+  .cc-scroll { max-height: 620px; overflow-y: auto; }
+  .cc-tab-tbl { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .cc-tab-tbl th { text-align: left; padding: 10px 14px; background: #f8fafc; color: #475569; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 2; }
+  .cc-tab-tbl td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+  .cc-tab-tbl tr:hover td { background: #f8fafc; }
+  .cc-tab-tbl td.r { text-align: right; font-weight: 700; }
+  .cc-tab-tbl td.c { text-align: center; }
+  .cc-tab-tbl td.mono { font-family: monospace; font-size: 11px; color: #1e3c72; }
+
+  .cc-badge-faixa {
+    display: inline-block; padding: 3px 10px; border-radius: 12px;
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+  }
+  .cc-badge-faixa.sup { background: #dcfce7; color: #166534; }
+  .cc-badge-faixa.target { background: #dbeafe; color: #1e40af; }
+  .cc-badge-faixa.min { background: #fef3c7; color: #92400e; }
+  .cc-badge-faixa.penal { background: #fee2e2; color: #991b1b; }
+
+  .cc-pct-badge {
+    display: inline-block; padding: 4px 10px; border-radius: 10px;
+    font-weight: 800; font-size: 12px;
+  }
+  .cc-total-hero {
+    font-size: 14px; font-weight: 900; color: #059669;
+  }
+
+  .cc-vazio { padding: 60px; text-align: center; color: #94a3b8; }
+  .cc-erro { padding: 60px; text-align: center; color: #ef4444; }
+</style>
+
+<div class="cc-wrap" id="cc-wrap">
+
+  <div class="cc-filters">
+    <div class="cc-field">
+      <label>Mês</label>
+      <select id="cc-mes">
+        <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+        <option value="3">Março</option><option value="4">Abril</option>
+        <option value="5">Maio</option><option value="6">Junho</option>
+        <option value="7">Julho</option><option value="8">Agosto</option>
+        <option value="9">Setembro</option><option value="10">Outubro</option>
+        <option value="11">Novembro</option><option value="12">Dezembro</option>
+      </select>
+    </div>
+    <div class="cc-field">
+      <label>Ano</label>
+      <select id="cc-ano">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+    <button class="cc-btn cc-btn-primary" id="cc-btn-filtrar" onclick="CC.filtrar()">💰 Calcular</button>
+    <button class="cc-btn cc-btn-soft" onclick="CC.limpar()">Limpar</button>
+    <button class="cc-btn cc-btn-pdf" id="cc-btn-pdf" onclick="CC.exportarPDF()" disabled>📄 PDF</button>
+    <button class="cc-btn cc-btn-xls" id="cc-btn-xls" onclick="CC.exportarExcel()" disabled>📊 Excel</button>
+  </div>
+
+  <div id="cc-conteudo">
+    <div class="cc-vazio">Selecione o mês e clique em Calcular</div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const fmtPct = (v) => Number(v || 0).toFixed(1) + '%';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let DADOS = null;
+  let ABA_ATIVA = 'consultores';
+
+  function getSb() {
+    if (window.sb) return window.sb;
+    try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e) {}
+    return null;
+  }
+
+  function initMesAno() {
+    const hoje = new Date();
+    $('cc-mes').value = String(hoje.getMonth() + 1);
+    $('cc-ano').value = String(hoje.getFullYear());
+  }
+
+  async function filtrar() {
+    const sb = getSb();
+    if (!sb) return alert('Supabase indisponível');
+
+    const btn = $('cc-btn-filtrar');
+    btn.disabled = true; btn.textContent = '⏳ Calculando...';
+    $('cc-conteudo').innerHTML = '<div class="cc-vazio">Calculando...</div>';
+
+    const mes = parseInt($('cc-mes').value);
+    const ano = parseInt($('cc-ano').value);
+
+    try {
+      const { data, error } = await sb.rpc('gestao_comissoes_cargos', {
+        p_mes: mes, p_ano: ano
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      DADOS = data;
+      render(data);
+
+      $('cc-btn-pdf').disabled = false;
+      $('cc-btn-xls').disabled = false;
+    } catch (e) {
+      console.error(e);
+      $('cc-conteudo').innerHTML = `<div class="cc-erro">❌ ${esc(e.message||e)}</div>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '💰 Calcular';
+    }
+  }
+
+  function render(d) {
+    const t = d.totais || {};
+    const metas = d.metas || {};
+    const consultores = d.por_consultor || [];
+    const backoffice = d.backoffice || [];
+    const gerente = d.gerente || [];
+
+    // Totais consolidados
+    const totalConsul = consultores.reduce((s, c) => s + Number(c.comissao_total || 0), 0);
+    const totalBack = backoffice.reduce((s, c) => s + Number(c.total || 0), 0);
+    const totalGer = gerente.reduce((s, c) => s + Number(c.total || 0), 0);
+    const totalGeral = totalConsul + totalBack + totalGer;
+
+    // Faixa visual
+    const faixaCls = (f) => ({
+      'SUP': 'sup', 'TARGET': 'target', 'MIN': 'min', 'PENALIDADE': 'penal'
+    }[f] || 'penal');
+    const faixaLabel = (f) => ({
+      'SUP': '🏆 Superada', 'TARGET': '🎯 Target', 'MIN': '✅ Mínima', 'PENALIDADE': '⚠️ Abaixo'
+    }[f] || f);
+
+    const badgeMetaGer = t.bateu_meta_gerencial ? 'ok' : 'warn';
+    const badgeMetaGerLabel = t.bateu_meta_gerencial ? '✅ Meta gerencial batida' : '⚠️ Meta gerencial não batida';
+
+    $('cc-conteudo').innerHTML = `
+      <!-- HERO -->
+      <div class="cc-hero">
+        <div class="cc-hero-top">
+          <div>
+            <h2 class="cc-hero-title">💰 Comissões de Cargos</h2>
+            <p class="cc-hero-sub">${d.periodo.mes_nome}/${d.periodo.ano} · Cálculo previsto por cargo</p>
+          </div>
+          <div class="cc-hero-badge ${badgeMetaGer}">${badgeMetaGerLabel}</div>
+        </div>
+
+        <div class="cc-hero-faixas">
+          <div class="cc-faixa-card">
+            <div class="cc-faixa-label">Faixa Faturamento</div>
+            <div class="cc-faixa-val">${t.pct_fat_aplicado}%</div>
+            <div class="cc-faixa-info">${faixaLabel(t.faixa_fat)} · base ${fmt(t.loja_fat)}</div>
+          </div>
+          <div class="cc-faixa-card">
+            <div class="cc-faixa-label">Faixa Portabilidade</div>
+            <div class="cc-faixa-val">${t.pct_port_aplicado}%</div>
+            <div class="cc-faixa-info">${faixaLabel(t.faixa_port)} · base ${fmt(t.loja_port)}</div>
+          </div>
+          <div class="cc-faixa-card">
+            <div class="cc-faixa-label">Faixa Renegociação</div>
+            <div class="cc-faixa-val">${t.pct_reneg_aplicado}%</div>
+            <div class="cc-faixa-info">${faixaLabel(t.faixa_reneg)} · base ${fmt(t.loja_reneg)}</div>
+          </div>
+          <div class="cc-faixa-card">
+            <div class="cc-faixa-label">Meta Gerencial</div>
+            <div class="cc-faixa-val">${fmt(t.meta_gerencial)}</div>
+            <div class="cc-faixa-info">Total geral: ${fmt(t.total_geral)}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPIs -->
+      <div class="cc-kpis">
+        <div class="cc-kpi" style="--c:#0b1a3a;">
+          <div class="cc-kpi-label">💰 Total de Comissões</div>
+          <div class="cc-kpi-value" style="color:#059669;">${fmt(totalGeral)}</div>
+          <div class="cc-kpi-sub">previsto no mês</div>
+        </div>
+        <div class="cc-kpi" style="--c:#3b82f6;">
+          <div class="cc-kpi-label">👥 Consultores</div>
+          <div class="cc-kpi-value">${fmt(totalConsul)}</div>
+          <div class="cc-kpi-sub">${consultores.length} pessoa(s)</div>
+        </div>
+        <div class="cc-kpi" style="--c:#a855f7;">
+          <div class="cc-kpi-label">🖥️ Backoffice</div>
+          <div class="cc-kpi-value">${fmt(totalBack)}</div>
+          <div class="cc-kpi-sub">${backoffice.length} pessoa(s)</div>
+        </div>
+        <div class="cc-kpi" style="--c:#f59e0b;">
+          <div class="cc-kpi-label">👔 Gerente</div>
+          <div class="cc-kpi-value">${fmt(totalGer)}</div>
+          <div class="cc-kpi-sub">${gerente.length} pessoa(s)</div>
+        </div>
+        <div class="cc-kpi" style="--c:#10b981;">
+          <div class="cc-kpi-label">📊 Custo/Faturamento</div>
+          <div class="cc-kpi-value">${t.total_geral > 0 ? fmtPct((totalGeral / t.total_geral) * 100) : '—'}</div>
+          <div class="cc-kpi-sub">% do faturamento total</div>
+        </div>
+        <div class="cc-kpi" style="--c:#dc2626;">
+          <div class="cc-kpi-label">📈 Faturamento Base</div>
+          <div class="cc-kpi-value">${fmt(t.total_geral)}</div>
+          <div class="cc-kpi-sub">loja ${fmt(t.loja_fat)} + tbp ${fmt(t.tbp_fat)}</div>
+        </div>
+      </div>
+
+      <!-- TOGGLE -->
+      <div class="cc-tabs">
+        <button class="cc-tab ${ABA_ATIVA==='consultores'?'ativo':''}" onclick="CC.setAba('consultores')">
+          💼 Consultores <span class="cc-tab-count">${consultores.length}</span>
+        </button>
+        <button class="cc-tab ${ABA_ATIVA==='backoffice'?'ativo':''}" onclick="CC.setAba('backoffice')">
+          🖥️ Backoffice <span class="cc-tab-count">${backoffice.length}</span>
+        </button>
+        <button class="cc-tab ${ABA_ATIVA==='gerente'?'ativo':''}" onclick="CC.setAba('gerente')">
+          👔 Gerente <span class="cc-tab-count">${gerente.length}</span>
+        </button>
+      </div>
+
+      <!-- CONTEÚDO DA ABA -->
+      <div class="cc-tabela">
+        <div class="cc-thead">
+          <h3 id="cc-titulo-tab">${getTituloAba()}</h3>
+          <span id="cc-info-tab"></span>
+        </div>
+        <div class="cc-scroll">
+          <table class="cc-tab-tbl">
+            <thead id="cc-thead-tab"></thead>
+            <tbody id="cc-tbody-tab"></tbody>
+          </table>
+        </div>
+      </div>
+    `;
+
+    renderAba(d);
+  }
+
+  function getTituloAba() {
+    return {
+      'consultores': '💼 Comissões por Consultor',
+      'backoffice':  '🖥️ Comissões por Backoffice',
+      'gerente':     '👔 Comissões por Gerente'
+    }[ABA_ATIVA];
+  }
+
+  function setAba(aba) {
+    ABA_ATIVA = aba;
+    if (DADOS) render(DADOS);
+  }
+
+  function renderAba(d) {
+    const consultores = d.por_consultor || [];
+    const backoffice = d.backoffice || [];
+    const gerente = d.gerente || [];
+
+    if (ABA_ATIVA === 'consultores') {
+      renderConsultores(consultores);
+    } else if (ABA_ATIVA === 'backoffice') {
+      renderBackoffice(backoffice, d.totais);
+    } else {
+      renderGerente(gerente, d.totais);
+    }
+  }
+
+  function renderConsultores(arr) {
+    const t = DADOS.totais || {};
+
+    $('cc-thead-tab').innerHTML = `
+      <tr>
+        <th style="width:50px;">#</th>
+        <th>Consultor</th>
+        <th class="c">Vendas</th>
+        <th class="r">Faturamento</th>
+        <th class="c">% Fat</th>
+        <th class="r">Com. Faturamento</th>
+        <th class="r">Portabilidade</th>
+        <th class="c">% Port</th>
+        <th class="r">Com. Port</th>
+        <th class="r">Renegociação</th>
+        <th class="r">Com. Reneg</th>
+        <th class="r" style="background:#fef3c7;color:#92400e;">TOTAL</th>
+      </tr>`;
+
+    $('cc-info-tab').textContent = `${arr.length} consultor(es)`;
+    const total = arr.reduce((s,c) => s + Number(c.comissao_total||0), 0);
+
+    if (arr.length === 0) {
+      $('cc-tbody-tab').innerHTML = '<tr><td colspan="12" class="cc-vazio">Nenhum consultor com venda no período.</td></tr>';
+      return;
+    }
+
+    $('cc-tbody-tab').innerHTML = arr.map((c, i) => {
+      const pos = i + 1;
+      const posCls = pos <= 3 ? 'p'+pos : '';
+      const bgPos = posCls ? '#fef3c7' : '#f1f5f9';
+      const corPos = posCls ? '#92400e' : '#475569';
+
+      return `<tr>
+        <td><span style="display:inline-block;width:26px;height:26px;line-height:26px;border-radius:50%;text-align:center;font-weight:800;font-size:11px;background:${bgPos};color:${corPos};">${pos}</span></td>
+        <td><strong>${esc(c.consultor)}</strong></td>
+        <td class="c">${c.qtd_vendas}</td>
+        <td class="r">${fmt(c.fat_total)}</td>
+        <td class="c"><span class="cc-pct-badge" style="background:#dbeafe;color:#1e40af;">${t.pct_fat_aplicado}%</span></td>
+        <td class="r">${fmt(c.comissao_fat)}</td>
+        <td class="r">${fmt(c.port_total)}</td>
+        <td class="c"><span class="cc-pct-badge" style="background:#f3e8ff;color:#7c3aed;">${t.pct_port_aplicado}%</span></td>
+        <td class="r">${fmt(c.comissao_port)}</td>
+        <td class="r">${fmt(c.reneg_total)}</td>
+        <td class="r">${fmt(c.comissao_reneg)}</td>
+        <td class="r cc-total-hero">${fmt(c.comissao_total)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  function renderBackoffice(arr, t) {
+    $('cc-thead-tab').innerHTML = `
+      <tr>
+        <th style="width:50px;">#</th>
+        <th>Backoffice</th>
+        <th>Matrícula</th>
+        <th class="r">Base Loja</th>
+        <th class="c">% Loja</th>
+        <th class="r">Com. Loja</th>
+        <th class="r">Base TBP</th>
+        <th class="c">% TBP</th>
+        <th class="r">Com. TBP</th>
+        <th class="r" style="background:#fef3c7;color:#92400e;">TOTAL</th>
+      </tr>`;
+
+    $('cc-info-tab').textContent = `${arr.length} pessoa(s)`;
+
+    if (arr.length === 0) {
+      $('cc-tbody-tab').innerHTML = '<tr><td colspan="10" class="cc-vazio">Nenhum backoffice cadastrado.</td></tr>';
+      return;
+    }
+
+    $('cc-tbody-tab').innerHTML = arr.map((c, i) => `
+      <tr>
+        <td class="c">${i+1}</td>
+        <td><strong>${esc(c.nome || '—')}</strong></td>
+        <td class="mono">${esc(c.matricula || '—')}</td>
+        <td class="r">${fmt(c.base_loja)}</td>
+        <td class="c"><span class="cc-pct-badge" style="background:#dbeafe;color:#1e40af;">${c.pct_loja}%</span></td>
+        <td class="r">${fmt(c.comissao_loja)}</td>
+        <td class="r">${fmt(c.base_tbp)}</td>
+        <td class="c"><span class="cc-pct-badge" style="background:#f3e8ff;color:#7c3aed;">${c.pct_tbp}%</span></td>
+        <td class="r">${fmt(c.comissao_tbp)}</td>
+        <td class="r cc-total-hero">${fmt(c.total)}</td>
+      </tr>`).join('');
+  }
+
+  function renderGerente(arr, t) {
+    const badge = t.bateu_meta_gerencial 
+      ? '<span class="cc-badge-faixa sup">✅ Meta batida (80% / 30%)</span>'
+      : '<span class="cc-badge-faixa penal">⚠️ Meta não batida (10% / 8%)</span>';
+
+    $('cc-thead-tab').innerHTML = `
+      <tr>
+        <th style="width:50px;">#</th>
+        <th>Gerente</th>
+        <th>Matrícula</th>
+        <th class="c">Status Meta</th>
+        <th class="r">Base Loja</th>
+        <th class="c">% Loja</th>
+        <th class="r">Com. Loja</th>
+        <th class="r">Base TBP</th>
+        <th class="c">% TBP</th>
+        <th class="r">Com. TBP</th>
+        <th class="r" style="background:#fef3c7;color:#92400e;">TOTAL</th>
+      </tr>`;
+
+    $('cc-info-tab').textContent = `${arr.length} pessoa(s)`;
+
+    if (arr.length === 0) {
+      $('cc-tbody-tab').innerHTML = '<tr><td colspan="11" class="cc-vazio">Nenhum gerente cadastrado.</td></tr>';
+      return;
+    }
+
+    $('cc-tbody-tab').innerHTML = arr.map((c, i) => `
+      <tr>
+        <td class="c">${i+1}</td>
+        <td><strong>${esc(c.nome || '—')}</strong></td>
+        <td class="mono">${esc(c.matricula || '—')}</td>
+        <td class="c">${badge}</td>
+        <td class="r">${fmt(c.base_loja)}</td>
+        <td class="c"><span class="cc-pct-badge" style="background:#dbeafe;color:#1e40af;">${c.pct_loja}%</span></td>
+        <td class="r">${fmt(c.comissao_loja)}</td>
+        <td class="r">${fmt(c.base_tbp)}</td>
+        <td class="c"><span class="cc-pct-badge" style="background:#f3e8ff;color:#7c3aed;">${c.pct_tbp}%</span></td>
+        <td class="r">${fmt(c.comissao_tbp)}</td>
+        <td class="r cc-total-hero">${fmt(c.total)}</td>
+      </tr>`).join('');
+  }
+
+  function limpar() {
+    initMesAno();
+    DADOS = null;
+    ABA_ATIVA = 'consultores';
+    $('cc-conteudo').innerHTML = '<div class="cc-vazio">Selecione o mês e clique em Calcular</div>';
+    $('cc-btn-pdf').disabled = true;
+    $('cc-btn-xls').disabled = true;
+  }
+
+  function exportarPDF() {
+    if (!DADOS) return;
+    const d = DADOS;
+    const t = d.totais || {};
+    const consultores = d.por_consultor || [];
+    const backoffice = d.backoffice || [];
+    const gerente = d.gerente || [];
+
+    const rowsCons = consultores.map((c, i) => `
+      <tr>
+        <td class="c">${i+1}</td>
+        <td>${esc(c.consultor)}</td>
+        <td class="c">${c.qtd_vendas}</td>
+        <td class="r">${fmt(c.fat_total)}</td>
+        <td class="r">${fmt(c.comissao_total)}</td>
+      </tr>`).join('');
+
+    const rowsBack = backoffice.map((c, i) => `
+      <tr>
+        <td class="c">${i+1}</td>
+        <td>${esc(c.nome)}</td>
+        <td class="r">${fmt(c.comissao_loja)}</td>
+        <td class="r">${fmt(c.comissao_tbp)}</td>
+        <td class="r"><b>${fmt(c.total)}</b></td>
+      </tr>`).join('');
+
+    const rowsGer = gerente.map((c, i) => `
+      <tr>
+        <td class="c">${i+1}</td>
+        <td>${esc(c.nome)}</td>
+        <td class="r">${fmt(c.comissao_loja)}</td>
+        <td class="r">${fmt(c.comissao_tbp)}</td>
+        <td class="r"><b>${fmt(c.total)}</b></td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Comissões de Cargos</title>
+<style>
+  @page { size: A4 portrait; margin: 12mm; }
+  body { font-family: Arial, sans-serif; color: #0f172a; padding: 20px; }
+  .head { border-bottom: 3px solid #0b1a3a; padding-bottom: 12px; margin-bottom: 18px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .head h1 { margin: 0; font-size: 18px; color: #0b1a3a; }
+  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 16px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px; }
+  .kpi small { font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .kpi strong { display: block; font-size: 14px; color: #0f172a; margin-top: 3px; }
+  h3 { font-size: 13px; color: #0b1a3a; margin: 20px 0 10px; border-left: 3px solid #3b82f6; padding-left: 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 10px; margin-bottom: 16px; }
+  th { background: #f1f5f9; text-align: left; padding: 6px 8px; border-bottom: 1px solid #cbd5e1; font-size: 9px; text-transform: uppercase; color: #475569; }
+  td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+  td.r { text-align: right; font-weight: 700; }
+  td.c { text-align: center; }
+  .foot { margin-top: 24px; font-size: 9px; color: #94a3b8; text-align: center; border-top: 1px solid #e2e8f0; padding-top: 12px; }
+  .no-print { text-align:center; margin-top:16px; }
+  @media print { .no-print { display:none; } body { padding: 0; } }
+</style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="padding:10px 24px;background:#0b1a3a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  <div class="head">
+    <div>
+      <h1>VEXO · Comissões de Cargos</h1>
+      <small style="color:#64748b;">${d.periodo.mes_nome}/${d.periodo.ano} · ${d.periodo.inicio} a ${d.periodo.fim}</small>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#64748b;">Emitido em ${new Date().toLocaleString('pt-BR')}</div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi"><small>Faturamento Loja</small><strong>${fmt(t.loja_fat)}</strong></div>
+    <div class="kpi"><small>Faturamento TBP</small><strong>${fmt(t.tbp_fat)}</strong></div>
+    <div class="kpi"><small>Faixas Aplicadas</small><strong>Fat ${t.pct_fat_aplicado}% · Port ${t.pct_port_aplicado}% · Reneg ${t.pct_reneg_aplicado}%</strong></div>
+    <div class="kpi"><small>Meta Gerencial</small><strong>${t.bateu_meta_gerencial ? '✅ Batida' : '⚠️ Não batida'}</strong></div>
+  </div>
+
+  <h3>💼 Consultores</h3>
+  <table>
+    <thead><tr><th>#</th><th>Consultor</th><th>Vendas</th><th>Faturamento</th><th>Comissão Total</th></tr></thead>
+    <tbody>${rowsCons}</tbody>
+  </table>
+
+  ${backoffice.length > 0 ? `
+  <h3>🖥️ Backoffice</h3>
+  <table>
+    <thead><tr><th>#</th><th>Backoffice</th><th>Com. Loja</th><th>Com. TBP</th><th>Total</th></tr></thead>
+    <tbody>${rowsBack}</tbody>
+  </table>` : ''}
+
+  ${gerente.length > 0 ? `
+  <h3>👔 Gerente</h3>
+  <table>
+    <thead><tr><th>#</th><th>Gerente</th><th>Com. Loja</th><th>Com. TBP</th><th>Total</th></tr></thead>
+    <tbody>${rowsGer}</tbody>
+  </table>` : ''}
+
+  <div class="foot">Gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}</div>
+</body></html>`;
+
+    const w = window.open('', '_blank', 'width=900,height=1100');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  function exportarExcel() {
+    if (!DADOS) return;
+    const d = DADOS;
+    const t = d.totais || {};
+    const wb = XLSX.utils.book_new();
+
+    // Aba 1: Resumo
+    const resumo = [
+      { 'Indicador': 'Mês/Ano', 'Valor': `${d.periodo.mes_nome}/${d.periodo.ano}` },
+      { 'Indicador': 'Faturamento Loja', 'Valor': Number(t.loja_fat) || 0 },
+      { 'Indicador': 'Faturamento TBP', 'Valor': Number(t.tbp_fat) || 0 },
+      { 'Indicador': 'Total Geral', 'Valor': Number(t.total_geral) || 0 },
+      { 'Indicador': 'Faixa Faturamento', 'Valor': `${t.faixa_fat} (${t.pct_fat_aplicado}%)` },
+      { 'Indicador': 'Faixa Portabilidade', 'Valor': `${t.faixa_port} (${t.pct_port_aplicado}%)` },
+      { 'Indicador': 'Faixa Renegociação', 'Valor': `${t.faixa_reneg} (${t.pct_reneg_aplicado}%)` },
+      { 'Indicador': 'Meta Gerencial', 'Valor': Number(t.meta_gerencial) || 0 },
+      { 'Indicador': 'Bateu Meta Gerencial', 'Valor': t.bateu_meta_gerencial ? 'SIM' : 'NÃO' }
+    ];
+    const ws0 = XLSX.utils.json_to_sheet(resumo);
+    ws0['!cols'] = [{wch:25},{wch:22}];
+    XLSX.utils.book_append_sheet(wb, ws0, 'Resumo');
+
+    // Aba 2: Consultores
+    const ws1 = XLSX.utils.json_to_sheet((d.por_consultor || []).map((c, i) => ({
+      'Posição': i+1,
+      'Consultor': c.consultor,
+      'Vendas': c.qtd_vendas,
+      'Faturamento': Number(c.fat_total)||0,
+      '% Fat': t.pct_fat_aplicado,
+      'Com. Faturamento': Number(c.comissao_fat)||0,
+      'Portabilidade': Number(c.port_total)||0,
+      '% Port': t.pct_port_aplicado,
+      'Com. Portabilidade': Number(c.comissao_port)||0,
+      'Renegociação': Number(c.reneg_total)||0,
+      '% Reneg': t.pct_reneg_aplicado,
+      'Com. Renegociação': Number(c.comissao_reneg)||0,
+      'Total': Number(c.comissao_total)||0
+    })));
+    ws1['!cols'] = [{wch:8},{wch:30},{wch:10},{wch:14},{wch:8},{wch:16},{wch:14},{wch:8},{wch:16},{wch:14},{wch:8},{wch:16},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, ws1, 'Consultores');
+
+    // Aba 3: Backoffice
+    if ((d.backoffice||[]).length > 0) {
+      const ws2 = XLSX.utils.json_to_sheet((d.backoffice||[]).map((c, i) => ({
+        'Posição': i+1,
+        'Nome': c.nome,
+        'Matrícula': c.matricula,
+        'Base Loja': Number(c.base_loja)||0,
+        '% Loja': c.pct_loja,
+        'Com. Loja': Number(c.comissao_loja)||0,
+        'Base TBP': Number(c.base_tbp)||0,
+        '% TBP': c.pct_tbp,
+        'Com. TBP': Number(c.comissao_tbp)||0,
+        'Total': Number(c.total)||0
+      })));
+      ws2['!cols'] = [{wch:8},{wch:25},{wch:12},{wch:14},{wch:8},{wch:14},{wch:14},{wch:8},{wch:14},{wch:14}];
+      XLSX.utils.book_append_sheet(wb, ws2, 'Backoffice');
+    }
+
+    // Aba 4: Gerente
+    if ((d.gerente||[]).length > 0) {
+      const ws3 = XLSX.utils.json_to_sheet((d.gerente||[]).map((c, i) => ({
+        'Posição': i+1,
+        'Nome': c.nome,
+        'Matrícula': c.matricula,
+        'Meta Gerencial Batida': c.bateu_meta_gerencial ? 'SIM' : 'NÃO',
+        'Base Loja': Number(c.base_loja)||0,
+        '% Loja': c.pct_loja,
+        'Com. Loja': Number(c.comissao_loja)||0,
+        'Base TBP': Number(c.base_tbp)||0,
+        '% TBP': c.pct_tbp,
+        'Com. TBP': Number(c.comissao_tbp)||0,
+        'Total': Number(c.total)||0
+      })));
+      ws3['!cols'] = [{wch:8},{wch:25},{wch:12},{wch:18},{wch:14},{wch:8},{wch:14},{wch:14},{wch:8},{wch:14},{wch:14}];
+      XLSX.utils.book_append_sheet(wb, ws3, 'Gerente');
+    }
+
+    XLSX.writeFile(wb, `comissoes_cargos_${d.periodo.mes_nome}_${d.periodo.ano}.xlsx`);
+  }
+
+  function init() {
+    initMesAno();
+  }
+
+  window.CC = { filtrar, limpar, setAba, exportarPDF, exportarExcel };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else setTimeout(init, 100);
+})();
+</script>
+</body>
+</html>
