@@ -1759,9 +1759,10 @@ async function logout() {
   localStorage.removeItem('vexo_ultimo_acesso');
   localStorage.removeItem('vertex_dash_cache');
 
-setTimeout(() => {
-  window.location.href = 'login.html';
+ setTimeout(() => {
+  window.location.href = '/';
 }, 400);
+}
   
 function gerarArteStatus() {
   const area = document.getElementById('bloco-arte-meta');
