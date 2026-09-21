@@ -1,0 +1,895 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+  .ro-wrap { font-family: 'Poppins', sans-serif; color: #0f172a; padding: 4px; }
+  .ro-filters {
+    background: white; border-radius: 14px; padding: 20px 22px;
+    border: 1px solid #e2e8f0; margin-bottom: 22px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .ro-field { display: flex; flex-direction: column; gap: 5px; min-width: 140px; }
+  .ro-field label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .ro-field input, .ro-field select {
+    padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 9px;
+    font-family: inherit; font-size: 13px; outline: none; transition: 0.2s;
+    background: white;
+  }
+  .ro-field input:focus, .ro-field select:focus { border-color: #0b1a3a; box-shadow: 0 0 0 3px rgba(11,26,58,0.08); }
+  .ro-btn { padding: 10px 20px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+  .ro-btn-primary { background: #0b1a3a; color: white; }
+  .ro-btn-primary:hover:not(:disabled) { background: #1a3060; }
+  .ro-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .ro-btn-soft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .ro-btn-soft:hover { background: #e2e8f0; }
+  .ro-btn-pdf { background: #dc2626; color: white; }
+  .ro-btn-pdf:hover:not(:disabled) { background: #b91c1c; }
+  .ro-btn-xls { background: #16a34a; color: white; }
+  .ro-btn-xls:hover:not(:disabled) { background: #15803d; }
+  .ro-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .ro-kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px; margin-bottom: 22px;
+  }
+  .ro-kpi {
+    background: white; border-radius: 14px; padding: 16px 18px;
+    border: 1px solid #e2e8f0; position: relative;
+  }
+  .ro-kpi::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 100%; border-radius: 14px 14px 0 0; background: var(--c, #0b1a3a); }
+  .ro-kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .ro-kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+  .ro-kpi-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+
+  /* PAINEL DUPLO: gráfico rosca + top lista */
+  .ro-row {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 22px;
+  }
+  @media (max-width: 900px) { .ro-row { grid-template-columns: 1fr; } }
+  .ro-box {
+    background: white; border-radius: 14px; border: 1px solid #e2e8f0;
+    padding: 20px 24px;
+  }
+  .ro-box h3 { margin: 0 0 4px; font-size: 14px; font-weight: 800; color: #0b1a3a; }
+  .ro-box p { margin: 0 0 16px; font-size: 11px; color: #64748b; }
+  .ro-graf-inner { position: relative; height: 280px; }
+
+  /* Ranking top inline */
+  .ro-rank {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 12px; border-radius: 10px; margin-bottom: 8px;
+    background: #f8fafc; border-left: 4px solid var(--cor, #64748b);
+  }
+  .ro-rank-pos {
+    width: 24px; height: 24px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 800; background: white; color: #475569;
+    border: 1.5px solid #cbd5e1; flex-shrink: 0;
+  }
+  .ro-rank-pos.p1 { background: #fef3c7; color: #92400e; border-color: #fbbf24; }
+  .ro-rank-pos.p2 { background: #e2e8f0; color: #475569; border-color: #cbd5e1; }
+  .ro-rank-pos.p3 { background: #fed7aa; color: #9a3412; border-color: #d97706; }
+  .ro-rank-nome { flex: 1; font-weight: 700; font-size: 13px; color: #0f172a; }
+  .ro-rank-qtd { font-weight: 800; font-size: 14px; color: #0f172a; }
+  .ro-rank-perc { font-size: 10px; color: #64748b; }
+
+  /* TABELA */
+  .ro-tabela { background: white; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; margin-bottom: 22px; }
+  .ro-thead {
+    padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0;
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+  }
+  .ro-thead h3 { margin: 0; font-size: 13px; font-weight: 800; color: #0b1a3a; }
+  .ro-thead span { font-size: 11px; color: #64748b; }
+  .ro-scroll { max-height: 500px; overflow-y: auto; }
+  .ro-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .ro-tab th {
+    text-align: left; padding: 10px 14px; background: #f8fafc;
+    color: #475569; font-size: 10px; font-weight: 800;
+    text-transform: uppercase; letter-spacing: 0.5px;
+    border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 2;
+  }
+  .ro-tab td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+  .ro-tab tr:hover td { background: #f8fafc; }
+  .ro-tab td.r { text-align: right; font-weight: 700; }
+  .ro-tab td.c { text-align: center; }
+
+  /* Badge operadora */
+  .ro-badge {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 10px; border-radius: 12px;
+    font-size: 11px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .ro-badge::before {
+    content: ''; width: 8px; height: 8px; border-radius: 50%;
+    background: currentColor;
+  }
+  .ro-badge.vivo    { background: #ede9fe; color: #6d28d9; }
+  .ro-badge.claro   { background: #fee2e2; color: #b91c1c; }
+  .ro-badge.oi      { background: #fef3c7; color: #b45309; }
+  .ro-badge.tim     { background: #dbeafe; color: #1e40af; }
+  .ro-badge.algar   { background: #dcfce7; color: #166534; }
+  .ro-badge.sercom  { background: #fce7f3; color: #9d174d; }
+  .ro-badge.outras  { background: #f1f5f9; color: #475569; }
+  .ro-badge.nao_informada { background: #f8fafc; color: #94a3b8; border: 1px dashed #cbd5e1; }
+
+  .ro-badge-tipo {
+    display: inline-block; padding: 3px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+  }
+  .ro-badge-tipo.terceiro   { background: #dbeafe; color: #1e40af; }
+  .ro-badge-tipo.freelancer { background: #fce7f3; color: #9d174d; }
+
+  .ro-vazio { padding: 60px; text-align: center; color: #94a3b8; }
+
+  /* MULTI-SELECT */
+  .ro-multi { position: relative; min-width: 200px; }
+  .ro-multi-trigger {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 9px;
+    background: white; cursor: pointer; font-size: 13px;
+    font-family: inherit; min-height: 38px;
+    transition: 0.2s; user-select: none;
+  }
+  .ro-multi-trigger:hover { border-color: #0b1a3a; }
+  .ro-multi-trigger.aberto { border-color: #0b1a3a; box-shadow: 0 0 0 3px rgba(11,26,58,0.08); }
+  .ro-multi-label { flex: 1; text-align: left; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #0f172a; }
+  .ro-multi-label.vazio { color: #94a3b8; }
+  .ro-multi-seta { font-size: 10px; color: #64748b; margin-left: 8px; transition: transform 0.2s; }
+  .ro-multi-trigger.aberto .ro-multi-seta { transform: rotate(180deg); }
+  .ro-multi-painel {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: white; border: 1.5px solid #cbd5e1; border-radius: 10px;
+    box-shadow: 0 12px 28px -8px rgba(15,23,42,0.18);
+    z-index: 100; display: none; max-height: 340px; overflow: hidden;
+    flex-direction: column;
+  }
+  .ro-multi-painel.aberto { display: flex; }
+  .ro-multi-busca { padding: 8px 12px; border-bottom: 1px solid #e2e8f0; }
+  .ro-multi-busca input {
+    width: 100%; padding: 7px 10px; border: 1px solid #e2e8f0;
+    border-radius: 7px; font-size: 12px; outline: none; font-family: inherit;
+    box-sizing: border-box;
+  }
+  .ro-multi-lista { overflow-y: auto; padding: 6px; flex: 1; }
+  .ro-multi-opt {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px; border-radius: 6px; cursor: pointer;
+    font-size: 12.5px; color: #334155; user-select: none;
+    transition: background 0.15s;
+  }
+  .ro-multi-opt:hover { background: #f1f5f9; }
+  .ro-multi-opt input { accent-color: #0b1a3a; width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+  .ro-multi-opt.escondido { display: none; }
+  .ro-multi-rodape {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 8px 12px; border-top: 1px solid #e2e8f0; background: #f8fafc; gap: 8px;
+  }
+  .ro-multi-rodape button {
+    padding: 6px 12px; border: none; border-radius: 7px;
+    font-family: inherit; font-size: 11px; font-weight: 700;
+    cursor: pointer; transition: 0.15s;
+  }
+  .ro-multi-limpar { background: #f1f5f9; color: #475569; }
+  .ro-multi-aplicar { background: #0b1a3a; color: white; }
+</style>
+
+<div class="ro-wrap" id="ro-wrap">
+
+  <!-- FILTROS -->
+  <div class="ro-filters">
+    <div class="ro-field">
+      <label>Mês</label>
+      <select id="ro-mes">
+        <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+        <option value="3">Março</option><option value="4">Abril</option>
+        <option value="5">Maio</option><option value="6">Junho</option>
+        <option value="7">Julho</option><option value="8">Agosto</option>
+        <option value="9">Setembro</option><option value="10">Outubro</option>
+        <option value="11">Novembro</option><option value="12">Dezembro</option>
+      </select>
+    </div>
+    <div class="ro-field">
+      <label>Ano</label>
+      <select id="ro-ano">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+    <div class="ro-field">
+      <label>Início (opcional)</label>
+      <input type="date" id="ro-ini">
+    </div>
+    <div class="ro-field">
+      <label>Fim (opcional)</label>
+      <input type="date" id="ro-fim">
+    </div>
+    <div class="ro-field">
+      <label>Tipo TBP</label>
+      <select id="ro-tipo">
+        <option value="">Todos</option>
+        <option value="TERCEIRO">Terceiros</option>
+        <option value="FREELANCER">Freelancers</option>
+      </select>
+    </div>
+    <div class="ro-field">
+      <label>Operadoras</label>
+      <div class="ro-multi" id="ro-multi-operadora" data-tipo="operadora">
+        <div class="ro-multi-trigger" data-tipo="operadora">
+          <span class="ro-multi-label vazio" id="ro-label-operadora">Todas</span>
+          <span class="ro-multi-seta">▼</span>
+        </div>
+        <div class="ro-multi-painel" id="ro-painel-operadora">
+          <div class="ro-multi-busca">
+            <input type="text" placeholder="🔍 Buscar..." data-busca-tipo="operadora">
+          </div>
+          <div class="ro-multi-lista" id="ro-lista-operadora"></div>
+          <div class="ro-multi-rodape">
+            <button class="ro-multi-limpar" data-acao="limpar" data-tipo="operadora">Limpar</button>
+            <button class="ro-multi-aplicar" data-acao="aplicar" data-tipo="operadora">Aplicar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <button class="ro-btn ro-btn-primary" id="ro-btn-filtrar" onclick="RO.filtrar()">🔍 Filtrar</button>
+    <button class="ro-btn ro-btn-soft" onclick="RO.limpar()">Limpar</button>
+    <button class="ro-btn ro-btn-pdf" id="ro-btn-pdf" onclick="RO.exportarPDF()" disabled>📄 PDF</button>
+    <button class="ro-btn ro-btn-xls" id="ro-btn-xls" onclick="RO.exportarExcel()" disabled>📊 Excel</button>
+  </div>
+
+  <!-- KPIs -->
+  <div class="ro-kpis" id="ro-kpis"></div>
+
+  <!-- ROW: Gráfico + Top ranking -->
+  <div class="ro-row">
+    <div class="ro-box">
+      <h3>📊 Distribuição por Operadora</h3>
+      <p>% do total de portabilidades/aditivos com operadora preenchida</p>
+      <div class="ro-graf-inner">
+        <canvas id="ro-grafico-rosca"></canvas>
+      </div>
+    </div>
+    <div class="ro-box">
+      <h3>🏆 Top Operadoras</h3>
+      <p>Ranking por quantidade no período</p>
+      <div id="ro-top-list"></div>
+    </div>
+  </div>
+
+  <!-- TABELA RANKING OPERADORAS -->
+  <div class="ro-tabela">
+    <div class="ro-thead">
+      <h3>🏆 Ranking Completo de Operadoras</h3>
+      <span id="ro-info-op"></span>
+    </div>
+    <div class="ro-scroll">
+      <table class="ro-tab">
+        <thead>
+          <tr>
+            <th style="width:50px;">#</th>
+            <th>Operadora Doadora</th>
+            <th class="c">Qtd Total</th>
+            <th class="c">Ativadas</th>
+            <th class="r">Valor Ativado</th>
+            <th class="r">Ticket Médio</th>
+            <th class="c">% do Bolo</th>
+            <th class="c">TBPs</th>
+          </tr>
+        </thead>
+        <tbody id="ro-tbody-op">
+          <tr><td colspan="8" class="ro-vazio">Selecione o período e clique em Filtrar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TABELA CRUZAMENTO TBP × OPERADORA -->
+  <div class="ro-tabela">
+    <div class="ro-thead">
+      <h3>🤝 Cruzamento TBP × Operadora (Top 30)</h3>
+      <span id="ro-info-tbp"></span>
+    </div>
+    <div class="ro-scroll">
+      <table class="ro-tab">
+        <thead>
+          <tr>
+            <th>TBP</th>
+            <th>Tipo</th>
+            <th>Operadora</th>
+            <th class="c">Qtd</th>
+            <th class="c">Ativadas</th>
+            <th class="r">Valor Ativado</th>
+          </tr>
+        </thead>
+        <tbody id="ro-tbody-tbp">
+          <tr><td colspan="6" class="ro-vazio">Sem dados.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const fmtPerc = (v) => Number(v || 0).toFixed(1) + '%';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let DADOS_ATUAIS = null;
+  let CHART_ROSCA = null;
+
+  // Cores por operadora
+  const CORES_OPERADORA = {
+    'VIVO':      '#7c3aed',
+    'CLARO':     '#dc2626',
+    'OI':        '#f59e0b',
+    'TIM':       '#2563eb',
+    'ALGAR':     '#10b981',
+    'SERCOMTEL': '#ec4899',
+    'OUTRAS':    '#64748b',
+    'NÃO INFORMADA': '#cbd5e1'
+  };
+
+  function getCorOperadora(op) {
+    const norm = String(op || '').toUpperCase().trim();
+    return CORES_OPERADORA[norm] || '#94a3b8';
+  }
+
+  function getClasseOperadora(op) {
+    const norm = String(op || '').toUpperCase().trim();
+    if (norm === 'VIVO') return 'vivo';
+    if (norm === 'CLARO') return 'claro';
+    if (norm === 'OI') return 'oi';
+    if (norm === 'TIM') return 'tim';
+    if (norm === 'ALGAR') return 'algar';
+    if (norm === 'SERCOMTEL') return 'sercom';
+    if (norm === 'OUTRAS') return 'outras';
+    if (norm === 'NÃO INFORMADA') return 'nao_informada';
+    return 'outras';
+  }
+
+  function getSb() {
+    if (window.sb) return window.sb;
+    try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e) {}
+    return null;
+  }
+
+  /* ═══════════════════════════════════════════════════════════
+     MULTI-SELECT SIMPLIFICADO
+     ═══════════════════════════════════════════════════════════ */
+  const ROMulti = (function() {
+    const estado = {
+      operadora: { aplicados: new Set(), temp: new Set(), opcoes: [] }
+    };
+
+    function toggle(tipo) {
+      const painel = document.getElementById('ro-painel-' + tipo);
+      const trigger = document.querySelector('#ro-multi-' + tipo + ' .ro-multi-trigger');
+      if (!painel || !trigger) return;
+      const abrindo = !painel.classList.contains('aberto');
+      const p = document.getElementById('ro-painel-' + tipo);
+      const tr = document.querySelector('#ro-multi-' + tipo + ' .ro-multi-trigger');
+      if (p) p.classList.remove('aberto');
+      if (tr) tr.classList.remove('aberto');
+      if (abrindo) {
+        estado[tipo].temp = new Set(estado[tipo].aplicados);
+        renderLista(tipo);
+        painel.classList.add('aberto');
+        trigger.classList.add('aberto');
+      }
+    }
+
+    function fechar(tipo) {
+      const painel = document.getElementById('ro-painel-' + tipo);
+      const trigger = document.querySelector('#ro-multi-' + tipo + ' .ro-multi-trigger');
+      if (painel) painel.classList.remove('aberto');
+      if (trigger) trigger.classList.remove('aberto');
+    }
+
+    function renderLista(tipo) {
+      const lista = document.getElementById('ro-lista-' + tipo);
+      if (!lista) return;
+      const opcoes = estado[tipo].opcoes;
+      if (opcoes.length === 0) {
+        lista.innerHTML = '<div style="padding:20px;text-align:center;color:#94a3b8;font-size:12px;">Nenhuma opção</div>';
+        return;
+      }
+      lista.innerHTML = opcoes.map(op => {
+        const marcado = estado[tipo].temp.has(op);
+        return `<label class="ro-multi-opt" data-valor="${esc(op)}" data-busca="${esc(op.toLowerCase())}">
+          <input type="checkbox" ${marcado ? 'checked' : ''} data-item-tipo="${tipo}" data-item-valor="${esc(op)}">
+          <span>${esc(op)}</span>
+        </label>`;
+      }).join('');
+    }
+
+    function toggleItem(tipo, valor) {
+      if (estado[tipo].temp.has(valor)) estado[tipo].temp.delete(valor);
+      else estado[tipo].temp.add(valor);
+    }
+
+    function limpar(tipo) { estado[tipo].temp.clear(); renderLista(tipo); }
+
+    function aplicar(tipo) {
+      estado[tipo].aplicados = new Set(estado[tipo].temp);
+      atualizarLabel(tipo);
+      fechar(tipo);
+    }
+
+    function atualizarLabel(tipo) {
+      const label = document.getElementById('ro-label-' + tipo);
+      if (!label) return;
+      const sel = Array.from(estado[tipo].aplicados);
+      if (sel.length === 0) {
+        label.textContent = 'Todas';
+        label.classList.add('vazio');
+      } else if (sel.length === 1) {
+        label.textContent = sel[0];
+        label.classList.remove('vazio');
+      } else {
+        label.textContent = `${sel.length} selecionadas`;
+        label.classList.remove('vazio');
+      }
+    }
+
+    function filtrarBusca(tipo, termo) {
+      const lista = document.getElementById('ro-lista-' + tipo);
+      if (!lista) return;
+      const t = termo.toLowerCase().trim();
+      lista.querySelectorAll('.ro-multi-opt').forEach(el => {
+        el.classList.toggle('escondido', t && !(el.dataset.busca || '').includes(t));
+      });
+    }
+
+    function setOpcoes(tipo, arr) {
+      estado[tipo].opcoes = (arr || []).filter(Boolean).map(String).sort((a,b) => a.localeCompare(b, 'pt-BR'));
+    }
+
+    function getValores(tipo) {
+      const arr = Array.from(estado[tipo].aplicados);
+      return arr.length === 0 ? null : arr;
+    }
+
+    function limparTudo() {
+      estado.operadora.aplicados.clear();
+      estado.operadora.temp.clear();
+      atualizarLabel('operadora');
+    }
+
+    function initTriggers() {
+      document.querySelectorAll('.ro-multi-trigger').forEach(trigger => {
+        if (trigger.dataset.bind) return;
+        trigger.dataset.bind = '1';
+        trigger.addEventListener('click', (e) => {
+          e.stopPropagation();
+          toggle(trigger.dataset.tipo);
+        });
+      });
+      document.querySelectorAll('.ro-multi-lista').forEach(lista => {
+        if (lista.dataset.bind) return;
+        lista.dataset.bind = '1';
+        lista.addEventListener('click', (e) => e.stopPropagation());
+        lista.addEventListener('change', (e) => {
+          const input = e.target;
+          if (input.matches('input[type="checkbox"][data-item-tipo]')) {
+            toggleItem(input.dataset.itemTipo, input.dataset.itemValor);
+          }
+        });
+      });
+      document.querySelectorAll('.ro-multi-rodape button').forEach(btn => {
+        if (btn.dataset.bind) return;
+        btn.dataset.bind = '1';
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const t = btn.dataset.tipo;
+          if (btn.dataset.acao === 'limpar') limpar(t);
+          else if (btn.dataset.acao === 'aplicar') aplicar(t);
+        });
+      });
+      document.querySelectorAll('input[data-busca-tipo]').forEach(input => {
+        if (input.dataset.bind) return;
+        input.dataset.bind = '1';
+        input.addEventListener('click', (e) => e.stopPropagation());
+        input.addEventListener('input', (e) => filtrarBusca(input.dataset.buscaTipo, e.target.value));
+      });
+      if (!window._roMultiGlobal) {
+        window._roMultiGlobal = true;
+        document.addEventListener('click', (e) => {
+          const box = document.getElementById('ro-multi-operadora');
+          if (box && box.contains(e.target)) return;
+          fechar('operadora');
+        });
+      }
+    }
+
+    return { setOpcoes, getValores, limparTudo, initTriggers };
+  })();
+
+  function initMesAno() {
+    const hoje = new Date();
+    $('ro-mes').value = String(hoje.getMonth() + 1);
+    $('ro-ano').value = String(hoje.getFullYear());
+  }
+
+  async function filtrar() {
+    const sb = getSb();
+    if (!sb) return alert('Supabase indisponível');
+
+    const btn = $('ro-btn-filtrar');
+    btn.disabled = true; btn.textContent = '⏳ Carregando...';
+    $('ro-tbody-op').innerHTML = `<tr><td colspan="8" class="ro-vazio">Carregando...</td></tr>`;
+
+    const mes = parseInt($('ro-mes').value);
+    const ano = parseInt($('ro-ano').value);
+    const ini = $('ro-ini').value || null;
+    const fim = $('ro-fim').value || null;
+
+    try {
+      const { data, error } = await sb.rpc('gestao_operadora_doadora', {
+        p_mes: mes, p_ano: ano,
+        p_inicio: ini, p_fim: fim,
+        p_tipo: $('ro-tipo').value || null,
+        p_modalidades: null,
+        p_operadoras: ROMulti.getValores('operadora')
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      DADOS_ATUAIS = data;
+      render(data);
+
+      $('ro-btn-pdf').disabled = false;
+      $('ro-btn-xls').disabled = false;
+    } catch (e) {
+      console.error(e);
+      $('ro-tbody-op').innerHTML = `<tr><td colspan="8" class="ro-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '🔍 Filtrar';
+    }
+  }
+
+  function render(d) {
+    const t = d.totais || {};
+    const porOp = d.por_operadora || [];
+    const porTbpOp = d.por_tbp_operadora || [];
+
+    // Carrega filtro de operadoras (não destrutivo)
+    if (porOp.length > 0) {
+      const ops = porOp.map(o => o.operadora).filter(Boolean);
+      ROMulti.setOpcoes('operadora', ops);
+    }
+
+    // KPIs
+    const topOp = porOp[0];
+    const percTop = topOp ? topOp.perc_qtd : 0;
+
+    $('ro-kpis').innerHTML = `
+      <div class="ro-kpi" style="--c:#0b1a3a;">
+        <div class="ro-kpi-label">Total de Vendas</div>
+        <div class="ro-kpi-value">${fmtInt(t.qtd_total)}</div>
+        <div class="ro-kpi-sub">${fmtInt(t.qtd_ativadas)} ativadas</div>
+      </div>
+      <div class="ro-kpi" style="--c:#10b981;">
+        <div class="ro-kpi-label">Valor Ativado</div>
+        <div class="ro-kpi-value" style="color:#059669;">${fmt(t.valor_ativado)}</div>
+        <div class="ro-kpi-sub">${fmt(t.valor_total)} total</div>
+      </div>
+      <div class="ro-kpi" style="--c:#a855f7;">
+        <div class="ro-kpi-label">Ticket Médio</div>
+        <div class="ro-kpi-value">${fmt(t.ticket_medio)}</div>
+        <div class="ro-kpi-sub">por venda</div>
+      </div>
+      <div class="ro-kpi" style="--c:#3b82f6;">
+        <div class="ro-kpi-label">Operadoras Distintas</div>
+        <div class="ro-kpi-value">${fmtInt(t.operadoras_distintas)}</div>
+        <div class="ro-kpi-sub">doadoras no período</div>
+      </div>
+      <div class="ro-kpi" style="--c:${getCorOperadora(topOp?.operadora)};">
+        <div class="ro-kpi-label">🏆 Top Operadora</div>
+        <div class="ro-kpi-value">${esc(topOp?.operadora || '—')}</div>
+        <div class="ro-kpi-sub">${fmtInt(topOp?.qtd_total || 0)} vendas · ${fmtPerc(percTop)} do bolo</div>
+      </div>
+      <div class="ro-kpi" style="--c:#dc2626;">
+        <div class="ro-kpi-label">TBPs Envolvidos</div>
+        <div class="ro-kpi-value">${fmtInt(t.tbps_envolvidos)}</div>
+        <div class="ro-kpi-sub">${fmtInt(t.consultores_envolvidos)} consultores</div>
+      </div>`;
+
+    // Gráfico rosca
+    renderRosca(porOp);
+
+    // Top list
+    $('ro-top-list').innerHTML = porOp.slice(0, 6).map((o, i) => {
+      const pos = i + 1;
+      const posCls = pos <= 3 ? `p${pos}` : '';
+      const cor = getCorOperadora(o.operadora);
+      return `<div class="ro-rank" style="--cor:${cor};">
+        <div class="ro-rank-pos ${posCls}">${pos}</div>
+        <div class="ro-rank-nome">
+          ${esc(o.operadora)}
+          <div class="ro-rank-perc">${fmt(o.valor_ativado)} · ${fmtPerc(o.perc_qtd)}</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="ro-rank-qtd">${fmtInt(o.qtd_total)}</div>
+          <div class="ro-rank-perc">vendas</div>
+        </div>
+      </div>`;
+    }).join('') || '<p style="text-align:center;color:#94a3b8;">Sem dados</p>';
+
+    // Tabela operadoras
+    $('ro-info-op').textContent = `${porOp.length} operadora(s)`;
+    if (porOp.length === 0) {
+      $('ro-tbody-op').innerHTML = '<tr><td colspan="8" class="ro-vazio">Nenhuma venda com operadora no período.</td></tr>';
+    } else {
+      $('ro-tbody-op').innerHTML = porOp.map(o => {
+        const posCls = o.posicao <= 3 ? `p${o.posicao}` : '';
+        const cls = getClasseOperadora(o.operadora);
+        return `<tr>
+          <td><span class="ro-rank-pos ${posCls}">${o.posicao}</span></td>
+          <td><span class="ro-badge ${cls}">${esc(o.operadora)}</span></td>
+          <td class="c">${fmtInt(o.qtd_total)}</td>
+          <td class="c" style="color:#059669;font-weight:700;">${fmtInt(o.qtd_ativadas)}</td>
+          <td class="r" style="color:#059669;">${fmt(o.valor_ativado)}</td>
+          <td class="r">${fmt(o.ticket_medio)}</td>
+          <td class="c">
+            <div style="font-weight:800;color:${getCorOperadora(o.operadora)};">${fmtPerc(o.perc_qtd)}</div>
+            <div class="ro-bar-mini"><div style="width:${Math.min(o.perc_qtd, 100)}%;background:${getCorOperadora(o.operadora)};"></div></div>
+          </td>
+          <td class="c">${fmtInt(o.tbps_unicos)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    // Tabela TBP × Operadora
+    $('ro-info-tbp').textContent = `${porTbpOp.length} combinação(ões)`;
+    if (porTbpOp.length === 0) {
+      $('ro-tbody-tbp').innerHTML = '<tr><td colspan="6" class="ro-vazio">Sem dados.</td></tr>';
+    } else {
+      $('ro-tbody-tbp').innerHTML = porTbpOp.map(r => {
+        const cls = getClasseOperadora(r.operadora);
+        const tipoCls = (r.tipo_tbp || '').toLowerCase();
+        return `<tr>
+          <td><strong>${esc(r.tbp)}</strong></td>
+          <td><span class="ro-badge-tipo ${tipoCls}">${esc(r.tipo_tbp || '—')}</span></td>
+          <td><span class="ro-badge ${cls}">${esc(r.operadora)}</span></td>
+          <td class="c">${fmtInt(r.qtd_total)}</td>
+          <td class="c" style="color:#059669;font-weight:700;">${fmtInt(r.qtd_ativadas)}</td>
+          <td class="r" style="color:#059669;">${fmt(r.valor_ativado)}</td>
+        </tr>`;
+      }).join('');
+    }
+  }
+
+  function renderRosca(porOp) {
+    const ctx = $('ro-grafico-rosca').getContext('2d');
+    if (CHART_ROSCA) CHART_ROSCA.destroy();
+
+    if (porOp.length === 0) {
+      CHART_ROSCA = null;
+      return;
+    }
+
+    const labels = porOp.map(o => o.operadora);
+    const valores = porOp.map(o => Number(o.qtd_total) || 0);
+    const cores = porOp.map(o => getCorOperadora(o.operadora));
+
+    CHART_ROSCA = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels,
+        datasets: [{
+          data: valores,
+          backgroundColor: cores,
+          borderColor: '#ffffff',
+          borderWidth: 3,
+          hoverOffset: 8
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        cutout: '55%',
+        plugins: {
+          legend: {
+            position: 'right',
+            labels: {
+              font: { size: 11, weight: '600' },
+              boxWidth: 12,
+              padding: 8,
+              generateLabels: (chart) => {
+                const data = chart.data;
+                return data.labels.map((label, i) => {
+                  const total = data.datasets[0].data.reduce((a,b)=>a+b,0);
+                  const val = data.datasets[0].data[i];
+                  const perc = total > 0 ? ((val/total)*100).toFixed(1) : 0;
+                  return {
+                    text: `${label} (${perc}%)`,
+                    fillStyle: data.datasets[0].backgroundColor[i],
+                    strokeStyle: '#fff',
+                    lineWidth: 1,
+                    fontColor: '#334155',
+                    index: i
+                  };
+                });
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(15,23,42,0.95)',
+            padding: 12,
+            callbacks: {
+              label: (c) => {
+                const total = c.dataset.data.reduce((a,b)=>a+b,0);
+                const perc = total > 0 ? ((c.parsed/total)*100).toFixed(1) : 0;
+                return `${c.label}: ${c.parsed} vendas (${perc}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+  }
+
+  function limpar() {
+    ROMulti.limparTudo();
+    $('ro-ini').value = '';
+    $('ro-fim').value = '';
+    $('ro-tipo').value = '';
+    initMesAno();
+    filtrar();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // PDF
+  // ═══════════════════════════════════════════════════════════
+  function exportarPDF() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+    const t = d.totais || {};
+    const porOp = d.por_operadora || [];
+    const porTbpOp = d.por_tbp_operadora || [];
+
+    const rowsOp = porOp.map(o => `
+      <tr>
+        <td style="text-align:center;">${o.posicao}</td>
+        <td><strong>${esc(o.operadora)}</strong></td>
+        <td style="text-align:center;">${o.qtd_total}</td>
+        <td style="text-align:center;">${o.qtd_ativadas}</td>
+        <td style="text-align:right;">${fmt(o.valor_ativado)}</td>
+        <td style="text-align:right;">${fmt(o.ticket_medio)}</td>
+        <td style="text-align:center;">${fmtPerc(o.perc_qtd)}</td>
+      </tr>`).join('');
+
+    const rowsTbp = porTbpOp.map(r => `
+      <tr>
+        <td>${esc(r.tbp)}</td>
+        <td style="text-align:center;">${esc(r.tipo_tbp)}</td>
+        <td>${esc(r.operadora)}</td>
+        <td style="text-align:center;">${r.qtd_total}</td>
+        <td style="text-align:right;">${fmt(r.valor_ativado)}</td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Operadora Doadora</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; color: #0f172a; padding: 20px; }
+  .head { border-bottom: 3px solid #0b1a3a; padding-bottom: 12px; margin-bottom: 18px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .head h1 { margin: 0; font-size: 18px; color: #0b1a3a; }
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 16px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+  .kpi small { font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .kpi strong { display: block; font-size: 14px; color: #0f172a; margin-top: 3px; }
+  h2 { font-size: 14px; margin: 20px 0 10px; color: #0b1a3a; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; margin-bottom: 20px; }
+  th { background: #f1f5f9; text-align: left; padding: 6px 8px; border-bottom: 1px solid #cbd5e1; font-size: 8px; text-transform: uppercase; color: #475569; }
+  td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+  .foot { margin-top: 20px; font-size: 9px; color: #94a3b8; text-align: center; }
+  .no-print { text-align:center; margin-top:20px; }
+  @media print { .no-print { display:none; } body { padding: 0; } }
+</style></head><body>
+  <div class="no-print">
+    <button onclick="window.print()" style="padding:10px 24px;background:#0b1a3a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button>
+  </div>
+  <div class="head">
+    <div>
+      <h1>VEXO · Operadora Doadora</h1>
+      <small style="color:#64748b;">Período: ${d.periodo.inicio} a ${d.periodo.fim}</small>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#64748b;">Emitido em ${new Date().toLocaleString('pt-BR')}</div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small>Total Vendas</small><strong>${fmtInt(t.qtd_total)}</strong></div>
+    <div class="kpi"><small>Ativadas</small><strong>${fmtInt(t.qtd_ativadas)}</strong></div>
+    <div class="kpi"><small>Valor Ativado</small><strong>${fmt(t.valor_ativado)}</strong></div>
+    <div class="kpi"><small>Ticket Médio</small><strong>${fmt(t.ticket_medio)}</strong></div>
+    <div class="kpi"><small>Operadoras</small><strong>${fmtInt(t.operadoras_distintas)}</strong></div>
+    <div class="kpi"><small>TBPs</small><strong>${fmtInt(t.tbps_envolvidos)}</strong></div>
+  </div>
+  <h2>🏆 Ranking de Operadoras</h2>
+  <table>
+    <thead><tr><th>#</th><th>Operadora</th><th>Qtd</th><th>Ativadas</th><th>Valor Ativado</th><th>Ticket</th><th>% Bolo</th></tr></thead>
+    <tbody>${rowsOp}</tbody>
+  </table>
+  <h2>🤝 Cruzamento TBP × Operadora</h2>
+  <table>
+    <thead><tr><th>TBP</th><th>Tipo</th><th>Operadora</th><th>Qtd</th><th>Valor Ativado</th></tr></thead>
+    <tbody>${rowsTbp}</tbody>
+  </table>
+  <div class="foot">Gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}</div>
+</body></html>`;
+
+    const w = window.open('', '_blank', 'width=1200,height=800');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // EXCEL
+  // ═══════════════════════════════════════════════════════════
+  function exportarExcel() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+    const porOp = d.por_operadora || [];
+    const porTbpOp = d.por_tbp_operadora || [];
+
+    const wb = XLSX.utils.book_new();
+
+    // Aba 1 — Ranking Operadoras
+    const dadosOp = porOp.map(o => ({
+      'Posição': o.posicao,
+      'Operadora': o.operadora,
+      'Qtd Total': o.qtd_total,
+      'Ativadas': o.qtd_ativadas,
+      'Valor Total': Number(o.valor_total) || 0,
+      'Valor Ativado': Number(o.valor_ativado) || 0,
+      'Ticket Médio': Number(o.ticket_medio) || 0,
+      '% do Bolo': Number((o.perc_qtd || 0).toFixed(2)),
+      'TBPs Envolvidos': o.tbps_unicos
+    }));
+    const wsOp = XLSX.utils.json_to_sheet(dadosOp);
+    wsOp['!cols'] = [{wch:8},{wch:20},{wch:12},{wch:12},{wch:14},{wch:14},{wch:14},{wch:12},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, wsOp, 'Operadoras');
+
+    // Aba 2 — Cruzamento
+    const dadosTbp = porTbpOp.map(r => ({
+      'TBP': r.tbp,
+      'Tipo': r.tipo_tbp,
+      'Operadora': r.operadora,
+      'Qtd Total': r.qtd_total,
+      'Ativadas': r.qtd_ativadas,
+      'Valor Ativado': Number(r.valor_ativado) || 0
+    }));
+    const wsTbp = XLSX.utils.json_to_sheet(dadosTbp);
+    wsTbp['!cols'] = [{wch:32},{wch:12},{wch:20},{wch:12},{wch:12},{wch:14}];
+    XLSX.utils.book_append_sheet(wb, wsTbp, 'TBP x Operadora');
+
+    XLSX.writeFile(wb, `operadora_doadora_${d.periodo.inicio}_a_${d.periodo.fim}.xlsx`);
+  }
+
+  function init() {
+    initMesAno();
+    ROMulti.initTriggers();
+    setTimeout(filtrar, 300);
+  }
+
+  window.RO = { filtrar, limpar, exportarPDF, exportarExcel };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else setTimeout(init, 100);
+})();
+</script>
+</body>
+</html>
