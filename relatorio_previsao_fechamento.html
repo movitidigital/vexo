@@ -1,0 +1,707 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+  .pf-wrap { font-family: 'Poppins', sans-serif; color: #0f172a; padding: 4px; }
+  .pf-filters {
+    background: white; border-radius: 14px; padding: 20px 22px;
+    border: 1px solid #e2e8f0; margin-bottom: 22px;
+    display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-end;
+  }
+  .pf-field { display: flex; flex-direction: column; gap: 5px; min-width: 130px; }
+  .pf-field label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .pf-field input, .pf-field select {
+    padding: 9px 12px; border: 1.5px solid #cbd5e1; border-radius: 9px;
+    font-family: inherit; font-size: 13px; outline: none; transition: 0.2s; background: white;
+  }
+  .pf-field input:focus, .pf-field select:focus { border-color: #0b1a3a; box-shadow: 0 0 0 3px rgba(11,26,58,0.08); }
+  .pf-btn { padding: 10px 20px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 8px; transition: 0.2s; }
+  .pf-btn-primary { background: #0b1a3a; color: white; }
+  .pf-btn-primary:hover:not(:disabled) { background: #1a3060; }
+  .pf-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .pf-btn-soft { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .pf-btn-soft:hover { background: #e2e8f0; }
+  .pf-btn-pdf { background: #dc2626; color: white; }
+  .pf-btn-pdf:hover:not(:disabled) { background: #b91c1c; }
+  .pf-btn-xls { background: #16a34a; color: white; }
+  .pf-btn-xls:hover:not(:disabled) { background: #15803d; }
+  .pf-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* STATUS HERO */
+  .pf-hero {
+    border-radius: 18px; padding: 24px 28px; margin-bottom: 22px;
+    display: flex; justify-content: space-between; align-items: center;
+    flex-wrap: wrap; gap: 20px; color: white; position: relative; overflow: hidden;
+  }
+  .pf-hero.vai_bater, .pf-hero.superou    { background: linear-gradient(135deg, #059669, #10b981); }
+  .pf-hero.risco                          { background: linear-gradient(135deg, #d97706, #f59e0b); }
+  .pf-hero.abaixo, .pf-hero.fechado_abaixo { background: linear-gradient(135deg, #b91c1c, #dc2626); }
+  .pf-hero.fechado_ok                     { background: linear-gradient(135deg, #1e40af, #3b82f6); }
+  .pf-hero.sem_meta, .pf-hero.sem_dados, .pf-hero.futuro { background: linear-gradient(135deg, #475569, #64748b); }
+
+  .pf-hero-status {
+    font-size: 12px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;
+    background: rgba(255,255,255,0.15); padding: 5px 14px; border-radius: 20px;
+    display: inline-block; margin-bottom: 8px;
+  }
+  .pf-hero-titulo { font-size: 22px; font-weight: 800; margin: 0 0 6px; }
+  .pf-hero-desc { font-size: 13px; opacity: 0.9; margin: 0; max-width: 500px; line-height: 1.5; }
+  .pf-hero-num { text-align: right; }
+  .pf-hero-num-val { font-size: 38px; font-weight: 900; margin: 0; line-height: 1; }
+  .pf-hero-num-lbl { font-size: 11px; opacity: 0.85; text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+
+  /* KPIs */
+  .pf-kpis {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px; margin-bottom: 22px;
+  }
+  .pf-kpi { background: white; border-radius: 14px; padding: 16px 18px; border: 1px solid #e2e8f0; position: relative; }
+  .pf-kpi::before { content: ''; position: absolute; top: 0; left: 0; height: 3px; width: 100%; border-radius: 14px 14px 0 0; background: var(--c, #0b1a3a); }
+  .pf-kpi-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+  .pf-kpi-value { font-size: 22px; font-weight: 800; color: #0f172a; margin-top: 4px; }
+  .pf-kpi-sub { font-size: 10px; color: #94a3b8; margin-top: 2px; }
+  .pf-kpi-delta {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 10px; font-weight: 800; padding: 2px 7px;
+    border-radius: 8px; margin-top: 6px;
+  }
+  .pf-delta-up   { background: #dcfce7; color: #166534; }
+  .pf-delta-down { background: #fee2e2; color: #991b1b; }
+  .pf-delta-flat { background: #f1f5f9; color: #64748b; }
+
+  /* BARRA DE PROGRESSO VISUAL */
+  .pf-progress {
+    background: white; border-radius: 14px; border: 1px solid #e2e8f0;
+    padding: 22px 24px; margin-bottom: 22px;
+  }
+  .pf-progress h3 { margin: 0 0 20px; font-size: 14px; font-weight: 800; color: #0b1a3a; }
+  .pf-bar-wrap {
+    position: relative; height: 44px; background: #f1f5f9; border-radius: 12px;
+    overflow: hidden; margin-bottom: 12px;
+  }
+  .pf-bar-fill {
+    height: 100%; background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border-radius: 12px; transition: width 0.8s ease; display: flex;
+    align-items: center; justify-content: flex-end; padding-right: 12px;
+    color: white; font-size: 12px; font-weight: 800;
+  }
+  .pf-bar-proj {
+    position: absolute; top: 0; height: 100%; 
+    background: repeating-linear-gradient(
+      45deg, rgba(59,130,246,0.2), rgba(59,130,246,0.2) 10px,
+      rgba(59,130,246,0.35) 10px, rgba(59,130,246,0.35) 20px
+    );
+    border-top-right-radius: 12px; border-bottom-right-radius: 12px;
+    pointer-events: none;
+  }
+  .pf-bar-meta {
+    position: absolute; top: -6px; height: 56px; width: 3px;
+    background: #dc2626; border-radius: 2px;
+  }
+  .pf-bar-meta::before {
+    content: '🎯 META';
+    position: absolute; top: -22px; left: 50%; transform: translateX(-50%);
+    font-size: 9px; font-weight: 800; color: #dc2626; white-space: nowrap;
+    background: white; padding: 2px 6px; border-radius: 4px;
+    border: 1px solid #fecaca;
+  }
+  .pf-bar-legenda {
+    display: flex; justify-content: space-between; margin-top: 16px;
+    font-size: 11px; color: #64748b; font-weight: 600;
+    flex-wrap: wrap; gap: 8px;
+  }
+  .pf-leg-item { display: flex; align-items: center; gap: 6px; }
+  .pf-leg-swatch {
+    width: 14px; height: 14px; border-radius: 4px;
+  }
+
+  /* GRÁFICO */
+  .pf-graf-box {
+    background: white; border-radius: 14px; border: 1px solid #e2e8f0;
+    padding: 20px 24px; margin-bottom: 22px;
+  }
+  .pf-graf-box h3 { margin: 0 0 4px; font-size: 14px; font-weight: 800; color: #0b1a3a; }
+  .pf-graf-box p { margin: 0 0 16px; font-size: 11px; color: #64748b; }
+  .pf-graf-inner { position: relative; height: 320px; }
+
+  /* TABELA */
+  .pf-tabela { background: white; border-radius: 14px; border: 1px solid #e2e8f0; overflow: hidden; }
+  .pf-thead { padding: 14px 20px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px; }
+  .pf-thead h3 { margin: 0; font-size: 13px; font-weight: 800; color: #0b1a3a; }
+  .pf-thead span { font-size: 11px; color: #64748b; }
+  .pf-scroll { max-height: 620px; overflow-y: auto; }
+  .pf-tab { width: 100%; border-collapse: collapse; font-size: 12px; }
+  .pf-tab th { text-align: left; padding: 10px 14px; background: #f8fafc; color: #475569; font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 2; }
+  .pf-tab td { padding: 10px 14px; border-bottom: 1px solid #f1f5f9; }
+  .pf-tab tr:hover td { background: #f8fafc; }
+  .pf-tab td.r { text-align: right; font-weight: 700; }
+  .pf-tab td.c { text-align: center; }
+
+  .pf-badge-status {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 4px 10px; border-radius: 12px;
+    font-size: 10px; font-weight: 800; text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .pf-badge.vai_bater, .pf-badge.superou   { background: #dcfce7; color: #166534; }
+  .pf-badge.risco                          { background: #fef3c7; color: #92400e; }
+  .pf-badge.abaixo, .pf-badge.fechado_abaixo { background: #fee2e2; color: #991b1b; }
+  .pf-badge.fechado_ok                     { background: #dbeafe; color: #1e40af; }
+  .pf-badge.sem_meta, .pf-badge.futuro     { background: #f1f5f9; color: #64748b; }
+
+  .pf-bar-mini { height: 6px; border-radius: 6px; background: #f1f5f9; overflow: hidden; margin-top: 4px; position: relative; }
+  .pf-bar-mini > div { height: 100%; border-radius: 6px; transition: width 0.6s; }
+  .pf-bar-mini-mark { position: absolute; top: -2px; width: 2px; height: 10px; background: #dc2626; }
+
+  .pf-vazio { padding: 60px; text-align: center; color: #94a3b8; }
+</style>
+
+<div class="pf-wrap" id="pf-wrap">
+
+  <!-- FILTROS -->
+  <div class="pf-filters">
+    <div class="pf-field">
+      <label>Mês</label>
+      <select id="pf-mes">
+        <option value="1">Janeiro</option><option value="2">Fevereiro</option>
+        <option value="3">Março</option><option value="4">Abril</option>
+        <option value="5">Maio</option><option value="6">Junho</option>
+        <option value="7">Julho</option><option value="8">Agosto</option>
+        <option value="9">Setembro</option><option value="10">Outubro</option>
+        <option value="11">Novembro</option><option value="12">Dezembro</option>
+      </select>
+    </div>
+    <div class="pf-field">
+      <label>Ano</label>
+      <select id="pf-ano">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+    <button class="pf-btn pf-btn-primary" id="pf-btn-filtrar" onclick="PF.filtrar()">🔮 Projetar</button>
+    <button class="pf-btn pf-btn-soft" onclick="PF.limpar()">Limpar</button>
+    <button class="pf-btn pf-btn-pdf" id="pf-btn-pdf" onclick="PF.exportarPDF()" disabled>📄 PDF</button>
+    <button class="pf-btn pf-btn-xls" id="pf-btn-xls" onclick="PF.exportarExcel()" disabled>📊 Excel</button>
+  </div>
+
+  <!-- HERO STATUS -->
+  <div class="pf-hero" id="pf-hero" style="display:none;">
+    <div>
+      <span class="pf-hero-status" id="pf-hero-status">—</span>
+      <h2 class="pf-hero-titulo" id="pf-hero-titulo">—</h2>
+      <p class="pf-hero-desc" id="pf-hero-desc">—</p>
+    </div>
+    <div class="pf-hero-num">
+      <p class="pf-hero-num-val" id="pf-hero-num">—</p>
+      <p class="pf-hero-num-lbl" id="pf-hero-lbl">—</p>
+    </div>
+  </div>
+
+  <!-- KPIs -->
+  <div class="pf-kpis" id="pf-kpis"></div>
+
+  <!-- PROGRESSO VISUAL -->
+  <div class="pf-progress" id="pf-progress" style="display:none;">
+    <h3>🎯 Progresso do Faturamento vs Meta</h3>
+    <div class="pf-bar-wrap">
+      <div class="pf-bar-fill" id="pf-bar-fill">0%</div>
+      <div class="pf-bar-proj" id="pf-bar-proj"></div>
+      <div class="pf-bar-meta" id="pf-bar-meta"></div>
+    </div>
+    <div class="pf-bar-legenda">
+      <div class="pf-leg-item">
+        <div class="pf-leg-swatch" style="background:linear-gradient(90deg, #3b82f6, #8b5cf6);"></div>
+        <span><b id="pf-leg-real">R$ 0</b> realizado</span>
+      </div>
+      <div class="pf-leg-item">
+        <div class="pf-leg-swatch" style="background:repeating-linear-gradient(45deg, rgba(59,130,246,0.4), rgba(59,130,246,0.4) 4px, rgba(59,130,246,0.6) 4px, rgba(59,130,246,0.6) 8px);"></div>
+        <span><b id="pf-leg-proj">R$ 0</b> projetado</span>
+      </div>
+      <div class="pf-leg-item">
+        <div class="pf-leg-swatch" style="background:#dc2626;"></div>
+        <span><b id="pf-leg-meta">R$ 0</b> meta</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- GRÁFICO -->
+  <div class="pf-graf-box">
+    <h3>📈 Evolução Diária vs Meta</h3>
+    <p>Acumulado do mês vs meta acumulada (linear por dia)</p>
+    <div class="pf-graf-inner">
+      <canvas id="pf-grafico"></canvas>
+    </div>
+  </div>
+
+  <!-- TABELA -->
+  <div class="pf-tabela">
+    <div class="pf-thead">
+      <h3>👥 Projeção por Consultor</h3>
+      <span id="pf-info"></span>
+    </div>
+    <div class="pf-scroll">
+      <table class="pf-tab">
+        <thead>
+          <tr>
+            <th style="width:50px;">#</th>
+            <th>Consultor</th>
+            <th class="c">Ativadas</th>
+            <th class="r">Realizado</th>
+            <th class="r">Projetado</th>
+            <th class="r">Meta</th>
+            <th style="min-width:130px;">% Atingimento</th>
+            <th class="c">Status</th>
+          </tr>
+        </thead>
+        <tbody id="pf-tbody">
+          <tr><td colspan="8" class="pf-vazio">Selecione o mês e clique em Projetar.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const $ = (id) => document.getElementById(id);
+  const fmt = (v) => 'R$ ' + Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmtInt = (v) => Number(v || 0).toLocaleString('pt-BR');
+  const fmtPerc = (v) => Number(v || 0).toFixed(1) + '%';
+  const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+  let DADOS_ATUAIS = null;
+  let CHART = null;
+
+  function getSb() {
+    if (window.sb) return window.sb;
+    try { if (typeof sb !== 'undefined' && sb) return sb; } catch(e) {}
+    return null;
+  }
+
+  function initMesAno() {
+    const hoje = new Date();
+    $('pf-mes').value = String(hoje.getMonth() + 1);
+    $('pf-ano').value = String(hoje.getFullYear());
+  }
+
+  async function filtrar() {
+    const sb = getSb();
+    if (!sb) return alert('Supabase indisponível');
+
+    const btn = $('pf-btn-filtrar');
+    btn.disabled = true; btn.textContent = '⏳ Projetando...';
+    $('pf-tbody').innerHTML = `<tr><td colspan="8" class="pf-vazio">Carregando...</td></tr>`;
+
+    const mes = parseInt($('pf-mes').value);
+    const ano = parseInt($('pf-ano').value);
+
+    try {
+      const { data, error } = await sb.rpc('gestao_previsao_fechamento', {
+        p_mes: mes, p_ano: ano
+      });
+
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+
+      DADOS_ATUAIS = data;
+      render(data);
+
+      $('pf-btn-pdf').disabled = false;
+      $('pf-btn-xls').disabled = false;
+    } catch (e) {
+      console.error(e);
+      $('pf-tbody').innerHTML = `<tr><td colspan="8" class="pf-vazio" style="color:#ef4444;">❌ ${esc(e.message||e)}</td></tr>`;
+    } finally {
+      btn.disabled = false; btn.textContent = '🔮 Projetar';
+    }
+  }
+
+  function render(d) {
+    const real = d.realizado || {};
+    const proj = d.projetado || {};
+    const meta = d.meta || {};
+    const perc = d.percentuais || {};
+    const per = d.periodo || {};
+    const ant = d.comparativo_anterior || {};
+    const status = d.status_projecao || 'sem_dados';
+
+    renderHero(status, real, proj, meta, perc, per, ant);
+    renderKPIs(real, proj, meta, perc, per, ant);
+    renderBarra(real, proj, meta, perc);
+    renderGrafico(d.evolucao_diaria || [], meta.fat_target || 0);
+    renderTabela(d.por_consultor || [], per);
+  }
+
+  function renderHero(status, real, proj, meta, perc, per, ant) {
+    const hero = $('pf-hero');
+    hero.style.display = 'flex';
+    hero.className = 'pf-hero ' + status;
+
+    const config = {
+      vai_bater:     { emoji: '🎉', titulo: 'Vai bater a meta!',        desc: (per) => `No ritmo atual, fecha o mês com ${fmtPerc(perc.projetado_fat)} da meta (${per.dias_restantes} dias restantes).` },
+      superou:       { emoji: '🏆', titulo: 'Meta superada!',           desc: () => `Fechamento acima de 100% da meta.` },
+      risco:         { emoji: '⚠️', titulo: 'Em risco',                 desc: (per) => `Projeção de ${fmtPerc(perc.projetado_fat)}. Faltam ${per.dias_restantes} dias — hora de acelerar.` },
+      abaixo:        { emoji: '🚨', titulo: 'Projeção abaixo',          desc: (per) => `No ritmo atual, fecha com apenas ${fmtPerc(perc.projetado_fat)} da meta. Faltam ${per.dias_restantes} dias.` },
+      fechado_ok:    { emoji: '✅', titulo: 'Fechou acima de 85%',      desc: () => `Mês encerrado com performance sólida.` },
+      fechado_abaixo:{ emoji: '📉', titulo: 'Fechou abaixo da meta',    desc: () => `Mês encerrado com ${fmtPerc(perc.atual_fat)} da meta.` },
+      sem_meta:      { emoji: '❓', titulo: 'Sem meta cadastrada',       desc: () => `Cadastre a meta do mês em Metas & KPIs para ver projeção.` },
+      futuro:        { emoji: '🔮', titulo: 'Mês futuro',               desc: () => `Selecione o mês atual ou um mês passado.` },
+      sem_dados:     { emoji: '📭', titulo: 'Sem dados',                desc: () => `Nenhuma venda registrada.` }
+    };
+    const c = config[status] || config.sem_dados;
+
+    $('pf-hero-status').textContent = c.emoji + ' ' + status.replace('_',' ').toUpperCase();
+    $('pf-hero-titulo').textContent = c.titulo;
+    $('pf-hero-desc').textContent = c.desc(per);
+
+    // Numéro grande: se mês fechado, mostra realizado; senão, projeção
+    if (per.mes_fechado) {
+      $('pf-hero-num').textContent = fmt(real.fat);
+      $('pf-hero-lbl').textContent = 'FATURAMENTO FINAL';
+    } else if (per.mes_futuro) {
+      $('pf-hero-num').textContent = '—';
+      $('pf-hero-lbl').textContent = 'MÊS FUTURO';
+    } else {
+      $('pf-hero-num').textContent = fmt(proj.fat);
+      $('pf-hero-lbl').textContent = 'PROJEÇÃO DE FECHAMENTO';
+    }
+  }
+
+  function renderKPIs(real, proj, meta, perc, per, ant) {
+    // Delta vs mês anterior
+    const cresc = Number(ant.perc_crescimento || 0);
+    let deltaHtml = '';
+    if (ant.realizado_ant > 0) {
+      if (cresc > 0.5) deltaHtml = `<span class="pf-kpi-delta pf-delta-up">▲ ${cresc.toFixed(1)}% vs mês ant.</span>`;
+      else if (cresc < -0.5) deltaHtml = `<span class="pf-kpi-delta pf-delta-down">▼ ${Math.abs(cresc).toFixed(1)}% vs mês ant.</span>`;
+      else deltaHtml = `<span class="pf-kpi-delta pf-delta-flat">▬ igual mês ant.</span>`;
+    }
+
+    const isFechado = per.mes_fechado;
+
+    $('pf-kpis').innerHTML = `
+      <div class="pf-kpi" style="--c:#0b1a3a;">
+        <div class="pf-kpi-label">Meta do Mês</div>
+        <div class="pf-kpi-value">${fmt(meta.fat_target)}</div>
+        <div class="pf-kpi-sub">faturamento alvo</div>
+      </div>
+      <div class="pf-kpi" style="--c:#3b82f6;">
+        <div class="pf-kpi-label">Realizado</div>
+        <div class="pf-kpi-value" style="color:#1e40af;">${fmt(real.fat)}</div>
+        <div class="pf-kpi-sub">${fmtPerc(perc.atual_fat)} da meta · ${real.port} portab. · ${real.reneg} reneg</div>
+        ${deltaHtml}
+      </div>
+      <div class="pf-kpi" style="--c:#a855f7;">
+        <div class="pf-kpi-label">${isFechado ? 'Resultado Final' : 'Projeção Fechamento'}</div>
+        <div class="pf-kpi-value" style="color:#86198f;">${fmt(proj.fat)}</div>
+        <div class="pf-kpi-sub">${isFechado ? 'valor fechado' : 'ritmo linear do mês'}</div>
+      </div>
+      <div class="pf-kpi" style="--c:#10b981;">
+        <div class="pf-kpi-label">% Projetado</div>
+        <div class="pf-kpi-value" style="color:${perc.projetado_fat >= 100 ? '#166534' : (perc.projetado_fat >= 85 ? '#b45309' : '#991b1b')};">${fmtPerc(perc.projetado_fat)}</div>
+        <div class="pf-kpi-sub">da meta ao final do mês</div>
+      </div>
+      <div class="pf-kpi" style="--c:#f59e0b;">
+        <div class="pf-kpi-label">Dias Restantes</div>
+        <div class="pf-kpi-value">${isFechado ? '—' : per.dias_restantes}</div>
+        <div class="pf-kpi-sub">${per.dias_decorridos} de ${per.dias_totais} dias</div>
+      </div>
+      <div class="pf-kpi" style="--c:#dc2626;">
+        <div class="pf-kpi-label">${isFechado ? 'Diferença Final' : 'Falta Projetado'}</div>
+        <div class="pf-kpi-value" style="color:${proj.fat >= meta.fat_target ? '#166534' : '#991b1b'};">
+          ${proj.fat >= meta.fat_target ? '+' : ''}${fmt(proj.fat - meta.fat_target)}
+        </div>
+        <div class="pf-kpi-sub">${proj.fat >= meta.fat_target ? 'acima da meta' : 'abaixo da meta'}</div>
+      </div>`;
+  }
+
+  function renderBarra(real, proj, meta, perc) {
+    const progress = $('pf-progress');
+    progress.style.display = 'block';
+
+    const metaVal = Number(meta.fat_target) || 1;
+    const realizado = Number(real.fat) || 0;
+    const projetado = Number(proj.fat) || 0;
+
+    // Escala: max(meta, projetado, realizado) * 1.1 pra deixar espaço
+    const maxVal = Math.max(metaVal, projetado, realizado) * 1.1;
+    const percReal = (realizado / maxVal) * 100;
+    const percProj = (projetado / maxVal) * 100;
+    const percMeta = (metaVal / maxVal) * 100;
+
+    const fill = $('pf-bar-fill');
+    fill.style.width = Math.min(percReal, 100) + '%';
+    fill.textContent = fmtPerc((realizado / metaVal) * 100);
+
+    const projEl = $('pf-bar-proj');
+    projEl.style.left = Math.min(percReal, 100) + '%';
+    projEl.style.width = Math.max(0, Math.min(percProj - percReal, 100 - percReal)) + '%';
+
+    $('pf-bar-meta').style.left = Math.min(percMeta, 100) + '%';
+
+    $('pf-leg-real').textContent = fmt(realizado);
+    $('pf-leg-proj').textContent = fmt(projetado);
+    $('pf-leg-meta').textContent = fmt(metaVal);
+  }
+
+  function renderGrafico(evolucao, metaTotal) {
+    const ctx = $('pf-grafico').getContext('2d');
+    if (CHART) CHART.destroy();
+
+    if (!evolucao || evolucao.length === 0) {
+      CHART = null;
+      return;
+    }
+
+    const labels = evolucao.map(e => `Dia ${e.dia_num}`);
+    const valores = evolucao.map(e => Number(e.valor_acumulado) || 0);
+    const metaAcum = evolucao.map(e => Number(e.meta_acumulada) || 0);
+
+    CHART = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels,
+        datasets: [
+          {
+            label: 'Realizado Acumulado',
+            data: valores,
+            borderColor: '#3b82f6',
+            backgroundColor: 'rgba(59, 130, 246, 0.12)',
+            borderWidth: 3, fill: true, tension: 0.3,
+            pointBackgroundColor: '#fff', pointBorderColor: '#3b82f6',
+            pointBorderWidth: 2, pointRadius: 3, pointHoverRadius: 6
+          },
+          {
+            label: 'Meta Acumulada',
+            data: metaAcum,
+            borderColor: '#dc2626',
+            backgroundColor: 'transparent',
+            borderWidth: 2, borderDash: [6, 4], fill: false, tension: 0,
+            pointRadius: 0, pointHoverRadius: 4
+          }
+        ]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11, weight: '600' }, boxWidth: 12, padding: 10 } },
+          tooltip: {
+            backgroundColor: 'rgba(15,23,42,0.95)', padding: 12,
+            callbacks: {
+              label: (c) => ` ${c.dataset.label}: ${fmt(c.parsed.y)}`
+            }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            grid: { color: 'rgba(0,0,0,0.05)' },
+            ticks: { font: { size: 10 }, color: '#64748b', callback: (v) => 'R$ ' + Number(v).toLocaleString('pt-BR') }
+          },
+          x: {
+            grid: { display: false },
+            ticks: { font: { size: 10, weight: '600' }, color: '#475569', maxRotation: 0, autoSkip: true, maxTicksLimit: 15 }
+          }
+        }
+      }
+    });
+  }
+
+  function renderTabela(porConsultor, per) {
+    $('pf-info').textContent = `${porConsultor.length} consultor(es)`;
+
+    if (porConsultor.length === 0) {
+      $('pf-tbody').innerHTML = '<tr><td colspan="8" class="pf-vazio">Nenhum consultor com venda no período.</td></tr>';
+      return;
+    }
+
+    $('pf-tbody').innerHTML = porConsultor.map((c, i) => {
+      const pos = i + 1;
+      const percAtual = Number(c.perc_atual) || 0;
+      const percProj = Number(c.perc_projetado) || 0;
+      const meta = Number(c.meta_target_fat) || 0;
+
+      // Status consultor
+      let statusCons = 'sem_meta';
+      if (meta > 0) {
+        if (per.mes_fechado) {
+          if (percAtual >= 100) statusCons = 'superou';
+          else if (percAtual >= 85) statusCons = 'fechado_ok';
+          else statusCons = 'fechado_abaixo';
+        } else {
+          if (percProj >= 100) statusCons = 'vai_bater';
+          else if (percProj >= 85) statusCons = 'risco';
+          else statusCons = 'abaixo';
+        }
+      }
+
+      const corBarra = percProj >= 100 ? '#10b981' : (percProj >= 85 ? '#f59e0b' : '#dc2626');
+      const posCls = pos <= 3 ? `p${pos}` : '';
+
+      return `<tr>
+        <td><span style="display:inline-block;width:28px;height:28px;line-height:28px;border-radius:50%;text-align:center;font-weight:800;font-size:12px;background:${posCls ? '#fef3c7' : '#f1f5f9'};color:${posCls ? '#92400e' : '#475569'};">${pos}</span></td>
+        <td>
+          <strong>${esc(c.nome_completo || c.consultor || '—')}</strong>
+          ${c.matricula ? `<br><small style="color:#94a3b8;font-size:10px;">${esc(c.matricula)}</small>` : ''}
+        </td>
+        <td class="c">${fmtInt(c.qtd_ativadas)}</td>
+        <td class="r" style="color:#1e40af;">${fmt(c.valor_ativado)}</td>
+        <td class="r" style="color:#86198f;">${fmt(c.valor_projetado)}</td>
+        <td class="r" style="color:#64748b;">${meta > 0 ? fmt(meta) : '—'}</td>
+        <td>
+          <div style="font-weight:800;font-size:12px;color:${corBarra};">${meta > 0 ? fmtPerc(percProj) : '—'}</div>
+          ${meta > 0 ? `
+            <div class="pf-bar-mini">
+              <div style="width:${Math.min(percAtual, 100)}%;background:${corBarra};"></div>
+              <div class="pf-bar-mini-mark" style="left:100%;"></div>
+            </div>
+            <small style="font-size:9px;color:#94a3b8;">atual: ${fmtPerc(percAtual)}</small>
+          ` : ''}
+        </td>
+        <td class="c">
+          <span class="pf-badge-status pf-badge ${statusCons}">
+            ${
+              statusCons === 'vai_bater' ? '🎉 Vai bater' :
+              statusCons === 'superou' ? '🏆 Superou' :
+              statusCons === 'risco' ? '⚠️ Em risco' :
+              statusCons === 'abaixo' ? '🚨 Abaixo' :
+              statusCons === 'fechado_ok' ? '✅ Fechou ok' :
+              statusCons === 'fechado_abaixo' ? '📉 Fechou baixo' :
+              '❓ Sem meta'
+            }
+          </span>
+        </td>
+      </tr>`;
+    }).join('');
+  }
+
+  function limpar() {
+    initMesAno();
+    filtrar();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // PDF
+  // ═══════════════════════════════════════════════════════════
+  function exportarPDF() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+    const real = d.realizado || {};
+    const proj = d.projetado || {};
+    const meta = d.meta || {};
+    const perc = d.percentuais || {};
+    const per = d.periodo || {};
+    const porCons = d.por_consultor || [];
+
+    const rows = porCons.map((c, i) => `
+      <tr>
+        <td style="text-align:center;">${i+1}</td>
+        <td>${esc(c.nome_completo || c.consultor || '—')}</td>
+        <td style="text-align:center;">${c.qtd_ativadas}</td>
+        <td style="text-align:right;">${fmt(c.valor_ativado)}</td>
+        <td style="text-align:right;">${fmt(c.valor_projetado)}</td>
+        <td style="text-align:right;">${c.meta_target_fat > 0 ? fmt(c.meta_target_fat) : '—'}</td>
+        <td style="text-align:center;">${fmtPerc(c.perc_projetado || 0)}</td>
+      </tr>`).join('');
+
+    const html = `<!DOCTYPE html><html><head><meta charset="utf-8"><title>Previsão de Fechamento</title>
+<style>
+  @page { size: A4 landscape; margin: 12mm; }
+  body { font-family: Arial, sans-serif; color: #0f172a; padding: 20px; }
+  .head { border-bottom: 3px solid #0b1a3a; padding-bottom: 12px; margin-bottom: 18px; display:flex; justify-content:space-between; align-items:flex-end; }
+  .head h1 { margin: 0; font-size: 18px; color: #0b1a3a; }
+  .status { padding: 12px 16px; border-radius: 10px; margin-bottom: 16px; background: #f1f5f9; }
+  .kpis { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; margin-bottom: 16px; }
+  .kpi { border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 10px; }
+  .kpi small { font-size: 8px; color: #64748b; text-transform: uppercase; font-weight: 700; }
+  .kpi strong { display: block; font-size: 14px; color: #0f172a; margin-top: 3px; }
+  table { width: 100%; border-collapse: collapse; font-size: 9px; }
+  th { background: #f1f5f9; text-align: left; padding: 6px 8px; border-bottom: 1px solid #cbd5e1; font-size: 8px; text-transform: uppercase; color: #475569; }
+  td { padding: 5px 8px; border-bottom: 1px solid #f1f5f9; }
+  .foot { margin-top: 20px; font-size: 9px; color: #94a3b8; text-align: center; }
+  .no-print { text-align:center; margin-top:20px; }
+  @media print { .no-print { display:none; } body { padding: 0; } }
+</style></head><body>
+  <div class="no-print"><button onclick="window.print()" style="padding:10px 24px;background:#0b1a3a;color:white;border:none;border-radius:8px;font-weight:700;cursor:pointer;">🖨️ Imprimir / Salvar PDF</button></div>
+  <div class="head">
+    <div>
+      <h1>VEXO · Previsão de Fechamento · ${d.periodo.mes_nome}/${d.periodo.ano}</h1>
+      <small style="color:#64748b;">Dias: ${per.dias_decorridos} de ${per.dias_totais} · Restam: ${per.dias_restantes} · Status: <b>${(d.status_projecao || '').toUpperCase().replace('_',' ')}</b></small>
+    </div>
+    <div style="text-align:right;font-size:10px;color:#64748b;">Emitido em ${new Date().toLocaleString('pt-BR')}</div>
+  </div>
+  <div class="kpis">
+    <div class="kpi"><small>Meta</small><strong>${fmt(meta.fat_target)}</strong></div>
+    <div class="kpi"><small>Realizado</small><strong>${fmt(real.fat)}</strong></div>
+    <div class="kpi"><small>${per.mes_fechado ? 'Final' : 'Projeção'}</small><strong>${fmt(proj.fat)}</strong></div>
+    <div class="kpi"><small>% Atual</small><strong>${fmtPerc(perc.atual_fat)}</strong></div>
+    <div class="kpi"><small>% Projetado</small><strong>${fmtPerc(perc.projetado_fat)}</strong></div>
+    <div class="kpi"><small>Portab. / Reneg</small><strong>${real.port} / ${real.reneg}</strong></div>
+  </div>
+  <table>
+    <thead><tr><th>#</th><th>Consultor</th><th>Ativadas</th><th>Realizado</th><th>Projetado</th><th>Meta</th><th>% Projetado</th></tr></thead>
+    <tbody>${rows}</tbody>
+  </table>
+  <div class="foot">Gerado por VEXO Intelligent Management · ${new Date().toLocaleString('pt-BR')}</div>
+</body></html>`;
+
+    const w = window.open('', '_blank', 'width=1200,height=800');
+    w.document.write(html);
+    w.document.close();
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // EXCEL
+  // ═══════════════════════════════════════════════════════════
+  function exportarExcel() {
+    if (!DADOS_ATUAIS) return;
+    const d = DADOS_ATUAIS;
+    const porCons = d.por_consultor || [];
+
+    const dados = porCons.map((c, i) => ({
+      'Posição': i + 1,
+      'Consultor': c.nome_completo || c.consultor || '',
+      'Matrícula': c.matricula || '',
+      'Ativadas': c.qtd_ativadas,
+      'Portabilidades': c.qtd_portabilidade,
+      'Renegociações': c.qtd_renegociacao,
+      'Realizado': Number(c.valor_ativado) || 0,
+      'Projetado': Number(c.valor_projetado) || 0,
+      'Meta': Number(c.meta_target_fat) || 0,
+      '% Atual': Number((c.perc_atual || 0).toFixed(1)),
+      '% Projetado': Number((c.perc_projetado || 0).toFixed(1)),
+      'Diferença': Number((c.valor_projetado - c.meta_target_fat)) || 0
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(dados);
+    ws['!cols'] = [{wch:8},{wch:30},{wch:12},{wch:10},{wch:14},{wch:14},{wch:14},{wch:14},{wch:14},{wch:12},{wch:14},{wch:14}];
+
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Projeção');
+
+    XLSX.writeFile(wb, `previsao_fechamento_${d.periodo.mes_nome}_${d.periodo.ano}.xlsx`);
+  }
+
+  function init() {
+    initMesAno();
+    setTimeout(filtrar, 300);
+  }
+
+  window.PF = { filtrar, limpar, exportarPDF, exportarExcel };
+
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else setTimeout(init, 100);
+})();
+</script>
+</body>
+</html>
