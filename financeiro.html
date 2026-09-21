@@ -554,92 +554,139 @@
   // ═══════════════════════════════════════════════════════════
   // COMISSÕES DE CARGOS
   // ═══════════════════════════════════════════════════════════
-  async function carregarComissoesCargos() {
-    const sb = getSb();
-    if (!sb) return;
+async function carregarComissoesCargos() {
+  const sb = getSb();
+  if (!sb) return;
 
-    const inputMes = $('filtro-mes-fin');
-    const [ano, mes] = (inputMes?.value || '').split('-');
-    const container = $('comissoes-cargos');
-    if (!container) return;
+  const inputMes = $('filtro-mes-fin');
+  const [ano, mes] = (inputMes?.value || '').split('-');
+  const container = $('comissoes-cargos');
+  if (!container) return;
 
-    container.innerHTML = `
-      <div style="grid-column:1/-1;text-align:center;padding:30px;color:#94a3b8;font-size:12px;">
-        Carregando comissões de cargos...
-      </div>`;
+  // 🔥 Detecta o role do usuário logado
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const role = (sessao.role || '').toUpperCase().trim();
+  const isAdmin = role === 'ADMINISTRADOR' || role === 'ADMIN';
+  const isGerente = role === 'GERENTE' || role === 'GERENTE/SUPERVISOR' || role === 'SUPERVISOR';
+  const isBackoffice = role === 'BACKOFFICE';
 
-    try {
-      const [rb, rg] = await Promise.all([
-        sb.rpc('admin_comissao_cargo', { p_cargo: 'BACKOFFICE', p_mes: parseInt(mes,10), p_ano: parseInt(ano,10) }),
-        sb.rpc('admin_comissao_cargo', { p_cargo: 'GERENTE',    p_mes: parseInt(mes,10), p_ano: parseInt(ano,10) })
-      ]);
-      if (rb.error) throw rb.error;
-      if (rg.error) throw rg.error;
+  // 🔒 Regras:
+  //   ADMIN → vê tudo
+  //   GERENTE → vê Backoffice + Gerente
+  //   BACKOFFICE → vê SÓ Backoffice (o dele)
+  const podeVerBackoffice = isAdmin || isGerente || isBackoffice;
+  const podeVerGerente = isAdmin || isGerente;
 
-      const render = (d, cor, icone, titulo) => {
-        if (!d?.success) return `<div style="grid-column:1/-1;color:#ef4444;">Erro: ${d?.message}</div>`;
-        const l = d.loja || {};
-        const t = d.tbp || {};
-        const mg = d.meta_gerencial || {};
-        const num = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+  // Quantos cards vão carregar? (pra ajustar grid)
+  const qtdCards = (podeVerBackoffice ? 1 : 0) + (podeVerGerente ? 1 : 0);
 
-        return `
-          <div style="background:white;border:1px solid #eef2f6;border-radius:16px;padding:22px 24px;box-shadow:0 2px 10px rgba(0,0,0,0.02);position:relative;overflow:hidden;">
-            <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:${cor};"></div>
-
-            <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
-              <div style="width:44px;height:44px;border-radius:12px;background:${cor}15;color:${cor};display:flex;align-items:center;justify-content:center;font-size:20px;">${icone}</div>
-              <div>
-                <div style="font-size:15px;font-weight:800;color:#0f172a;">${titulo}</div>
-                <div style="font-size:11px;color:#94a3b8;">Comissão do mês · ${String(mes).padStart(2,'0')}/${ano}</div>
-              </div>
-            </div>
-
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-              <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
-                <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;">Loja · ${l.percentual_aplicado}%</div>
-                <div style="font-size:11px;color:#475569;margin-top:4px;">Faturamento: <b>R$ ${num(l.faturamento)}</b></div>
-                <div style="font-size:16px;font-weight:800;color:${cor};margin-top:6px;">R$ ${num(l.comissao)}</div>
-              </div>
-              <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
-                <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;">TBPs · ${t.percentual_aplicado}%</div>
-                <div style="font-size:11px;color:#475569;margin-top:4px;">${t.qtd_linhas} linhas · R$ ${num(t.faturamento)}</div>
-                <div style="font-size:16px;font-weight:800;color:${cor};margin-top:6px;">R$ ${num(t.comissao)}</div>
-              </div>
-            </div>
-
-            ${mg.valor_meta > 0 ? `
-              <div style="background:${mg.bateu ? '#ecfdf5' : '#fef3c7'};border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:11px;font-weight:700;color:${mg.bateu ? '#065f46' : '#92400e'};">
-                🎯 Meta Gerencial: R$ ${num(mg.valor_meta)} · Total: R$ ${num(mg.faturamento_total)} · ${mg.bateu ? '✅ BATIDA' : '⏳ Não batida'}
-              </div>` : ''}
-
-            <div style="background:linear-gradient(135deg,#0f172a,#1e3c72);color:white;padding:16px 20px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
-              <span style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:0.7;">Total a Pagar</span>
-              <span style="font-size:22px;font-weight:800;color:#38ef7d;">R$ ${num(d.total)}</span>
-            </div>
-
-                       <div style="display:flex;gap:8px;">
-              <button onclick='abrirExtratoCargo(${JSON.stringify(d.cargo)}, "${mes}", "${ano}")'
-                style="flex:1;padding:12px;background:white;color:${cor};border:1.5px solid ${cor};border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">
-                📄 Extrato
-              </button>
-              <button onclick='confirmarPagamentoCargo(${JSON.stringify(d.cargo)}, ${d.total}, ${JSON.stringify(d)})'
-                style="flex:2;padding:12px;background:${cor};color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">
-                💰 Registrar Pagamento
-              </button>
-            </div>
-          </div>`;
-      };
-
-      container.innerHTML =
-        render(rb.data, '#3b82f6', '🧑‍💼', 'Backoffice Comercial') +
-        render(rg.data, '#8b5cf6', '👔', 'Gerente SMB');
-
-    } catch (e) {
-      console.error('[CARGOS]', e);
-      container.innerHTML = `<div style="grid-column:1/-1;color:#ef4444;text-align:center;padding:20px;">❌ ${e.message}</div>`;
-    }
+  if (qtdCards === 0) {
+    container.innerHTML = '';
+    return;
   }
+
+  // Ajusta grid conforme quantidade
+  container.style.gridTemplateColumns = qtdCards === 1 ? '1fr' : '1fr 1fr';
+
+  container.innerHTML = `
+    <div style="grid-column:1/-1;text-align:center;padding:30px;color:#94a3b8;font-size:12px;">
+      Carregando comissões de cargos...
+    </div>`;
+
+  try {
+    const rpcCalls = [];
+    if (podeVerBackoffice) {
+      rpcCalls.push(
+        sb.rpc('admin_comissao_cargo', { p_cargo: 'BACKOFFICE', p_mes: parseInt(mes,10), p_ano: parseInt(ano,10) })
+      );
+    }
+    if (podeVerGerente) {
+      rpcCalls.push(
+        sb.rpc('admin_comissao_cargo', { p_cargo: 'GERENTE', p_mes: parseInt(mes,10), p_ano: parseInt(ano,10) })
+      );
+    }
+
+    const resultados = await Promise.all(rpcCalls);
+    // Verifica erros
+    for (const r of resultados) {
+      if (r.error) throw r.error;
+    }
+
+    const render = (d, cor, icone, titulo) => {
+      if (!d?.success) {
+        return `<div style="grid-column:1/-1;color:#ef4444;padding:20px;text-align:center;background:#fef2f2;border-radius:12px;">
+          ❌ ${d?.message || 'Erro ao carregar'}
+        </div>`;
+      }
+      const l = d.loja || {};
+      const t = d.tbp || {};
+      const mg = d.meta_gerencial || {};
+      const num = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+
+      return `
+        <div style="background:white;border:1px solid #eef2f6;border-radius:16px;padding:22px 24px;box-shadow:0 2px 10px rgba(0,0,0,0.02);position:relative;overflow:hidden;">
+          <div style="position:absolute;top:0;left:0;width:100%;height:4px;background:${cor};"></div>
+
+          <div style="display:flex;align-items:center;gap:12px;margin-bottom:18px;">
+            <div style="width:44px;height:44px;border-radius:12px;background:${cor}15;color:${cor};display:flex;align-items:center;justify-content:center;font-size:20px;">${icone}</div>
+            <div>
+              <div style="font-size:15px;font-weight:800;color:#0f172a;">${titulo}</div>
+              <div style="font-size:11px;color:#94a3b8;">Comissão do mês · ${String(mes).padStart(2,'0')}/${ano}</div>
+            </div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
+            <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
+              <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;">Loja · ${l.percentual_aplicado}%</div>
+              <div style="font-size:11px;color:#475569;margin-top:4px;">Faturamento: <b>R$ ${num(l.faturamento)}</b></div>
+              <div style="font-size:16px;font-weight:800;color:${cor};margin-top:6px;">R$ ${num(l.comissao)}</div>
+            </div>
+            <div style="background:#f8fafc;border-radius:10px;padding:12px 14px;">
+              <div style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;">TBPs · ${t.percentual_aplicado}%</div>
+              <div style="font-size:11px;color:#475569;margin-top:4px;">${t.qtd_linhas} linhas · R$ ${num(t.faturamento)}</div>
+              <div style="font-size:16px;font-weight:800;color:${cor};margin-top:6px;">R$ ${num(t.comissao)}</div>
+            </div>
+          </div>
+
+          ${mg.valor_meta > 0 ? `
+            <div style="background:${mg.bateu ? '#ecfdf5' : '#fef3c7'};border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:11px;font-weight:700;color:${mg.bateu ? '#065f46' : '#92400e'};">
+              🎯 Meta Gerencial: R$ ${num(mg.valor_meta)} · Total: R$ ${num(mg.faturamento_total)} · ${mg.bateu ? '✅ BATIDA' : '⏳ Não batida'}
+            </div>` : ''}
+
+          <div style="background:linear-gradient(135deg,#0f172a,#1e3c72);color:white;padding:16px 20px;border-radius:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <span style="font-size:11px;text-transform:uppercase;letter-spacing:1px;opacity:0.7;">Total a Pagar</span>
+            <span style="font-size:22px;font-weight:800;color:#38ef7d;">R$ ${num(d.total)}</span>
+          </div>
+
+          <div style="display:flex;gap:8px;">
+            <button onclick='abrirExtratoCargo(${JSON.stringify(d.cargo)}, "${mes}", "${ano}")'
+              style="flex:1;padding:12px;background:white;color:${cor};border:1.5px solid ${cor};border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">
+              📄 Extrato
+            </button>
+            <button onclick='confirmarPagamentoCargo(${JSON.stringify(d.cargo)}, ${d.total}, ${JSON.stringify(d)})'
+              style="flex:2;padding:12px;background:${cor};color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">
+              💰 Registrar Pagamento
+            </button>
+          </div>
+        </div>`;
+    };
+
+    let html = '';
+    let idx = 0;
+    if (podeVerBackoffice) {
+      html += render(resultados[idx++].data, '#3b82f6', '🧑‍💼', 'Backoffice Comercial');
+    }
+    if (podeVerGerente) {
+      html += render(resultados[idx++].data, '#8b5cf6', '👔', 'Gerente SMB');
+    }
+
+    container.innerHTML = html;
+
+  } catch (e) {
+    console.error('[CARGOS]', e);
+    container.innerHTML = `<div style="grid-column:1/-1;color:#ef4444;text-align:center;padding:20px;">❌ ${e.message}</div>`;
+  }
+}
 
   async function confirmarPagamentoCargo(cargo, total, detalhes) {
     if (!confirm(`Registrar pagamento de ${cargo} no valor de R$ ${Number(total).toFixed(2)}?`)) return;
