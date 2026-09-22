@@ -1319,7 +1319,7 @@ function fecharConfirmModal() {
   // 🎨 MODAL DE SOLICITAÇÃO DE DATA
   // ============================================
   
-function showDateModal(type, onConfirm) {
+function showDateModal(type, onConfirm, dataSugerida) {
     let modal = document.getElementById('vexo-date-modal');
 
     if (!modal) {
@@ -1337,9 +1337,14 @@ function showDateModal(type, onConfirm) {
               <span style="font-size: 30px;">📅</span>
             </div>
             <p id="date-modal-message" style="color: #475569; margin-bottom: 20px; font-size: 14px; line-height: 1.5;"></p>
+
+            <!-- 🔥 NOVO: aviso/hint sobre a data do RADAR -->
+            <div id="date-modal-hint" style="display:none; margin-bottom: 16px; padding: 10px 14px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; font-size: 12px; color: #1e40af; text-align: left; line-height: 1.5;"></div>
+
             <div style="margin-bottom: 20px; text-align: left;">
               <label style="font-size: 12px; font-weight: 700; color: #1e293b; display: block; margin-bottom: 6px;">DATA</label>
               <input type="date" id="date-modal-input" style="width: 100%; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; font-size: 14px; box-sizing: border-box; font-family: inherit;">
+              <div id="date-modal-error" style="display:none; margin-top: 8px; font-size: 12px; color: #ef4444; font-weight: 600;"></div>
             </div>
             <div style="display: flex; gap: 12px;">
               <button class="btn-secondary" id="date-modal-cancel" style="flex: 1; padding: 12px 20px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; border: none; background: #f1f5f9; color: #64748b; font-family: inherit;">Cancelar</button>
@@ -1356,6 +1361,9 @@ function showDateModal(type, onConfirm) {
       document.body.appendChild(modal);
     }
 
+    // ═══════════════════════════════════════════════════════
+    // TÍTULO + MENSAGEM
+    // ═══════════════════════════════════════════════════════
     if (type === 'boc') {
       document.getElementById('date-modal-title').innerHTML = '<i class="fas fa-check-double"></i> Aprovação BOC';
       document.getElementById('date-modal-message').innerHTML = 'Informe a <strong>data de aprovação pelo BOC</strong> para avançar o pedido.';
@@ -1364,11 +1372,46 @@ function showDateModal(type, onConfirm) {
       document.getElementById('date-modal-message').innerHTML = 'Informe a <strong>data de ativação do serviço</strong> para concluir o pedido.';
     }
 
-    document.getElementById('date-modal-input').value = '';
+    // ═══════════════════════════════════════════════════════
+    // 🔥 NOVO: RESET DO INPUT, HINT E ERRO
+    // ═══════════════════════════════════════════════════════
+    const inputEl = document.getElementById('date-modal-input');
+    const hintEl  = document.getElementById('date-modal-hint');
+    const errorEl = document.getElementById('date-modal-error');
 
+    inputEl.value = '';
+    inputEl.style.border = '1px solid #e2e8f0';
+    inputEl.style.boxShadow = '';
+    errorEl.style.display = 'none';
+    errorEl.innerHTML = '';
+
+    // ═══════════════════════════════════════════════════════
+    // 🔥 NOVO: PRÉ-PREENCHER COM A DATA DO RADAR (se houver)
+    // ═══════════════════════════════════════════════════════
+    if (type === 'ativacao' && dataSugerida) {
+      const iso = converterParaISO(dataSugerida);
+      if (iso) inputEl.value = iso;
+
+      hintEl.style.display = 'block';
+      hintEl.innerHTML = `
+        <div style="display:flex;align-items:flex-start;gap:8px;">
+          <span style="font-size:16px;">ℹ️</span>
+          <div>
+            Data atual no <b>RADAR</b>: <b style="color:#1e3c72;font-size:13px;">${dataSugerida}</b>
+            <br><span style="font-size:11px;color:#3b82f6;">Se a data correta for diferente, altere abaixo. O sistema vai conferir se os meses batem.</span>
+          </div>
+        </div>
+      `;
+    } else {
+      hintEl.style.display = 'none';
+      hintEl.innerHTML = '';
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // ESTILOS FORÇADOS (mantidos do original)
+    // ═══════════════════════════════════════════════════════
     const modalEl = document.getElementById('vexo-date-modal');
 
-    // 🔥 Zera estilos inline antigos e aplica corretos
     modalEl.removeAttribute('style');
     modalEl.style.cssText = `
       position: fixed !important;
@@ -1386,7 +1429,6 @@ function showDateModal(type, onConfirm) {
       overflow: hidden !important;
     `;
 
-    // 🔥 Reforça o container interno
     const containerEl = modalEl.querySelector('.modal-container');
     if (containerEl) {
       containerEl.style.cssText = `
@@ -1404,7 +1446,6 @@ function showDateModal(type, onConfirm) {
       `;
     }
 
-    // 🔥 Reforça o header
     const headerEl = modalEl.querySelector('.modal-header');
     if (headerEl) {
       headerEl.style.cssText = `
@@ -1419,7 +1460,6 @@ function showDateModal(type, onConfirm) {
       `;
     }
 
-    // 🔥 Reforça o título do header
     const titleEl = modalEl.querySelector('.modal-header h3');
     if (titleEl) {
       titleEl.style.cssText = `
@@ -1433,7 +1473,6 @@ function showDateModal(type, onConfirm) {
       `;
     }
 
-    // 🔥 Reforça o X de fechar
     const closeEl = modalEl.querySelector('.modal-close');
     if (closeEl) {
       closeEl.style.cssText = `
@@ -1454,7 +1493,6 @@ function showDateModal(type, onConfirm) {
       `;
     }
 
-    // 🔥 Reforça o body
     const bodyEl = modalEl.querySelector('.modal-body');
     if (bodyEl) {
       bodyEl.style.cssText = `
@@ -1468,17 +1506,75 @@ function showDateModal(type, onConfirm) {
 
     modalEl.classList.add('active');
 
+    // ═══════════════════════════════════════════════════════
+    // 🔥 NOVO: HELPERS DE VALIDAÇÃO
+    // ═══════════════════════════════════════════════════════
+    const limparErro = () => {
+      errorEl.style.display = 'none';
+      errorEl.innerHTML = '';
+      inputEl.style.border = '1px solid #e2e8f0';
+      inputEl.style.boxShadow = '';
+    };
+
+    const mostrarErro = (msg) => {
+      errorEl.style.display = 'block';
+      errorEl.innerHTML = `⚠️ ${msg}`;
+      inputEl.style.border = '2px solid #ef4444';
+      inputEl.style.boxShadow = '0 0 0 3px rgba(239,68,68,0.15)';
+    };
+
+    // Limpa o erro assim que o usuário mexer na data
+    inputEl.addEventListener('input', limparErro);
+    inputEl.addEventListener('change', limparErro);
+
+    // ═══════════════════════════════════════════════════════
+    // HANDLERS
+    // ═══════════════════════════════════════════════════════
     const onConfirmClick = () => {
-      const input = document.getElementById('date-modal-input');
-      const data = input.value;
+      const data = inputEl.value;
 
       if (!data) {
-        showToast('Por favor, informe a data para continuar.', 'warning');
+        mostrarErro('Informe a data para continuar.');
         return;
       }
 
-      const [ano, mes, dia] = data.split('-');
-      const dataFormatada = `${dia}/${mes}/${ano}`;
+      const [ano, mes, dia] = data.split('-').map(Number);
+      const dataObj = new Date(ano, mes - 1, dia);
+      const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+
+      // 🔥 VALIDAÇÃO 1: data futura
+      if (dataObj > hoje) {
+        mostrarErro('A data não pode estar no futuro.');
+        return;
+      }
+
+      // 🔥 VALIDAÇÃO 2: data muito antiga (> 180 dias)
+      const diffDias = Math.floor((hoje - dataObj) / (1000 * 60 * 60 * 24));
+      if (diffDias > 180) {
+        // Não bloqueia, mas avisa via toast e destaca o campo
+        inputEl.style.border = '2px solid #f59e0b';
+        inputEl.style.boxShadow = '0 0 0 3px rgba(245,158,11,0.15)';
+        showToast(
+          `⚠️ Essa data tem <b>${diffDias} dias</b> (mais de 6 meses). Confira antes de confirmar.`,
+          'warning'
+        );
+        // Permite seguir — o usuário decide
+      }
+
+      const dataFormatada = `${String(dia).padStart(2, '0')}/${String(mes).padStart(2, '0')}/${ano}`;
+
+      // 🔥 VALIDAÇÃO 3: se veio uma dataSugerida e o mês/ano divergem, avisa mas deixa passar
+      // (o bloqueio real com confirmação acontece em atualizarStatus → Patch 3)
+      if (type === 'ativacao' && dataSugerida) {
+        const ref = converterParaISO(dataSugerida);
+        if (ref) {
+          const [aRef, mRef] = ref.split('-').map(Number);
+          if (aRef !== ano || mRef !== mes) {
+            // Aviso curto, mas deixa o caller decidir (showConfirmModal lá em cima)
+            console.warn(`⚠️ [date-modal] data digitada (${dataFormatada}) difere do RADAR (${dataSugerida})`);
+          }
+        }
+      }
 
       fecharDateModal();
       if (onConfirm) onConfirm(dataFormatada);
@@ -1492,13 +1588,41 @@ function showDateModal(type, onConfirm) {
     };
 
     const cleanup = () => {
-      document.getElementById('date-modal-confirm').removeEventListener('click', onConfirmClick);
-      document.getElementById('date-modal-cancel').removeEventListener('click', onCancelClick);
+      const btnConf = document.getElementById('date-modal-confirm');
+      const btnCanc = document.getElementById('date-modal-cancel');
+      if (btnConf) btnConf.removeEventListener('click', onConfirmClick);
+      if (btnCanc) btnCanc.removeEventListener('click', onCancelClick);
+      inputEl.removeEventListener('input', limparErro);
+      inputEl.removeEventListener('change', limparErro);
     };
+
+    // ═══════════════════════════════════════════════════════
+    // ❗ BUGFIX: `onCancel` não existe como parâmetro desta função.
+    // Aqui ele é declarado para evitar ReferenceError ao clicar em Cancelar.
+    // Se você quiser realmente ter callback de cancelamento, adicione como
+    // 4º parâmetro: showDateModal(type, onConfirm, dataSugerida, onCancel)
+    // ═══════════════════════════════════════════════════════
+    const onCancel = (typeof onCancelParam !== 'undefined') ? onCancelParam : null;
 
     document.getElementById('date-modal-confirm').addEventListener('click', onConfirmClick);
     document.getElementById('date-modal-cancel').addEventListener('click', onCancelClick);
+}
+
+// ═══════════════════════════════════════════════════════════
+// 🔥 HELPER: converte "21/09/2026" ou "2026-09-21" para "2026-09-21"
+//    (necessário para o <input type="date">)
+// ═══════════════════════════════════════════════════════════
+function converterParaISO(dataStr) {
+  if (!dataStr) return '';
+  const s = String(dataStr).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(s)) return s.substring(0, 10);
+  const p = s.split('/');
+  if (p.length === 3) {
+    const [d, m, a] = p;
+    return `${a.padStart(4, '0')}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
   }
+  return '';
+}
 function fecharDateModal() {
   const modal = document.getElementById('vexo-date-modal');
   if (modal) {
@@ -2524,7 +2648,6 @@ function handleDetailClick(event) {
   // ============================================
   // ATUALIZAR STATUS (COM MODAIS PERSONALIZADOS)
   // ============================================
-  
 function atualizarStatus(idUnico, direcao, origem) {
   const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico);
 
@@ -2571,7 +2694,9 @@ function atualizarStatus(idUnico, direcao, origem) {
     const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
     const nomeUsuario = sessao.nome || sessao.username || 'Sistema';
 
-    const idUnico = pedido.id_unico || '';
+    // 🔥 RENOMEADO: antes era `const idUnico = ...` (shadowing do parâmetro).
+    //    Agora usa `idUnicoFinal` para deixar claro que é o valor do pedido.
+    const idUnicoFinal = pedido.id_unico || '';
     const bancoDeDadosId = pedido.bancoDeDadosId || null;
 
     google.script.run
@@ -2599,7 +2724,7 @@ function atualizarStatus(idUnico, direcao, origem) {
         null,
         null,
         nomeUsuario,
-        idUnico,
+        idUnicoFinal,
         bancoDeDadosId
       );
 
@@ -2650,11 +2775,55 @@ function atualizarStatus(idUnico, direcao, origem) {
     direcao === 'avancar' ? '<i class="fas fa-arrow-right"></i> Avançar Etapa' : '<i class="fas fa-arrow-left"></i> Voltar Etapa',
     `Deseja ${direcao === 'avancar' ? 'avançar' : 'voltar'} o pedido <strong>${pedido.cliente.substring(0, 40)}</strong> da etapa <strong>${statusAtualLabel}</strong> para <strong>${novoStatusLabel}</strong>?`,
     () => {
-      // Lógica de modais específicos (BOC e Ativação)
+      // ═══════════════════════════════════════════════════════
+      // BOC: modal de data simples
+      // ═══════════════════════════════════════════════════════
       if (novoStatus === "3. DOCS VALIDADOS BOC") {
         showDateModal('boc', (data) => executarAtualizacaoStatus(linha, origem, novoStatus, null, data));
+
+      // ═══════════════════════════════════════════════════════
+      // ATIVAÇÃO: modal com pré-preenchimento + cross-validation RADAR × TIM
+      // ═══════════════════════════════════════════════════════
       } else if (novoStatus === "6. ATIVADO") {
-        showDateModal('ativacao', (data) => executarAtualizacaoStatus(linha, origem, novoStatus, data, null));
+        showDateModal(
+          'ativacao',
+          (data) => {
+            // 🔥 CROSS-CHECK: se RADAR tem data e diverge em mês/ano do que foi digitado,
+            //    abre um modal de confirmação em cima do modal de data.
+            const radar = pedido.data_radar;
+            if (radar) {
+              const r = parseDataBR(radar);
+              const t = parseDataBR(data);
+              const divergente = r && t &&
+                (r.getMonth() !== t.getMonth() || r.getFullYear() !== t.getFullYear());
+
+              if (divergente) {
+                const radarFormatado = r.toLocaleDateString('pt-BR');
+                const timFormatado   = t.toLocaleDateString('pt-BR');
+
+                showConfirmModal(
+                  '<i class="fas fa-exclamation-triangle"></i> Datas divergentes',
+                  `A data no <b>RADAR</b> está em <b style="color:#b45309;">${radarFormatado}</b> e a data que você digitou é <b style="color:#b45309;">${timFormatado}</b>.
+                   <br><br>Elas estão em <b>meses/anos diferentes</b>. Isso pode fazer o pedido ser contabilizado no mês errado.
+                   <br><br><span style="font-size:12px;color:#64748b;">Se o RADAR está errado, clique em Cancelar, corrija o card "Ativação no Sistema RADAR" no detalhe do pedido e tente de novo.</span>`,
+                  // Confirmou mesmo assim
+                  () => executarAtualizacaoStatus(linha, origem, novoStatus, data, null),
+                  // Cancelou
+                  () => showToast('Operação cancelada. Corrija a data do RADAR antes de ativar.', 'info')
+                );
+                return;
+              }
+            }
+
+            // Sem divergência (ou sem RADAR preenchido), segue o fluxo normal
+            executarAtualizacaoStatus(linha, origem, novoStatus, data, null);
+          },
+          pedido.data_radar || null   // 🔥 3º parâmetro: pré-preenche o input e mostra hint
+        );
+
+      // ═══════════════════════════════════════════════════════
+      // DEMAIS ETAPAS: segue sem data
+      // ═══════════════════════════════════════════════════════
       } else {
         executarAtualizacaoStatus(linha, origem, novoStatus, null, null);
       }
