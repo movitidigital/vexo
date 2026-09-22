@@ -749,6 +749,99 @@
    🎛️ SIDEBAR RECOLHÍVEL — VEXO
    ═══════════════════════════════════════════════════════════ */
 
+.sidebar-erp {
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Botão flutuante na borda direita da sidebar */
+.sidebar-toggle {
+  position: absolute !important;
+  top: 90px !important;
+  right: -14px !important;
+  width: 28px !important;
+  height: 28px !important;
+  border-radius: 50% !important;
+  background: #1e293b !important;
+  color: #94a3b8 !important;
+  border: 2px solid #334155 !important;
+  cursor: pointer !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 800;
+  padding: 0 !important;
+  z-index: 9999 !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: all 0.25s ease;
+  font-family: 'Poppins', sans-serif;
+  line-height: 1;
+  pointer-events: auto !important;
+}
+
+.sidebar-toggle:hover {
+  background: #3b82f6 !important;
+  color: #fff !important;
+  border-color: #60a5fa !important;
+  transform: scale(1.1);
+}
+
+.sidebar-toggle-icon {
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: -3px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ESTADO RECOLHIDO
+   ═══════════════════════════════════════════════════════════ */
+.sidebar-erp.collapsed {
+  width: 76px !important;
+}
+
+.sidebar-erp.collapsed .sidebar-logo {
+  padding: 0 8px;
+  margin-bottom: 40px;
+}
+
+.sidebar-erp.collapsed .logo-img-sidebar {
+  width: 48px;
+}
+
+.sidebar-erp.collapsed .sidebar-item {
+  width: calc(100% - 16px);
+  margin: 4px 8px;
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebar-erp.collapsed .sidebar-item span {
+  display: none;
+}
+
+.sidebar-erp.collapsed .sidebar-item i {
+  font-size: 22px;
+  width: auto;
+}
+
+.sidebar-erp.collapsed .sidebar-item.active::before {
+  left: 0;
+  height: 60%;
+  top: 20%;
+}
+
+.sidebar-erp.collapsed .sidebar-separator {
+  margin: 15px 12px;
+}
+
+.sidebar-erp.collapsed .sidebar-toggle-icon {
+  transform: rotate(180deg);
+}
+    /* ═══════════════════════════════════════════════════════════
+   🎛️ SIDEBAR RECOLHÍVEL — VEXO
+   ═══════════════════════════════════════════════════════════ */
+
 /* Botão de toggle — fica flutuando na borda direita do sidebar */
 .sidebar-erp {
   position: relative;
@@ -3182,6 +3275,83 @@ window.addEventListener('resize', () => {
 // Expõe global para os onclick=""
 window.toggleSidebar = toggleSidebar;
 window.restaurarEstadoSidebar = restaurarEstadoSidebar;
+  // ═══════════════════════════════════════════════════════════
+// 🎛️ SIDEBAR RECOLHÍVEL — VEXO
+// ═══════════════════════════════════════════════════════════
+(function initSidebarToggle() {
+  'use strict';
+  console.log('🎛️ [SIDEBAR] Inicializando...');
+
+  const STORAGE_KEY = 'vexoSidebarCollapsed';
+
+  function getSidebar() {
+    return document.getElementById('sidebar-erp') || document.querySelector('.sidebar-erp');
+  }
+  function getToggle() {
+    return document.getElementById('sidebar-toggle') || document.querySelector('.sidebar-toggle');
+  }
+
+  window.toggleSidebar = function(event) {
+    if (event) { event.preventDefault(); event.stopPropagation(); }
+
+    const sidebar = getSidebar();
+    const toggle  = getToggle();
+
+    console.log('🎛️ [SIDEBAR] Clique! sidebar =', !!sidebar);
+
+    if (!sidebar) {
+      console.error('❌ [SIDEBAR] .sidebar-erp NÃO ENCONTRADO no DOM!');
+      return;
+    }
+
+    const collapsed = sidebar.classList.toggle('collapsed');
+
+    if (toggle) {
+      toggle.title = collapsed ? 'Expandir menu' : 'Recolher menu';
+    }
+
+    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch(e) {}
+
+    console.log('✅ [SIDEBAR]', collapsed ? 'RECOLHIDA' : 'EXPANDIDA');
+  };
+
+  // 🔥 Delegação de evento (funciona mesmo se o botão for re-injetado)
+  document.addEventListener('click', function(e) {
+    const btn = e.target.closest('#sidebar-toggle, .sidebar-toggle');
+    if (btn) {
+      console.log('🎯 [SIDEBAR] Clique capturado via delegação');
+      window.toggleSidebar(e);
+    }
+  }, true); // capture = true pega antes de qualquer outro handler
+
+  // Restaura estado salvo
+  function restaurar() {
+    const sidebar = getSidebar();
+    const toggle  = getToggle();
+    if (!sidebar) {
+      console.warn('⚠️ [SIDEBAR] Não foi possível restaurar — sidebar não existe');
+      return;
+    }
+
+    let collapsed = false;
+    try { collapsed = localStorage.getItem(STORAGE_KEY) === '1'; } catch(e) {}
+    if (window.innerWidth < 900) collapsed = true;
+
+    if (collapsed) {
+      sidebar.classList.add('collapsed');
+      if (toggle) toggle.title = 'Expandir menu';
+    }
+    console.log('🎛️ [SIDEBAR] Estado restaurado:', collapsed ? 'recolhido' : 'expandido');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', restaurar);
+  } else {
+    restaurar();
+  }
+
+  console.log('✅ [SIDEBAR] Pronto pra uso');
+})();
 </script>
 </body>
 </html>
