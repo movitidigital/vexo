@@ -417,8 +417,18 @@
     const role      = document.getElementById('u_role').value;
     const ativo     = document.getElementById('u_active').value === 'true';
 
-    const perms = [];
-    document.querySelectorAll('input[name="u_perm"]:checked').forEach(c => perms.push(c.value));
+   let perms = [];
+document.querySelectorAll('input[name="u_perm"]:checked').forEach(c => perms.push(c.value));
+
+// 🔥 Se o admin não marcou nada, herda o padrão do cargo automaticamente
+if (perms.length === 0 && role) {
+  const { data } = await sb
+    .from('role_permissions')
+    .select('permission')
+    .eq('role', role);
+  perms = (data || []).map(r => r.permission);
+  console.log(`ℹ️ [VEXO] Sem perms custom → herdando ${perms.length} do cargo ${role}`);
+}
 
     // ---- Validações ----
     if (!matricula || !nome || !email || !role) {
