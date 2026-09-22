@@ -1106,70 +1106,104 @@ async function iniciarImportacao() {
   const errosDetalhes = [];
 
   try {
+    // ═══════════════ MODO REPLACE: apaga tudo antes ═══════════════
     if (modo === 'replace' && !dryRun) {
       log('warn', 'Apagando registros existentes...');
-      const { error: delErr } = await sb.from(SQL_TABLE).delete().neq('id', '00000000-0000-0000-0000-000000000000');
+      const { error: delErr } = await sb
+        .from(SQL_TABLE)
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000');
       if (delErr) throw delErr;
       log('ok', 'Tabela limpa.');
     }
 
+    // ═══════════════ MODO IGNORE: carrega chaves existentes ═══════════════
     let chavesExistentes = new Set();
     if (modo === 'ignore' && !dryRun) {
       log('info', 'Verificando duplicados...');
-      const { data: existentes, error: exErr } = await sb.from(SQL_TABLE).select('cnpj, data_retomada');
-      if (exErr) log('warn', 'Não consegui carregar existentes: ' + exErr.message);
-      else {
-        (existentes || []).forEach(e => { chavesExistentes.add(`${limparCNPJ(e.cnpj)}__${e.data_retomada}`); });
+      const { data: existentes, error: exErr } = await sb
+        .from(SQL_TABLE)
+        .select('cnpj, data_retomada');
+
+      if (exErr) {
+        log('warn', 'Não consegui carregar existentes: ' + exErr.message);
+      } else {
+        (existentes || []).forEach(e => {
+          chavesExistentes.add(`${limparCNPJ(e.cnpj)}__${e.data_retomada}`);
+        });
         log('info', `${chavesExistentes.size} registros já existentes.`);
       }
     }
 
+    // ═══════════════ LOOP DE INSERÇÃO ═══════════════
     for (let i = 0; i < dadosProntos.length; i++) {
       const d = dadosProntos[i];
       const pct = Math.round((i / dadosProntos.length) * 100);
       atualizarProgresso(pct, i + 1, dadosProntos.length);
 
+      // Deduplicação
       if (modo === 'ignore' && !dryRun) {
         const chave = `${limparCNPJ(d.cnpj)}__${d.data_retomada}`;
         if (chavesExistentes.has(chave)) {
           ignorados++;
-          log('warn', `[${i+1}] Ignorado: ${d.razao_social}`);
+          log('warn', `[${i + 1}] Ignorado (duplicado): ${d.razao_social}`);
           continue;
         }
         chavesExistentes.add(chave);
       }
 
+      // ═══════════════════════════════════════════════════════════
+      // 🔥 PAYLOAD BLINDADO — todos os campos com fallback
+      // ═══════════════════════════════════════════════════════════
       const payload = {
-        cnpj: d.cnpj, razao_social: d.razao_social,
-        contato: d.contato, contato_alt: d.contato_alt,
-        codigo_cliente: d.codigo_cliente,
-        tipo: d.tipo, prioridade: d.prioridade,
-        motivo: d.motivo, data_retomada: d.data_retomada,
-        status: d.status,
-        valor_potencial: d.valor_potencial,
-        qtd_linhas_estimada: d.qtd_linhas_estimada,
-        documentacao_capturada: d.documentacao_capturada
-      };
-      if (d.consultor_id) payload.consultor_id = d.consultor_id;
+        cnpj:                 d.cnpj || 'SEM_CNPJ',
+        razao_social:         d.razao_social || '(Sem razão social)',
+        contato:              d.contato || null,
+        contato_alt:          d.contato_alt || null,
+        codigo_cliente:       d.codigo_cliente || null,
+        tipo:                 d.tipo || 'NEGOCIACAO_FUTURA',
+        prioridade:           d.prioridade || 'MEDIA',
+        motivo:               d.motivo || '(sem motivo informado)',
+        data_retomada:        d.data_retomada,
+        status:               d.status || 'AGENDADO',
+        valor_potencial:      d.valor_potencial || null,
+        qtd_linhas_estimada:  d.qtd_linhas_estimada || null,
+        documentacao_capturada: d.documentacao_capturada === true,
 
+        // 🔥🔥🔥 A LINHA QUE ESTAVA FALTANDO:
+        consultor_nome:       (d.consultor_nome && String(d.consultor_nome).trim()) || '—'
+      };
+
+      // Só envia consultor_id se ele existir (evita violar FK)
+      if (d.consultor_id) {
+        payload.consultor_id = d.consultor_id;
+      }
+
+      // ═══════════════ MODO DRY-RUN ═══════════════
       if (dryRun) {
-        log('info', `[${i+1}] SIMULAÇÃO: ${d.razao_social}`);
+        log('info', `[${i + 1}] SIMULAÇÃO: ${d.razao_social} — consultor: ${payload.consultor_nome}`);
         inseridos++;
         continue;
       }
 
+      // ═══════════════ INSERT NO SUPABASE ═══════════════
       try {
         const { error } = await sb.from(SQL_TABLE).insert(payload);
         if (error) throw error;
         inseridos++;
-        log('ok', `[${i+1}] ✓ ${d.razao_social.slice(0, 50)}`);
+        log('ok', `[${i + 1}] ✓ ${d.razao_social.slice(0, 50)} — ${payload.consultor_nome}`);
       } catch (e) {
         erros++;
-        errosDetalhes.push({ idx: i + 1, empresa: d.razao_social, erro: e.message });
-        log('err', `[${i+1}] ✗ ${d.razao_social.slice(0, 40)} — ${e.message}`);
+        errosDetalhes.push({
+          idx: i + 1,
+          empresa: d.razao_social,
+          erro: e.message
+        });
+        log('err', `[${i + 1}] ✗ ${d.razao_social.slice(0, 40)} — ${e.message}`);
       }
     }
 
+    // ═══════════════ RESUMO FINAL ═══════════════
     atualizarProgresso(100, dadosProntos.length, dadosProntos.length);
 
     document.getElementById('summary').innerHTML = `
@@ -1180,6 +1214,7 @@ async function iniciarImportacao() {
     `;
 
     log('ok', `🏁 Finalizado: ${inseridos} inseridos, ${ignorados} ignorados, ${erros} erros.`);
+
     if (erros > 0) baixarRelatorioErros(errosDetalhes);
     if (!dryRun && inseridos > 0) document.getElementById('step4').classList.add('completed');
 
