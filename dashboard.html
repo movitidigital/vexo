@@ -3275,82 +3275,116 @@ window.addEventListener('resize', () => {
 // Expõe global para os onclick=""
 window.toggleSidebar = toggleSidebar;
 window.restaurarEstadoSidebar = restaurarEstadoSidebar;
-  // ═══════════════════════════════════════════════════════════
-// 🎛️ SIDEBAR RECOLHÍVEL — VEXO
+// ═══════════════════════════════════════════════════════════
+// 🎛️ SIDEBAR RECOLHÍVEL — VEXO (v2 — auto-collapse responsivo)
 // ═══════════════════════════════════════════════════════════
 (function initSidebarToggle() {
   'use strict';
   console.log('🎛️ [SIDEBAR] Inicializando...');
 
-  const STORAGE_KEY = 'vexoSidebarCollapsed';
+  const STORAGE_KEY    = 'vexoSidebarCollapsed';       // preferência desktop
+  const SESSION_KEY    = 'vexoSidebarManualOverride';  // override da sessão (mobile)
+  const BREAKPOINT     = 1024;                          // <=1024 = "tela pequena"
 
-  function getSidebar() {
-    return document.getElementById('sidebar-erp') || document.querySelector('.sidebar-erp');
-  }
-  function getToggle() {
-    return document.getElementById('sidebar-toggle') || document.querySelector('.sidebar-toggle');
+  const getSidebar = () => document.querySelector('.sidebar-erp');
+  const getToggle  = () => document.querySelector('.sidebar-toggle');
+  const isSmall    = () => window.innerWidth <= BREAKPOINT;
+
+  function applyState() {
+    const sidebar = getSidebar();
+    const toggle  = getToggle();
+    if (!sidebar) return;
+
+    let collapsed;
+    if (isSmall()) {
+      // 📱 Tablet/Mobile: recolhe POR PADRÃO, a menos que o usuário
+      // tenha expandido manualmente nesta sessão
+      const override = sessionStorage.getItem(SESSION_KEY);
+      collapsed = override !== 'expand';
+    } else {
+      // 🖥️ Desktop: respeita a preferência salva
+      try { collapsed = localStorage.getItem(STORAGE_KEY) === '1'; }
+      catch(e) { collapsed = false; }
+    }
+
+    sidebar.classList.toggle('collapsed', collapsed);
+    if (toggle) toggle.title = collapsed ? 'Expandir menu' : 'Recolher menu';
+
+    console.log(
+      `🎛️ [SIDEBAR] ${collapsed ? 'RECOLHIDA' : 'EXPANDIDA'} ` +
+      `| innerWidth=${window.innerWidth} | small=${isSmall()}`
+    );
   }
 
+  // Toggle do usuário
   window.toggleSidebar = function(event) {
     if (event) { event.preventDefault(); event.stopPropagation(); }
 
     const sidebar = getSidebar();
-    const toggle  = getToggle();
-
-    console.log('🎛️ [SIDEBAR] Clique! sidebar =', !!sidebar);
-
     if (!sidebar) {
-      console.error('❌ [SIDEBAR] .sidebar-erp NÃO ENCONTRADO no DOM!');
+      console.error('❌ [SIDEBAR] sidebar-erp não encontrada');
       return;
     }
 
-    const collapsed = sidebar.classList.toggle('collapsed');
+    const nowCollapsed = !sidebar.classList.contains('collapsed');
+    sidebar.classList.toggle('collapsed', nowCollapsed);
 
-    if (toggle) {
-      toggle.title = collapsed ? 'Expandir menu' : 'Recolher menu';
-    }
+    const toggle = getToggle();
+    if (toggle) toggle.title = nowCollapsed ? 'Expandir menu' : 'Recolher menu';
 
-    try { localStorage.setItem(STORAGE_KEY, collapsed ? '1' : '0'); } catch(e) {}
+    // Salva em chaves diferentes conforme o contexto
+    try {
+      if (isSmall()) {
+        // 📱 No mobile, só vale pra esta sessão (volta ao recolhido no próximo carregamento)
+        sessionStorage.setItem(SESSION_KEY, nowCollapsed ? 'collapse' : 'expand');
+      } else {
+        // 🖥️ No desktop, a preferência é permanente
+        localStorage.setItem(STORAGE_KEY, nowCollapsed ? '1' : '0');
+      }
+    } catch(e) {}
 
-    console.log('✅ [SIDEBAR]', collapsed ? 'RECOLHIDA' : 'EXPANDIDA');
+    console.log(`✅ [SIDEBAR] Toggle manual → ${nowCollapsed ? 'RECOLHIDA' : 'EXPANDIDA'}`);
   };
 
-  // 🔥 Delegação de evento (funciona mesmo se o botão for re-injetado)
+  // Delegação de clique (pega mesmo se o botão for re-injetado)
   document.addEventListener('click', function(e) {
     const btn = e.target.closest('#sidebar-toggle, .sidebar-toggle');
-    if (btn) {
-      console.log('🎯 [SIDEBAR] Clique capturado via delegação');
-      window.toggleSidebar(e);
-    }
-  }, true); // capture = true pega antes de qualquer outro handler
+    if (btn) window.toggleSidebar(e);
+  }, true);
 
-  // Restaura estado salvo
-  function restaurar() {
-    const sidebar = getSidebar();
-    const toggle  = getToggle();
-    if (!sidebar) {
-      console.warn('⚠️ [SIDEBAR] Não foi possível restaurar — sidebar não existe');
-      return;
-    }
+  // Aplica no primeiro paint
+  function boot() {
+    applyState();
 
-    let collapsed = false;
-    try { collapsed = localStorage.getItem(STORAGE_KEY) === '1'; } catch(e) {}
-    if (window.innerWidth < 900) collapsed = true;
-
-    if (collapsed) {
-      sidebar.classList.add('collapsed');
-      if (toggle) toggle.title = 'Expandir menu';
-    }
-    console.log('🎛️ [SIDEBAR] Estado restaurado:', collapsed ? 'recolhido' : 'expandido');
+    // Reaplica depois que o browser termina de calcular layout
+    // (importante em mobile — evita race condition com a viewport meta)
+    setTimeout(applyState, 100);
+    setTimeout(applyState, 400);
   }
 
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', restaurar);
+    document.addEventListener('DOMContentLoaded', boot);
   } else {
-    restaurar();
+    boot();
   }
 
-  console.log('✅ [SIDEBAR] Pronto pra uso');
+  // Reage a mudanças de tamanho/orientação
+  let resizeTimer;
+  function onResize() {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(applyState, 180);
+  }
+  window.addEventListener('resize', onResize);
+  window.addEventListener('orientationchange', () => setTimeout(applyState, 350));
+
+  // matchMedia como reforço (mais confiável que resize em alguns Androids)
+  try {
+    const mq = window.matchMedia(`(max-width: ${BREAKPOINT}px)`);
+    if (mq.addEventListener) mq.addEventListener('change', applyState);
+    else if (mq.addListener) mq.addListener(applyState);
+  } catch(e) {}
+
+  console.log('✅ [SIDEBAR] Pronto');
 })();
 </script>
 </body>
