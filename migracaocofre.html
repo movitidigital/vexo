@@ -893,45 +893,73 @@ function processarCSV() {
     status:   headers.indexOf('STATUS')
   };
 
-  if (idx.cnpj < 0 || idx.empresa < 0) { alert('Colunas CNPJ e NOME_EMPRESA são obrigatórias.'); return; }
+  // 🔥 Apenas avisos — não bloqueia mais
+  if (idx.cnpj < 0)    log('warn', '⚠️ Coluna CNPJ não encontrada no cabeçalho — usarei vazio.');
+  if (idx.empresa < 0) log('warn', '⚠️ Coluna NOME_EMPRESA não encontrada — usarei "(Sem razão social)".');
+
+  // Se nem CNPJ nem Empresa existem, aí sim não dá pra continuar
+  if (idx.cnpj < 0 && idx.empresa < 0) {
+    alert('O CSV precisa ter pelo menos a coluna CNPJ ou a coluna NOME_EMPRESA.');
+    return;
+  }
 
   dadosProntos = [];
-  let ignorados = 0;
+  let semCnpj = 0;
+  let semEmpresa = 0;
+  let semData = 0;
 
   for (let i = 1; i < rows.length; i++) {
     const r = rows[i];
     if (!r || r.every(c => !c || !c.trim())) continue;
 
-    let cnpjBruto = r[idx.cnpj] || '';
-    let empresa = r[idx.empresa] || '';
-    let motivo = r[idx.motivo] || '';
-    let telefone = r[idx.telefone] || '';
-    let consultorNome = r[idx.consultor] || '';
-    let statusCSV = r[idx.status] || 'PENDENTE';
-    let dataAg = r[idx.dataAgen] || '';
-    let idFuturo = r[idx.id] || '';
+    let cnpjBruto = idx.cnpj >= 0 ? (r[idx.cnpj] || '') : '';
+    let empresa   = idx.empresa >= 0 ? (r[idx.empresa] || '') : '';
+    let motivo    = idx.motivo >= 0 ? (r[idx.motivo] || '') : '';
+    let telefone  = idx.telefone >= 0 ? (r[idx.telefone] || '') : '';
+    let consultorNome = idx.consultor >= 0 ? (r[idx.consultor] || '') : '';
+    let statusCSV = idx.status >= 0 ? (r[idx.status] || 'PENDENTE') : 'PENDENTE';
+    let dataAg    = idx.dataAgen >= 0 ? (r[idx.dataAgen] || '') : '';
+    let idFuturo  = idx.id >= 0 ? (r[idx.id] || '') : '';
 
     if (fixEnc) {
-      cnpjBruto = fixEncoding(cnpjBruto);
-      empresa   = fixEncoding(empresa);
-      motivo    = fixEncoding(motivo);
-      telefone  = fixEncoding(telefone);
+      cnpjBruto    = fixEncoding(cnpjBruto);
+      empresa      = fixEncoding(empresa);
+      motivo       = fixEncoding(motivo);
+      telefone     = fixEncoding(telefone);
       consultorNome = fixEncoding(consultorNome);
-      statusCSV = fixEncoding(statusCSV);
-      dataAg    = fixEncoding(dataAg);
-      idFuturo  = fixEncoding(idFuturo);
+      statusCSV    = fixEncoding(statusCSV);
+      dataAg       = fixEncoding(dataAg);
+      idFuturo     = fixEncoding(idFuturo);
     }
 
     const cnpjLimpo = limparCNPJ(cnpjBruto);
-    const cnpjFmt = formatarCNPJ(cnpjBruto);
-    const telLimpo = limparTelefone(telefone);
-    const dataISO = parseDataParaISO(dataAg);
+    const cnpjFmt   = formatarCNPJ(cnpjBruto);
+    const telLimpo  = limparTelefone(telefone);
+    const dataISO   = parseDataParaISO(dataAg);
 
-    if (!cnpjLimpo || !empresa.trim()) { ignorados++; continue; }
+    // 🔥 AVISOS (não descarta mais)
+    if (!cnpjLimpo) {
+      semCnpj++;
+      log('warn', `Linha ${i}: sem CNPJ — salvando com marcador "SEM_CNPJ".`);
+    } else if (cnpjLimpo.length !== 14) {
+      log('warn', `Linha ${i}: CNPJ "${cnpjBruto}" tem ${cnpjLimpo.length} dígitos (esperado 14).`);
+    }
 
-    if (cnpjLimpo.length !== 14) log('warn', `Linha ${i}: CNPJ "${cnpjBruto}" tem ${cnpjLimpo.length} dígitos.`);
-    if (!dataISO) log('warn', `Linha ${i}: data "${dataAg}" inválida — usando hoje.`);
+    if (!empresa.trim()) {
+      semEmpresa++;
+      log('warn', `Linha ${i}: sem razão social — salvando como "(Sem razão social)".`);
+    }
 
+    if (!dataISO) {
+      semData++;
+      log('warn', `Linha ${i}: data "${dataAg}" inválida — usando hoje.`);
+    }
+
+    // 🎯 Fallbacks
+    const cnpjFinal    = cnpjLimpo ? (cnpjFmt || cnpjLimpo) : 'SEM_CNPJ';
+    const empresaFinal = empresa.trim() || '(Sem razão social)';
+
+    // Consultor
     let consultorId = null;
     let consultorDisplay = consultorNome.trim() || '—';
     if (vincConsult && consultorNome) {
@@ -957,13 +985,13 @@ function processarCSV() {
     const statusFinal = mapStatus(statusCSV);
 
     dadosProntos.push({
-      cnpj: cnpjFmt || cnpjLimpo,
-      razao_social: empresa.trim(),
+      cnpj: cnpjFinal,
+      razao_social: empresaFinal,
       contato: telLimpo || null,
       contato_alt: null,
       codigo_cliente: null,
       tipo, prioridade,
-      motivo: motivo.trim(),
+      motivo: motivo.trim() || '(sem motivo informado)',
       data_retomada: dataISO || new Date().toISOString().slice(0, 10),
       status: statusFinal,
       valor_potencial: null,
@@ -975,7 +1003,17 @@ function processarCSV() {
     });
   }
 
-  log('ok', `${dadosProntos.length} registros prontos (${ignorados} ignorados).`);
+  // Resumo final com avisos
+  const avisos = [];
+  if (semCnpj > 0)    avisos.push(`${semCnpj} sem CNPJ`);
+  if (semEmpresa > 0) avisos.push(`${semEmpresa} sem razão social`);
+  if (semData > 0)    avisos.push(`${semData} com data inválida`);
+
+  log('ok', `✅ ${dadosProntos.length} registros prontos para importar.`);
+  if (avisos.length > 0) {
+    log('warn', `⚠️ Avisos: ${avisos.join(', ')} (não bloqueiam a importação)`);
+  }
+
   renderPreview();
 }
 
