@@ -19,12 +19,12 @@
     }
   </script>
 </head>
-<body style="font-family: 'Poppins', sans-serif; background: #f1f5f9; margin: 0; padding: 20px;">
+<body style="font-family: 'Poppins', sans-serif; background: transparent; margin: 0; padding: 0; overflow-x: hidden;">
 
-<div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); margin: 20px auto; max-width: 1100px;">
+<div style="background: white; padding: 30px; border-radius: 24px; box-shadow: 0 10px 40px rgba(0,0,0,0.05); margin: 20px auto; max-width: 1400px; width: 100%; box-sizing: border-box;">
 
   <!-- HEADER -->
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; flex-wrap: wrap; gap: 15px;">
     <div>
       <h2 style="color: #0f172a; margin: 0; font-weight: 800; letter-spacing: -1px;">👥 Time VEXO</h2>
       <p style="margin: 0; font-size: 12px; color: #64748b;">Gestão de identidades e níveis de acesso</p>
@@ -151,16 +151,16 @@
   </div>
 
   <!-- TABELA -->
-  <div style="overflow-x: auto;">
+  <div style="overflow-x: auto; border-radius: 12px; padding-bottom: 4px;">
     <table style="width: 100%; border-collapse: collapse; font-size: 13px;">
       <thead>
-        <tr style="text-align: left; border-bottom: 2px solid #f1f5f9; color: #64748b;">
-          <th style="padding: 15px;">COLABORADOR</th>
-          <th style="padding: 15px;">MATRÍCULA</th>
-          <th style="padding: 15px;">CARGO</th>
-          <th style="padding: 15px;">MÓDULOS</th>
-          <th style="padding: 15px;">STATUS</th>
-          <th style="padding: 15px; text-align: center;">AÇÃO</th>
+        <tr style="text-align: left; border-bottom: 2px solid #f1f5f9; color: #64748b; font-size: 11px;">
+          <th style="padding: 12px 15px; white-space: nowrap;">COLABORADOR</th>
+          <th style="padding: 12px 15px; white-space: nowrap;">MATRÍCULA</th>
+          <th style="padding: 12px 15px; white-space: nowrap;">CARGO</th>
+          <th style="padding: 12px 15px;">MÓDULOS</th>
+          <th style="padding: 12px 15px; white-space: nowrap;">STATUS</th>
+          <th style="padding: 12px 15px; text-align: center; white-space: nowrap;">AÇÃO</th>
         </tr>
       </thead>
       <tbody id="lista-usuarios-tabela">
@@ -272,7 +272,7 @@
 
     if (error) {
       console.error('Erro ao carregar usuários:', error);
-      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#dc2626;">Erro: ${error.message}</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#dc2626; padding: 30px;">Erro: ${error.message}</td></tr>`;
       return;
     }
 
@@ -283,35 +283,54 @@
 
     tbody.innerHTML = data.map(u => {
       const foto = u.photo_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(u.nome || 'U')}&background=3b82f6&color=fff`;
-      const permsHtml = (u.permissoes || []).map(p =>
-        `<small style="background:#e0e7ff; color:#4338ca; padding:2px 6px; border-radius:6px; margin-right:3px; font-weight:600; font-size:10px;">${p.toUpperCase()}</small>`
-      ).join('');
+      const perms = u.permissoes || [];
+
+      // 🔥 Badges compactas: máx. 6 visíveis + "+N" com tooltip
+      const permsHtml = `
+        <div style="display: flex; flex-wrap: wrap; gap: 4px; max-width: 340px;">
+          ${perms.slice(0, 6).map(p =>
+            `<small style="background:#e0e7ff; color:#4338ca; padding:2px 6px; border-radius:6px; font-weight:600; font-size:9px; white-space: nowrap; letter-spacing: 0.2px;">${String(p).toUpperCase()}</small>`
+          ).join('')}
+          ${perms.length > 6
+            ? `<small title="${perms.slice(6).map(p => String(p).toUpperCase()).join(', ')}"
+                      style="background:#f1f5f9; color:#475569; padding:2px 6px; border-radius:6px; font-weight:700; font-size:9px; cursor: help; white-space: nowrap;">
+                 +${perms.length - 6}
+               </small>`
+            : ''}
+        </div>
+      `;
+
       const ativo = u.ativo === true;
       const statusStyle = ativo
         ? 'background:#dcfce7; color:#15803d;'
         : 'background:#fee2e2; color:#b91c1c;';
 
       const podeEditar = PROFILE_ATUAL.role === 'ADMINISTRADOR';
+      const roleFormatado = (u.role || '').replace(/\//g, ' / ');
 
       return `
-        <tr style="border-bottom: 1px solid #f8fafc;">
-          <td style="padding: 15px; display: flex; align-items: center; gap: 10px;">
-            <img src="${foto}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #fff;">
-            <div>
-              <div style="font-weight: 700; color: #1e293b;">${u.nome || ''} ${u.sobrenome || ''}</div>
-              <div style="font-size: 10px; color: #94a3b8;">${u.email || ''}</div>
+        <tr style="border-bottom: 1px solid #f8fafc; vertical-align: middle;">
+          <td style="padding: 12px 15px;">
+            <div style="display: flex; align-items: center; gap: 10px;">
+              <img src="${foto}" style="width: 35px; height: 35px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; flex-shrink: 0;">
+              <div style="min-width: 0;">
+                <div style="font-weight: 700; color: #1e293b; font-size: 12px; white-space: nowrap;">${u.nome || ''} ${u.sobrenome || ''}</div>
+                <div style="font-size: 10px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px;">${u.email || ''}</div>
+              </div>
             </div>
           </td>
-          <td style="padding: 15px; font-family: monospace;">${u.matricula || ''}</td>
-          <td style="padding: 15px;">${u.role || ''}</td>
-          <td style="padding: 15px;">${permsHtml}</td>
-          <td style="padding: 15px;">
+          <td style="padding: 12px 15px; font-family: monospace; font-size: 12px; white-space: nowrap;">${u.matricula || ''}</td>
+          <td style="padding: 12px 15px; font-size: 11px; font-weight: 600; color: #334155; white-space: nowrap;">${roleFormatado}</td>
+          <td style="padding: 12px 15px;">${permsHtml}</td>
+          <td style="padding: 12px 15px; white-space: nowrap;">
             <span style="${statusStyle} padding: 4px 10px; border-radius: 20px; font-size: 10px; font-weight: 800;">
               ${ativo ? 'ATIVO' : 'INATIVO'}
             </span>
           </td>
-          <td style="padding: 15px; text-align: center;">
-            ${podeEditar ? `<button onclick="prepararEdicao('${u.id}')" style="cursor:pointer; border:none; background:#f1f5f9; padding:8px; border-radius:10px; color:#3b82f6;">✏️</button>` : '—'}
+          <td style="padding: 12px 15px; text-align: center;">
+            ${podeEditar
+              ? `<button onclick="prepararEdicao('${u.id}')" style="cursor:pointer; border:none; background:#f1f5f9; padding:8px 10px; border-radius:10px; color:#3b82f6;">✏️</button>`
+              : '—'}
           </td>
         </tr>
       `;
@@ -353,7 +372,7 @@
   }
 
   // ============================================================
-  // FORM — PERMISSÕES POR CARGO
+  // FORM — PERMISSÕES POR CARGO (auto-preenche checkboxes)
   // ============================================================
   async function aplicarPermissoesPorCargo(cargo) {
     if (!cargo) return;
@@ -368,6 +387,8 @@
     document.querySelectorAll('input[name="u_perm"]').forEach(cb => {
       cb.checked = permsArray.includes(cb.value);
     });
+
+    console.log(`ℹ️ [VEXO] Cargo "${cargo}" → ${permsArray.length} permissões aplicadas`);
   }
 
   // ============================================================
@@ -417,18 +438,18 @@
     const role      = document.getElementById('u_role').value;
     const ativo     = document.getElementById('u_active').value === 'true';
 
-   let perms = [];
-document.querySelectorAll('input[name="u_perm"]:checked').forEach(c => perms.push(c.value));
+    let perms = [];
+    document.querySelectorAll('input[name="u_perm"]:checked').forEach(c => perms.push(c.value));
 
-// 🔥 Se o admin não marcou nada, herda o padrão do cargo automaticamente
-if (perms.length === 0 && role) {
-  const { data } = await sb
-    .from('role_permissions')
-    .select('permission')
-    .eq('role', role);
-  perms = (data || []).map(r => r.permission);
-  console.log(`ℹ️ [VEXO] Sem perms custom → herdando ${perms.length} do cargo ${role}`);
-}
+    // 🔥 Se o admin não marcou nada, herda o padrão do cargo automaticamente
+    if (perms.length === 0 && role) {
+      const { data } = await sb
+        .from('role_permissions')
+        .select('permission')
+        .eq('role', role);
+      perms = (data || []).map(r => r.permission);
+      console.log(`ℹ️ [VEXO] Sem perms custom → herdando ${perms.length} do cargo ${role}`);
+    }
 
     // ---- Validações ----
     if (!matricula || !nome || !email || !role) {
@@ -466,7 +487,7 @@ if (perms.length === 0 && role) {
         photoUrl = urlData.publicUrl;
       }
 
-          // ---- EDITAR EXISTENTE ----
+      // ---- EDITAR EXISTENTE ----
       if (editing && editId) {
         // 🔥 1) Busca o email atual pra comparar
         const { data: perfilAtual } = await sb
@@ -528,7 +549,9 @@ if (perms.length === 0 && role) {
         limparForm();
         carregarUsuarios();
         return;
-      }      // ---- CRIAR NOVO ----
+      }
+
+      // ---- CRIAR NOVO ----
       const tenant_id = PROFILE_ATUAL.tenant_id;
 
       // 1) Cria no auth (signUp)
@@ -592,6 +615,9 @@ if (perms.length === 0 && role) {
     });
   }
 
+  // ============================================================
+  // MASTER — SALVAR (upsert primeiro, delete depois = seguro)
+  // ============================================================
   async function salvarConfiguracaoNoBanco() {
     const cargo = document.getElementById('config_cargo_nome').value;
     if (!cargo) { alert('Selecione um cargo.'); return; }
@@ -600,15 +626,34 @@ if (perms.length === 0 && role) {
     document.querySelectorAll('.master-perm:checked').forEach(cb => selecionadas.push(cb.value));
 
     try {
-      await sb.from('role_permissions').delete().eq('role', cargo);
-
+      // 🔥 1) Insere/atualiza PRIMEIRO (idempotente via upsert)
       if (selecionadas.length > 0) {
         const rows = selecionadas.map(p => ({ role: cargo, permission: p }));
-        const { error } = await sb.from('role_permissions').insert(rows);
-        if (error) throw error;
+        const { error: insErr } = await sb
+          .from('role_permissions')
+          .upsert(rows, { onConflict: 'role,permission', ignoreDuplicates: true });
+        if (insErr) throw insErr;
       }
 
-      alert('✅ Permissões de "' + cargo + '" salvas com sucesso!');
+      // 🔥 2) Só depois remove o que NÃO está na seleção
+      if (selecionadas.length > 0) {
+        const inList = selecionadas.map(p => `"${p}"`).join(',');
+        const { error: delErr } = await sb
+          .from('role_permissions')
+          .delete()
+          .eq('role', cargo)
+          .not('permission', 'in', `(${inList})`);
+        if (delErr) throw delErr;
+      } else {
+        // Se nada foi marcado, limpa tudo do cargo
+        const { error: delErr } = await sb
+          .from('role_permissions')
+          .delete()
+          .eq('role', cargo);
+        if (delErr) throw delErr;
+      }
+
+      alert(`✅ Permissões de "${cargo}" salvas com sucesso! (${selecionadas.length} módulos)`);
     } catch (e) {
       console.error(e);
       alert('❌ Erro: ' + e.message);
