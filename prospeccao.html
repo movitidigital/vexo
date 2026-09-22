@@ -4478,39 +4478,102 @@ function gerarHTMLPropostaMultiLinha(d) {
   const logoEE = 'https://www.weebly.com/editor/uploads/1/3/4/2/134260582/custom_themes/739339945850558639/files/LOGOMARCAOFICIALEEE-TIMSMB.png';
   const logoTIM = 'https://www.weebly.com/editor/uploads/1/3/4/2/134260582/custom_themes/739339945850558639/files/TIM_Logo-PNG-1.png';
 
-  // ============================================
-  // 🎁 MAPEAMENTO DE ÍCONES PARA REDES SOCIAIS E APPS
-  // ============================================
-  const iconesBeneficios = {
-    'whatsapp': '💬',
-    'whatsapp business': '💼',
-    'facebook': '📘',
-    'x': '🐦',
-    'instagram': '📸',
-    'messenger': '💭',
-    'waze': '🗺️',
-    'exa cloud': '☁️',
-    'tim protect': '🛡️',
-    'tim monitor': '📊',
-    'aya books': '📚',
-    'bancah': '📖',
-    'roaming': '✈️',
-    'ligações': '📞',
-    'waze incluso': '🧭',
-    'cloud': '☁️',
-    'segurança': '🔒',
-    'backup': '💾',
-    'antivírus': '🛡️',
-    'armazenamento': '💿'
-  };
-  
-  function getIconeBeneficio(nome) {
-    const nomeLower = String(nome || "").toLowerCase();
-    for (let [chave, icone] of Object.entries(iconesBeneficios)) {
-      if (nomeLower.includes(chave)) return icone;
+  // ═══════════════════════════════════════════════════════════════
+// 🎨 MAPA DE MARCAS — Emojis + Cores oficiais
+// ═══════════════════════════════════════════════════════════════
+const MARCAS_MAP = {
+  // 📱 REDES SOCIAIS
+  'whatsapp business': { emoji: '💼', cor: '#25D366', nome: 'WhatsApp Business' },
+  'whatsapp':          { emoji: '💬', cor: '#25D366', nome: 'WhatsApp' },
+  'facebook':          { emoji: '📘', cor: '#1877F2', nome: 'Facebook' },
+  'instagram':         { emoji: '📷', cor: '#E4405F', nome: 'Instagram' },
+  'messenger':         { emoji: '💌', cor: '#0099FF', nome: 'Messenger' },
+  'twitter':           { emoji: '🐦', cor: '#1DA1F2', nome: 'Twitter' },
+  'tiktok':            { emoji: '🎵', cor: '#FF0050', nome: 'TikTok' },
+  'telegram':          { emoji: '✈️', cor: '#26A5E4', nome: 'Telegram' },
+  'linkedin':          { emoji: '💼', cor: '#0077B5', nome: 'LinkedIn' },
+
+  // 🎬 STREAMING
+  'youtube':           { emoji: '▶️', cor: '#FF0000', nome: 'YouTube' },
+  'netflix':           { emoji: '🎬', cor: '#E50914', nome: 'Netflix' },
+  'spotify':           { emoji: '🎧', cor: '#1DB954', nome: 'Spotify' },
+  'deezer':            { emoji: '🎼', cor: '#A238FF', nome: 'Deezer' },
+  'prime video':       { emoji: '📺', cor: '#00A8E1', nome: 'Prime Video' },
+  'disney':            { emoji: '🏰', cor: '#113CCF', nome: 'Disney+' },
+  'hbo':               { emoji: '🎥', cor: '#5822B4', nome: 'HBO Max' },
+
+  // 🧭 NAVEGAÇÃO
+  'waze':              { emoji: '🧭', cor: '#33CCFF', nome: 'Waze' },
+  'google maps':       { emoji: '🗺️', cor: '#4285F4', nome: 'Google Maps' },
+
+  // 🚗 TRANSPORTE E DELIVERY
+  'uber':              { emoji: '🚗', cor: '#000000', nome: 'Uber' },
+  'ifood':             { emoji: '🍔', cor: '#EA1D2C', nome: 'iFood' },
+
+  // 🏢 TIM EMPRESAS
+  'tim monitor':       { emoji: '📊', cor: '#0033A0', nome: 'TIM Monitor' },
+  'tim protege':       { emoji: '🛡️', cor: '#0033A0', nome: 'TIM Protege' },
+  'tim protect':       { emoji: '🛡️', cor: '#0033A0', nome: 'TIM Protect' },
+  'tim segurança':     { emoji: '🔒', cor: '#0033A0', nome: 'TIM Segurança' },
+  'tim black':         { emoji: '⚫', cor: '#000000', nome: 'TIM Black' },
+
+  // ☁️ CLOUD E PRODUTIVIDADE
+  'exa cloud':         { emoji: '☁️', cor: '#0066CC', nome: 'EXA Cloud' },
+  'exa':               { emoji: '☁️', cor: '#0066CC', nome: 'EXA' },
+  'cloud':             { emoji: '☁️', cor: '#0066CC', nome: 'Cloud' },
+  'google one':        { emoji: '☁️', cor: '#4285F4', nome: 'Google One' },
+  'drive':             { emoji: '📁', cor: '#4285F4', nome: 'Drive' },
+
+  // 🎓 EDUCAÇÃO
+  'aya books':         { emoji: '📚', cor: '#8B5CF6', nome: 'AYA Books' },
+  'aya idiomas':       { emoji: '🎓', cor: '#8B5CF6', nome: 'AYA Idiomas' },
+  'aya':               { emoji: '🎓', cor: '#8B5CF6', nome: 'AYA' },
+  'bancah':            { emoji: '📖', cor: '#8B5CF6', nome: 'BanCah' },
+  'ban cah':           { emoji: '📖', cor: '#8B5CF6', nome: 'BanCah' },
+
+  // ⭐ CLUBE E VANTAGENS
+  'clube vantagens':   { emoji: '⭐', cor: '#F59E0B', nome: 'Clube Vantagens' },
+  'clube':             { emoji: '⭐', cor: '#F59E0B', nome: 'Clube' },
+  'vantagens':         { emoji: '🎁', cor: '#F59E0B', nome: 'Vantagens' },
+
+  // ✈️ INTERNACIONAL
+  'roaming':           { emoji: '✈️', cor: '#0EA5E9', nome: 'Roaming' },
+  'internacional':     { emoji: '🌎', cor: '#0EA5E9', nome: 'Internacional' },
+
+  // 📞 VOZ
+  'ligações':          { emoji: '📞', cor: '#10B981', nome: 'Ligações' },
+  'voz ilimitada':     { emoji: '📞', cor: '#10B981', nome: 'Voz Ilimitada' },
+  'ddd':               { emoji: '🌐', cor: '#10B981', nome: 'DDD' },
+
+  // 🔒 SEGURANÇA
+  'antivírus':         { emoji: '🛡️', cor: '#DC2626', nome: 'Antivírus' },
+  'antivirus':         { emoji: '🛡️', cor: '#DC2626', nome: 'Antivírus' },
+  'segurança':         { emoji: '🔒', cor: '#DC2626', nome: 'Segurança' },
+  'backup':            { emoji: '💾', cor: '#DC2626', nome: 'Backup' },
+};
+
+// 🎯 Identifica a marca pelo nome — prioriza match mais longo
+function identificarMarca(nome) {
+  const nomeLower = String(nome || "").toLowerCase().trim();
+  if (!nomeLower) return { emoji: '✦', cor: '#94a3b8', nome: '' };
+
+  // Ordena as chaves por tamanho decrescente (pega o match mais específico)
+  const chaves = Object.keys(MARCAS_MAP).sort((a, b) => b.length - a.length);
+
+  for (const chave of chaves) {
+    if (nomeLower.includes(chave)) {
+      return { ...MARCAS_MAP[chave], textoOriginal: nome };
     }
-    return '✓';
   }
+
+  // Fallback: usa o nome original com emoji padrão
+  return { emoji: '✦', cor: '#94a3b8', nome: nome, textoOriginal: nome };
+}
+
+// Mantém a função antiga como alias (compatibilidade)
+function getIconeBeneficio(nome) {
+  return identificarMarca(nome).emoji;
+}
 
   // ============================================
   // 📦 EXTRAI BENEFÍCIOS ÚNICOS E AGRUPA POR PLANO
@@ -4569,21 +4632,155 @@ function gerarHTMLPropostaMultiLinha(d) {
   
   const beneficiosPorLinha = Object.values(beneficiosAgrupados);
 
-  const beneficiosPorLinhaHTML = beneficiosPorLinha.map(bl => `
-    <div style="background: var(--surface-light); border-left: 4px solid var(--tim-blue); border-radius: 4px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 4px 16px rgba(0,31,92,0.06);">
-      <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap;">
-        <span style="background: linear-gradient(135deg, var(--tim-blue), #003d99); color: white; padding: 6px 14px; border-radius: 3px; font-size: 11px; font-weight: 700; letter-spacing: 0.8px; text-transform: uppercase;">Linhas: ${bl.linhasNums.join(', ')}</span>
-        <span style="font-weight: 700; color: var(--text-main); font-size: 14px; font-family: 'Playfair Display', serif;">${esc(bl.planoNome)}</span>
+// ═══════════════════════════════════════════════════════════════
+// 🎁 AGRUPAMENTO INTELIGENTE DE BENEFÍCIOS
+// ═══════════════════════════════════════════════════════════════
+const beneficiosUnicos = new Map(); // nome → marca
+
+d.linhas.forEach((l) => {
+  const oferta = l.oferta || {};
+  const fontes = [
+    oferta.apps_inclusos,
+    oferta.vas_seguranca,
+    oferta.vas_beneficios
+  ].filter(Boolean).join(',');
+
+  if (!fontes) return;
+
+  fontes.split(',').map(s => s.trim()).filter(Boolean).forEach(nome => {
+    const chave = nome.toLowerCase();
+    if (!beneficiosUnicos.has(chave)) {
+      beneficiosUnicos.set(chave, identificarMarca(nome));
+    }
+  });
+});
+
+const listaBeneficios = Array.from(beneficiosUnicos.values());
+
+// Separa em: apps sociais (top) vs outros serviços
+const CATEGORIAS_SOCIAIS = ['whatsapp', 'facebook', 'instagram', 'messenger', 'tiktok', 'twitter'];
+const CATEGORIAS_STREAMING = ['youtube', 'netflix', 'spotify', 'deezer', 'prime', 'disney', 'hbo'];
+
+const appsPrincipais = listaBeneficios.filter(b => 
+  CATEGORIAS_SOCIAIS.some(c => b.textoOriginal.toLowerCase().includes(c)) ||
+  CATEGORIAS_STREAMING.some(c => b.textoOriginal.toLowerCase().includes(c))
+);
+
+const servicosTim = listaBeneficios.filter(b => 
+  !appsPrincipais.includes(b) &&
+  (b.textoOriginal.toLowerCase().includes('tim') ||
+   b.textoOriginal.toLowerCase().includes('exa') ||
+   b.textoOriginal.toLowerCase().includes('cloud'))
+);
+
+const outrosBeneficios = listaBeneficios.filter(b => 
+  !appsPrincipais.includes(b) && !servicosTim.includes(b)
+);
+
+// ─── Card grande para apps principais ───
+function renderAppCard(app) {
+  const marca = app;
+  return `
+    <div style="
+      background: linear-gradient(135deg, #ffffff 0%, #fafbfc 100%);
+      border: 1px solid #e8ecf2;
+      border-radius: 14px;
+      padding: 18px 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 8px;
+      transition: all 0.25s ease;
+      position: relative;
+      overflow: hidden;
+    ">
+      <div style="
+        position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        background: ${marca.cor};
+      "></div>
+      <div style="
+        width: 52px; height: 52px;
+        border-radius: 14px;
+        background: ${marca.cor}15;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 26px;
+        border: 1px solid ${marca.cor}30;
+      ">${marca.emoji}</div>
+      <div style="font-size: 12px; font-weight: 800; color: #0f172a; line-height: 1.2;">
+        ${marca.nome || marca.textoOriginal}
       </div>
-      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px;">
-        ${bl.beneficios.map(b => `
-          <span style="background: var(--surface-dark); border: 1px solid var(--border-subtle); border-radius: 3px; padding: 6px 12px; font-size: 11px; font-weight: 600; color: var(--text-muted); display: inline-flex; align-items: center; gap: 5px;">
-            <span style="font-size: 13px;">${b.icone}</span> ${esc(b.nome)}
-          </span>
-        `).join('')}
+      <div style="font-size: 9px; font-weight: 700; color: ${marca.cor}; letter-spacing: 0.5px; text-transform: uppercase;">
+        Incluso
       </div>
     </div>
-  `).join('');
+  `;
+}
+
+// ─── Chip pequeno para serviços complementares ───
+function renderChip(b) {
+  return `
+    <div style="
+      background: #ffffff;
+      border: 1px solid #e8ecf2;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #334155;
+      transition: all 0.2s ease;
+    ">
+      <span style="
+        font-size: 14px;
+        width: 22px; height: 22px;
+        border-radius: 6px;
+        background: ${b.cor}15;
+        display: inline-flex; align-items: center; justify-content: center;
+        flex-shrink: 0;
+      ">${b.emoji}</span>
+      <span style="white-space: nowrap;">${b.nome || b.textoOriginal}</span>
+    </div>
+  `;
+}
+
+// ─── HTML final da seção ───
+const beneficiosPorLinhaHTML = listaBeneficios.length === 0 ? '' : `
+  <div style="background: #f8fafc; border-radius: 16px; padding: 24px; margin-bottom: 20px;">
+    
+    ${appsPrincipais.length > 0 ? `
+      <div style="font-size: 10px; font-weight: 800; color: #001F5C; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+        📱 Aplicativos Ilimitados
+        <span style="flex: 1; height: 1px; background: linear-gradient(to right, #e2e8f0, transparent);"></span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 12px; margin-bottom: 22px;">
+        ${appsPrincipais.map(renderAppCard).join('')}
+      </div>
+    ` : ''}
+
+    ${servicosTim.length > 0 ? `
+      <div style="font-size: 10px; font-weight: 800; color: #001F5C; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+        ⚡ Serviços TIM Exclusivos
+        <span style="flex: 1; height: 1px; background: linear-gradient(to right, #e2e8f0, transparent);"></span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px;">
+        ${servicosTim.map(renderChip).join('')}
+      </div>
+    ` : ''}
+
+    ${outrosBeneficios.length > 0 ? `
+      <div style="font-size: 10px; font-weight: 800; color: #001F5C; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;">
+        🎁 Também Incluso
+        <span style="flex: 1; height: 1px; background: linear-gradient(to right, #e2e8f0, transparent);"></span>
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+        ${outrosBeneficios.map(renderChip).join('')}
+      </div>
+    ` : ''}
+  </div>
+`;
 
   // ============================================
   // 📱 AGRUPAMENTO DE "NOVAS LINHAS" NA TABELA
@@ -4831,15 +5028,8 @@ body{
   display: block;
 }
 
-.capa-titulo {
-  font-family: 'Playfair Display', serif;
-  font-size: 72px;
-  line-height: 1.08;
-  color: var(--text-main);
-  margin-bottom: 24px;
-  letter-spacing: -1.2px;
-  font-weight: 800;
-}
+.capa-titulo { font-size: 64px; line-height: 1.05; margin-bottom: 20px; }
+
 
 .capa-empresa {
   font-size: 24px;
@@ -5270,11 +5460,8 @@ body{
   .ctrl-bar {
     display: none !important;
   }
-  .capa {
-    height: 100vh;
-    page-break-after: always;
-    break-inside: avoid;
-  }
+.capa { padding: 60px 60px 40px; } 
+
   .page {
     box-shadow: none;
     margin: 0;
@@ -5286,6 +5473,14 @@ body{
     size: A4 landscape;
     margin: 5mm;
   }
+}
+.app-card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(0, 31, 92, 0.08);
+}
+
+@media print {
+  .app-card-hover:hover { transform: none; box-shadow: none; }
 }
 </style>
 </head>
@@ -5409,21 +5604,22 @@ body{
   <div class="sec" style="padding-top: 0;">
     <div class="sec-h">🎁 Ecossistema de Benefícios</div>
     
-    <div class="benef-grid">
-      ${[
-        ['✈️','Roaming Nacional','Comunicação livre de taxas em viagens pelo Brasil'],
-        ['📞','Voz Ilimitada','Chamadas locais e DDD para qualquer operadora'],
-        ['💬','Apps Essenciais','WhatsApp e Messenger ilimitados sem consumir franquia'],
-        ['📱','Redes Sociais','Acesso garantido ao Facebook, Instagram e Twitter'],
-        ['🛡️','TIM Protect','Segurança robusta para a gestão de dados corporativos'],
-        ['🗺️','Navegação','Waze incluso para mobilidade da equipe sem gastar dados']
-      ].map(([ico,nome,desc])=>`
-      <div class="benef-item">
-        <div class="benef-ico">${ico}</div>
-        <div class="benef-nome">${nome}</div>
-        <div class="benef-desc">${desc}</div>
-      </div>`).join('')}
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 22px;">
+  ${[
+    { ico: '✈️', titulo: 'Roaming Nacional', desc: 'Livre de taxas em viagens pelo Brasil' },
+    { ico: '📞', titulo: 'Voz Ilimitada',    desc: 'Chamadas locais e DDD para qualquer operadora' },
+    { ico: '💬', titulo: 'Apps Essenciais',  desc: 'WhatsApp e Messenger ilimitados' },
+    { ico: '📱', titulo: 'Redes Sociais',    desc: 'Facebook, Instagram e Twitter liberados' },
+    { ico: '🛡️', titulo: 'TIM Protect',      desc: 'Segurança corporativa para dados' },
+    { ico: '🧭', titulo: 'Navegação',        desc: 'Waze incluso sem consumir dados' }
+  ].map(b => `
+    <div style="background: #f8fafc; border-radius: 12px; padding: 16px; border: 1px solid #e8ecf2;">
+      <div style="font-size: 22px; margin-bottom: 6px;">${b.ico}</div>
+      <div style="font-size: 12px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">${b.titulo}</div>
+      <div style="font-size: 10px; color: #64748b; line-height: 1.5;">${b.desc}</div>
     </div>
+  `).join('')}
+</div>
 
     ${beneficiosPorLinha.length > 0 ? `
     <div style="margin-top: 32px;">
