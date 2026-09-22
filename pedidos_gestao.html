@@ -1667,7 +1667,6 @@ function showDateModal(type, onConfirm, dataSugerida) {
 
     const onCancelClick = () => {
       fecharDateModal();
-      if (onCancel) onCancel();
       cleanup();
     };
 
@@ -1680,15 +1679,7 @@ function showDateModal(type, onConfirm, dataSugerida) {
       inputEl.removeEventListener('change', limparErro);
     };
 
-    // ═══════════════════════════════════════════════════════
-    // ❗ BUGFIX: `onCancel` não existe como parâmetro desta função.
-    // Aqui ele é declarado para evitar ReferenceError ao clicar em Cancelar.
-    // Se você quiser realmente ter callback de cancelamento, adicione como
-    // 4º parâmetro: showDateModal(type, onConfirm, dataSugerida, onCancel)
-    // ═══════════════════════════════════════════════════════
-    const onCancel = (typeof onCancelParam !== 'undefined') ? onCancelParam : null;
-
-    document.getElementById('date-modal-confirm').addEventListener('click', onConfirmClick);
+      document.getElementById('date-modal-confirm').addEventListener('click', onConfirmClick);
     document.getElementById('date-modal-cancel').addEventListener('click', onCancelClick);
 }
 
