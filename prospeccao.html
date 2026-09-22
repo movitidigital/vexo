@@ -4430,7 +4430,7 @@ function coletarDadosPropostaMultiLinha() {
     razao: document.getElementById('oportunidade_razao')?.innerText || 'Cliente',
     cnpj: document.getElementById('oportunidade_cnpj')?.innerText || '',
     email: document.getElementById('oportunidade_email')?.innerText || '',
-    usuario: (JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}').username) || 'Consultor',
+    usuario: usuarioVexo?.nomeCompleto || 'Consultor',
     linhas: linhas,
     subtotal: subtotal,
     desconto_total: descontoTotal,
