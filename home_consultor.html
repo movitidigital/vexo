@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meu Dia — VEXO</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="supabase-client.js"></script>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Poppins', sans-serif;
+    background: #0f172a;
+    color: #f8fafc;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  /* ---- HEADER ---- */
+  .vx-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background: #1e293b;
+    border-radius: 16px;
+    margin-bottom: 24px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .vx-header-left { display: flex; align-items: center; gap: 14px; }
+  .vx-avatar {
+    width: 44px; height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 18px;
+    overflow: hidden;
+  }
+  .vx-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .vx-greeting { font-size: 15px; font-weight: 700; color: #f8fafc; }
+  .vx-date { font-size: 11px; color: #64748b; font-weight: 500; }
+  .vx-btn-nova {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white; border: none;
+    padding: 10px 18px;
+    border-radius: 10px;
+    font-family: inherit; font-weight: 700; font-size: 12px;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(16,185,129,0.25);
+    transition: transform 0.2s;
+  }
+  .vx-btn-nova:hover { transform: translateY(-1px); }
+
+  /* ---- BLOCO META VIVA ---- */
+  .vx-meta-bloco {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 24px;
+    padding: 32px;
+    border: 1px solid rgba(59,130,246,0.2);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+    margin-bottom: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+  .vx-meta-bloco::before {
+    content: '';
+    position: absolute;
+    top: 0; right: 0;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(59,130,246,0.15), transparent 70%);
+    transform: translate(30%, -30%);
+    pointer-events: none;
+  }
+  .vx-meta-label {
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    color: #3b82f6;
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+  .vx-meta-titulo {
+    font-size: 32px;
+    font-weight: 900;
+    color: #f8fafc;
+    letter-spacing: -1px;
+    line-height: 1.15;
+    margin-bottom: 24px;
+  }
+  .vx-meta-titulo b { color: #60a5fa; }
+  .vx-meta-titulo.ritmo-ok b { color: #10b981; }
+  .vx-meta-titulo.ritmo-atraso b { color: #ef4444; }
+
+  .vx-barra {
+    height: 14px;
+    background: rgba(0,0,0,0.35);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 20px;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .vx-barra-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+    border-radius: 10px;
+    transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 0 20px rgba(59,130,246,0.5);
+  }
+  .vx-barra-pct {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: #94a3b8;
+    font-weight: 600;
+    margin-bottom: 24px;
+  }
+  .vx-barra-pct b { color: #f8fafc; font-weight: 800; font-size: 14px; }
+
+  /* Quebra por modalidade */
+  .vx-quebra {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .vx-quebra-item {
+    background: rgba(0,0,0,0.25);
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid rgba(255,255,255,0.05);
+  }
+  .vx-quebra-topo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+  }
+  .vx-quebra-nome {
+    font-size: 10px;
+    font-weight: 800;
+    color: #94a3b8;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .vx-quebra-num {
+    font-size: 11px;
+    font-weight: 800;
+    color: #f8fafc;
+  }
+  .vx-quebra-barra {
+    height: 5px;
+    background: rgba(0,0,0,0.4);
+    border-radius: 10px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+  .vx-quebra-barra > div {
+    height: 100%;
+    border-radius: 10px;
+    transition: width 1s ease;
+  }
+  .vx-quebra-pct {
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  /* Rodapé da Meta Viva */
+  .vx-meta-rodape {
+    padding-top: 20px;
+    border-top: 1px dashed rgba(255,255,255,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    font-size: 12px;
+  }
+  .vx-projecao {
+    color: #94a3b8;
+    font-weight: 600;
+  }
+  .vx-projecao b { color: #f8fafc; font-weight: 800; }
+  .vx-status-ritmo {
+    font-size: 11px;
+    font-weight: 800;
+    padding: 6px 14px;
+    border-radius: 20px;
+    letter-spacing: 0.5px;
+  }
+  .vx-status-ritmo.ok { background: rgba(16,185,129,0.15); color: #34d399; border: 1px solid rgba(16,185,129,0.3); }
+  .vx-status-ritmo.atencao { background: rgba(245,158,11,0.15); color: #fbbf24; border: 1px solid rgba(245,158,11,0.3); }
+  .vx-status-ritmo.critico { background: rgba(239,68,68,0.15); color: #fca5a5; border: 1px solid rgba(239,68,68,0.3); }
+
+  /* Estados */
+  .vx-skeleton {
+    background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+    background-size: 200% 100%;
+    animation: skel 1.5s infinite;
+    border-radius: 10px;
+  }
+  @keyframes skel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+  .vx-erro {
+    padding: 40px;
+    text-align: center;
+    color: #fca5a5;
+    background: rgba(239,68,68,0.05);
+    border: 1px dashed rgba(239,68,68,0.3);
+    border-radius: 16px;
+    font-size: 13px;
+  }
+
+  @media (max-width: 640px) {
+    body { padding: 16px; }
+    .vx-meta-bloco { padding: 24px 20px; }
+    .vx-meta-titulo { font-size: 24px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="vx-header">
+  <div class="vx-header-left">
+    <div class="vx-avatar" id="vx-avatar">--</div>
+    <div>
+      <div class="vx-greeting" id="vx-greeting">Carregando...</div>
+      <div class="vx-date" id="vx-date">--</div>
+    </div>
+  </div>
+  <button class="vx-btn-nova" onclick="if(window.parent && window.parent.abrirModulo) window.parent.abrirModulo('vendas');">+ Nova venda</button>
+</div>
+
+<!-- BLOCO META VIVA -->
+<div id="vx-meta-container">
+  <div class="vx-meta-bloco">
+    <div class="vx-skeleton" style="width: 200px; height: 12px; margin-bottom: 16px;"></div>
+    <div class="vx-skeleton" style="width: 70%; height: 32px; margin-bottom: 24px;"></div>
+    <div class="vx-skeleton" style="width: 100%; height: 14px; margin-bottom: 20px;"></div>
+    <div class="vx-skeleton" style="width: 100%; height: 80px;"></div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// VEXO — Meu Dia — Bloco 1: Meta Viva
+// ============================================================
+
+// ---- 1. Detectar ambiente (DEV vs PROD) ----
+const VX_HOST = window.location.hostname;
+const VX_IS_DEV = 
+  VX_HOST.includes('vercel.app') ||     // preview do Vercel
+  VX_HOST.startsWith('dev.') ||         // subdomínio dev
+  VX_HOST === 'localhost' ||
+  VX_HOST === '127.0.0.1';
+
+console.log(`🎯 VEXO Meu Dia — Ambiente: ${VX_IS_DEV ? 'DEV' : 'PROD'} | Host: ${VX_HOST}`);
+
+// ---- 2. Helpers ----
+const MESES = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'];
+const MESES_NUM = {'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12};
+
+function vxParseValor(v) {
+  if (!v) return 0;
+  let s = String(v).replace('R$', '').trim();
+  if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
+  return parseFloat(s.replace(/[^\d.-]/g, '')) || 0;
+}
+
+function vxParseData(str) {
+  if (!str) return null;
+  str = String(str).trim();
+  if (str === '' || str === '-') return null;
+  if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const p = str.split(' ')[0].split(/[\/\-]/);
+  if (p.length === 3) {
+    let ano = parseInt(p[2]); if (ano < 100) ano += 2000;
+    const d = new Date(ano, parseInt(p[1]) - 1, parseInt(p[0]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+
+// ---- 3. Dias úteis do mês ----
+function vxDiasUteis(ano, mes) { // mes 1-12
+  const dias = new Date(ano, mes, 0).getDate();
+  let uteis = 0;
+  for (let d = 1; d <= dias; d++) {
+    const dow = new Date(ano, mes - 1, d).getDay();
+    if (dow !== 0 && dow !== 6) uteis++;
+  }
+  return uteis;
+}
+function vxDiasUteisDecorridos(ano, mes) {
+  const hoje = new Date();
+  if (ano > hoje.getFullYear() || (ano === hoje.getFullYear() && mes > hoje.getMonth() + 1)) return 0;
+  if (ano < hoje.getFullYear() || (ano === hoje.getFullYear() && mes < hoje.getMonth() + 1)) return vxDiasUteis(ano, mes);
+  let uteis = 0;
+  for (let d = 1; d <= hoje.getDate(); d++) {
+    const dow = new Date(ano, mes - 1, d).getDay();
+    if (dow !== 0 && dow !== 6) uteis++;
+  }
+  return uteis;
+}
+
+// ---- 4. Carregar dados ----
+async function vxCarregarMeuDia() {
+  try {
+    // Aguarda o supabase-client.js
+    await new Promise(res => {
+      let tent = 0;
+      const check = () => {
+        if (window.sb) return res();
+        if (++tent > 30) return res(); // 3s
+        setTimeout(check, 100);
+      };
+      check();
+    });
+
+    if (!window.sb) throw new Error('Supabase não carregou');
+
+    // ---- Perfil ----
+    const { data: { user } } = await sb.auth.getUser();
+    if (!user) throw new Error('Usuário não logado');
+
+    const { data: perfil } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+    if (!perfil) throw new Error('Perfil não encontrado');
+
+    // Guarda flag pra usar depois
+    const temFlagNova = perfil.use_new_dashboard === true;
+    console.log(`👤 ${perfil.nome} | cargo: ${perfil.role} | use_new_dashboard: ${temFlagNova}`);
+
+    // ---- Mês/Ano atual ----
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth() + 1;
+    const anoAtual = hoje.getFullYear();
+    const mesNome = MESES[mesAtual - 1];
+
+    // ---- Buscar meta individual ----
+    const matricula = String(perfil.matricula || '').trim().toUpperCase();
+    let metaFat = 0, metaPort = 0, metaAdit = 0;
+    try {
+      const { data: metas } = await sb
+        .from('metas_time_mes')
+        .select('*')
+        .eq('ano', anoAtual);
+
+      if (metas && metas.length) {
+        const minhaMeta = metas.find(m => {
+          const mNum = MESES_NUM[String(m.mes).toUpperCase()] || parseInt(m.mes);
+          const mat = String(m.matricula || '').trim().toUpperCase();
+          return mNum === mesAtual && mat === matricula;
+        });
+        if (minhaMeta) {
+          metaFat = Number(minhaMeta.meta_target_fat) || 0;
+          metaPort = Number(minhaMeta.meta_target_port) || 0;
+          metaAdit = Number(minhaMeta.meta_target_adit) || 0; // se não existir, fica 0
+        }
+      }
+    } catch (e) { console.warn('metas_time_mes:', e.message); }
+
+    // ---- Buscar VENDAS do mês ----
+    const { data: vendas } = await sb.from('VENDAS').select('*');
+
+    let realGross = 0, realPort = 0, realAdit = 0;
+    const contGross = { feito: 0, total: 0 };
+    const contPort = { feito: 0, total: 0 };
+    const contAdit = { feito: 0, total: 0 };
+
+    (vendas || []).forEach(v => {
+      const status = String(v.status_do_pedido || '').toUpperCase().trim();
+      if (status.includes('CANCELADO')) return;
+
+      const d = vxParseData(v.data_de_ativacao_no_radar);
+      if (!d) return;
+      if (d.getMonth() + 1 !== mesAtual || d.getFullYear() !== anoAtual) return;
+
+      const mat = String(v.consultor_que_vendeu || '').trim().toUpperCase();
+      if (mat !== matricula) return;
+
+      const mod = String(v.modalidade || '').toUpperCase();
+      const valor = vxParseValor(v.valor_contratado);
+
+      if (mod.includes('PORTABIL')) {
+        realPort += valor;
+        contPort.feito++;
+      } else if (mod.includes('ADITIVO')) {
+        realAdit += valor;
+        contAdit.feito++;
+      } else if (mod.includes('ATIVA') || mod.includes('MIGRA')) {
+        realGross += valor;
+        contGross.feito++;
+      }
+    });
+
+    // ---- Render ----
+    renderizarMeuDia({
+      perfil, mesNome, anoAtual, mesAtual,
+      metaFat, metaPort, metaAdit,
+      realGross, realPort, realAdit,
+      contGross, contPort, contAdit
+    });
+
+  } catch (err) {
+    console.error('❌ Meu Dia erro:', err);
+    document.getElementById('vx-meta-container').innerHTML = `
+      <div class="vx-erro">
+        <div style="font-size: 32px; margin-bottom: 10px;">⚠️</div>
+        <b>Não foi possível carregar sua meta</b><br>
+        <span style="color: #64748b; font-size: 11px;">${err.message}</span>
+      </div>`;
+  }
+}
+
+// ---- 5. Renderizar ----
+function renderizarMeuDia(d) {
+  const { perfil, mesNome, anoAtual, metaFat, metaPort, metaAdit, realGross, realPort, realAdit, contGross, contPort, contAdit } = d;
+
+  // ---- Header ----
+  const nome = [perfil.nome, perfil.sobrenome].filter(Boolean).join(' ') || 'Consultor';
+  const iniciais = nome.split(' ').map(n => n[0]).slice(0,2).join('').toUpperCase();
+  const avatarEl = document.getElementById('vx-avatar');
+  if (perfil.photo_url) {
+    avatarEl.innerHTML = `<img src="${perfil.photo_url}" alt="">`;
+  } else {
+    avatarEl.textContent = iniciais;
+  }
+  document.getElementById('vx-greeting').innerText = `Olá, ${nome.split(' ')[0]}`;
+  
+  const diasUteisTotal = vxDiasUteis(anoAtual, d.mesAtual);
+  const diasUteisDec = vxDiasUteisDecorridos(anoAtual, d.mesAtual);
+  document.getElementById('vx-date').innerText = 
+    `${mesNome.toLowerCase().replace(/^./, c => c.toUpperCase())} ${anoAtual} · Dia útil ${diasUteisDec}/${diasUteisTotal}`;
+
+  // ---- Meta global ----
+  const metaTotal = metaFat + metaPort + metaAdit;
+  const realTotal = realGross + realPort + realAdit;
+  const faltaTotal = Math.max(0, metaTotal - realTotal);
+  const pctGlobal = metaTotal > 0 ? Math.min((realTotal / metaTotal) * 100, 100) : 0;
+
+  // Projeção
+  const ritmo = diasUteisDec > 0 ? realTotal / diasUteisDec : 0;
+  const projecao = ritmo * diasUteisTotal;
+  const pctProjecao = metaTotal > 0 ? (projecao / metaTotal) * 100 : 0;
+
+  // Status
+  let statusClasse, statusTexto, tituloClasse;
+  if (metaTotal === 0) {
+    statusClasse = 'atencao'; statusTexto = 'SEM META'; tituloClasse = '';
+  } else if (pctProjecao >= 100) {
+    statusClasse = 'ok'; statusTexto = '🟢 NO RITMO'; tituloClasse = 'ritmo-ok';
+  } else if (pctProjecao >= 80) {
+    statusClasse = 'atencao'; statusTexto = '🟡 ATENÇÃO'; tituloClasse = '';
+  } else {
+    statusClasse = 'critico'; statusTexto = '🔴 ATRASADO'; tituloClasse = 'ritmo-atraso';
+  }
+
+  const fmt = v => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  
+  // Frase principal
+  let tituloHTML;
+  if (metaTotal === 0) {
+    tituloHTML = `Nenhuma meta definida pra <b>${mesNome}</b>`;
+  } else if (faltaTotal <= 0) {
+    tituloHTML = `🏆 <b>Meta batida!</b> Cada venda agora é bônus`;
+  } else {
+    tituloHTML = `Faltam <b>${fmt(faltaTotal)}</b> pra bater ${mesNome.toLowerCase()}`;
+  }
+
+  // Quebras
+  const quebras = [
+    { nome: 'Gross', feito: realGross, meta: metaFat, cor: '#3b82f6', pct: metaFat > 0 ? Math.min((realGross/metaFat)*100, 100) : 0 },
+    { nome: 'Portabilidade', feito: realPort, meta: metaPort, cor: '#a855f7', pct: metaPort > 0 ? Math.min((realPort/metaPort)*100, 100) : 0 },
+    { nome: 'Aditivo', feito: realAdit, meta: metaAdit, cor: '#f59e0b', pct: metaAdit > 0 ? Math.min((realAdit/metaAdit)*100, 100) : 0 }
+  ];
+
+  const quebraHTML = quebras.map(q => `
+    <div class="vx-quebra-item">
+      <div class="vx-quebra-topo">
+        <span class="vx-quebra-nome">${q.nome}</span>
+        <span class="vx-quebra-num">${fmt(q.feito)} / ${fmt(q.meta)}</span>
+      </div>
+      <div class="vx-quebra-barra">
+        <div style="width: ${q.pct}%; background: ${q.cor};"></div>
+      </div>
+      <div class="vx-quebra-pct" style="color: ${q.cor};">${q.pct.toFixed(0)}%</div>
+    </div>
+  `).join('');
+
+  // Rodapé
+  const fmtData = dt => `${String(dt.getDate()).padStart(2,'0')}/${String(dt.getMonth()+1).padStart(2,'0')}`;
+  const projecaoTexto = metaTotal > 0
+    ? (pctProjecao >= 100 
+        ? `Projeção: bate meta em <b>${Math.ceil((metaTotal / (ritmo || 1)))}</b> dias úteis`
+        : `No ritmo atual, você bate <b>${pctProjecao.toFixed(0)}%</b> da meta`)
+    : 'Defina uma meta pra ver a projeção';
+
+  const container = document.getElementById('vx-meta-container');
+  container.innerHTML = `
+    <div class="vx-meta-bloco">
+      <div class="vx-meta-label">🎯 Meta Viva · ${mesNome} ${anoAtual}</div>
+      <div class="vx-meta-titulo ${tituloClasse}">${tituloHTML}</div>
+
+      <div class="vx-barra">
+        <div class="vx-barra-fill" style="width: ${pctGlobal}%;"></div>
+      </div>
+      <div class="vx-barra-pct">
+        <span>${fmt(realTotal)} de ${fmt(metaTotal)}</span>
+        <b>${pctGlobal.toFixed(1)}%</b>
+      </div>
+
+      <div class="vx-quebra">${quebraHTML}</div>
+
+      <div class="vx-meta-rodape">
+        <div class="vx-projecao">${projecaoTexto}</div>
+        <div class="vx-status-ritmo ${statusClasse}">${statusTexto}</div>
+      </div>
+    </div>
+  `;
+}
+
+// ---- 6. Iniciar ----
+document.addEventListener('DOMContentLoaded', vxCarregarMeuDia);
+</script>
+</body>
+</html>
