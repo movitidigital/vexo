@@ -1257,7 +1257,91 @@ var STATUS_LIST = [
   "5. CONFIRMAÇÃO LOGÍSTICA",
   "6. ATIVADO"
 ];
-  
+  // ═══════════════════════════════════════════════════════════
+// 🔧 HELPERS DE DATA (usados na validação de ativação)
+// ═══════════════════════════════════════════════════════════
+function parseDataBR(str) {
+  if (!str) return null;
+  str = String(str).trim();
+  if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+    const d = new Date(str);
+    return isNaN(d.getTime()) ? null : d;
+  }
+  const p = str.split('/');
+  if (p.length === 3) {
+    const d = new Date(parseInt(p[2]), parseInt(p[1]) - 1, parseInt(p[0]));
+    return isNaN(d.getTime()) ? null : d;
+  }
+  return null;
+}
+// ═══════════════════════════════════════════════════════════
+// 🔧 SALVAR DATA DO RADAR (versão única e global)
+// ═══════════════════════════════════════════════════════════
+function salvarDataRadar(idUnico, origem, dataRadar, btnElement) {
+  if (!idUnico) {
+    showToast('Identificador único do pedido não encontrado. Recarregue a lista.', 'error');
+    return;
+  }
+  if (!dataRadar) {
+    showToast('Informe uma data válida.', 'warning');
+    return;
+  }
+
+  // 🔥 SANIDADE (Patch 4): valida antes de enviar
+  const d = parseDataBR(dataRadar);
+  if (d) {
+    const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+
+    if (d > hoje) {
+      showToast('⚠️ A data do RADAR não pode estar no futuro.', 'warning');
+      return;
+    }
+
+    const diasAtras = Math.floor((hoje - d) / (1000 * 60 * 60 * 24));
+    if (diasAtras > 180) {
+      showToast(
+        `⚠️ Essa data tem <b>${diasAtras} dias</b> (mais de 6 meses). Confira se não é engano.`,
+        'warning'
+      );
+      // Não bloqueia — só avisa.
+    }
+  }
+
+  const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico && p.origem === origem);
+  const bancoDeDadosId = pedido ? pedido.bancoDeDadosId : null;
+  console.log(`🏦 bancoDeDadosId para salvar data RADAR: ${bancoDeDadosId || 'NULL'}`);
+
+  showLoading('Salvando data RADAR...');
+
+  google.script.run
+    .withSuccessHandler(res => {
+      hideLoading();
+      if (res && res.success) {
+        showToast('Data RADAR salva com sucesso!', 'success');
+
+        // Atualiza o objeto global
+        if (pedido) pedido.data_radar = dataRadar;
+
+        // Atualiza o input no modal (se ainda estiver aberto)
+        const input = document.getElementById('data-radar-input');
+        if (input) input.value = converterDataParaInput(dataRadar);
+
+        // Atualiza o botão (se foi passado)
+        if (btnElement) {
+          btnElement.textContent = 'Editar';
+          btnElement.dataset.mode = 'edit';
+          btnElement.style.background = '#f59e0b';
+        }
+      } else {
+        showToast(res?.message || 'Erro ao salvar', 'error');
+      }
+    })
+    .withFailureHandler(err => {
+      hideLoading();
+      showToast('Erro de comunicação: ' + err, 'error');
+    })
+    .salvarDataRadarBackend(idUnico, origem, dataRadar, bancoDeDadosId);
+}
   // ============================================
   // 🎨 SISTEMA DE TOAST NOTIFICATIONS
   // ============================================
@@ -3224,33 +3308,6 @@ function converterDataParaInput(dataStr) {
   return dataStr;
 }
 
-function salvarDataRadar(idUnico, origem, dataRadar) {
-  if (!dataRadar) {
-    showToast('Informe uma data válida.', 'warning');
-    return;
-  }
-  showLoading('Salvando data RADAR...');
-  google.script.run
-    .withSuccessHandler(res => {
-      hideLoading();
-      if (res.success) {
-        showToast('Data RADAR salva com sucesso!', 'success');
-        // Atualiza o pedido local
-        const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico && p.origem === origem);
-        if (pedido) pedido.data_radar = dataRadar;
-        // Atualiza o campo no modal se ainda estiver aberto
-        const input = document.getElementById('data-radar-input');
-        if (input) input.value = converterDataParaInput(dataRadar);
-      } else {
-        showToast(res.message || 'Erro ao salvar', 'error');
-      }
-    })
-    .withFailureHandler(err => {
-      hideLoading();
-      showToast('Erro de comunicação: ' + err, 'error');
-    })
-    .salvarDataRadarBackend(idUnico, origem, dataRadar);
-}
 
 // ============================================
 // RENDERIZAR DETALHES DO PEDIDO (MODAL)
@@ -3267,63 +3324,6 @@ function renderizarDetalhes(pedido) {
     return;
   }
 
-  // ============================================
-  // FUNÇÕES AUXILIARES LOCAIS (DATA RADAR)
-  // ============================================
-
-  function converterDataParaInput(dataStr) {
-    if (!dataStr) return '';
-    if (typeof dataStr === 'string' && dataStr.includes('-')) {
-      return dataStr.split('T')[0];
-    }
-    if (typeof dataStr === 'string' && dataStr.includes('/')) {
-      const partes = dataStr.split('/');
-      if (partes.length === 3) {
-        return `${partes[2]}-${partes[1]}-${partes[0]}`;
-      }
-    }
-    return String(dataStr);
-  }
-
-  // Função salvarDataRadar com callback para atualizar o botão
-  function salvarDataRadar(idUnico, origem, dataRadar, btnElement) {
-    if (!idUnico) {
-      showToast('Identificador único do pedido não encontrado. Recarregue a lista.', 'error');
-      return;
-    }
-    if (!dataRadar) {
-      showToast('Informe uma data válida.', 'warning');
-      return;
-    }
-
-    const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico && p.origem === origem);
-    const bancoDeDadosId = pedido ? pedido.bancoDeDadosId : null;
-    console.log(`🏦 bancoDeDadosId para salvar data RADAR: ${bancoDeDadosId || 'NULL'}`);
-
-    showLoading('Salvando data RADAR...');
-    google.script.run
-      .withSuccessHandler(res => {
-        hideLoading();
-        if (res.success) {
-          showToast('Data RADAR salva com sucesso!', 'success');
-          if (pedido) pedido.data_radar = dataRadar;
-          const input = document.getElementById('data-radar-input');
-          if (input) input.value = converterDataParaInput(dataRadar);
-          if (btnElement) {
-            btnElement.textContent = 'Editar';
-            btnElement.dataset.mode = 'edit';
-            btnElement.style.background = '#f59e0b';
-          }
-        } else {
-          showToast(res.message || 'Erro ao salvar', 'error');
-        }
-      })
-      .withFailureHandler(err => {
-        hideLoading();
-        showToast('Erro de comunicação: ' + err, 'error');
-      })
-      .salvarDataRadarBackend(idUnico, origem, dataRadar, bancoDeDadosId);
-  }
 
   // ============================================
   // FUNÇÃO PARA SALVAR CÓDIGO DO CLIENTE (NOVA)
