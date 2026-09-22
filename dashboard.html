@@ -56,8 +56,7 @@
 }
     /* --- VEXO BRANDING - ESTRUTURA ERP --- */
     body, html { margin: 0; padding: 0; height: 100%; font-family: 'Poppins', sans-serif; background: #f4f7fa; overflow: hidden; }
-    .dash-wrapper { display: flex; height: 100vh; width: 100%; }
-
+.dash-wrapper { display: flex; height: 100vh; width: 100%; }
    /* --- SIDEBAR VEXO - VERSÃO EVOLUÍDA --- */
     .sidebar-erp {
       width: 250px; /* Largura ampliada para melhor leitura */
@@ -172,7 +171,7 @@
     }
 
     /* VIEWPORT PRINCIPAL */
-    .main-viewport { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; }
+.main-viewport { flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     .nav-header-erp {
       padding: 12px 30px; background: #fff; display: flex;
       justify-content: space-between; align-items: center;
@@ -746,6 +745,114 @@
     -webkit-line-clamp: 2;
   }
 }
+    /* ═══════════════════════════════════════════════════════════
+   🎛️ SIDEBAR RECOLHÍVEL — VEXO
+   ═══════════════════════════════════════════════════════════ */
+
+/* Botão de toggle — fica flutuando na borda direita do sidebar */
+.sidebar-erp {
+  position: relative;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.sidebar-toggle {
+  position: absolute;
+  top: 80px;
+  right: -14px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #1e293b;
+  color: #94a3b8;
+  border: 2px solid #334155;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 0;
+  z-index: 1100;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  font-family: 'Poppins', sans-serif;
+  line-height: 1;
+}
+
+.sidebar-toggle:hover {
+  background: #3b82f6;
+  color: #fff;
+  border-color: #60a5fa;
+  transform: scale(1.1);
+}
+
+.sidebar-toggle-icon {
+  display: inline-block;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  margin-top: -2px;
+}
+
+/* ═══════════════════════════════════════════════════════════
+   ESTADO RECOLHIDO
+   ═══════════════════════════════════════════════════════════ */
+.sidebar-erp.collapsed {
+  width: 76px;
+}
+
+.sidebar-erp.collapsed .sidebar-logo {
+  padding: 0 8px;
+  margin-bottom: 40px;
+}
+
+.sidebar-erp.collapsed .logo-img-sidebar {
+  width: 48px;
+}
+
+.sidebar-erp.collapsed .sidebar-item {
+  width: calc(100% - 16px);
+  margin: 4px 8px;
+  padding: 0;
+  justify-content: center;
+  gap: 0;
+}
+
+.sidebar-erp.collapsed .sidebar-item span {
+  display: none;
+}
+
+.sidebar-erp.collapsed .sidebar-item i {
+  font-size: 22px;
+  width: auto;
+}
+
+.sidebar-erp.collapsed .sidebar-item.active::before {
+  left: 0;
+  height: 60%;
+  top: 20%;
+}
+
+.sidebar-erp.collapsed .sidebar-separator {
+  margin: 15px 12px;
+}
+
+/* Ícone do botão gira quando recolhido */
+.sidebar-erp.collapsed .sidebar-toggle-icon {
+  transform: rotate(180deg);
+}
+
+/* Tooltip nativo via title="" já cobre, mas reforçamos visualmente */
+.sidebar-erp.collapsed .sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ═══════════════════════════════════════════════════════════
+   RESPONSIVO — já começa recolhido em telas pequenas
+   ═══════════════════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .sidebar-erp:not(.collapsed) {
+    width: 200px;
+  }
+}
   </style>
 </head>
 <body>
@@ -766,6 +873,8 @@
          alt="VERTEX" 
          class="logo-img-sidebar">
   </div>
+
+  <button class="sidebar-toggle" id="sidebar-toggle" onclick="toggleSidebar()" title="Recolher menu"> <span class="sidebar-toggle-icon">‹</span> </button>
   
   <div class="sidebar-item active" id="btn-dash" onclick="voltarAoMenu()" title="Dashboard">
     <i>📊</i><span>Dashboard</span>
@@ -2998,6 +3107,80 @@ async function verificarAlertasCofre() {
     console.warn('⚠️ verificarAlertasCofre:', e.message);
   }
 }
+  // ═══════════════════════════════════════════════════════════
+// 🎛️ CONTROLE DA SIDEBAR RECOLHÍVEL
+// ═══════════════════════════════════════════════════════════
+
+const SIDEBAR_STORAGE_KEY = 'vexoSidebarCollapsed';
+
+function toggleSidebar() {
+  const sidebar = document.getElementById('sidebar-erp');
+  const toggle  = document.getElementById('sidebar-toggle');
+  if (!sidebar) return;
+
+  const estaCollapsed = sidebar.classList.toggle('collapsed');
+
+  // Atualiza tooltip do botão
+  if (toggle) {
+    toggle.title = estaCollapsed ? 'Expandir menu' : 'Recolher menu';
+  }
+
+  // Persiste preferência
+  try {
+    localStorage.setItem(SIDEBAR_STORAGE_KEY, estaCollapsed ? '1' : '0');
+  } catch (e) { /* localStorage bloqueado — ignora */ }
+
+  console.log(`🎛️ [SIDEBAR] ${estaCollapsed ? 'Recolhida' : 'Expandida'}`);
+}
+
+function restaurarEstadoSidebar() {
+  const sidebar = document.getElementById('sidebar-erp');
+  const toggle  = document.getElementById('sidebar-toggle');
+  if (!sidebar) return;
+
+  let deveEstarCollapsed = false;
+  try {
+    deveEstarCollapsed = localStorage.getItem(SIDEBAR_STORAGE_KEY) === '1';
+  } catch (e) { /* ignore */ }
+
+  // Em telas pequenas, força recolhido por padrão
+  if (window.innerWidth < 900) {
+    deveEstarCollapsed = true;
+  }
+
+  if (deveEstarCollapsed) {
+    sidebar.classList.add('collapsed');
+    if (toggle) toggle.title = 'Expandir menu';
+  }
+}
+
+// Aplica no load (antes do primeiro paint, se possível)
+restaurarEstadoSidebar();
+
+// Reaplica quando redimensiona muito (entra/sai de mobile)
+let _sidebarResizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(_sidebarResizeTimer);
+  _sidebarResizeTimer = setTimeout(() => {
+    const sidebar = document.getElementById('sidebar-erp');
+    if (!sidebar) return;
+
+    // Se saiu do mobile para desktop, restaura a preferência salva
+    if (window.innerWidth >= 900 && sidebar.classList.contains('collapsed')) {
+      let preferencia = '0';
+      try { preferencia = localStorage.getItem(SIDEBAR_STORAGE_KEY) || '0'; } catch (e) {}
+      if (preferencia === '0') {
+        sidebar.classList.remove('collapsed');
+        const toggle = document.getElementById('sidebar-toggle');
+        if (toggle) toggle.title = 'Recolher menu';
+      }
+    }
+  }, 200);
+});
+
+// Expõe global para os onclick=""
+window.toggleSidebar = toggleSidebar;
+window.restaurarEstadoSidebar = restaurarEstadoSidebar;
 </script>
 </body>
 </html>
