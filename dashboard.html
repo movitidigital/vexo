@@ -66,7 +66,7 @@
       padding: 25px 0; 
       flex-shrink: 0;
       box-shadow: 4px 0 15px rgba(0,0,0,0.2); 
-      z-index: 1000;
+      z-index: 998;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     }
     
@@ -752,7 +752,44 @@
 .sidebar-erp {
   transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
+/* ═══════════════════════════════════════════════════════════
+   📱 SWIPE + OVERLAY — só em telas pequenas
+   ═══════════════════════════════════════════════════════════ */
 
+/* Overlay escuro atrás da sidebar quando aberta no mobile */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+  z-index: 998;              /* fica atrás da sidebar (que é 1000) */
+  opacity: 0;
+  transition: opacity 0.28s ease;
+  cursor: pointer;
+  touch-action: none;
+}
+
+/* Só existe visualmente em telas pequenas */
+@media (max-width: 1024px) {
+  /* Quando a sidebar está ABERTA no mobile, aparece o overlay */
+  body.vexo-sidebar-open .sidebar-overlay {
+    display: block;
+    opacity: 1;
+  }
+
+  /* Feedback visual ao arrastar (opcional, discreto) */
+  .sidebar-erp.vexo-dragging {
+    transition: none !important; /* durante o drag, sem transition — segue o dedo */
+    box-shadow: 8px 0 40px rgba(0, 0, 0, 0.5);
+  }
+}
+
+/* Em telas grandes, o overlay nunca aparece */
+@media (min-width: 1025px) {
+  .sidebar-overlay { display: none !important; }
+}
 /* Botão flutuante na borda direita da sidebar */
 .sidebar-toggle {
   position: absolute !important;
@@ -958,6 +995,7 @@
   </div>
 </div>
 
+    <div class="sidebar-overlay" id="sidebar-overlay" aria-hidden="true"></div>
 
 <div class="dash-wrapper">
 <aside class="sidebar-erp">
@@ -3385,6 +3423,173 @@ window.restaurarEstadoSidebar = restaurarEstadoSidebar;
   } catch(e) {}
 
   console.log('✅ [SIDEBAR] Pronto');
+})();
+  // ═══════════════════════════════════════════════════════════
+// 👆 SWIPE GESTURES + OVERLAY — VEXO (mobile/tablet)
+// ═══════════════════════════════════════════════════════════
+(function initSidebarSwipe() {
+  'use strict';
+
+  const BREAKPOINT = 1024;               // mesmo breakpoint do toggle
+  const EDGE_ZONE  = 30;                 // px de margem pra ativar "swipe from edge"
+  const MIN_DIST   = 50;                 // px mínimos pra considerar swipe válido
+  const MAX_VERT   = 60;                 // desvio vertical máximo permitido
+
+  const isSmall   = () => window.innerWidth <= BREAKPOINT;
+  const getSidebar = () => document.querySelector('.sidebar-erp');
+  const getOverlay = () => document.getElementById('sidebar-overlay');
+
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let tracking = false;
+  let mode = null; // 'open' (abrindo via edge) | 'close' (fechando) | null
+
+  // ─── Atualiza classes no body conforme estado da sidebar ───
+  function syncOverlay() {
+    const sidebar = getSidebar();
+    if (!sidebar) return;
+    const collapsed = sidebar.classList.contains('collapsed');
+
+    // No mobile, sidebar "aberta" = NÃO collapsed
+    if (isSmall() && !collapsed) {
+      document.body.classList.add('vexo-sidebar-open');
+    } else {
+      document.body.classList.remove('vexo-sidebar-open');
+    }
+  }
+
+  // Expõe pra outras partes do sistema
+  window.syncSidebarOverlay = syncOverlay;
+
+  // ─── Força abrir/fechar (usado pelos gestos) ───
+  function openSidebar() {
+    const sidebar = getSidebar();
+    if (!sidebar || !isSmall()) return;
+    sidebar.classList.remove('collapsed');
+    // Registra que foi manual (pra não voltar a recolher sozinho no reload)
+    try { sessionStorage.setItem('vexoSidebarManualOverride', 'expand'); } catch(e) {}
+    syncOverlay();
+    console.log('👆 [SWIPE] Abriu sidebar');
+  }
+
+  function closeSidebar() {
+    const sidebar = getSidebar();
+    if (!sidebar || !isSmall()) return;
+    sidebar.classList.add('collapsed');
+    try { sessionStorage.setItem('vexoSidebarManualOverride', 'collapse'); } catch(e) {}
+    syncOverlay();
+    console.log('👆 [SWIPE] Fechou sidebar');
+  }
+
+  // ─── Detecta intenção no TOUCHSTART ───
+  document.addEventListener('touchstart', (e) => {
+    if (!isSmall()) return;
+    if (e.touches.length !== 1) return;
+
+    const sidebar = getSidebar();
+    if (!sidebar) return;
+
+    const t = e.touches[0];
+    touchStartX = t.clientX;
+    touchStartY = t.clientY;
+
+    const collapsed = sidebar.classList.contains('collapsed');
+
+    // Caso 1: toca na borda esquerda (com sidebar fechada) → pode abrir
+    if (collapsed && touchStartX <= EDGE_ZONE) {
+      tracking = true;
+      mode = 'open';
+      console.log('👆 [SWIPE] Iniciando detecção de abertura (from edge)');
+      return;
+    }
+
+    // Caso 2: toca sobre a sidebar aberta → pode fechar
+    if (!collapsed && touchStartX <= sidebar.offsetWidth + 10) {
+      tracking = true;
+      mode = 'close';
+      console.log('👆 [SWIPE] Iniciando detecção de fechamento');
+      return;
+    }
+
+    tracking = false;
+    mode = null;
+  }, { passive: true });
+
+  // ─── Durante o movimento ───
+  document.addEventListener('touchmove', (e) => {
+    if (!tracking) return;
+    const t = e.touches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+
+    // Se o movimento for mais vertical que horizontal, cancela
+    if (Math.abs(dy) > Math.abs(dx) && Math.abs(dy) > 20) {
+      tracking = false;
+      mode = null;
+      return;
+    }
+
+    // Feedback visual durante o drag (opcional)
+    const sidebar = getSidebar();
+    if (sidebar) sidebar.classList.add('vexo-dragging');
+  }, { passive: true });
+
+  // ─── No TOUCHEND, decide a ação ───
+  document.addEventListener('touchend', (e) => {
+    if (!tracking) return;
+
+    const sidebar = getSidebar();
+    if (sidebar) sidebar.classList.remove('vexo-dragging');
+
+    const t = e.changedTouches[0];
+    const dx = t.clientX - touchStartX;
+    const dy = t.clientY - touchStartY;
+
+    const horizontalOk = Math.abs(dx) >= MIN_DIST && Math.abs(dy) <= MAX_VERT;
+
+    if (mode === 'open' && horizontalOk && dx > 0) {
+      openSidebar();
+    } else if (mode === 'close' && horizontalOk && dx < 0) {
+      closeSidebar();
+    }
+
+    tracking = false;
+    mode = null;
+  }, { passive: true });
+
+  // ─── Overlay: toque fecha a sidebar ───
+  document.addEventListener('click', (e) => {
+    if (e.target.closest('#sidebar-overlay')) {
+      closeSidebar();
+    }
+  });
+
+  // ─── Sincroniza overlay quando o botão toggle é usado ───
+  // (interceptamos o toggleSidebar original pra chamar o sync depois)
+  const originalToggle = window.toggleSidebar;
+  if (typeof originalToggle === 'function') {
+    window.toggleSidebar = function(evt) {
+      originalToggle(evt);
+      // Aguarda a class mudar (é síncrono, mas por segurança)
+      setTimeout(syncOverlay, 10);
+    };
+  }
+
+  // ─── Re-sincroniza ao redimensionar ───
+  let resizeTimer;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(syncOverlay, 180);
+  });
+
+  // ─── Executa no boot ───
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => setTimeout(syncOverlay, 300));
+  } else {
+    setTimeout(syncOverlay, 300);
+  }
+
+  console.log('✅ [SWIPE] Gestos ativos (breakpoint:', BREAKPOINT + 'px)');
 })();
 </script>
 </body>
