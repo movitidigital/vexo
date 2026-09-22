@@ -195,7 +195,7 @@
 
   <div id="splash-screen">
     <img src="vexo-imglogo.png" class="splash-logo" alt="Carregando VEXO" onerror="this.style.display='none'">
-    <div style="color: #64748b; letter-spacing: 3px; font-size: 11px; font-weight: 600;">INICIALIZANDO SISTEMA VEXO</div>
+    <div style="color: #64748b; letter-spacing: 3px; font-size: 11px; font-weight: 600;">SAINDO DO SISTEMA VEXO</div>
   </div>
 
   <div class="login-wrapper" id="login-box">
@@ -331,7 +331,7 @@ async function executarLogin() {
 
   btn.disabled = true;
   if (loader) loader.style.display = "inline-block";
-  status.innerHTML = "<span style='color:#64748b'>Validando acesso seguro VEXO...</span>";
+  status.innerHTML = "<span style='color:#64748b'>Validando acesso seguro ao sistema...</span>";
 
   try {
     // ─── 1. Autentica no Supabase Auth ──────────────────────
@@ -421,7 +421,7 @@ function carregarPainel(tipoAcesso) {
     if (splash) {
       splash.style.display = "flex";
       splash.style.opacity = "1";
-      if (statusTexto) statusTexto.innerText = "CARREGANDO PAINEL VEXO...";
+      if (statusTexto) statusTexto.innerText = "CARREGANDO SISTEMA VEXO...";
     }
 
     const moduloDestino = (tipoAcesso === 'PARCEIRO') ? 'dashboard_parceiro.html' : 'dashboard.html';
