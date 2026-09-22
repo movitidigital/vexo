@@ -1191,6 +1191,14 @@
 </style>
 
 <script>
+  // 🔥 Cache do usuário logado (preenchido no boot)
+let _usuarioLogadoGlobal = null;
+
+// No setTimeout existente de boot, adicione:
+(async () => {
+  _usuarioLogadoGlobal = await obterUsuarioVexo();
+  console.log('👤 Usuário carregado:', _usuarioLogadoGlobal?.nomeCompleto);
+})();
   // ============================================================
 // HELPERS DE USUÁRIO (lê do Supabase Auth + tabela profiles)
 // ============================================================
@@ -2956,6 +2964,7 @@ function processarExclusao(id) {
 setTimeout(async () => {
   const usuarioVexo = await obterUsuarioVexo();
   if (usuarioVexo) {
+    _usuarioLogadoGlobal = usuarioVexo;   // 🔥 ADICIONAR ESTA LINHA
     console.log("Iniciando Funil para:", usuarioVexo.nomeCompleto, "Cargo:", usuarioVexo.role);
     await carregarMeuFunil();
     await controlarVisibilidadeBotaoDevolver();
@@ -4426,11 +4435,26 @@ function coletarDadosPropostaMultiLinha() {
   const descontoTotal = linhas.reduce((s, l) => s + l.desconto, 0);
   const valorFinal = linhas.reduce((s, l) => s + l.valor_final, 0);
 
+  // 🔥 Resolve o nome do consultor logado (3 camadas de fallback)
+  let nomeConsultor = 'Consultor';
+  try {
+    if (typeof _usuarioLogadoGlobal !== 'undefined' && _usuarioLogadoGlobal) {
+      nomeConsultor = _usuarioLogadoGlobal.nomeCompleto 
+                   || _usuarioLogadoGlobal.username 
+                   || nomeConsultor;
+    } else {
+      const s = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+      nomeConsultor = s.nome || s.username || s.nomeCompleto || nomeConsultor;
+    }
+  } catch (e) {
+    console.warn('Não foi possível resolver o nome do consultor:', e);
+  }
+
   return {
     razao: document.getElementById('oportunidade_razao')?.innerText || 'Cliente',
     cnpj: document.getElementById('oportunidade_cnpj')?.innerText || '',
     email: document.getElementById('oportunidade_email')?.innerText || '',
-    usuario: usuarioVexo?.nomeCompleto || 'Consultor',
+    usuario: nomeConsultor,   // ← 🔥 NOME REAL em vez do token
     linhas: linhas,
     subtotal: subtotal,
     desconto_total: descontoTotal,
