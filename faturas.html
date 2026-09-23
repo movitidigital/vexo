@@ -1516,17 +1516,16 @@ async function estornarGrupo(codigoCliente, dataVencimento) {
     return;
   }
 
-  // Coleta as células que estão marcadas como PAGO para este vencimento
+  // Coleta as células que estão marcadas como PAGO/PAGA para este vencimento
   var celulas = [];
-  var dataObj = null;
   for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
     var linha = cliente.linhasTelefonicas[l];
     for (var f = 0; f < linha.faturas.length; f++) {
       var fatura = linha.faturas[f];
-           var dataFatura = parseDataSemTimezone(fatura.vencimento);
-      if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento && ['PAGO','PAGA'].includes(fatura.status.toUpperCase())) {
+      var dataFatura = parseDataSemTimezone(fatura.vencimento);
+      if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento &&
+          ['PAGO','PAGA'].includes(fatura.status.toUpperCase())) {
         celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
-        if (!dataObj) dataObj = dataFatura;
       }
     }
   }
@@ -1538,25 +1537,46 @@ async function estornarGrupo(codigoCliente, dataVencimento) {
 
   if (!confirm('Deseja estornar ' + celulas.length + ' fatura(s) com vencimento ' + dataVencimento + '? Isso irá reverter para PENDENTE.')) return;
 
-  var nomeUsuario = obterNomeUsuario();
+  // 🔥 BUGFIX: obterNomeUsuario() é async — precisa de await
+  var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
 
   google.script.run
-    .withSuccessHandler(function() {
-      // Atualizar cache local
+    .withSuccessHandler(function(res) {
+      // 🔥 VALIDA O RETORNO DO RPC ANTES DE MEXER NO CACHE
+      if (!res || res.success !== true) {
+        const motivo = res?.message || 'O servidor não confirmou a operação.';
+        console.error('❌ Estorno recusado pelo servidor:', res);
+        alert('⚠️ O estorno NÃO foi aplicado: ' + motivo);
+        return;
+      }
+
+      const afetadas = Number(res.linhas_afetadas ?? 0);
+      if (afetadas === 0) {
+        console.error('❌ RPC retornou sucesso mas afetou 0 linhas.', res);
+        alert('⚠️ O banco não foi atualizado (0 linhas afetadas). Verifique permissões ou IDs.');
+        return;
+      }
+
+      // ✅ Sucesso real — atualiza o cache local
       for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
         var linha2 = cliente.linhasTelefonicas[l2];
         for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
           var fatura2 = linha2.faturas[f2];
-          var dataFatura2 = new Date(fatura2.vencimento);
-                  if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento && ['PAGO','PAGA'].includes(fatura2.status.toUpperCase())) {
+          var dataFatura2 = parseDataSemTimezone(fatura2.vencimento);   // 🔥 trocado
+          if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento &&
+              ['PAGO','PAGA'].includes(fatura2.status.toUpperCase())) {
             fatura2.status = 'PENDENTE';
+            fatura2.dataPagamento = null;     // 🔥 limpa a data de pagamento ao estornar
           }
         }
       }
       renderizarTabela(cacheClientes);
-      alert('✅ ' + celulas.length + ' fatura(s) estornada(s) com sucesso!');
+      alert('✅ ' + afetadas + ' fatura(s) estornada(s) com sucesso!');
     })
-    .withFailureHandler(function(erro) { alert('❌ Erro: ' + erro); })
+    .withFailureHandler(function(erro) {
+      console.error('❌ Erro na RPC de estorno:', erro);
+      alert('❌ Erro: ' + erro);
+    })
     .estornarStatusFaturas(celulas, nomeUsuario);
 }
 function enviarWhatsAppComLog(numeroContato, msg, codigoCliente, dataVencimento) {
