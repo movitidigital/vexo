@@ -1391,7 +1391,7 @@ async function darBaixaGrupo(codigoCliente, dataVencimento) {
     var linha = cliente.linhasTelefonicas[l];
     for (var f = 0; f < linha.faturas.length; f++) {
       var fatura = linha.faturas[f];
-          var dataFatura = parseDataSemTimezone(fatura.vencimento);
+      var dataFatura = parseDataSemTimezone(fatura.vencimento);
       if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento && !['PAGO','PAGA'].includes(fatura.status.toUpperCase())) {
         celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
       }
@@ -1408,23 +1408,41 @@ async function darBaixaGrupo(codigoCliente, dataVencimento) {
   var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
 
   google.script.run
-    .withSuccessHandler(function() {
-      // Atualiza cache local com status PAGO e data de pagamento
+    .withSuccessHandler(function(res) {
+      // 🔥 VALIDA O RETORNO DO RPC ANTES DE MEXER NO CACHE
+      if (!res || res.success !== true) {
+        const motivo = res?.message || 'O servidor não confirmou a operação.';
+        console.error('❌ Baixa recusada pelo servidor:', res);
+        alert('⚠️ A baixa NÃO foi aplicada: ' + motivo);
+        return;
+      }
+
+      const afetadas = Number(res.linhas_afetadas ?? 0);
+      if (afetadas === 0) {
+        console.error('❌ RPC retornou sucesso mas afetou 0 linhas.', res);
+        alert('⚠️ O banco não foi atualizado (0 linhas afetadas). Verifique permissões ou IDs.');
+        return;
+      }
+
+      // ✅ Sucesso real — atualiza o cache local
       for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
         var linha2 = cliente.linhasTelefonicas[l2];
         for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
           var fatura2 = linha2.faturas[f2];
-          var dataFatura2 = new Date(fatura2.vencimento);
-                  if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento && !['PAGO','PAGA'].includes(fatura2.status.toUpperCase())) {
+          var dataFatura2 = parseDataSemTimezone(fatura2.vencimento);
+          if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento && !['PAGO','PAGA'].includes(fatura2.status.toUpperCase())) {
             fatura2.status = 'PAGO';
-            fatura2.dataPagamento = dataPagamento; // 🔥 Adiciona data de pagamento
+            fatura2.dataPagamento = dataPagamento;
           }
         }
       }
       renderizarTabela(cacheClientes);
-      alert('✅ ' + celulas.length + ' faturas baixadas com sucesso! Logs registrados.');
+      alert('✅ ' + afetadas + ' fatura(s) baixada(s) com sucesso!');
     })
-    .withFailureHandler(function(erro) { alert('❌ Erro: ' + erro); })
+    .withFailureHandler(function(erro) {
+      console.error('❌ Erro na RPC de baixa:', erro);
+      alert('❌ Erro: ' + erro);
+    })
     .atualizarStatusFaturasComLog(celulas, nomeUsuario);
 }
 
