@@ -265,6 +265,33 @@
   </div>
 
 <script>
+  // ═══════════════════════════════════════════════════════════
+// 🔒 REGRAS DE ACESSO POR TIPO × ROLE
+// ═══════════════════════════════════════════════════════════
+const ROLES_PROPRIO = [
+  'ADMINISTRADOR', 'ADMIN', 'DIRETORIA',
+  'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR', 'SUPERVISOR',
+  'CONSULTOR DE VENDAS', 'CONSULTOR'   // consultor interno
+];
+
+const ROLES_PARCEIRO = [
+  'ADMINISTRADOR', 'ADMIN', 'DIRETORIA',
+  'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR', 'SUPERVISOR',
+  'PARCEIRO', 'FREELANCER'
+];
+
+function validarTipoAcesso(role, tipoAcesso) {
+  const r = String(role || '').toUpperCase().trim();
+  if (tipoAcesso === 'PARCEIRO') return ROLES_PARCEIRO.includes(r);
+  return ROLES_PROPRIO.includes(r);
+}
+
+function mensagemBloqueio(tipoAcesso, role) {
+  if (tipoAcesso === 'PARCEIRO') {
+    return `Seu perfil (${role}) não tem acesso ao Portal do Parceiro. Use a aba "Equipe E&E" para entrar.`;
+  }
+  return `Seu perfil (${role}) não tem acesso ao painel interno. Use a aba "Parceiros" para entrar.`;
+}
 // ============================================
 // CONFIGURAÇÃO DO BANCO DE DADOS (SUPABASE)
 // ============================================
@@ -371,6 +398,37 @@ async function executarLogin() {
       if (loader) loader.style.display = "none";
       return;
     }
+    // ─── 3. 🔒 Trava de tipo de acesso × role ───────────────
+const roleUsuario = String(profile.role || '').toUpperCase().trim();
+
+if (!validarTipoAcesso(roleUsuario, tipoAcesso)) {
+  console.warn(`🚫 [VEXO] Bloqueio: role="${roleUsuario}" tentou acessar como "${tipoAcesso}"`);
+
+  status.innerHTML = `<span style='color:#ef4444'>🚫 ${mensagemBloqueio(tipoAcesso, roleUsuario)}</span>`;
+
+  await db.auth.signOut();
+  btn.disabled = false;
+  if (loader) loader.style.display = "none";
+
+  // 🔥 Dá um "nudge" visual pro usuário trocar a aba certa
+  if (tipoAcesso === 'PARCEIRO') {
+    const btn = document.getElementById('btn-proprio');
+    if (btn) {
+      btn.classList.add('active');
+      document.getElementById('btn-parceiro')?.classList.remove('active');
+    }
+    document.getElementById('tipoAcesso').value = 'PROPRIO';
+  } else {
+    const btn = document.getElementById('btn-parceiro');
+    if (btn) {
+      btn.classList.add('active');
+      document.getElementById('btn-proprio')?.classList.remove('active');
+    }
+    document.getElementById('tipoAcesso').value = 'PARCEIRO';
+  }
+
+  return;
+}
 
     // ─── 3. Salva o PROFILE no sessionStorage ───────────────
     const sessaoFinal = {
