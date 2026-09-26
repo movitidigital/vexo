@@ -187,6 +187,19 @@
   </main>
 
 <script>
+  (async function guardParceiro() {
+  const s = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const role = String(s.role || '').toUpperCase().trim();
+  const permitido = ['ADMINISTRADOR','ADMIN','DIRETORIA','BACKOFFICE',
+                     'GERENTE','GERENTE/SUPERVISOR','SUPERVISOR',
+                     'PARCEIRO','FREELANCER'];
+  if (!permitido.includes(role)) {
+    alert('Acesso negado. Use o painel correto para o seu perfil.');
+    try { await window.sb?.auth.signOut(); } catch(e) {}
+    sessionStorage.clear();
+    location.replace('/');
+  }
+})();
 (function () {
   'use strict';
 
