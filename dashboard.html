@@ -1252,6 +1252,19 @@
 </div>
 
 <script>
+  (async function guardProprio() {
+  const s = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const role = String(s.role || '').toUpperCase().trim();
+  const permitido = ['ADMINISTRADOR','ADMIN','DIRETORIA','BACKOFFICE',
+                     'GERENTE','GERENTE/SUPERVISOR','SUPERVISOR',
+                     'CONSULTOR DE VENDAS','CONSULTOR'];
+  if (!permitido.includes(role)) {
+    alert('Acesso negado. Seu perfil não pertence ao painel interno.');
+    try { await window.sb?.auth.signOut(); } catch(e) {}
+    sessionStorage.clear();
+    location.replace('/');
+  }
+})();
 // --- FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO (BLINDADA) ---
 function renderizarDashboard(dados) {
   if (dados.erro) {
