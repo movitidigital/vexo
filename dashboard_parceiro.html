@@ -169,7 +169,7 @@
         </div>
       </div>
 
-      <div class="user-profile">
+      <div class="user-profile" onclick="abrirModalFoto()" title="Alterar foto de perfil" style="cursor: pointer;">
         <div class="user-info">
           <p id="user-display-name">Carregando...</p>
           <span id="user-role">Parceiro PE</span>
@@ -456,5 +456,154 @@ if (pagina !== 'vendas_parceiro') delete window._vexoVendasParceiroLoaded;
   console.log('✅ [VEXO] Dashboard Parceiro carregado');
 })();
 </script>
+  <script>
+    // ═══════════════════════════════════════════════════════════
+// 📷 ALTERAR FOTO DE PERFIL — Dashboard Parceiro
+// ═══════════════════════════════════════════════════════════
+
+// -- Toast simples (usado no sucesso/erro da foto) --
+window.showToastFoto = function (msg, tipo) {
+  const t = document.createElement('div');
+  t.style.cssText = `position:fixed;bottom:24px;right:24px;background:white;
+    border-left:4px solid ${tipo === 'error' ? '#ef4444' : '#10b981'};
+    padding:14px 20px;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.15);
+    z-index:99999;font-family:Poppins,sans-serif;font-size:13px;font-weight:600;color:#1e293b;`;
+  t.textContent = msg;
+  document.body.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+};
+
+// -- Estado da seleção atual --
+let _fotoSelecionada = null;
+
+function _getUserFoto() {
+  try { return JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}'); }
+  catch (e) { return {}; }
+}
+
+function _avatarFallback(u) {
+  const nome = encodeURIComponent(u.username || u.nome || u.email || 'U');
+  return `https://ui-avatars.com/api/?background=0f172a&color=fff&name=${nome}`;
+}
+
+function _atualizarFotoNoHeader(url) {
+  const img = document.getElementById('user-avatar');   // 👈 seletor do dashboard_parceiro
+  if (img) img.src = url;
+}
+
+window.abrirModalFoto = function () {
+  const u = _getUserFoto();
+  const urlAtual = u.photoUrl || _avatarFallback(u);
+  _fotoSelecionada = null;
+
+  document.getElementById('preview-foto').src = urlAtual;
+  document.getElementById('foto-info').textContent = '';
+  document.getElementById('input-foto').value = '';
+  document.getElementById('btn-salvar-foto').disabled = true;
+  document.getElementById('modal-foto-perfil').classList.add('active');
+};
+
+window.fecharModalFoto = function () {
+  document.getElementById('modal-foto-perfil').classList.remove('active');
+};
+
+document.addEventListener('change', function (e) {
+  if (e.target && e.target.id === 'input-foto') {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      alert('Arquivo precisa ser uma imagem.');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Imagem muito grande. Máximo 2 MB.');
+      e.target.value = '';
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = ev => {
+      _fotoSelecionada = { file, dataUrl: ev.target.result };
+      document.getElementById('preview-foto').src = ev.target.result;
+      document.getElementById('foto-info').textContent =
+        `${file.name} · ${(file.size / 1024).toFixed(0)} KB`;
+      document.getElementById('btn-salvar-foto').disabled = false;
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+window.salvarFoto = async function () {
+  if (!_fotoSelecionada) return;
+  const u = _getUserFoto();
+  if (!u.id) { alert('Sessão inválida.'); return; }
+
+  const btn = document.getElementById('btn-salvar-foto');
+  btn.disabled = true;
+  btn.textContent = '⏳ Enviando...';
+
+  try {
+    const ext = (_fotoSelecionada.file.name.split('.').pop() || 'jpg').toLowerCase();
+    const path = `${u.id}/avatar-${Date.now()}.${ext}`;
+
+    const { error: upErr } = await window.sb.storage
+      .from('avatars')
+      .upload(path, _fotoSelecionada.file, {
+        cacheControl: '3600',
+        upsert: false,
+        contentType: _fotoSelecionada.file.type
+      });
+    if (upErr) throw upErr;
+
+    const { data: pub } = window.sb.storage.from('avatars').getPublicUrl(path);
+    const url = pub.publicUrl;
+
+    const { error: dbErr } = await window.sb
+      .from('profiles')
+      .update({ photo_url: url })
+      .eq('id', u.id);
+    if (dbErr) throw dbErr;
+
+    u.photoUrl = url;
+    sessionStorage.setItem('usuarioLogado', JSON.stringify(u));
+
+    _atualizarFotoNoHeader(url);
+    fecharModalFoto();
+    showToastFoto('✅ Foto atualizada com sucesso!', 'success');
+  } catch (e) {
+    console.error('[VEXO][Foto] Erro:', e);
+    showToastFoto('❌ Erro ao salvar foto: ' + e.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💾 Salvar';
+  }
+};
+
+window.removerFoto = async function () {
+  const u = _getUserFoto();
+  if (!u.id) return;
+  if (!confirm('Remover sua foto de perfil? Um avatar padrão será exibido.')) return;
+
+  try {
+    const { error } = await window.sb
+      .from('profiles')
+      .update({ photo_url: null })
+      .eq('id', u.id);
+    if (error) throw error;
+
+    u.photoUrl = null;
+    sessionStorage.setItem('usuarioLogado', JSON.stringify(u));
+
+    _atualizarFotoNoHeader(_avatarFallback(u));
+    fecharModalFoto();
+    showToastFoto('🗑️ Foto removida.', 'success');
+  } catch (e) {
+    console.error('[VEXO][Foto] Erro ao remover:', e);
+    showToastFoto('❌ Erro ao remover foto: ' + e.message, 'error');
+  }
+};
+  </script>
 </body>
 </html>
