@@ -1268,34 +1268,92 @@ const metaLoja = data.meta_loja || {};
 const faixasLoja = data.faixas_loja || {};
 
 // ═══════════════════════════════════════════════════════════════
-// 🎯 FIX · BÔNUS PORTABILIDADE NO EXTRATO DE CARGOS
+// 🎯 FIX v3 · BÔNUS PORTABILIDADE NO EXTRATO DE CARGOS
 // ───────────────────────────────────────────────────────────────
-// Mesma regra do extrato do consultor:
-//   • Base  = todas as linhas × % da faixa FATURAMENTO da loja
-//   • Port  = linhas portadas × % da faixa PORTABILIDADE da loja
-// A linha portada entra nas DUAS contas (base + adicional).
+// 1. Detecta portabilidade de forma tolerante
+// 2. Descobre a faixa da loja em várias fontes + fallback
+//    via admin_resumo_equipe + cálculo local
 // ═══════════════════════════════════════════════════════════════
-const isPort = (v) => !!(v.is_port ?? v.isPort ?? v.portado);
+const isPort = (v) => {
+  if (!v) return false;
+  if (v.is_port === true || v.isPort === true || v.portado === true) return true;
+  if (String(v.tipo || '').toUpperCase().includes('PORT')) return true;
+  const txt = `${v.modalidade || ''} ${v.plano || ''} ${v.descricao || ''}`.toUpperCase();
+  return /PORT(A|ADO|AB|IN|-IN)/.test(txt);
+};
 
 const lojaVendas     = loja.vendas || [];
 const tbpVendas      = tbp.vendas || [];
 const lojaPortVendas = lojaVendas.filter(isPort);
 const tbpPortVendas  = tbpVendas.filter(isPort);
 
-// Resolve o % de portabilidade conforme a faixa da loja
+// 🔍 DEBUG — olhe isso no console pra confirmar
+console.log('🧪 [CARGO] 1ª venda LOJA:', lojaVendas[0]);
+console.log('🧪 [CARGO] 1ª venda TBP :', tbpVendas[0]);
+console.log('🧪 [CARGO] Detectadas  :', {
+  loja_total: lojaVendas.length, loja_port: lojaPortVendas.length,
+  tbp_total: tbpVendas.length,  tbp_port: tbpPortVendas.length
+});
+console.log('🧪 [CARGO] faixas_loja  :', data.faixas_loja);
+
+// 1) Descobrir faixa de portabilidade da loja
+let faixaPort =
+      data?.faixas_loja?.port
+   || data?.faixa_port
+   || metaLoja?.faixa_port
+   || data?.loja?.faixa_port
+   || null;
+
+// 2) Fallback A: pegar do admin_resumo_equipe
+if (!faixaPort) {
+  try {
+    const { data: resumo } = await sb.rpc('admin_resumo_equipe', {
+      p_mes: parseInt(mes, 10), p_ano: parseInt(ano, 10)
+    });
+    faixaPort = resumo?.totais?.loja_faixa_port || null;
+    console.log('🔎 [CARGO] faixaPort via admin_resumo_equipe:', faixaPort);
+  } catch (e) { console.warn('[CARGO] resumo_equipe falhou:', e); }
+}
+
+// 3) Fallback B: calcular localmente pelo realizado x metas
+if (!faixaPort && metaLoja?.port_target) {
+  const realizadoPort = lojaPortVendas.reduce((a,v)=>a+Number(v.valor||0),0)
+                      + tbpPortVendas.reduce((a,v)=>a+Number(v.valor||0),0);
+  const t  = Number(metaLoja.port_target) || 0;
+  const mn = Number(metaLoja.port_min)    || t * 0.7;
+  const sp = Number(metaLoja.port_sup)    || t * 1.5;
+  if      (realizadoPort >= sp) faixaPort = 'SUP';
+  else if (realizadoPort >= t)  faixaPort = 'TARGET';
+  else if (realizadoPort >= mn) faixaPort = 'MIN';
+  else                          faixaPort = 'PENALIDADE';
+  console.log('🔎 [CARGO] faixaPort calculada localmente:', faixaPort, '| realizado:', realizadoPort);
+}
+
+// 4) Aplicar o % correspondente
 let pctPort = 0;
 try {
   const { data: cfgResp } = await sb.rpc('admin_config_faixas_get');
   const faixasCfg = cfgResp?.faixas || [];
   const cfgPort = faixasCfg.find(f => f.modalidade === 'PORTABILIDADE') || {};
-  const faixaPort = faixasLoja.port || data.faixa_port || metaLoja.faixa_port;
-  if (faixaPort === 'SUP')         pctPort = Number(cfgPort.faixa_sup)    || 0;
+  if      (faixaPort === 'SUP')    pctPort = Number(cfgPort.faixa_sup)    || 0;
   else if (faixaPort === 'TARGET') pctPort = Number(cfgPort.faixa_target) || 0;
   else if (faixaPort === 'MIN')    pctPort = Number(cfgPort.faixa_min)    || 0;
-  console.log('🎯 [CARGO] % Portabilidade aplicado:', pctPort, '| faixa:', faixaPort);
+  console.log('🎯 [CARGO] faixaPort final:', faixaPort, '| pctPort:', pctPort, '| cfgPort:', cfgPort);
 } catch (e) {
-  console.warn('[CARGO] fallback pctPort:', e);
+  console.warn('[CARGO] falha ao aplicar pctPort:', e);
 }
+
+const lojaPortValor = lojaPortVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
+const tbpPortValor  = tbpPortVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
+const lojaPortCom   = lojaPortValor * pctPort / 100;
+const tbpPortCom    = tbpPortValor  * pctPort / 100;
+const totalPortCom  = lojaPortCom + tbpPortCom;
+const totalGeral    = Number(data.total || 0) + totalPortCom;
+
+console.log('💰 [CARGO] Totais finais:', {
+  lojaPortValor, tbpPortValor, pctPort,
+  lojaPortCom, tbpPortCom, totalPortCom, totalGeral
+});
 
 const lojaPortValor = lojaPortVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
 const tbpPortValor  = tbpPortVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
@@ -1452,20 +1510,16 @@ const totalGeral    = Number(data.total || 0) + totalPortCom;
 ${renderTabela('LOJA · VENDAS INTERNAS', '🏢', '#3b82f6', lojaVendas, loja.percentual_aplicado)}
 ${renderTabela('TBPs · ESCRITÓRIOS PARCEIROS', '🤝', '#10b981', tbpVendas, tbp.percentual_aplicado)}
 
-${pctPort > 0 ? `
-  ${renderTabela('BÔNUS PORTABILIDADE · LOJA (ADICIONAL)', '🔄', '#a855f7', lojaPortVendas, pctPort)}
-  ${renderTabela('BÔNUS PORTABILIDADE · TBPs (ADICIONAL)', '🔄', '#8b5cf6', tbpPortVendas, pctPort)}
-` : ''}
+${renderTabela('BÔNUS PORTABILIDADE · LOJA (ADICIONAL)', '🔄', '#a855f7', lojaPortVendas, pctPort)}
+${renderTabela('BÔNUS PORTABILIDADE · TBPs (ADICIONAL)', '🔄', '#8b5cf6', tbpPortVendas, pctPort)}
  <div class="resumo">
   <h3>Resumo de Comissões a Receber</h3>
-  <div class="resumo-grid" style="grid-template-columns: ${pctPort > 0 ? '1fr 1fr 1fr' : '1fr 1fr'};">
-    <div class="resumo-box loja"><small>Comissão Loja (${loja.percentual_aplicado}%)</small><div>R$ ${fmtBRL(loja.comissao)}</div></div>
-    <div class="resumo-box tbp"><small>Comissão TBPs (${tbp.percentual_aplicado}%)</small><div>R$ ${fmtBRL(tbp.comissao)}</div></div>
-    ${pctPort > 0 ? `
-      <div class="resumo-box port"><small>Bônus Portabilidade (${pctPort}%)</small><div>R$ ${fmtBRL(totalPortCom)}</div></div>
-    ` : ''}
-  </div>
-  <div class="resumo-total">
+  <div class="resumo-grid" style="grid-template-columns: 1fr 1fr 1fr;">
+  <div class="resumo-box loja"><small>Comissão Loja (${loja.percentual_aplicado}%)</small><div>R$ ${fmtBRL(loja.comissao)}</div></div>
+  <div class="resumo-box tbp"><small>Comissão TBPs (${tbp.percentual_aplicado}%)</small><div>R$ ${fmtBRL(tbp.comissao)}</div></div>
+  <div class="resumo-box port"><small>Bônus Portabilidade (${pctPort}%)</small><div>R$ ${fmtBRL(totalPortCom)}</div></div>
+</div>
+<div class="resumo-total">
     <span class="label">Total Líquido a Receber</span>
     <span class="value">R$ ${fmtBRL(totalGeral)}</span>
   </div>
