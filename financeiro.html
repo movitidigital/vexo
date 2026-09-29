@@ -415,6 +415,16 @@
       const cfgFat = t.cfg_fat || {};
       const cfgPort = t.cfg_port || {};
       const cfgReneg = t.cfg_reneg || {};
+      // 🎯 FIX · Percentual pela faixa da LOJA (mesma regra do extrato)
+const resolvePctLoja = (faixa, cfg) => {
+  if (faixa === 'SUP')    return Number(cfg.faixa_sup)    || 10;
+  if (faixa === 'TARGET') return Number(cfg.faixa_target) || 10;
+  if (faixa === 'MIN')    return Number(cfg.faixa_min)    || 10;
+  return 10;
+};
+const pctFatLoja   = resolvePctLoja(t.loja_faixa_fat,   cfgFat);
+const pctPortLoja  = resolvePctLoja(t.loja_faixa_port,  cfgPort);
+const pctRenegLoja = resolvePctLoja(t.loja_faixa_reneg, cfgReneg);
 
       const grossTotal = lista.reduce((a, c) => a + (Number(c.gross) || 0), 0);
       const comissaoTotal = lista.reduce((a, c) =>
@@ -481,10 +491,11 @@
         const portValor = Number(c.realizado_port) || 0;
         const midQtd = Number(c.realizado_reneg_qtd) || 0;
         const gross = Number(c.gross) || 0;
-        const valorFat = Number(c.valor_fat) || 0;
-        const valorPort = Number(c.valor_port) || 0;
-        const valorReneg = Number(c.valor_reneg) || 0;
-        const total = valorFat + valorPort + valorReneg;
+       // Recalcula com o percentual da faixa da LOJA
+const valorFat   = faturamento * pctFatLoja   / 100;
+const valorPort  = portValor   * pctPortLoja  / 100;
+const valorReneg = midQtd      * pctRenegLoja;
+const total = valorFat + valorPort + valorReneg;
 
         const badgeBateu = (b) => b
           ? '<span style="background:#dcfce7;color:#166534;font-size:9px;font-weight:800;padding:2px 6px;border-radius:6px;">✓ META</span>'
@@ -993,13 +1004,51 @@ async function carregarComissoesCargos() {
       const vendas = data.vendas || [];
       if (!vendas.length) return toast('⚠️ Nenhuma venda ativada no período.', 'warn');
 
-      const pct = data.percentuais || { fat: 0, port: 0, reneg: 0 };
-      const bateu = data.bateu_meta || {};
-      const metas = data.metas_pessoais || {};
-      const realizado = data.realizado || {};
-      const loja = data.loja_realizado || {};
-      const metaLoja = data.meta_loja || {};
-      const faixas = data.faixas_loja || {};
+ const bateu = data.bateu_meta || {};
+const metas = data.metas_pessoais || {};
+const realizado = data.realizado || {};
+const loja = data.loja_realizado || {};
+const metaLoja = data.meta_loja || {};
+const faixas = data.faixas_loja || {};
+
+// ═══════════════════════════════════════════════════════════════
+// 🎯 FIX · Percentual aplicado conforme a FAIXA DA LOJA
+// ───────────────────────────────────────────────────────────────
+// Se a LOJA atingiu SUPERADO em uma modalidade, TODA a produção da
+// consultora nessa modalidade recebe o % SUPERADO da config —
+// não o % de penalidade da meta pessoal.
+// O RPC admin_extrato_consultor estava devolvendo 10% fixo (penalidade)
+// ignorando a faixa da loja. Recalculamos com admin_config_faixas_get.
+// ═══════════════════════════════════════════════════════════════
+let pct = data.percentuais || { fat: 0, port: 0, reneg: 0 };
+try {
+  const { data: cfgResp } = await sb.rpc('admin_config_faixas_get');
+  const faixasCfg = cfgResp?.faixas || [];
+  const getCfg = (mod) => faixasCfg.find(f => f.modalidade === mod) || {};
+  const cfgFat   = getCfg('FATURAMENTO');
+  const cfgPort  = getCfg('PORTABILIDADE');
+  const cfgReneg = getCfg('RENEGOCIACAO');
+
+  const resolvePct = (faixa, cfg, fallback) => {
+    if (faixa === 'SUP')    return Number(cfg.faixa_sup)    || fallback;
+    if (faixa === 'TARGET') return Number(cfg.faixa_target) || fallback;
+    if (faixa === 'MIN')    return Number(cfg.faixa_min)    || fallback;
+    return 10; // PENALIDADE
+  };
+
+  pct = {
+    fat:   resolvePct(faixas.fat,   cfgFat,   pct.fat),
+    port:  resolvePct(faixas.port,  cfgPort,  pct.port),
+    reneg: resolvePct(faixas.reneg, cfgReneg, pct.reneg)
+  };
+
+  console.log('🎯 [EXTRATO] Percentuais recalculados pela faixa da LOJA:', {
+    faixas_loja: faixas,
+    percentuais_aplicados: pct
+  });
+} catch (e) {
+  console.warn('[EXTRATO] Falha ao recalcular faixas, usando RPC:', e);
+}
 
       const todasVendas = vendas;
       const vendasPort = vendas.filter(v => v.is_port);
