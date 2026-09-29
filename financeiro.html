@@ -1343,16 +1343,35 @@ try {
   console.warn('[CARGO] falha ao aplicar pctPort:', e);
 }
 
+// ═══════════════════════════════════════════════════════════════
+// 🎯 FIX · LOJA usa faixa · PARCEIRO (TBP) sempre 10%
+// ───────────────────────────────────────────────────────────────
+// Regra de negócio:
+//   • Linha vendida pela LOJA      → % da faixa da loja
+//   • Linha vendida por PARCEIRO   → 10% fixo (base + portabilidade)
+// ═══════════════════════════════════════════════════════════════
+const PCT_PARCEIRO = 10;
+
+const pctLoja = Number(loja.percentual_aplicado) || 0;
+
+const lojaFatValor  = lojaVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
+const tbpFatValor   = tbpVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
 const lojaPortValor = lojaPortVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
 const tbpPortValor  = tbpPortVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
-const lojaPortCom   = lojaPortValor * pctPort / 100;
-const tbpPortCom    = tbpPortValor  * pctPort / 100;
-const totalPortCom  = lojaPortCom + tbpPortCom;
-const totalGeral    = Number(data.total || 0) + totalPortCom;
+
+const lojaFatCom  = lojaFatValor  * pctLoja     / 100;
+const tbpFatCom   = tbpFatValor   * PCT_PARCEIRO / 100;
+const lojaPortCom = lojaPortValor * pctPort     / 100;
+const tbpPortCom  = tbpPortValor  * PCT_PARCEIRO / 100;
+
+const totalPortCom = lojaPortCom + tbpPortCom;
+const totalGeral   = lojaFatCom + tbpFatCom + lojaPortCom + tbpPortCom;
 
 console.log('💰 [CARGO] Totais finais:', {
-  lojaPortValor, tbpPortValor, pctPort,
-  lojaPortCom, tbpPortCom, totalPortCom, totalGeral
+  pctLoja, pctPort, PCT_PARCEIRO,
+  lojaFatValor,  tbpFatValor,  lojaPortValor, tbpPortValor,
+  lojaFatCom,    tbpFatCom,    lojaPortCom,   tbpPortCom,
+  totalPortCom,  totalGeral
 });
 
       const mesNome = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][parseInt(mes,10) - 1];
@@ -1496,22 +1515,24 @@ console.log('💰 [CARGO] Totais finais:', {
     </div>
   `}
  <div class="kpis">
-  <div class="kpi"><small>Faturamento Loja</small><div>R$ ${fmtBRL(loja.faturamento)}</div></div>
-  <div class="kpi"><small>Faturamento TBPs</small><div>R$ ${fmtBRL(tbp.faturamento)}</div></div>
+<div class="kpis">
+  <div class="kpi"><small>Faturamento Loja</small><div>R$ ${fmtBRL(lojaFatValor)}</div></div>
+  <div class="kpi"><small>Faturamento TBPs</small><div>R$ ${fmtBRL(tbpFatValor)}</div></div>
   <div class="kpi"><small>Linhas (Loja + TBP)</small><div>${(loja.qtd_linhas || 0) + (tbp.qtd_linhas || 0)}</div></div>
   <div class="kpi destaque"><small>Total a Receber</small><div>R$ ${fmtBRL(totalGeral)}</div></div>
 </div>
-${renderTabela('LOJA · VENDAS INTERNAS', '🏢', '#3b82f6', lojaVendas, loja.percentual_aplicado)}
-${renderTabela('TBPs · ESCRITÓRIOS PARCEIROS', '🤝', '#10b981', tbpVendas, tbp.percentual_aplicado)}
+${renderTabela('LOJA · VENDAS INTERNAS', '🏢', '#3b82f6', lojaVendas, pctLoja)}
+${renderTabela('TBPs · ESCRITÓRIOS PARCEIROS', '🤝', '#10b981', tbpVendas, PCT_PARCEIRO)}
 
 ${renderTabela('BÔNUS PORTABILIDADE · LOJA (ADICIONAL)', '🔄', '#a855f7', lojaPortVendas, pctPort)}
-${renderTabela('BÔNUS PORTABILIDADE · TBPs (ADICIONAL)', '🔄', '#8b5cf6', tbpPortVendas, pctPort)}
+${renderTabela('BÔNUS PORTABILIDADE · TBPs (ADICIONAL)', '🔄', '#8b5cf6', tbpPortVendas, PCT_PARCEIRO)}
  <div class="resumo">
   <h3>Resumo de Comissões a Receber</h3>
-  <div class="resumo-grid" style="grid-template-columns: 1fr 1fr 1fr;">
-  <div class="resumo-box loja"><small>Comissão Loja (${loja.percentual_aplicado}%)</small><div>R$ ${fmtBRL(loja.comissao)}</div></div>
-  <div class="resumo-box tbp"><small>Comissão TBPs (${tbp.percentual_aplicado}%)</small><div>R$ ${fmtBRL(tbp.comissao)}</div></div>
-  <div class="resumo-box port"><small>Bônus Portabilidade (${pctPort}%)</small><div>R$ ${fmtBRL(totalPortCom)}</div></div>
+ <div class="resumo-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+  <div class="resumo-box loja"><small>Loja Fat. (${pctLoja}%)</small><div>R$ ${fmtBRL(lojaFatCom)}</div></div>
+  <div class="resumo-box tbp"><small>Parceiros Fat. (${PCT_PARCEIRO}%)</small><div>R$ ${fmtBRL(tbpFatCom)}</div></div>
+  <div class="resumo-box port"><small>Port. Loja (${pctPort}%)</small><div>R$ ${fmtBRL(lojaPortCom)}</div></div>
+  <div class="resumo-box port"><small>Port. Parceiros (${PCT_PARCEIRO}%)</small><div>R$ ${fmtBRL(tbpPortCom)}</div></div>
 </div>
 <div class="resumo-total">
     <span class="label">Total Líquido a Receber</span>
