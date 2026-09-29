@@ -1132,9 +1132,16 @@ try {
   .title { text-align: center; font-size: 20px; font-weight: 800; color: #1e3c72; letter-spacing: 2px; text-transform: uppercase; padding: 14px 0; margin-bottom: 22px; border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; }
   .info-loj { background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; padding: 14px 18px; margin-bottom: 22px; font-size: 11px; color: #1e40af; line-height: 1.7; }
   .info-loj strong { color: #1e3c72; }
-  .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 26px; }
-  .kpi { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; text-align: center; }
-  .kpi small { display: block; font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 26px;
+  width: 100%;
+  box-sizing: border-box;
+} 
+.kpi { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; text-align: center; min-width: 0; }
+.kpi small { display: block; font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
   .kpi div { font-size: 15px; font-weight: 800; color: #1e3c72; }
   .kpi.destaque { background: #0f172a; border-color: #0f172a; }
   .kpi.destaque small { color: #94a3b8; }
@@ -1453,12 +1460,13 @@ console.log('💰 [CARGO] Totais finais:', {
   .info-meta { background: ${mg.bateu ? '#ecfdf5' : '#fef3c7'}; border: 1px solid ${mg.bateu ? '#bbf7d0' : '#fde68a'}; color: ${mg.bateu ? '#065f46' : '#92400e'}; }
   .kpis { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 26px; }
   .kpi { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px 14px; text-align: center; }
-  .kpi small { display: block; font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .kpi div { font-size: 15px; font-weight: 800; color: #1e3c72; }
+.kpi small { display: block; font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; } .kpi div { font-size: 15px; font-weight: 800; color: #1e3c72; } .kpi.destaque { background: #0f172a; border-color: #0f172a; } .kpi.destaque small { color: #94a3b8; } .kpi.destaque div { color: #38ef7d; font-size: 18px; }  .kpi div { font-size: 15px; font-weight: 800; color: #1e3c72; }
   .kpi.destaque { background: #0f172a; border-color: #0f172a; }
   .kpi.destaque small { color: #94a3b8; }
+  .sections-wrap { display: block; width: 100%; clear: both; }
   .kpi.destaque div { color: #38ef7d; font-size: 18px; }
   .sect { background: white; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 22px; overflow: hidden; }
+  .sect { display: block; width: 100%; clear: both; box-sizing: border-box; background: white; border: 1px solid #e2e8f0; border-radius: 10px; margin-bottom: 22px; overflow: hidden; }
   .sect-head { color: white; padding: 10px 16px; font-weight: 800; font-size: 12px; letter-spacing: 0.5px; display: flex; justify-content: space-between; align-items: center; }
   .sect-head span:last-child { background: rgba(255,255,255,0.2); padding: 3px 10px; border-radius: 12px; font-size: 10px; }
   table { width: 100%; border-collapse: collapse; font-size: 10px; }
@@ -1514,18 +1522,19 @@ console.log('💰 [CARGO] Totais finais:', {
       Status: <strong>${mg.bateu ? '✅ BATIDA — Gerente recebe faixa cheia' : '⏳ NÃO BATIDA — Gerente recebe faixa base'}</strong>
     </div>
   `}
- <div class="kpis">
 <div class="kpis">
-  <div class="kpi"><small>Faturamento Loja</small><div>R$ ${fmtBRL(lojaFatValor)}</div></div>
-  <div class="kpi"><small>Faturamento TBPs</small><div>R$ ${fmtBRL(tbpFatValor)}</div></div>
+  <div class="kpi"><small>Faturamento Loja</small><div>R$ ${fmtBRL(loja.faturamento)}</div></div>
+  <div class="kpi"><small>Faturamento TBPs</small><div>R$ ${fmtBRL(tbp.faturamento)}</div></div>
   <div class="kpi"><small>Linhas (Loja + TBP)</small><div>${(loja.qtd_linhas || 0) + (tbp.qtd_linhas || 0)}</div></div>
   <div class="kpi destaque"><small>Total a Receber</small><div>R$ ${fmtBRL(totalGeral)}</div></div>
 </div>
-${renderTabela('LOJA · VENDAS INTERNAS', '🏢', '#3b82f6', lojaVendas, pctLoja)}
-${renderTabela('TBPs · ESCRITÓRIOS PARCEIROS', '🤝', '#10b981', tbpVendas, PCT_PARCEIRO)}
 
-${renderTabela('BÔNUS PORTABILIDADE · LOJA (ADICIONAL)', '🔄', '#a855f7', lojaPortVendas, pctPort)}
-${renderTabela('BÔNUS PORTABILIDADE · TBPs (ADICIONAL)', '🔄', '#8b5cf6', tbpPortVendas, PCT_PARCEIRO)}
+<div class="sections-wrap">
+  ${renderTabela('LOJA · VENDAS INTERNAS', '🏢', '#3b82f6', lojaVendas, loja.percentual_aplicado)}
+  ${renderTabela('TBPs · ESCRITÓRIOS PARCEIROS', '🤝', '#10b981', tbpVendas, tbp.percentual_aplicado)}
+  ${renderTabela('BÔNUS PORTABILIDADE · LOJA (ADICIONAL)', '🔄', '#a855f7', lojaPortVendas, pctPort)}
+  ${renderTabela('BÔNUS PORTABILIDADE · TBPs (ADICIONAL)', '🔄', '#8b5cf6', tbpPortVendas, pctPort)}
+</div>
  <div class="resumo">
   <h3>Resumo de Comissões a Receber</h3>
  <div class="resumo-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
