@@ -1355,12 +1355,6 @@ console.log('💰 [CARGO] Totais finais:', {
   lojaPortCom, tbpPortCom, totalPortCom, totalGeral
 });
 
-const lojaPortValor = lojaPortVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
-const tbpPortValor  = tbpPortVendas.reduce((a, v) => a + Number(v.valor || 0), 0);
-const lojaPortCom   = lojaPortValor * pctPort / 100;
-const tbpPortCom    = tbpPortValor  * pctPort / 100;
-const totalPortCom  = lojaPortCom + tbpPortCom;
-const totalGeral    = Number(data.total || 0) + totalPortCom;
       const mesNome = ['JANEIRO','FEVEREIRO','MARÇO','ABRIL','MAIO','JUNHO','JULHO','AGOSTO','SETEMBRO','OUTUBRO','NOVEMBRO','DEZEMBRO'][parseInt(mes,10) - 1];
       const fmtBRL = (v) => Number(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
