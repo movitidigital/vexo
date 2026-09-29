@@ -1370,8 +1370,8 @@ if (cargo === 'GERENTE') {
   const metaBatida = !!mg.bateu;
   pctLojaFat  = metaBatida ? 80 : 10;
   pctTbpFat   = metaBatida ? 30 : 8;
-  pctLojaPort = pctLojaFat;   // política não separa portabilidade
-  pctTbpPort  = pctTbpFat;
+  pctLojaPort = 0;
+  pctTbpPort  = 0;
 } else {
   // Backoffice: loja usa faixa da loja; TBP 10% fixo
   pctLojaFat  = Number(loja.percentual_aplicado) || 0;
@@ -1546,8 +1546,8 @@ ${cargo === 'BACKOFFICE' ? `
   </div>
 `}
 <div class="kpis">
-  <div class="kpi"><small>Faturamento Loja</small><div>R$ ${fmtBRL(loja.faturamento)}</div></div>
-  <div class="kpi"><small>Faturamento TBPs</small><div>R$ ${fmtBRL(tbp.faturamento)}</div></div>
+  <div class="kpi"><small>Faturamento Loja</small><div>R$ ${fmtBRL(lojaFatValor)}</div></div>
+  <div class="kpi"><small>Faturamento TBPs</small><div>R$ ${fmtBRL(tbpFatValor)}</div></div>
   <div class="kpi"><small>Linhas (Loja + TBP)</small><div>${(loja.qtd_linhas || 0) + (tbp.qtd_linhas || 0)}</div></div>
   <div class="kpi destaque"><small>Total a Receber</small><div>R$ ${fmtBRL(totalGeral)}</div></div>
 </div>
@@ -1555,17 +1555,26 @@ ${cargo === 'BACKOFFICE' ? `
 <div class="sections-wrap">
   ${renderTabela('LOJA · VENDAS INTERNAS', '🏢', '#3b82f6', lojaVendas, pctLojaFat)}
   ${renderTabela('TBPs · ESCRITÓRIOS PARCEIROS', '🤝', '#10b981', tbpVendas, pctTbpFat)}
-  ${renderTabela('BÔNUS PORTABILIDADE · LOJA', '🔄', '#a855f7', lojaPortVendas, pctLojaPort)}
-  ${renderTabela('BÔNUS PORTABILIDADE · TBPs', '🔄', '#8b5cf6', tbpPortVendas, pctTbpPort)}
+  ${cargo === 'GERENTE' ? '' : `
+    ${renderTabela('BÔNUS PORTABILIDADE · LOJA', '🔄', '#a855f7', lojaPortVendas, pctLojaPort)}
+    ${renderTabela('BÔNUS PORTABILIDADE · TBPs', '🔄', '#8b5cf6', tbpPortVendas, pctTbpPort)}
+  `}
 </div>
  <div class="resumo">
   <h3>Resumo de Comissões a Receber</h3>
-<div class="resumo-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
-  <div class="resumo-box loja"><small>Loja Fat. (${pctLojaFat}%)</small><div>R$ ${fmtBRL(lojaFatCom)}</div></div>
-  <div class="resumo-box tbp"><small>Parceiros Fat. (${pctTbpFat}%)</small><div>R$ ${fmtBRL(tbpFatCom)}</div></div>
-  <div class="resumo-box port"><small>Port. Loja (${pctLojaPort}%)</small><div>R$ ${fmtBRL(lojaPortCom)}</div></div>
-  <div class="resumo-box port"><small>Port. Parceiros (${pctTbpPort}%)</small><div>R$ ${fmtBRL(tbpPortCom)}</div></div>
-</div>
+${cargo === 'GERENTE' ? `
+  <div class="resumo-grid" style="grid-template-columns: 1fr 1fr;">
+    <div class="resumo-box loja"><small>Loja Fat. (${pctLojaFat}%)</small><div>R$ ${fmtBRL(lojaFatCom)}</div></div>
+    <div class="resumo-box tbp"><small>Parceiros Fat. (${pctTbpFat}%)</small><div>R$ ${fmtBRL(tbpFatCom)}</div></div>
+  </div>
+` : `
+  <div class="resumo-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr;">
+    <div class="resumo-box loja"><small>Loja Fat. (${pctLojaFat}%)</small><div>R$ ${fmtBRL(lojaFatCom)}</div></div>
+    <div class="resumo-box tbp"><small>Parceiros Fat. (${pctTbpFat}%)</small><div>R$ ${fmtBRL(tbpFatCom)}</div></div>
+    <div class="resumo-box port"><small>Port. Loja (${pctLojaPort}%)</small><div>R$ ${fmtBRL(lojaPortCom)}</div></div>
+    <div class="resumo-box port"><small>Port. Parceiros (${pctTbpPort}%)</small><div>R$ ${fmtBRL(tbpPortCom)}</div></div>
+  </div>
+`}
 <div class="resumo-total">
     <span class="label">Total Líquido a Receber</span>
     <span class="value">R$ ${fmtBRL(totalGeral)}</span>
