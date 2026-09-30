@@ -98,6 +98,47 @@
     </div>
   </div>
 
+<!-- ═══ MODAL CONFERÊNCIA CONSULTOR ═══ -->
+<div id="modal-conferencia-consultor" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.7); z-index:10001; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+  <div style="background:white; width:96%; max-width:1100px; height:88vh; padding:28px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); display:flex; flex-direction:column;">
+    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:18px;">
+      <div>
+        <h3 style="margin:0; color:#1e293b; font-weight:800; font-size:20px;">🔍 Conferência de Comissão</h3>
+        <p id="conf-consultor-info" style="margin:4px 0 0 0; font-size:12px; color:#64748b;"></p>
+      </div>
+      <button onclick="fecharConferenciaConsultor()" style="background:none; border:none; font-size:26px; cursor:pointer; color:#94a3b8;">&times;</button>
+    </div>
+
+    <div id="conf-ciclo" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:12px; padding:14px 18px; margin-bottom:16px; font-size:12px; color:#475569; line-height:1.8;"></div>
+
+    <div style="display:flex; gap:8px; margin-bottom:14px; flex-wrap:wrap;">
+      <button id="conf-btn-validar-tudo" onclick="confValidarTudo()" style="background:#3b82f6; color:white; border:none; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:700; font-size:12px;">✓ Validar Todas</button>
+      <button id="conf-btn-liberar" onclick="confLiberarEspelho()" style="background:#10b981; color:white; border:none; padding:10px 18px; border-radius:10px; cursor:pointer; font-weight:700; font-size:12px;">📤 Liberar Espelho</button>
+      <span id="conf-contador" style="align-self:center; margin-left:auto; font-size:12px; font-weight:700; color:#475569;"></span>
+    </div>
+
+    <div style="flex:1; overflow-y:auto; border:1px solid #f1f5f9; border-radius:12px;">
+      <table style="width:100%; border-collapse:collapse; font-size:11px; min-width:800px;">
+        <thead style="position:sticky; top:0; background:#f8fafc; z-index:10;">
+          <tr style="text-align:left; color:#64748b; border-bottom:2px solid #e2e8f0;">
+            <th style="padding:12px 14px;">DATA</th>
+            <th style="padding:12px 14px;">CLIENTE</th>
+            <th style="padding:12px 14px;">MODALIDADE</th>
+            <th style="padding:12px 14px;">LINHA</th>
+            <th style="padding:12px 14px;">VALOR</th>
+            <th style="padding:12px 14px;">TAGS</th>
+            <th style="padding:12px 14px;">STATUS</th>
+            <th style="padding:12px 14px; text-align:center;">AÇÕES</th>
+          </tr>
+        </thead>
+        <tbody id="conf-tbody">
+          <tr><td colspan="8" style="text-align:center; padding:40px; color:#94a3b8;">Carregando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+  
   <!-- ═══ MODAL HISTÓRICO ═══ -->
   <div id="modal-historico-pag" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.7); z-index:9999; align-items:center; justify-content:center; backdrop-filter: blur(4px);">
     <div style="background:white; width:95%; max-width:900px; height: 80vh; padding:30px; border-radius:20px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); display: flex; flex-direction: column;">
@@ -540,13 +581,19 @@ const total = valorFat + valorPort + valorReneg;
               </div>
             </td>
             <td style="padding:15px;text-align:center;">
-              <div style="display:flex;gap:8px;justify-content:flex-end;">
-                <button onclick='abrirExtratoDetalhado(${JSON.stringify(c.consultor)}, "${mes}", "${ano}")'
-                  style="border:1px solid #1e3c72;background:white;color:#1e3c72;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:700;">
-                  📄 EXTRATO
-                </button>
-                ${botaoBaixa}
-              </div>
+             <div style="display:flex;gap:8px;justify-content:flex-end;">
+  <button onclick='abrirExtratoDetalhado(${JSON.stringify(c.consultor)}, "${mes}", "${ano}")'
+    style="border:1px solid #1e3c72;background:white;color:#1e3c72;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:700;">
+    📄 EXTRATO
+  </button>
+  ${isAdmin ? `
+    <button onclick='abrirConferenciaConsultor(${JSON.stringify(c.consultor)}, "${mes}", "${ano}")'
+      style="border:1px solid #f59e0b;background:#fffbeb;color:#92400e;padding:8px 12px;border-radius:8px;cursor:pointer;font-size:10px;font-weight:700;">
+      🔍 CONFERIR
+    </button>
+  ` : ''}
+  ${botaoBaixa}
+</div>
             </td>
           </tr>`;
       });
@@ -921,6 +968,203 @@ async function carregarComissoesCargos() {
     }
   }
 
+// ═══════════════════════════════════════════════════════════════
+// 🔍 CONFERÊNCIA DE COMISSÃO — COLABORADORES PRÓPRIOS
+// ═══════════════════════════════════════════════════════════════
+let _confState = { consultor: null, mes: null, ano: null, vendas: [], periodo: null };
+
+async function abrirConferenciaConsultor(consultor, mes, ano) {
+  const sb = getSb();
+  if (!sb) return;
+
+  const modal = $('modal-conferencia-consultor');
+  if (!modal) return;
+  modal.style.display = 'flex';
+
+  _confState = { consultor, mes, ano, vendas: [], periodo: null };
+
+  $('conf-consultor-info').textContent = `Consultor: ${consultor} · Competência: ${String(mes).padStart(2,'0')}/${ano}`;
+  $('conf-ciclo').innerHTML = '⏳ Carregando ciclo...';
+  $('conf-tbody').innerHTML = '<tr><td colspan="8" style="text-align:center;padding:40px;color:#94a3b8;">Carregando...</td></tr>';
+  $('conf-contador').textContent = '';
+
+  try {
+    const { data, error } = await sb.rpc('admin_periodo_detalhes_consultor', {
+      p_consultor_nome: consultor,
+      p_mes: parseInt(mes, 10),
+      p_ano: parseInt(ano, 10)
+    });
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.message || 'Erro ao carregar');
+
+    _confState.periodo = data.periodo || null;
+    _confState.vendas = data.vendas || [];
+
+    renderCicloConsultor(data);
+    renderLinhasConferencia();
+  } catch (e) {
+    console.error('[CONF]', e);
+    $('conf-tbody').innerHTML = `<tr><td colspan="8" style="text-align:center;color:#ef4444;padding:20px;">❌ ${e.message}</td></tr>`;
+  }
+}
+
+function fecharConferenciaConsultor() {
+  const modal = $('modal-conferencia-consultor');
+  if (modal) modal.style.display = 'none';
+}
+
+function renderCicloConsultor(d) {
+  const p = d.periodo || {};
+  const liberado = !!p.espelho_liberado;
+  const pendentes = (d.vendas || []).filter(v => (v.status_validacao || 'PENDENTE') === 'PENDENTE').length;
+  const validadas = (d.vendas || []).filter(v => v.status_validacao === 'VALIDADA').length;
+  const rejeitadas = (d.vendas || []).filter(v => v.status_validacao === 'REJEITADA').length;
+  const corrigidas = (d.vendas || []).filter(v => v.status_validacao === 'CORRIGIDA').length;
+
+  const fmtD = (s) => s ? new Date(s).toLocaleDateString('pt-BR') : '—';
+
+  $('conf-ciclo').innerHTML = `
+    <div><b>🔍 Validação até:</b> ${fmtD(p.data_limite_validacao)}</div>
+    <div><b>📋 Liberação espelho:</b> ${liberado ? '✅ Liberado em ' + fmtD(p.espelho_liberado_em) : (p.data_liberacao_espelho ? fmtD(p.data_liberacao_espelho) : '—')}</div>
+    <div><b>📎 Janela de ajustes:</b> ${fmtD(p.data_inicio_nf)} → ${fmtD(p.data_limite_nf)}</div>
+    <div style="margin-top:8px;">
+      <b>Status das linhas:</b>
+      <span style="background:#dcfce7;color:#166534;padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px;">✓ ${validadas} validadas</span>
+      <span style="background:#fef3c7;color:#92400e;padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px;margin-left:4px;">⏳ ${pendentes} pendentes</span>
+      ${corrigidas ? `<span style="background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px;margin-left:4px;">⚙ ${corrigidas} corrigidas</span>` : ''}
+      ${rejeitadas ? `<span style="background:#fee2e2;color:#991b1b;padding:2px 8px;border-radius:10px;font-weight:700;font-size:11px;margin-left:4px;">✕ ${rejeitadas} rejeitadas</span>` : ''}
+    </div>`;
+
+  $('conf-btn-validar-tudo').disabled = (pendentes === 0 || liberado);
+  $('conf-btn-validar-tudo').style.opacity = (pendentes === 0 || liberado) ? '0.5' : '1';
+  $('conf-btn-liberar').disabled = (pendentes > 0 || liberado || (d.vendas || []).length === 0);
+  $('conf-btn-liberar').style.opacity = (pendentes > 0 || liberado || (d.vendas || []).length === 0) ? '0.5' : '1';
+  $('conf-btn-liberar').innerHTML = liberado ? '✅ Espelho Liberado' : '📤 Liberar Espelho';
+}
+
+function renderLinhasConferencia() {
+  const tbody = $('conf-tbody');
+  const vendas = _confState.vendas || [];
+  const liberado = _confState.periodo?.espelho_liberado || false;
+
+  if (!vendas.length) {
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:60px;color:#94a3b8;">Nenhuma linha ativa neste período.</td></tr>';
+    $('conf-contador').textContent = '';
+    return;
+  }
+
+  const fmtBRL = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const fmtD = (s) => s ? new Date(s).toLocaleDateString('pt-BR') : '—';
+
+  const statusMap = {
+    'VALIDADA':  { label:'✓ Validada',  bg:'#dcfce7', cor:'#166534' },
+    'CORRIGIDA': { label:'⚙ Corrigida', bg:'#dbeafe', cor:'#1e40af' },
+    'REJEITADA': { label:'✕ Rejeitada', bg:'#fee2e2', cor:'#991b1b' },
+    'PENDENTE':  { label:'⏳ Pendente',  bg:'#f1f5f9', cor:'#475569' }
+  };
+
+  tbody.innerHTML = vendas.map(v => {
+    const st = statusMap[v.status_validacao || 'PENDENTE'] || statusMap.PENDENTE;
+    const podeAgir = (v.status_validacao === 'PENDENTE') && !liberado;
+    const tags = [];
+    if (v.is_port)  tags.push('<span style="background:#e9d5ff;color:#6d28d9;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;">PORT</span>');
+    if (v.is_reneg) tags.push('<span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;">RENEG</span>');
+
+    return `
+      <tr style="border-bottom:1px solid #f1f5f9;">
+        <td style="padding:10px 14px;">${fmtD(v.data_ativacao || v.data_venda)}</td>
+        <td style="padding:10px 14px; font-weight:600; color:#1e293b;">
+          ${v.cliente || ''}
+          <div style="font-size:9px; color:#94a3b8; font-weight:400;">${v.cnpj || ''}</div>
+        </td>
+        <td style="padding:10px 14px;">${v.modalidade || '—'}</td>
+        <td style="padding:10px 14px; font-family:monospace; color:#1e3c72; font-weight:600;">${v.numero_linha || '—'}</td>
+        <td style="padding:10px 14px; font-weight:600;">${fmtBRL(v.valor)}</td>
+        <td style="padding:10px 14px;">${tags.join(' ') || '<span style="color:#cbd5e1;">—</span>'}</td>
+        <td style="padding:10px 14px;"><span style="background:${st.bg}; color:${st.cor}; padding:4px 10px; border-radius:12px; font-size:10px; font-weight:700;">${st.label}</span></td>
+        <td style="padding:10px 14px; text-align:center;">
+          ${podeAgir ? `
+            <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
+              <button onclick="confValidarLinha('${v.comissao_id}', 'VALIDADA')" style="background:#10b981;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">✓ OK</button>
+              <button onclick="confValidarLinha('${v.comissao_id}', 'CORRIGIDA')" style="background:#f59e0b;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">⚙ Corrigir</button>
+              <button onclick="confValidarLinha('${v.comissao_id}', 'REJEITADA')" style="background:#ef4444;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">✕ Rejeitar</button>
+            </div>
+          ` : `<span style="font-size:10px; color:#94a3b8;">${st.label}</span>`}
+        </td>
+      </tr>`;
+  }).join('');
+
+  const pendentes = vendas.filter(v => (v.status_validacao || 'PENDENTE') === 'PENDENTE').length;
+  $('conf-contador').textContent = `${vendas.length - pendentes} de ${vendas.length} validadas`;
+}
+
+async function confValidarLinha(comissaoId, status) {
+  const sb = getSb();
+  if (!sb) return;
+  let obs = null, dataAtivacao = null;
+
+  if (status === 'CORRIGIDA') {
+    obs = prompt('Motivo da correção:'); if (obs === null) return;
+    const dt = prompt('Nova data de ativação (DD/MM/AAAA) — vazio pra manter:');
+    if (dt && /^\d{2}\/\d{2}\/\d{4}$/.test(dt.trim())) {
+      const [d, m, a] = dt.trim().split('/');
+      dataAtivacao = `${a}-${m}-${d}`;
+    }
+  } else if (status === 'REJEITADA') {
+    obs = prompt('Motivo da rejeição:'); if (obs === null) return;
+  }
+
+  try {
+    const { data, error } = await sb.rpc('admin_validar_comissao', {
+      p_comissao_id: comissaoId, p_status: status, p_observacao: obs || null, p_data_ativacao: dataAtivacao
+    });
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.message || 'Erro');
+    await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
+  } catch (e) { alert('❌ ' + (e.message || e)); }
+}
+
+async function confValidarTudo() {
+  const sb = getSb();
+  if (!sb) return;
+  if (!confirm('Validar TODAS as linhas pendentes?')) return;
+
+  const pendentes = (_confState.vendas || []).filter(v => (v.status_validacao || 'PENDENTE') === 'PENDENTE');
+  if (!pendentes.length) return alert('Nenhuma linha pendente.');
+
+  try {
+    for (const v of pendentes) {
+      const { data, error } = await sb.rpc('admin_validar_comissao', {
+        p_comissao_id: v.comissao_id, p_status: 'VALIDADA', p_observacao: 'Validação em lote', p_data_ativacao: null
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+    }
+    alert('✅ Todas as linhas foram validadas!');
+    await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
+  } catch (e) { alert('❌ ' + (e.message || e)); }
+}
+
+async function confLiberarEspelho() {
+  const sb = getSb();
+  if (!sb) return;
+  if (!confirm('Liberar espelho do consultor? Após liberar, o consultor verá o valor como FECHADO e o extrato dele ficará congelado.')) return;
+
+  try {
+    const { data, error } = await sb.rpc('admin_liberar_espelho_consultor', {
+      p_consultor_nome: _confState.consultor,
+      p_mes: parseInt(_confState.mes, 10),
+      p_ano: parseInt(_confState.ano, 10)
+    });
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.message || 'Erro');
+
+    alert(`✅ Espelho liberado!\nValor: ${fmt(data.valor_comissao || 0)}\nLinhas: ${data.qtd_linhas}`);
+    await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
+    carregarResumoConsolidado();
+  } catch (e) { alert('❌ ' + (e.message || e)); }
+}
+  
   function fecharModalHistorico() {
     const modal = $('modal-historico-pag');
     if (modal) modal.style.display = 'none';
@@ -1010,6 +1254,13 @@ const realizado = data.realizado || {};
 const loja = data.loja_realizado || {};
 const metaLoja = data.meta_loja || {};
 const faixas = data.faixas_loja || {};
+
+// 🎯 Status do período (PREVISÃO × FECHADO)
+const periodo = data.periodo || {};
+const espelhoLiberado = !!periodo.espelho_liberado;
+const dataLiberacao = periodo.espelho_liberado_em
+  ? new Date(periodo.espelho_liberado_em).toLocaleDateString('pt-BR')
+  : null;
 
 // ═══════════════════════════════════════════════════════════════
 // 🎯 FIX · Percentual aplicado conforme a FAIXA DA LOJA
@@ -1186,8 +1437,23 @@ try {
     </div>
   </div>
 
-  <div class="title">Extrato de Comissão</div>
+<div class="title">Extrato de Comissão</div>
 
+${!espelhoLiberado ? `
+  <div style="background:#fef3c7;border:2px solid #f59e0b;border-radius:10px;padding:14px 18px;margin-bottom:22px;font-size:12px;color:#92400e;line-height:1.7;">
+    <strong style="font-size:13px;">⚠️ PREVISÃO — VALORES SUJEITOS A ALTERAÇÃO</strong><br>
+    Este extrato ainda <b>não foi conferido e liberado</b> pelo financeiro. Os valores podem mudar
+    até o fechamento e a aprovação final das linhas pela TIM.
+    ${periodo.data_limite_validacao
+      ? `<br><b>Previsão de fechamento:</b> ${new Date(periodo.data_limite_validacao).toLocaleDateString('pt-BR')}`
+      : ''}
+  </div>
+` : `
+  <div style="background:#dcfce7;border:2px solid #10b981;border-radius:10px;padding:14px 18px;margin-bottom:22px;font-size:12px;color:#065f46;line-height:1.7;">
+    <strong style="font-size:13px;">✅ EXTRATO FECHADO E APROVADO</strong><br>
+    Extrato conferido pelo financeiro em <b>${dataLiberacao}</b>. Este valor é <b>oficial</b> e não sofre mais alterações.
+  </div>
+`}
   <div class="info-loj">
     <strong>🏢 DESEMPENHO DA LOJA · ${mesNome}/${ano}</strong><br>
     📊 Faturamento Total: <strong>R$ ${fmtBRL(loja.fat)}</strong> &nbsp;|&nbsp;
@@ -1614,6 +1880,11 @@ ${cargo === 'GERENTE' ? `
   window.salvarMetaGerencial = salvarMetaGerencial;
   window.confirmarPagamentoCargo = confirmarPagamentoCargo;
   window.abrirExtratoCargo = abrirExtratoCargo;
+  window.abrirConferenciaConsultor = abrirConferenciaConsultor;
+  window.fecharConferenciaConsultor = fecharConferenciaConsultor;
+  window.confValidarLinha = confValidarLinha;
+  window.confValidarTudo = confValidarTudo;
+  window.confLiberarEspelho = confLiberarEspelho;
 
   
 
