@@ -1144,6 +1144,9 @@ async function confValidarLinha(vendaId, status) {
   const sb = getSb();
   if (!sb) return;
 
+  // 🔥 DEBUG: mostra o ID que está sendo enviado
+  console.log('🔍 [VALIDAR] Recebido:', { vendaId, status, consultor: _confState.consultor, mes: _confState.mes, ano: _confState.ano });
+
   if (!vendaId || vendaId === 'null' || vendaId === 'undefined') {
     alert('❌ Erro: O ID desta venda não foi encontrado no sistema. Feche a janela e tente novamente.');
     return;
@@ -1165,31 +1168,34 @@ async function confValidarLinha(vendaId, status) {
   } else if (status === 'VALIDADA') {
     obs = 'Validação individual'; 
   } else if (status === 'PENDENTE') {
-    if (!confirm('Desfazer esta validação e voltar para PENDENTE?\n\nA linha voltará para o status original e precisará ser validada novamente.')) return;
+    if (!confirm('Desfazer esta validação e voltar para PENDENTE?')) return;
     obs = 'Status revertido para pendente';
   }
 
   try {
-    const { data, error } = await sb.rpc('admin_validar_venda_consultor', {
+    const payload = {
       p_venda_id: vendaId, 
       p_status: status, 
       p_observacao: obs || 'Validação individual',
-      // 🔥 NOVO: informa o mês/ano do espelho que está sendo visto
       p_mes_competencia: parseInt(_confState.mes, 10),
       p_ano_competencia: parseInt(_confState.ano, 10)
-    });
+    };
+    console.log('🚀 [VALIDAR] Enviando payload:', payload);
+
+    const { data, error } = await sb.rpc('admin_validar_venda_consultor', payload);
     
+    console.log('📥 [VALIDAR] Resposta:', { data, error });
+
     if (error) throw error;
     if (!data?.success) throw new Error(data?.message || 'Erro na validação');
 
-    // 🔥 Se foi transferida, avisa o usuário
     if (data.transferida) {
       alert('✅ Comissão validada e transferida para este mês!\n\nEla estava rejeitada em outro ciclo e agora foi somada a este espelho.');
     }
     
     await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
   } catch (e) { 
-    console.error('❌ Erro ao validar:', e);
+    console.error('❌ [VALIDAR] Erro capturado:', e);
     alert('❌ ' + (e.message || e)); 
   }
 }
