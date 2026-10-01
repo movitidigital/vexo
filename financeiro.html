@@ -1165,7 +1165,6 @@ async function confValidarLinha(vendaId, status) {
   } else if (status === 'VALIDADA') {
     obs = 'Validação individual'; 
   } else if (status === 'PENDENTE') {
-    // 🔥 DESFAZER
     if (!confirm('Desfazer esta validação e voltar para PENDENTE?\n\nA linha voltará para o status original e precisará ser validada novamente.')) return;
     obs = 'Status revertido para pendente';
   }
@@ -1174,11 +1173,19 @@ async function confValidarLinha(vendaId, status) {
     const { data, error } = await sb.rpc('admin_validar_venda_consultor', {
       p_venda_id: vendaId, 
       p_status: status, 
-      p_observacao: obs || 'Validação individual'
+      p_observacao: obs || 'Validação individual',
+      // 🔥 NOVO: informa o mês/ano do espelho que está sendo visto
+      p_mes_competencia: parseInt(_confState.mes, 10),
+      p_ano_competencia: parseInt(_confState.ano, 10)
     });
     
     if (error) throw error;
     if (!data?.success) throw new Error(data?.message || 'Erro na validação');
+
+    // 🔥 Se foi transferida, avisa o usuário
+    if (data.transferida) {
+      alert('✅ Comissão validada e transferida para este mês!\n\nEla estava rejeitada em outro ciclo e agora foi somada a este espelho.');
+    }
     
     await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
   } catch (e) { 
