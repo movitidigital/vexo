@@ -495,6 +495,47 @@
   .kpi-cliente.vermelho { border-left-color: #ef4444; }
   .kpi-cliente.verde    { border-left-color: #10b981; }
   .kpi-cliente.amarelo  { border-left-color: #f59e0b; }
+
+  /* ═══════════════════════════════════════════════════
+     🔥 RANK / PRIORIDADE DE COBRANÇA
+  ═══════════════════════════════════════════════════ */
+  .rank-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 34px;
+    padding: 0 6px;
+    border-radius: 10px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    box-shadow: var(--shadow-sm);
+  }
+  .rank-critical { background: #7f1d1d; color: #fff; }
+  .rank-high     { background: #dc2626; color: #fff; }
+  .rank-medium   { background: #f59e0b; color: #fff; }
+  .rank-low      { background: #3b82f6; color: #fff; }
+  .rank-near     { background: #e0e7ff; color: #1e3c72; }
+  .rank-ok       { background: #ecfdf5; color: #065f46; }
+
+  .atraso-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    margin-top: 4px;
+    border: 1px solid transparent;
+    white-space: nowrap;
+  }
+  .atraso-critico { background: #7f1d1d; color: #fff; border-color: #7f1d1d; }
+  .atraso-alto    { background: #fee2e2; color: #991b1b; border-color: #fca5a5; }
+  .atraso-medio   { background: #fffbeb; color: #b45309; border-color: #fcd34d; }
+  .atraso-baixo   { background: #eff6ff; color: #1e40af; border-color: #bfdbfe; }
+  .atraso-vence   { background: #ecfdf5; color: #065f46; border-color: #6ee7b7; }
 </style>
 </head>
 <body>
@@ -580,6 +621,7 @@
       <table id="tabela-clientes">
         <thead>
           <tr>
+            <th style="width:52px;">🎯 Prioridade</th>
             <th style="width:30px;"></th>
             <th>🏷️ Código do Cliente</th>
             <th>👤 Cliente</th>
@@ -794,6 +836,72 @@ const MAP = {
 }
 
   // =========================================================
+  // 🔥 PRIORIDADE DE COBRANÇA (novo)
+  // Retorna o grau de urgência do cliente com base na fatura
+  // mais crítica: dias de atraso (ou dias até vencer) + rótulo.
+  // =========================================================
+  function calcularPrioridade(cli, hoje) {
+    var linhas = cli.linhasTelefonicas || [];
+    var maxAtraso = 0;              // dias de atraso do pior caso
+    var minDiasVencer = Infinity;   // menor qtd de dias para vencer
+
+    for (var i = 0; i < linhas.length; i++) {
+      var fats = linhas[i].faturas || [];
+      for (var j = 0; j < fats.length; j++) {
+        var f = fats[j];
+        var v = parseDataSemTimezone(f.vencimento);
+        if (!v) continue;
+        var s = String(f.status || '').toUpperCase();
+        if (s === 'PAGA') s = 'PAGO';
+        if (s === 'PAGO') continue;
+
+        var diff = Math.round((v - hoje) / 86400000); // negativo = atrasado
+        if (diff < 0) {
+          var atraso = Math.abs(diff);
+          if (atraso > maxAtraso) maxAtraso = atraso;
+        } else {
+          if (diff < minDiasVencer) minDiasVencer = diff;
+        }
+      }
+    }
+
+    // Chave de ordenação: atrasado vem SEMPRE antes do "a vencer"
+    // Quanto mais atrasado, MENOR a sortKey (mais no topo).
+    // Quanto mais próximo de vencer, MENOR a sortKey.
+    var sortKey;
+    var grau, rotulo, rankClass, pillClass;
+
+    if (maxAtraso > 0) {
+      sortKey = -maxAtraso; // ex: -30 fica antes de -5
+      if (maxAtraso >= 30) {
+        grau = 1; rotulo = 'CRÍTICO'; rankClass = 'rank-critical'; pillClass = 'atraso-critico';
+      } else if (maxAtraso >= 15) {
+        grau = 2; rotulo = 'ALTO';    rankClass = 'rank-high';     pillClass = 'atraso-alto';
+      } else if (maxAtraso >= 6) {
+        grau = 3; rotulo = 'MÉDIO';   rankClass = 'rank-medium';   pillClass = 'atraso-medio';
+      } else {
+        grau = 4; rotulo = 'BAIXO';   rankClass = 'rank-low';      pillClass = 'atraso-baixo';
+      }
+    } else if (minDiasVencer !== Infinity) {
+      sortKey = minDiasVencer;   // 0 (hoje) fica antes de 3, 7, 14...
+      grau = 5; rotulo = 'A VENCER'; rankClass = 'rank-near';      pillClass = 'atraso-vence';
+    } else {
+      sortKey = Infinity;
+      grau = 6; rotulo = 'EM DIA';   rankClass = 'rank-ok';        pillClass = 'atraso-vence';
+    }
+
+    return {
+      sortKey: sortKey,
+      grau: grau,
+      rotulo: rotulo,
+      rankClass: rankClass,
+      pillClass: pillClass,
+      maxAtraso: maxAtraso,
+      minDiasVencer: minDiasVencer
+    };
+  }
+
+  // =========================================================
   // GERAR MENSAGEM PERSONALIZADA PARA WHATSAPP (sem codificação)
   // =========================================================
   function gerarMensagemWhatsApp(dataVencObj, status, nomeResponsavel, nomeEmpresa, linhasArray) {
@@ -949,39 +1057,36 @@ function renderizarTabela(clientes) {
   limite7Dias.setDate(hoje.getDate() + 7);
 
   // ═══════════════════════════════════════════════════════════
-// ORDENAÇÃO: cliente com MAIS dias de atraso aparece primeiro
-// ═══════════════════════════════════════════════════════════
-function _maxAtrasoCliente(cli) {
-  var max = 0;
-  var linhas = cli.linhasTelefonicas || [];
-  for (var i = 0; i < linhas.length; i++) {
-    var fats = linhas[i].faturas || [];
-    for (var j = 0; j < fats.length; j++) {
-      var v = parseDataSemTimezone(fats[j].vencimento);
-      if (!v) continue;
-      var s = String(fats[j].status || '').toUpperCase();
-      if (s === 'PAGA') s = 'PAGO';
-      if (s !== 'PAGO' && v < hoje) {
-        var dias = Math.floor((hoje - v) / 86400000);
-        if (dias > max) max = dias;
-      }
-    }
+  // 🎯 ORDENAÇÃO INTELIGENTE DE COBRANÇA
+  //   1) Clientes com fatura ATRASADA no topo,
+  //      ordenados do MAIS atrasado para o MENOS atrasado.
+  //   2) Em seguida, clientes que vão VENCER,
+  //      ordenados do mais próximo para o mais distante.
+  // ═══════════════════════════════════════════════════════════
+  var prioridades = {};
+  for (var pi = 0; pi < clientes.length; pi++) {
+    prioridades[pi] = calcularPrioridade(clientes[pi], hoje);
   }
-  return max;
-}
 
-clientes = clientes.slice().map(function (cli) {
-  return { cli: cli, atraso: _maxAtrasoCliente(cli) };
-}).sort(function (a, b) {
-  if (b.atraso !== a.atraso) return b.atraso - a.atraso;   // mais atrasado primeiro
-  return String(a.cli.nomeCliente || '').localeCompare(String(b.cli.nomeCliente || ''));
-}).map(function (x) { return x.cli; });
+  var indicesOrdenados = clientes.map(function (_, i) { return i; });
+  indicesOrdenados.sort(function (a, b) {
+    var pa = prioridades[a];
+    var pb = prioridades[b];
+    if (pa.sortKey !== pb.sortKey) return pa.sortKey - pb.sortKey;
+    var na = String(clientes[a].nomeCliente || '');
+    var nb = String(clientes[b].nomeCliente || '');
+    return na.localeCompare(nb);
+  });
+
+  // Reconstrói array na ordem de prioridade
+  clientes = indicesOrdenados.map(function (i) { return clientes[i]; });
 
   var tbody = document.getElementById('tbody-clientes');
   var html = '';
+  var posicao = 0; // contador visual de ranking
 
   if (!clientes || clientes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">📭</div><div>Nenhuma fatura pendente encontrada.</div></div></td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">📭</div><div>Nenhuma fatura pendente encontrada.</div></div></td></tr>';
     document.getElementById('kpi-atrasadas').innerText = '0';
     document.getElementById('kpi-vence-breve').innerText = '0';
     document.getElementById('kpi-recebidas').innerText = '0';
@@ -1042,11 +1147,22 @@ clientes = clientes.slice().map(function (cli) {
           dataPagamento: dataPagamento
         });
 
-      // 🔥 REGRA NOVA: cliente aparece SE tiver pelo menos 1 fatura ATRASADA
-// (vencimento < hoje e status != PAGO). Sem janela de dias.
-if (status === 'ATRASADO') {
-  temFaturaProxima = true;
-}
+        // 🔥 REGRA DE FILTRO: cliente aparece se:
+        // 1) fatura não paga E vence em até 14 dias (ou já venceu)
+        // 2) fatura paga HOJE (para permitir estorno até o final do dia)
+        if (status !== 'PAGO') {
+          var diffDias = Math.ceil((dataVenc - hoje) / (1000 * 60 * 60 * 24));
+          if (diffDias <= 14) {
+            temFaturaProxima = true;
+          }
+        } else if (dataPagamento) {
+          // Verifica se foi paga hoje (comparação dia/mês/ano)
+          if (dataPagamento.getFullYear() === hoje.getFullYear() &&
+              dataPagamento.getMonth() === hoje.getMonth() &&
+              dataPagamento.getDate() === hoje.getDate()) {
+            temFaturaProxima = true;
+          }
+        }
 
         // Atualiza a fatura mais crítica (para exibir no resumo)
         // Só considera se NÃO estiver paga OU se estiver paga hoje
@@ -1132,7 +1248,7 @@ if (status === 'ATRASADO') {
     var resp = cliente.nomeResponsavel || 'N/A';
     var cpfCnpj = cliente.cpfCnpj || '';
     var origem = cliente.origem || 'N/A';
-    var email = cliente.email || 'N/A';
+    var email = cliente.email || '';
 
     var detailId = 'detail-' + (++clienteIndex);
 
@@ -1171,7 +1287,38 @@ if (faturaMaisCritica) {
   else rowStatusClass = 'row-warning';
 }
 
-html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId + '">' +
+    // ═══════════════════════════════════════════════════════════
+    // 🎯 COLUNA "PRIORIDADE" — rank visual + dias de atraso
+    // ═══════════════════════════════════════════════════════════
+    posicao++;
+    var prio = prioridades[clientes.indexOf(cliente)] || calcularPrioridade(cliente, hoje);
+
+    // Pega a prioridade correta pelo índice atual (após reordenação)
+    // Como o array foi reordenado, precisamos recalcular com base no cliente
+    prio = calcularPrioridade(cliente, hoje);
+
+    var rankTexto = '#' + posicao;
+    var rankClass = prio.rankClass;
+
+    // Linha de detalhe da prioridade (dias de atraso / a vencer)
+    var prioridadeDetalhe = '';
+    if (prio.maxAtraso > 0) {
+      prioridadeDetalhe = '<span class="atraso-pill ' + prio.pillClass + '">' +
+                            '⚠️ ' + prio.maxAtraso + ' dia' + (prio.maxAtraso > 1 ? 's' : '') + ' em atraso' +
+                          '</span>';
+    } else if (prio.minDiasVencer === 0) {
+      prioridadeDetalhe = '<span class="atraso-pill ' + prio.pillClass + '">🔔 Vence hoje</span>';
+    } else if (prio.minDiasVencer !== Infinity && prio.minDiasVencer <= 14) {
+      prioridadeDetalhe = '<span class="atraso-pill ' + prio.pillClass + '">⏳ Vence em ' + prio.minDiasVencer + 'd</span>';
+    } else {
+      prioridadeDetalhe = '<span class="atraso-pill atraso-vence">✅ Em dia</span>';
+    }
+
+    html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId + '">' +
+      '<td style="text-align:center;">' +
+        '<div class="rank-badge ' + rankClass + '" title="' + prio.rotulo + '">' + rankTexto + '</div>' +
+        '<div style="margin-top:4px; text-align:center;">' + prioridadeDetalhe + '</div>' +
+      '</td>' +
       '<td>' +
       '<button class="expand-btn" onclick="toggleDetail(\'' + detailId + '\')" id="btn-' + detailId + '">▶</button>' +
       '</td>' +
@@ -1199,7 +1346,7 @@ html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId +
 
     // ---- LINHA DE DETALHE ----
     var detalheHtml = '<tr class="detail-row" id="' + detailId + '" style="display:none;">' +
-        '<td colspan="7">' +
+        '<td colspan="8">' +
           '<div class="detail-content">' +
             '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">' +
               '<strong style="font-size:1rem;">📋 Registro de Faturas do cliente</strong>' +
@@ -1322,9 +1469,9 @@ detalheHtml += '<div class="grupo-card">' +
   }
 
   // Se nenhum cliente passou no filtro
- if (html === '') {
-  tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">🎉</div><div style="font-weight:700; color:#10b981;">Nenhuma fatura em atraso!</div><div style="font-size:0.8rem; margin-top:0.25rem;">Todos os clientes estão em dia.</div></div></td></tr>';
-} else {
+  if (html === '') {
+    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">🎉</div><div style="font-weight:700; color:#10b981;">Todas as faturas estão em dia!</div><div style="font-size:0.8rem; margin-top:0.25rem;">Nenhum vencimento nos próximos 14 dias.</div></div></td></tr>';
+  } else {
     tbody.innerHTML = html;
   }
 
@@ -1333,19 +1480,19 @@ detalheHtml += '<div class="grupo-card">' +
   document.getElementById('kpi-recebidas').innerText = kpiRecebidas;
   document.getElementById('loading').style.display = 'none';
 
-  // 🔥 Badge "Em risco" = só clientes com pelo menos 1 fatura ATRASADA
-const _hojeBadge = new Date(); _hojeBadge.setHours(0,0,0,0);
-const totalEmRisco = clientes.filter(c => {
-  return (c.linhasTelefonicas || []).some(lt =>
-    (lt.faturas || []).some(f => {
-      const venc = parseDataSemTimezone(f.vencimento);
-      if (!venc) return false;
-      let st = String(f.status || '').toUpperCase();
-      if (st === 'PAGA') st = 'PAGO';
-      return st !== 'PAGO' && venc < _hojeBadge;
-    })
-  );
-}).length;
+  // 🔥 Badge "Em risco" = clientes com pelo menos 1 fatura ATRASADA
+  const totalEmRisco = cacheClientes.filter(c => {
+    return (c.linhasTelefonicas || []).some(lt =>
+      (lt.faturas || []).some(f => {
+        const venc = parseDataSemTimezone(f.vencimento);
+        if (!venc) return false;
+        const h = new Date(); h.setHours(0,0,0,0);
+        let st = String(f.status || '').toUpperCase();
+        if (st === 'PAGA') st = 'PAGO';
+        return st !== 'PAGO' && venc < h;
+      })
+    );
+  }).length;
   const badgeRisco = document.getElementById('badge-risco');
   if (badgeRisco) badgeRisco.textContent = totalEmRisco;
   if (typeof lucide !== 'undefined') lucide.createIcons();
