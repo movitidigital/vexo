@@ -1102,7 +1102,7 @@ function renderLinhasConferencia() {
           style="${btnStyle(statusAtual === 'CORRIGIDA', '#f59e0b')}padding:5px 9px;border-radius:6px;cursor:${statusAtual === 'CORRIGIDA' ? 'default' : 'pointer'};font-size:10px;font-weight:700;">
           ⚙ Corrigir
         </button>
-        <button onclick="confValidarLinha('${v.venda_id}', 'REJEITADA')" 
+        <button onclick="confValidarLinha('${v.comissao_id || v.venda_id}', 'REJEITADA')"  
           ${statusAtual === 'REJEITADA' ? 'disabled' : ''}
           title="${statusAtual === 'REJEITADA' ? 'Status atual' : 'Rejeitar'}"
           style="${btnStyle(statusAtual === 'REJEITADA', '#ef4444')}padding:5px 9px;border-radius:6px;cursor:${statusAtual === 'REJEITADA' ? 'default' : 'pointer'};font-size:10px;font-weight:700;">
@@ -1143,13 +1143,29 @@ async function confValidarLinha(comissaoId, status) {
   const sb = getSb();
   if (!sb) return;
 
-  // Encontra a venda correspondente no estado
+  // Encontra a venda no estado
   const venda = (_confState.vendas || []).find(v => 
     v.comissao_id === comissaoId || v.venda_id === comissaoId
-  ) || (_confState.vendas || []).find(v => v.comissao_id === comissaoId);
+  );
 
   if (!venda) {
-    alert('❌ Erro: linha não encontrada no estado. Feche a janela e tente novamente.');
+    alert('❌ Linha não encontrada. Feche e reabra a janela.');
+    return;
+  }
+
+  // 🔥 Pega o número da linha (prioridade para os dois nomes possíveis)
+  const numeroLinha = venda.numero_linha || venda.numero_da_linha || venda.linha || null;
+
+  console.log('🎯 [VALIDAR]', {
+    comissaoId,
+    status,
+    numeroLinha,
+    venda_id: venda.venda_id,
+    cliente: venda.cliente
+  });
+
+  if (!numeroLinha) {
+    alert('❌ Esta linha não tem número cadastrado. Não é possível validar sem ele.');
     return;
   }
 
@@ -1163,61 +1179,28 @@ async function confValidarLinha(comissaoId, status) {
   } else if (status === 'VALIDADA') {
     obs = 'Validação individual'; 
   } else if (status === 'PENDENTE') {
-    if (!confirm('Desfazer esta validação e voltar para PENDENTE?')) return;
+    if (!confirm('Desfazer e voltar para PENDENTE?')) return;
     obs = 'Status revertido para pendente';
   }
 
-  // ═══════════════════════════════════════════════════════
-  // ESTRATÉGIA 1: tentar por comissao_id (só se for UUID completo)
-  // ═══════════════════════════════════════════════════════
-  const idValido = comissaoId && comissaoId !== 'null' && comissaoId !== 'undefined' && comissaoId.length === 36;
-  
-  if (idValido) {
-    try {
-      const { data, error } = await sb.rpc('admin_validar_venda_consultor', {
-        p_venda_id: comissaoId,
-        p_status: status,
-        p_observacao: obs || 'Validação individual',
-        p_mes_competencia: parseInt(_confState.mes, 10),
-        p_ano_competencia: parseInt(_confState.ano, 10)
-      });
-      if (!error && data?.success) {
-        if (data.transferida) alert('✅ Comissão transferida para este mês!');
-        await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
-        return;
-      }
-      console.warn('⚠️ Falhou por ID (tentando fallback):', data?.message);
-    } catch (e) {
-      console.warn('⚠️ Erro por ID (tentando fallback):', e.message);
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════
-  // ESTRATÉGIA 2 (FALLBACK): buscar por numero_linha + consultor + mês
-  // ═══════════════════════════════════════════════════════
-  const numeroLinha = venda.numero_linha || venda.numero_da_linha || null;
-  
-  if (!numeroLinha) {
-    alert('❌ Erro: número de linha não disponível para este registro.\n\nDados disponíveis: ' + JSON.stringify(Object.keys(venda)));
-    return;
-  }
-
   try {
+    // 🔥 USA DIRETAMENTE O RPC SIMPLIFICADO (só numero_linha)
     const { data, error } = await sb.rpc('admin_validar_por_linha', {
       p_numero_linha: String(numeroLinha),
-      p_consultor_nome: _confState.consultor,
-      p_mes: parseInt(_confState.mes, 10),
-      p_ano: parseInt(_confState.ano, 10),
       p_status: status,
-      p_observacao: obs || 'Validação individual (via fallback)'
+      p_observacao: obs || 'Validação individual'
     });
+
+    console.log('📥 [VALIDAR] Resposta:', { data, error });
+
     if (error) throw error;
-    if (!data?.success) throw new Error(data?.message || 'Erro');
-    if (data.transferida) alert('✅ Comissão transferida para este mês!');
+    if (!data?.success) throw new Error(data?.message || 'Erro na validação');
+
+    // Recarrega a lista
     await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
   } catch (e) {
-    console.error('❌ [FALLBACK] Erro:', e);
-    alert('❌ Não foi possível validar: ' + (e.message || e));
+    console.error('❌ [VALIDAR] Erro:', e);
+    alert('❌ ' + (e.message || e));
   }
 }
 
@@ -1231,8 +1214,12 @@ async function confValidarTudo() {
 
   try {
     for (const v of pendentes) {
-   const { data, error } = await sb.rpc('admin_validar_venda_consultor', {
-  p_venda_id: v.comissao_id || v.venda_id, p_status: 'VALIDADA', p_observacao: 'Validação em lote'
+const numeroLinha = v.numero_linha || v.numero_da_linha || v.linha;
+if (!numeroLinha) continue;
+const { data, error } = await sb.rpc('admin_validar_por_linha', {
+  p_numero_linha: String(numeroLinha), 
+  p_status: 'VALIDADA', 
+  p_observacao: 'Validação em lote'
 });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.message || 'Erro');
