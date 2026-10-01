@@ -1125,6 +1125,7 @@ async function confValidarLinha(comissaoId, status) {
     if (!data?.success) throw new Error(data?.message || 'Erro');
     await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
   } catch (e) { alert('❌ ' + (e.message || e)); }
+  }
 
 async function confValidarTudo() {
   const sb = getSb();
