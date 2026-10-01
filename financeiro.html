@@ -1102,10 +1102,12 @@ function renderLinhasConferencia() {
 }
 
 async function confValidarLinha(comissaoId, status) {
+  console.log('🔍 [DEBUG] Botão clicado!', { comissaoId, status });
+
   const sb = getSb();
   if (!sb) return;
 
-  // 🔥 TRAVA DE SEGURANÇA: Impede o erro 'invalid input syntax for type uuid: "null"'
+  // 🔥 TRAVA DE SEGURANÇA
   if (!comissaoId || comissaoId === 'null' || comissaoId === 'undefined') {
     alert('❌ Erro: O ID desta comissão não foi encontrado no sistema. Feche esta janela, atualize a página (F5) e tente novamente.');
     return;
@@ -1128,6 +1130,13 @@ async function confValidarLinha(comissaoId, status) {
   }
 
   try {
+    console.log('🚀 [DEBUG] Enviando para o Supabase...', {
+      p_comissao_id: comissaoId,
+      p_status: status,
+      p_observacao: obs,
+      p_data_ativacao: dataAtivacao
+    });
+
     const { data, error } = await sb.rpc('admin_validar_comissao', {
       p_comissao_id: comissaoId, 
       p_status: status, 
@@ -1135,12 +1144,15 @@ async function confValidarLinha(comissaoId, status) {
       p_data_ativacao: dataAtivacao
     });
     
+    console.log('📥 [DEBUG] Resposta do Supabase:', { data, error });
+
     if (error) throw error;
     if (!data?.success) throw new Error(data?.message || 'Erro na validação');
     
     // Recarrega a lista atualizada após a validação
     await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
   } catch (e) { 
+    console.error('❌ [DEBUG] Erro capturado:', e);
     alert('❌ ' + (e.message || e)); 
   }
 }
