@@ -948,6 +948,35 @@ function renderizarTabela(clientes) {
   var limite7Dias = new Date(hoje);
   limite7Dias.setDate(hoje.getDate() + 7);
 
+  // ═══════════════════════════════════════════════════════════
+// ORDENAÇÃO: cliente com MAIS dias de atraso aparece primeiro
+// ═══════════════════════════════════════════════════════════
+function _maxAtrasoCliente(cli) {
+  var max = 0;
+  var linhas = cli.linhasTelefonicas || [];
+  for (var i = 0; i < linhas.length; i++) {
+    var fats = linhas[i].faturas || [];
+    for (var j = 0; j < fats.length; j++) {
+      var v = parseDataSemTimezone(fats[j].vencimento);
+      if (!v) continue;
+      var s = String(fats[j].status || '').toUpperCase();
+      if (s === 'PAGA') s = 'PAGO';
+      if (s !== 'PAGO' && v < hoje) {
+        var dias = Math.floor((hoje - v) / 86400000);
+        if (dias > max) max = dias;
+      }
+    }
+  }
+  return max;
+}
+
+clientes = clientes.slice().map(function (cli) {
+  return { cli: cli, atraso: _maxAtrasoCliente(cli) };
+}).sort(function (a, b) {
+  if (b.atraso !== a.atraso) return b.atraso - a.atraso;   // mais atrasado primeiro
+  return String(a.cli.nomeCliente || '').localeCompare(String(b.cli.nomeCliente || ''));
+}).map(function (x) { return x.cli; });
+
   var tbody = document.getElementById('tbody-clientes');
   var html = '';
 
@@ -1013,22 +1042,11 @@ function renderizarTabela(clientes) {
           dataPagamento: dataPagamento
         });
 
-        // 🔥 REGRA DE FILTRO: cliente aparece se:
-        // 1) fatura não paga E vence em até 14 dias (ou já venceu)
-        // 2) fatura paga HOJE (para permitir estorno até o final do dia)
-        if (status !== 'PAGO') {
-          var diffDias = Math.ceil((dataVenc - hoje) / (1000 * 60 * 60 * 24));
-          if (diffDias <= 14) {
-            temFaturaProxima = true;
-          }
-        } else if (dataPagamento) {
-          // Verifica se foi paga hoje (comparação dia/mês/ano)
-          if (dataPagamento.getFullYear() === hoje.getFullYear() &&
-              dataPagamento.getMonth() === hoje.getMonth() &&
-              dataPagamento.getDate() === hoje.getDate()) {
-            temFaturaProxima = true;
-          }
-        }
+      // 🔥 REGRA NOVA: cliente aparece SE tiver pelo menos 1 fatura ATRASADA
+// (vencimento < hoje e status != PAGO). Sem janela de dias.
+if (status === 'ATRASADO') {
+  temFaturaProxima = true;
+}
 
         // Atualiza a fatura mais crítica (para exibir no resumo)
         // Só considera se NÃO estiver paga OU se estiver paga hoje
@@ -1304,9 +1322,9 @@ detalheHtml += '<div class="grupo-card">' +
   }
 
   // Se nenhum cliente passou no filtro
-  if (html === '') {
-    tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">🎉</div><div style="font-weight:700; color:#10b981;">Todas as faturas estão em dia!</div><div style="font-size:0.8rem; margin-top:0.25rem;">Nenhum vencimento nos próximos 14 dias.</div></div></td></tr>';
-  } else {
+ if (html === '') {
+  tbody.innerHTML = '<tr><td colspan="7"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">🎉</div><div style="font-weight:700; color:#10b981;">Nenhuma fatura em atraso!</div><div style="font-size:0.8rem; margin-top:0.25rem;">Todos os clientes estão em dia.</div></div></td></tr>';
+} else {
     tbody.innerHTML = html;
   }
 
@@ -1316,16 +1334,18 @@ detalheHtml += '<div class="grupo-card">' +
   document.getElementById('loading').style.display = 'none';
 
   // 🔥 Badge "Em risco" = só clientes com pelo menos 1 fatura ATRASADA
-  const totalEmRisco = clientes.filter(c => {
-    return (c.linhasTelefonicas || []).some(lt =>
-      (lt.faturas || []).some(f => {
-        const venc = new Date(f.vencimento);
-        const hoje = new Date(); hoje.setHours(0,0,0,0);
-        venc.setHours(0,0,0,0);
-        return f.status.toUpperCase() !== 'PAGO' && venc < hoje;
-      })
-    );
-  }).length;
+const _hojeBadge = new Date(); _hojeBadge.setHours(0,0,0,0);
+const totalEmRisco = clientes.filter(c => {
+  return (c.linhasTelefonicas || []).some(lt =>
+    (lt.faturas || []).some(f => {
+      const venc = parseDataSemTimezone(f.vencimento);
+      if (!venc) return false;
+      let st = String(f.status || '').toUpperCase();
+      if (st === 'PAGA') st = 'PAGO';
+      return st !== 'PAGO' && venc < _hojeBadge;
+    })
+  );
+}).length;
   const badgeRisco = document.getElementById('badge-risco');
   if (badgeRisco) badgeRisco.textContent = totalEmRisco;
   if (typeof lucide !== 'undefined') lucide.createIcons();
