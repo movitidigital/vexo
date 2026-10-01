@@ -1090,13 +1090,13 @@ function renderLinhasConferencia() {
 
     const botoes = podeAgir ? `
       <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
-        <button onclick="confValidarLinha('${v.comissao_id}', 'VALIDADA')" 
+        <button onclick="confValidarLinha('${v.comissao_id || v.venda_id}', 'VALIDADA')" 
           ${statusAtual === 'VALIDADA' ? 'disabled' : ''}
           title="${statusAtual === 'VALIDADA' ? 'Status atual' : 'Marcar como Validada'}"
           style="${btnStyle(statusAtual === 'VALIDADA', '#10b981')}padding:5px 9px;border-radius:6px;cursor:${statusAtual === 'VALIDADA' ? 'default' : 'pointer'};font-size:10px;font-weight:700;">
           ✓ OK
         </button>
-        <button onclick="confValidarLinha('${v.venda_id}', 'CORRIGIDA')" 
+        <button onclick="confValidarLinha('${v.comissao_id || v.venda_id}', 'CORRIGIDA')" 
           ${statusAtual === 'CORRIGIDA' ? 'disabled' : ''}
           title="${statusAtual === 'CORRIGIDA' ? 'Status atual' : 'Corrigir'}"
           style="${btnStyle(statusAtual === 'CORRIGIDA', '#f59e0b')}padding:5px 9px;border-radius:6px;cursor:${statusAtual === 'CORRIGIDA' ? 'default' : 'pointer'};font-size:10px;font-weight:700;">
@@ -1109,7 +1109,7 @@ function renderLinhasConferencia() {
           ✕ Rejeitar
         </button>
         ${statusAtual !== 'PENDENTE' ? `
-          <button onclick="confValidarLinha('${v.venda_id}', 'PENDENTE')" 
+          <button onclick="confValidarLinha('${v.comissao_id || v.venda_id}', 'PENDENTE')" 
             title="Desfazer e voltar para Pendente"
             style="background:#f1f5f9;color:#64748b;border:1.5px solid #cbd5e1;padding:5px 9px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">
             ⟲ Desfazer
@@ -1143,15 +1143,17 @@ async function confValidarLinha(comissaoId, status) {
   const sb = getSb();
   if (!sb) return;
 
-  console.log('🔍 [VALIDAR] Recebido:', { comissaoId, status, mes: _confState.mes, ano: _confState.ano });
+  // Encontra a venda correspondente no estado para ter os dados auxiliares
+  const venda = (_confState.vendas || []).find(v => 
+    v.comissao_id === comissaoId || v.venda_id === comissaoId
+  );
 
-  if (!comissaoId || comissaoId === 'null' || comissaoId === 'undefined') {
-    alert('❌ Erro: O ID desta comissão não foi encontrado. Feche a janela e tente novamente.');
+  if (!venda && (!comissaoId || comissaoId === 'null')) {
+    alert('❌ Erro: linha não encontrada no estado. Feche a janela e tente novamente.');
     return;
   }
 
   let obs = null;
-
   if (status === 'CORRIGIDA') {
     obs = prompt('Motivo da correção:'); 
     if (obs === null) return;
@@ -1165,32 +1167,50 @@ async function confValidarLinha(comissaoId, status) {
     obs = 'Status revertido para pendente';
   }
 
-  try {
-    const payload = {
-      p_venda_id: comissaoId,  // 🔥 Envia como venda_id (a função SQL tem fallback para buscar por id também)
-      p_status: status, 
-      p_observacao: obs || 'Validação individual',
-      p_mes_competencia: parseInt(_confState.mes, 10),
-      p_ano_competencia: parseInt(_confState.ano, 10)
-    };
-    console.log('🚀 [VALIDAR] Payload:', payload);
-
-    const { data, error } = await sb.rpc('admin_validar_venda_consultor', payload);
-    
-    console.log('📥 [VALIDAR] Resposta:', { data, error });
-
-    if (error) throw error;
-    if (!data?.success) throw new Error(data?.message || 'Erro na validação');
-
-    if (data.transferida) {
-      alert('✅ Comissão validada e transferida para este mês!\n\nEla estava rejeitada em outro ciclo e agora foi somada a este espelho.');
+  // 🔥 Estratégia 1: tentar validação por comissao_id (se existir)
+  if (comissaoId && comissaoId !== 'null' && comissaoId !== 'undefined') {
+    try {
+      const { data, error } = await sb.rpc('admin_validar_venda_consultor', {
+        p_venda_id: comissaoId,
+        p_status: status,
+        p_observacao: obs || 'Validação individual',
+        p_mes_competencia: parseInt(_confState.mes, 10),
+        p_ano_competencia: parseInt(_confState.ano, 10)
+      });
+      if (!error && data?.success) {
+        if (data.transferida) alert('✅ Comissão transferida para este mês!');
+        await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
+        return;
+      }
+      console.warn('⚠️ Falhou por ID, tentando por linha...', data?.message);
+    } catch (e) {
+      console.warn('⚠️ Erro por ID:', e.message);
     }
-    
-    await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
-  } catch (e) { 
-    console.error('❌ [VALIDAR] Erro:', e);
-    alert('❌ ' + (e.message || e)); 
   }
+
+  // 🔥 Estratégia 2 (fallback): usar numero_linha + consultor + mês
+  if (venda?.numero_linha) {
+    try {
+      const { data, error } = await sb.rpc('admin_validar_por_linha', {
+        p_numero_linha: String(venda.numero_linha),
+        p_consultor_nome: _confState.consultor,
+        p_mes: parseInt(_confState.mes, 10),
+        p_ano: parseInt(_confState.ano, 10),
+        p_status: status,
+        p_observacao: obs || 'Validação individual (fallback)'
+      });
+      if (error) throw error;
+      if (!data?.success) throw new Error(data?.message || 'Erro');
+      await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
+      return;
+    } catch (e) {
+      console.error('❌ Erro fallback:', e);
+      alert('❌ Não foi possível validar: ' + (e.message || e));
+      return;
+    }
+  }
+
+  alert('❌ Erro: Nenhum identificador válido disponível para esta linha.');
 }
 
 async function confValidarTudo() {
@@ -1204,7 +1224,7 @@ async function confValidarTudo() {
   try {
     for (const v of pendentes) {
    const { data, error } = await sb.rpc('admin_validar_venda_consultor', {
-  p_venda_id: v.venda_id, p_status: 'VALIDADA', p_observacao: 'Validação em lote'
+  p_venda_id: v.comissao_id || v.venda_id, p_status: 'VALIDADA', p_observacao: 'Validação em lote'
 });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.message || 'Erro');
