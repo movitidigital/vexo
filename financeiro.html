@@ -1063,12 +1063,48 @@ function renderLinhasConferencia() {
     'PENDENTE':  { label:'⏳ Pendente',  bg:'#f1f5f9', cor:'#475569' }
   };
 
-  tbody.innerHTML = vendas.map((v, index) => {
+  tbody.innerHTML = vendas.map((v) => {
     const st = statusMap[v.status_validacao || 'PENDENTE'] || statusMap.PENDENTE;
-    const podeAgir = (v.status_validacao === 'PENDENTE') && !liberado;
+    const statusAtual = v.status_validacao || 'PENDENTE';
+    const podeAgir = !liberado; // 🔥 Pode agir em QUALQUER status, desde que não esteja liberado
     const tags = [];
     if (v.is_port)  tags.push('<span style="background:#e9d5ff;color:#6d28d9;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;">PORT</span>');
     if (v.is_reneg) tags.push('<span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;">RENEG</span>');
+
+    // 🔥 Estilo: botão ativo fica preenchido, inativo fica "fantasma"
+    const btnStyle = (ativo, corBase) => ativo
+      ? `background:${corBase};color:white;border:2px solid ${corBase};`
+      : `background:white;color:${corBase};border:1.5px solid ${corBase};opacity:0.6;`;
+
+    const botoes = podeAgir ? `
+      <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
+        <button onclick="confValidarLinha('${v.venda_id}', 'VALIDADA')" 
+          ${statusAtual === 'VALIDADA' ? 'disabled' : ''}
+          title="${statusAtual === 'VALIDADA' ? 'Status atual' : 'Marcar como Validada'}"
+          style="${btnStyle(statusAtual === 'VALIDADA', '#10b981')}padding:5px 9px;border-radius:6px;cursor:${statusAtual === 'VALIDADA' ? 'default' : 'pointer'};font-size:10px;font-weight:700;">
+          ✓ OK
+        </button>
+        <button onclick="confValidarLinha('${v.venda_id}', 'CORRIGIDA')" 
+          ${statusAtual === 'CORRIGIDA' ? 'disabled' : ''}
+          title="${statusAtual === 'CORRIGIDA' ? 'Status atual' : 'Corrigir'}"
+          style="${btnStyle(statusAtual === 'CORRIGIDA', '#f59e0b')}padding:5px 9px;border-radius:6px;cursor:${statusAtual === 'CORRIGIDA' ? 'default' : 'pointer'};font-size:10px;font-weight:700;">
+          ⚙ Corrigir
+        </button>
+        <button onclick="confValidarLinha('${v.venda_id}', 'REJEITADA')" 
+          ${statusAtual === 'REJEITADA' ? 'disabled' : ''}
+          title="${statusAtual === 'REJEITADA' ? 'Status atual' : 'Rejeitar'}"
+          style="${btnStyle(statusAtual === 'REJEITADA', '#ef4444')}padding:5px 9px;border-radius:6px;cursor:${statusAtual === 'REJEITADA' ? 'default' : 'pointer'};font-size:10px;font-weight:700;">
+          ✕ Rejeitar
+        </button>
+        ${statusAtual !== 'PENDENTE' ? `
+          <button onclick="confValidarLinha('${v.venda_id}', 'PENDENTE')" 
+            title="Desfazer e voltar para Pendente"
+            style="background:#f1f5f9;color:#64748b;border:1.5px solid #cbd5e1;padding:5px 9px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">
+            ⟲ Desfazer
+          </button>
+        ` : ''}
+      </div>
+    ` : `<span style="font-size:10px; color:#94a3b8;">${st.label}</span>`;
 
     return `
       <tr style="border-bottom:1px solid #f1f5f9;">
@@ -1082,15 +1118,7 @@ function renderLinhasConferencia() {
         <td style="padding:10px 14px; font-weight:600;">${fmtBRL(v.valor)}</td>
         <td style="padding:10px 14px;">${tags.join(' ') || '<span style="color:#cbd5e1;">—</span>'}</td>
         <td style="padding:10px 14px;"><span style="background:${st.bg}; color:${st.cor}; padding:4px 10px; border-radius:12px; font-size:10px; font-weight:700;">${st.label}</span></td>
-        <td style="padding:10px 14px; text-align:center;">
-          ${podeAgir ? `
-            <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
-              <button onclick="confValidarLinha('${v.venda_id}', 'VALIDADA')" style="background:#10b981;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">✓ OK</button>
-              <button onclick="confValidarLinha('${v.venda_id}', 'CORRIGIDA')" style="background:#f59e0b;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">⚙ Corrigir</button>
-              <button onclick="confValidarLinha('${v.venda_id}', 'REJEITADA')" style="background:#ef4444;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">✕ Rejeitar</button>
-            </div>
-          ` : `<span style="font-size:10px; color:#94a3b8;">${st.label}</span>`}
-        </td>
+        <td style="padding:10px 14px; text-align:center;">${botoes}</td>
       </tr>`;
   }).join('');
 
@@ -1103,7 +1131,6 @@ async function confValidarLinha(vendaId, status) {
   const sb = getSb();
   if (!sb) return;
 
-  // Trava de segurança para não enviar "null" para o banco
   if (!vendaId || vendaId === 'null' || vendaId === 'undefined') {
     alert('❌ Erro: O ID desta venda não foi encontrado no sistema. Feche a janela e tente novamente.');
     return;
@@ -1114,7 +1141,6 @@ async function confValidarLinha(vendaId, status) {
   if (status === 'CORRIGIDA') {
     obs = prompt('Motivo da correção:'); 
     if (obs === null) return;
-    
     const dt = prompt('Nova data de ativação (DD/MM/AAAA) — vazio pra manter:');
     if (dt && /^\d{2}\/\d{2}\/\d{4}$/.test(dt.trim())) {
       const [d, m, a] = dt.trim().split('/');
@@ -1125,10 +1151,13 @@ async function confValidarLinha(vendaId, status) {
     if (obs === null) return;
   } else if (status === 'VALIDADA') {
     obs = 'Validação individual'; 
+  } else if (status === 'PENDENTE') {
+    // 🔥 DESFAZER
+    if (!confirm('Desfazer esta validação e voltar para PENDENTE?\n\nA linha voltará para o status original e precisará ser validada novamente.')) return;
+    obs = 'Status revertido para pendente';
   }
 
   try {
-    // 🔥 Usando a MESMA RPC e o MESMO parâmetro que o "Validar Todas" usa
     const { data, error } = await sb.rpc('admin_validar_venda_consultor', {
       p_venda_id: vendaId, 
       p_status: status, 
@@ -1138,7 +1167,6 @@ async function confValidarLinha(vendaId, status) {
     if (error) throw error;
     if (!data?.success) throw new Error(data?.message || 'Erro na validação');
     
-    // Recarrega a lista atualizada
     await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
   } catch (e) { 
     console.error('❌ Erro ao validar:', e);
