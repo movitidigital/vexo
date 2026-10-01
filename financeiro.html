@@ -1063,12 +1063,15 @@ function renderLinhasConferencia() {
     'PENDENTE':  { label:'⏳ Pendente',  bg:'#f1f5f9', cor:'#475569' }
   };
 
-  tbody.innerHTML = vendas.map(v => {
+   tbody.innerHTML = vendas.map(v => {
     const st = statusMap[v.status_validacao || 'PENDENTE'] || statusMap.PENDENTE;
     const podeAgir = (v.status_validacao === 'PENDENTE') && !liberado;
     const tags = [];
     if (v.is_port)  tags.push('<span style="background:#e9d5ff;color:#6d28d9;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;">PORT</span>');
     if (v.is_reneg) tags.push('<span style="background:#fef3c7;color:#92400e;font-size:9px;font-weight:800;padding:2px 6px;border-radius:4px;">RENEG</span>');
+
+    // 🔥 CORREÇÃO: Garante que temos um ID válido para enviar ao banco
+    const idComissao = v.comissao_id || v.venda_id || null;
 
     return `
       <tr style="border-bottom:1px solid #f1f5f9;">
@@ -1083,11 +1086,11 @@ function renderLinhasConferencia() {
         <td style="padding:10px 14px;">${tags.join(' ') || '<span style="color:#cbd5e1;">—</span>'}</td>
         <td style="padding:10px 14px;"><span style="background:${st.bg}; color:${st.cor}; padding:4px 10px; border-radius:12px; font-size:10px; font-weight:700;">${st.label}</span></td>
         <td style="padding:10px 14px; text-align:center;">
-          ${podeAgir ? `
+          ${(podeAgir && idComissao) ? `
             <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
-              <button onclick="confValidarLinha('${v.comissao_id}', 'VALIDADA')" style="background:#10b981;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">✓ OK</button>
-              <button onclick="confValidarLinha('${v.comissao_id}', 'CORRIGIDA')" style="background:#f59e0b;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">⚙ Corrigir</button>
-              <button onclick="confValidarLinha('${v.comissao_id}', 'REJEITADA')" style="background:#ef4444;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">✕ Rejeitar</button>
+              <button onclick="confValidarLinha('${idComissao}', 'VALIDADA')" style="background:#10b981;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">✓ OK</button>
+              <button onclick="confValidarLinha('${idComissao}', 'CORRIGIDA')" style="background:#f59e0b;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">⚙ Corrigir</button>
+              <button onclick="confValidarLinha('${idComissao}', 'REJEITADA')" style="background:#ef4444;color:white;border:none;padding:5px 10px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">✕ Rejeitar</button>
             </div>
           ` : `<span style="font-size:10px; color:#94a3b8;">${st.label}</span>`}
         </td>
@@ -1101,17 +1104,27 @@ function renderLinhasConferencia() {
 async function confValidarLinha(comissaoId, status) {
   const sb = getSb();
   if (!sb) return;
+
+  // 🔥 TRAVA DE SEGURANÇA: Impede o erro 'invalid input syntax for type uuid: "null"'
+  if (!comissaoId || comissaoId === 'null' || comissaoId === 'undefined') {
+    alert('❌ Erro: O ID desta comissão não foi encontrado no sistema. Feche esta janela, atualize a página (F5) e tente novamente.');
+    return;
+  }
+
   let obs = null, dataAtivacao = null;
 
   if (status === 'CORRIGIDA') {
-    obs = prompt('Motivo da correção:'); if (obs === null) return;
+    obs = prompt('Motivo da correção:'); 
+    if (obs === null) return;
+    
     const dt = prompt('Nova data de ativação (DD/MM/AAAA) — vazio pra manter:');
     if (dt && /^\d{2}\/\d{2}\/\d{4}$/.test(dt.trim())) {
       const [d, m, a] = dt.trim().split('/');
       dataAtivacao = `${a}-${m}-${d}`;
     }
   } else if (status === 'REJEITADA') {
-    obs = prompt('Motivo da rejeição:'); if (obs === null) return;
+    obs = prompt('Motivo da rejeição:'); 
+    if (obs === null) return;
   }
 
   try {
@@ -1121,11 +1134,16 @@ async function confValidarLinha(comissaoId, status) {
       p_observacao: obs || null,
       p_data_ativacao: dataAtivacao
     });
+    
     if (error) throw error;
-    if (!data?.success) throw new Error(data?.message || 'Erro');
+    if (!data?.success) throw new Error(data?.message || 'Erro na validação');
+    
+    // Recarrega a lista atualizada após a validação
     await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
-  } catch (e) { alert('❌ ' + (e.message || e)); }
+  } catch (e) { 
+    alert('❌ ' + (e.message || e)); 
   }
+}
 
 async function confValidarTudo() {
   const sb = getSb();
