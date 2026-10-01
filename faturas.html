@@ -2350,27 +2350,38 @@ function parseDataSemTimezone(valor) {
               </tr>
             </thead>
             <tbody>
-              ${faturas.map(f => {
-                const venc = new Date(f.vencimento + 'T00:00:00');
-                const hoje = new Date(); hoje.setHours(0,0,0,0);
-                const atrasada = f.status === 'PENDENTE' && venc < hoje;
-                const corVenc = f.status === 'PAGO' ? '#065f46' : atrasada ? '#991b1b' : '#b45309';
-                const badge = f.status === 'PAGO'
-                  ? '<span class="badge badge-pago">✅ Pago</span>'
-                  : atrasada
-                    ? '<span class="badge badge-atrasado">🔴 Atrasado</span>'
-                    : '<span class="badge badge-pendente">⏳ Pendente</span>';
-                return `
-                  <tr style="border-bottom: 1px solid #f1f5f9;">
-                    <td style="padding: 8px; font-weight: 700; color: var(--text-muted);">${f.numero_sequencial || '—'}</td>
-                    <td style="padding: 8px;">📱 ${escapeHtml(f.linha || '—')}</td>
-                    <td style="padding: 8px;">${escapeHtml(f.plano || '—')}</td>
-                    <td style="padding: 8px; font-weight: 700; color: ${corVenc};">${formatarData(f.vencimento)}</td>
-                    <td style="padding: 8px;">${badge}</td>
-                  </tr>
-                `;
-              }).join('')}
-            </tbody>
+           ${faturas.map(f => {
+  const venc = new Date(f.vencimento + 'T00:00:00');
+  const hoje = new Date(); hoje.setHours(0,0,0,0);
+
+  // 🔥 NORMALIZAÇÃO: PAGA → PAGO (mesma regra do renderizarTabela)
+  let statusNorm = String(f.status || '').toUpperCase();
+  if (statusNorm === 'PAGA') statusNorm = 'PAGO';
+  if (statusNorm === 'PENDENTE' && venc < hoje) statusNorm = 'ATRASADO';
+
+  const atrasada = statusNorm === 'ATRASADO';
+  const corVenc = statusNorm === 'PAGO' ? '#065f46' : atrasada ? '#991b1b' : '#b45309';
+
+  let badge;
+  if (statusNorm === 'PAGO') {
+    badge = '<span class="badge badge-pago">✅ Pago</span>';
+  } else if (atrasada) {
+    badge = '<span class="badge badge-atrasado">🔴 Atrasado</span>';
+  } else {
+    badge = '<span class="badge badge-pendente">⏳ Pendente</span>';
+  }
+
+  return `
+    <tr style="border-bottom: 1px solid #f1f5f9;">
+      <td style="padding: 8px; font-weight: 700; color: var(--text-muted);">${f.numero_sequencial || '—'}</td>
+      <td style="padding: 8px;">📱 ${escapeHtml(f.linha || '—')}</td>
+      <td style="padding: 8px;">${escapeHtml(f.plano || '—')}</td>
+      <td style="padding: 8px; font-weight: 700; color: ${corVenc};">${formatarData(f.vencimento)}</td>
+      <td style="padding: 8px;">${badge}</td>
+    </tr>
+  `;
+}).join('')}
+</tbody>
           </table>
         </div>
       `;
