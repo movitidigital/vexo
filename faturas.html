@@ -9,7 +9,7 @@
   <script src="https://unpkg.com/lucide@latest"></script>
 
 <style>
-    /* ============ CÓDIGO COPIÁVEL ============ */
+  /* ============ CÓDIGO COPIÁVEL ============ */
   .codigo-copiavel {
     font-family: ui-monospace, 'SF Mono', monospace;
     font-size: 0.78rem;
@@ -44,7 +44,8 @@
     border-style: solid;
   }
   .codigo-copiavel.copiado .copy-hint { opacity: 1; }
-    /* ============ KPI NOVOS (com ícone grande) ============ */
+
+  /* ============ KPI NOVOS (com ícone grande) ============ */
   .kpi-card {
     display: flex;
     align-items: center;
@@ -52,9 +53,12 @@
     padding: 1.1rem 1.3rem;
   }
   .kpi-icon {
-    width: 54px; height: 54px;
+    width: 54px;
+    height: 54px;
     border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.75rem;
     flex-shrink: 0;
   }
@@ -62,6 +66,7 @@
   .kpi-warning .kpi-icon { background: #fffbeb; }
   .kpi-success .kpi-icon { background: #ecfdf5; }
   .kpi-body { flex: 1; min-width: 0; }
+
   :root {
     --bg-body: #f1f5f9;
     --bg-card: #ffffff;
@@ -100,35 +105,61 @@
   .header h1 span { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
 
   .btn-refresh {
-    background: white; border: 1px solid var(--border-color); color: var(--text-secondary);
-    padding: 0.55rem 1.05rem; border-radius: var(--radius-sm); cursor: pointer;
-    display: flex; align-items: center; gap: 0.5rem;
-    font-size: 0.78rem; font-weight: 600;
-    transition: all 0.18s ease; box-shadow: var(--shadow-sm);
+    background: white;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.55rem 1.05rem;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    transition: all 0.18s ease;
+    box-shadow: var(--shadow-sm);
   }
   .btn-refresh:hover {
-    background: var(--info-bg); border-color: var(--info); color: var(--info);
-    transform: translateY(-1px); box-shadow: var(--shadow-md);
+    background: var(--info-bg);
+    border-color: var(--info);
+    color: var(--info);
+    transform: translateY(-1px);
+    box-shadow: var(--shadow-md);
   }
 
   /* ============ KPIs ============ */
   .kpi-grid {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 1rem; margin-bottom: 1.5rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
   }
   .kpi-card {
-    background: white; border-radius: var(--radius); padding: 1.1rem 1.3rem;
-    box-shadow: var(--shadow-sm); border: 1px solid var(--border-color);
+    background: white;
+    border-radius: var(--radius);
+    padding: 1.1rem 1.3rem;
+    box-shadow: var(--shadow-sm);
+    border: 1px solid var(--border-color);
     transition: transform 0.15s, box-shadow 0.15s;
   }
   .kpi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
 
   .kpi-card .kpi-title {
-    font-size: 0.68rem; font-weight: 600; text-transform: uppercase;
-    letter-spacing: 0.04em; color: var(--text-muted);
-    display: flex; align-items: center; gap: 0.35rem;
+    font-size: 0.68rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-muted);
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
   }
-  .kpi-card .kpi-value { font-size: 1.85rem; font-weight: 800; margin-top: 0.25rem; line-height: 1.15; }
+  .kpi-card .kpi-value {
+    font-size: 1.85rem;
+    font-weight: 800;
+    margin-top: 0.25rem;
+    line-height: 1.15;
+  }
 
   .kpi-danger .kpi-value { color: var(--danger); }
   .kpi-warning .kpi-value { color: var(--warning); }
@@ -136,17 +167,28 @@
 
   /* ============ TABELA ============ */
   .table-container {
-    background: white; border-radius: var(--radius);
-    border: 1px solid var(--border-color); overflow: hidden;
+    background: white;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    overflow: hidden;
     box-shadow: var(--shadow-sm);
   }
-  .table-container table { width: 100%; border-collapse: collapse; font-size: 0.8rem; }
+  .table-container table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8rem;
+  }
 
   .table-container th {
-    background: #f8fafc; color: var(--text-secondary);
-    font-weight: 700; font-size: 0.65rem; text-transform: uppercase;
-    letter-spacing: 0.05em; padding: 0.75rem 0.9rem;
-    border-bottom: 1px solid var(--border-color); text-align: left;
+    background: #f8fafc;
+    color: var(--text-secondary);
+    font-weight: 700;
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 0.75rem 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+    text-align: left;
     white-space: nowrap;
   }
 
@@ -168,99 +210,240 @@
 
   /* ============ BLOCO DE INFO DO CLIENTE ============ */
   .client-name {
-    font-weight: 700; color: var(--text-primary);
-    font-size: 0.82rem; margin-bottom: 0.2rem; line-height: 1.25;
+    font-weight: 700;
+    color: var(--text-primary);
+    font-size: 0.82rem;
+    margin-bottom: 0.2rem;
+    line-height: 1.25;
   }
   .client-line {
-    color: var(--text-muted); font-size: 0.7rem; line-height: 1.3;
+    color: var(--text-muted);
+    font-size: 0.7rem;
+    line-height: 1.3;
   }
-  .client-line.mono { font-family: ui-monospace, 'SF Mono', monospace; font-size: 0.68rem; }
-  .client-line.origin { font-size: 0.62rem; color: #94a3b8; }
+  .client-line.mono {
+    font-family: ui-monospace, 'SF Mono', monospace;
+    font-size: 0.68rem;
+  }
+  .client-line.origin {
+    font-size: 0.62rem;
+    color: #94a3b8;
+  }
 
   /* ============ LINHAS & PLANOS ============ */
-  .linhas-cell { font-size: 0.72rem; line-height: 1.4; }
-  .linhas-cell .linha-item { margin-bottom: 0.15rem; white-space: nowrap; }
+  .linhas-cell {
+    font-size: 0.72rem;
+    line-height: 1.4;
+  }
+  .linhas-cell .linha-item {
+    margin-bottom: 0.15rem;
+    white-space: nowrap;
+  }
   .linhas-cell .linha-item:last-child { margin-bottom: 0; }
-  .linhas-cell .numero { font-weight: 700; color: var(--text-primary); }
-  .linhas-cell .plano { color: var(--text-muted); margin-left: 0.4rem; font-size: 0.7rem; }
+  .linhas-cell .numero {
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .linhas-cell .plano {
+    color: var(--text-muted);
+    margin-left: 0.4rem;
+    font-size: 0.7rem;
+  }
 
   /* ============ BADGES ============ */
   .badge {
-    padding: 0.22rem 0.6rem; border-radius: 20px;
-    font-size: 0.6rem; font-weight: 800;
-    letter-spacing: 0.04em; text-transform: uppercase;
-    display: inline-block; border: 1px solid transparent;
+    padding: 0.22rem 0.6rem;
+    border-radius: 20px;
+    font-size: 0.6rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    display: inline-block;
+    border: 1px solid transparent;
     white-space: nowrap;
   }
-  .badge-pendente { background: var(--warning-bg); color: #b45309; border-color: #fcd34d; }
-  .badge-pago     { background: var(--success-bg); color: #065f46; border-color: #6ee7b7; }
-  .badge-atrasado { background: var(--danger-bg);  color: #991b1b; border-color: #fca5a5; }
+  .badge-pendente {
+    background: var(--warning-bg);
+    color: #b45309;
+    border-color: #fcd34d;
+  }
+  .badge-pago {
+    background: var(--success-bg);
+    color: #065f46;
+    border-color: #6ee7b7;
+  }
+  .badge-atrasado {
+    background: var(--danger-bg);
+    color: #991b1b;
+    border-color: #fca5a5;
+  }
 
   /* ============ BOTÕES DE AÇÃO ============ */
   .btn-action {
-    display: inline-flex; align-items: center; gap: 0.35rem;
-    padding: 0.3rem 0.7rem; border-radius: 20px;
-    font-size: 0.67rem; font-weight: 600; cursor: pointer;
-    border: 1px solid transparent; transition: all 0.15s;
-    background: white; box-shadow: var(--shadow-sm);
-    text-decoration: none; color: inherit; white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.3rem 0.7rem;
+    border-radius: 20px;
+    font-size: 0.67rem;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid transparent;
+    transition: all 0.15s;
+    background: white;
+    box-shadow: var(--shadow-sm);
+    text-decoration: none;
+    color: inherit;
+    white-space: nowrap;
   }
   .btn-action:hover { transform: translateY(-1px); box-shadow: var(--shadow-md); }
-  .btn-success-action { background: var(--success-bg); color: #065f46; border-color: #6ee7b7; }
-  .btn-info           { background: var(--info-bg);    color: var(--info);  border-color: #bfdbfe; }
-  .btn-disabled       { background: #f1f5f9;           color: var(--text-muted); border-color: var(--border-color); cursor: default; }
-  .btn-warning-action { background: var(--warning-bg); color: #b45309;      border-color: #fcd34d; }
-  .btn-danger-action  { background: var(--danger-bg);  color: #991b1b;      border-color: #fca5a5; }
-  .btn-critical       { background: #fef2f2;           color: #7f1d1d;      border-color: #fecaca; }
-  .btn-whatsapp       { background: var(--whatsapp-bg);color: #075e54;      border-color: #25d366; }
+  .btn-success-action {
+    background: var(--success-bg);
+    color: #065f46;
+    border-color: #6ee7b7;
+  }
+  .btn-info {
+    background: var(--info-bg);
+    color: var(--info);
+    border-color: #bfdbfe;
+  }
+  .btn-disabled {
+    background: #f1f5f9;
+    color: var(--text-muted);
+    border-color: var(--border-color);
+    cursor: default;
+  }
+  .btn-warning-action {
+    background: var(--warning-bg);
+    color: #b45309;
+    border-color: #fcd34d;
+  }
+  .btn-danger-action {
+    background: var(--danger-bg);
+    color: #991b1b;
+    border-color: #fca5a5;
+  }
+  .btn-critical {
+    background: #fef2f2;
+    color: #7f1d1d;
+    border-color: #fecaca;
+  }
+  .btn-whatsapp {
+    background: var(--whatsapp-bg);
+    color: #075e54;
+    border-color: #25d366;
+  }
   .btn-whatsapp:hover { background: #25d366; color: white; }
-  .btn-call           { background: var(--call-bg);    color: #1e40af;      border-color: #3b82f6; }
-  .btn-call:hover     { background: #3b82f6; color: white; }
+  .btn-call {
+    background: var(--call-bg);
+    color: #1e40af;
+    border-color: #3b82f6;
+  }
+  .btn-call:hover { background: #3b82f6; color: white; }
 
   /* ============ TAG DE INADIMPLÊNCIA ============ */
   .inadimplencia-tag {
-    font-size: 0.58rem; color: #991b1b; background: var(--danger-bg);
-    padding: 0.12rem 0.45rem; border-radius: 10px;
-    font-weight: 800; display: inline-flex; align-items: center; gap: 0.2rem;
-    margin-bottom: 0.25rem; border: 1px solid #fca5a5;
+    font-size: 0.58rem;
+    color: #991b1b;
+    background: var(--danger-bg);
+    padding: 0.12rem 0.45rem;
+    border-radius: 10px;
+    font-weight: 800;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    margin-bottom: 0.25rem;
+    border: 1px solid #fca5a5;
     letter-spacing: 0.03em;
   }
 
   /* ============ LOADING / EMPTY ============ */
-  #loading { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); font-weight: 500; font-size: 0.85rem; }
-  .empty-state { text-align: center; padding: 2.5rem 1rem; color: var(--text-muted); }
-  .empty-state i { font-size: 2.2rem; display: block; margin-bottom: 0.5rem; }
+  #loading {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text-muted);
+    font-weight: 500;
+    font-size: 0.85rem;
+  }
+  .empty-state {
+    text-align: center;
+    padding: 2.5rem 1rem;
+    color: var(--text-muted);
+  }
+  .empty-state i {
+    font-size: 2.2rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
 
   /* ============ DETALHE EXPANDIDO ============ */
   .detail-row td { padding: 0 !important; background: #fafcff; }
-  .detail-content { padding: 1.2rem 1.6rem; border-top: 1px solid var(--border-color); }
+  .detail-content {
+    padding: 1.2rem 1.6rem;
+    border-top: 1px solid var(--border-color);
+  }
 
   .grupo-card {
-    border: 1px solid var(--border-color); border-radius: var(--radius-sm);
-    padding: 0.85rem 1rem; margin-bottom: 0.7rem; background: white;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    padding: 0.85rem 1rem;
+    margin-bottom: 0.7rem;
+    background: white;
     transition: box-shadow 0.15s;
   }
   .grupo-card:hover { box-shadow: var(--shadow-sm); }
-  .grupo-card .grupo-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.6rem; }
-  .grupo-card .grupo-info { display: flex; align-items: center; gap: 0.7rem; flex-wrap: wrap; font-size: 0.78rem; }
+  .grupo-card .grupo-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+  }
+  .grupo-card .grupo-info {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    flex-wrap: wrap;
+    font-size: 0.78rem;
+  }
   .grupo-card .grupo-info strong { font-size: 0.88rem; }
   .grupo-card .grupo-info .qtd { font-size: 0.7rem; color: var(--text-muted); }
   .grupo-card .grupo-info .numeros { font-size: 0.7rem; color: var(--text-secondary); }
   .grupo-card .grupo-actions { display: flex; gap: 0.35rem; flex-wrap: wrap; }
   .grupo-card .badge-grupo {
-    font-size: 0.6rem; padding: 0.15rem 0.55rem; border-radius: 12px;
-    background: var(--warning-bg); color: #b45309; border: 1px solid #fcd34d;
+    font-size: 0.6rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 12px;
+    background: var(--warning-bg);
+    color: #b45309;
+    border: 1px solid #fcd34d;
     font-weight: 700;
   }
-  .grupo-card .badge-grupo.pago { background: var(--success-bg); color: #065f46; border-color: #6ee7b7; }
+  .grupo-card .badge-grupo.pago {
+    background: var(--success-bg);
+    color: #065f46;
+    border-color: #6ee7b7;
+  }
 
-  .detail-actions { margin-top: 0.8rem; display: flex; justify-content: flex-end; gap: 0.5rem; }
+  .detail-actions {
+    margin-top: 0.8rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+  }
 
   /* ============ EXPAND BUTTON ============ */
   .expand-btn {
-    background: none; border: none; color: var(--text-muted);
-    cursor: pointer; font-size: 1rem; transition: transform 0.2s, color 0.2s;
-    padding: 0; display: flex; align-items: center; justify-content: center;
+    background: none;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 1rem;
+    transition: transform 0.2s, color 0.2s;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
   .expand-btn:hover { color: var(--info); }
   .expand-btn.open { transform: rotate(90deg); color: var(--info); }
@@ -281,8 +464,8 @@
     .kpi-grid { grid-template-columns: 1fr; }
     .header { flex-direction: column; align-items: stretch; }
   }
-  
-    /* ═══════════════════════════════════════════════════
+
+  /* ═══════════════════════════════════════════════════
      BUSCA GLOBAL
   ═══════════════════════════════════════════════════ */
   .busca-global {
@@ -394,6 +577,14 @@
     background: white;
     min-width: 200px;
   }
+  .filtros-tabela label {
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
   .info-total {
     margin-left: auto;
     font-size: 0.78rem;
@@ -411,9 +602,12 @@
     padding: 1.1rem 1.3rem;
   }
   .kpi-icon {
-    width: 54px; height: 54px;
+    width: 54px;
+    height: 54px;
     border-radius: 14px;
-    display: flex; align-items: center; justify-content: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     font-size: 1.75rem;
     flex-shrink: 0;
   }
@@ -433,8 +627,18 @@
     border-radius: 16px;
     border: 1px solid var(--border-color);
   }
-  .empty-consulta i { font-size: 3rem; margin-bottom: 1rem; display: block; opacity: 0.4; }
-  .empty-consulta h3 { font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.4rem; font-weight: 700; }
+  .empty-consulta i {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    display: block;
+    opacity: 0.4;
+  }
+  .empty-consulta h3 {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.4rem;
+    font-weight: 700;
+  }
   .empty-consulta p { font-size: 0.82rem; }
 
   .cliente-card-faturas {
@@ -617,11 +821,29 @@
 
   <!-- ABA: EM RISCO -->
   <div class="aba-content" id="tab-content-risco">
+
+    <!-- 🔥 SELETOR DE JANELA DE VENCIMENTO -->
+    <div class="filtros-tabela">
+      <label>
+        📅 Mostrar vencimentos nos próximos:
+        <select id="janela-dias" onchange="renderizarTabela(cacheClientes)">
+          <option value="7">7 dias</option>
+          <option value="14">14 dias</option>
+          <option value="30" selected>30 dias</option>
+          <option value="45">45 dias</option>
+          <option value="60">60 dias</option>
+          <option value="90">90 dias</option>
+          <option value="9999">Todos os pendentes</option>
+        </select>
+      </label>
+      <span id="info-janela" class="info-total"></span>
+    </div>
+
     <div class="table-container">
       <table id="tabela-clientes">
         <thead>
           <tr>
-            <th style="width:52px;">🎯 Prioridade</th>
+            <th style="width:60px;">🎯 Prior.</th>
             <th style="width:30px;"></th>
             <th>🏷️ Código do Cliente</th>
             <th>👤 Cliente</th>
@@ -746,33 +968,30 @@ function parseDataSemTimezone(valor) {
   const [a, m, d] = dataLimpa.split('-').map(Number);
   return new Date(a, m - 1, d, 0, 0, 0, 0);
 }
+
   // ═══════════════════════════════════════════════════════════
 // PONTE SUPABASE — substitui google.script.run
 // ═══════════════════════════════════════════════════════════
 (function () {
   if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
 
-// 🔥 Normaliza cada item do array para um UUID string.
-// Aceita 3 formatos:
-//   1) string direta: "abc-123"
-//   2) objeto com .coluna: { linha: "...", coluna: "abc-123" }
-//   3) objeto com .id: { id: "abc-123" }
-const _extractUuid = (x) => {
-  if (!x) return null;
-  if (typeof x === 'string') return x;
-  return x.coluna || x.id || x.uuid || x.lancamento_id || null;
-};
+  // 🔥 Normaliza cada item do array para um UUID string.
+  const _extractUuid = (x) => {
+    if (!x) return null;
+    if (typeof x === 'string') return x;
+    return x.coluna || x.id || x.uuid || x.lancamento_id || null;
+  };
 
-const _mapUuids = (ids) => Array.isArray(ids)
-  ? ids.map(_extractUuid).filter(Boolean)
-  : [];
+  const _mapUuids = (ids) => Array.isArray(ids)
+    ? ids.map(_extractUuid).filter(Boolean)
+    : [];
 
-const MAP = {
-  obterDadosFaturasFrontend:  { rpc: 'faturas_carregar_dados',          args: () => ({}) },
-  atualizarStatusFaturasComLog:{ rpc: 'faturas_baixar_pagamento',       args: (ids, usuario) => ({ p_ids: _mapUuids(ids), p_usuario: usuario }) },
-  estornarStatusFaturas:      { rpc: 'faturas_estornar_pagamento',      args: (ids, usuario) => ({ p_ids: _mapUuids(ids), p_usuario: usuario }) },
-  registrarLogWhatsApp:       { rpc: 'faturas_registrar_log_whatsapp',  args: (ids, usuario) => ({ p_ids: _mapUuids(ids), p_usuario: usuario }) },
-};
+  const MAP = {
+    obterDadosFaturasFrontend:  { rpc: 'faturas_carregar_dados',          args: () => ({}) },
+    atualizarStatusFaturasComLog:{ rpc: 'faturas_baixar_pagamento',       args: (ids, usuario) => ({ p_ids: _mapUuids(ids), p_usuario: usuario }) },
+    estornarStatusFaturas:      { rpc: 'faturas_estornar_pagamento',      args: (ids, usuario) => ({ p_ids: _mapUuids(ids), p_usuario: usuario }) },
+    registrarLogWhatsApp:       { rpc: 'faturas_registrar_log_whatsapp',  args: (ids, usuario) => ({ p_ids: _mapUuids(ids), p_usuario: usuario }) },
+  };
 
   function makeRunner() {
     let ok = null, fail = null;
@@ -802,6 +1021,7 @@ const MAP = {
   Object.defineProperty(window.google.script, 'run', { get: () => makeRunner() });
   console.log('✅ Ponte Supabase ativa — faturas.html');
 })();
+
   // =========================================================
   // GLOBAIS
   // =========================================================
@@ -818,32 +1038,32 @@ const MAP = {
   // =========================================================
   // FUNÇÃO AUXILIAR PARA OBTER NOME DO USUÁRIO LOGADO
   // =========================================================
- async function obterNomeUsuario() {
-  try {
-    if (window.sb) {
-      const { data: { user } } = await window.sb.auth.getUser();
-      if (user) {
-        const { data: prof } = await window.sb
-          .from('profiles')
-          .select('nome, sobrenome')
-          .eq('id', user.id)
-          .single();
-        if (prof) return ((prof.nome || '') + ' ' + (prof.sobrenome || '')).trim() || user.email;
+  async function obterNomeUsuario() {
+    try {
+      if (window.sb) {
+        const { data: { user } } = await window.sb.auth.getUser();
+        if (user) {
+          const { data: prof } = await window.sb
+            .from('profiles')
+            .select('nome, sobrenome')
+            .eq('id', user.id)
+            .single();
+          if (prof) return ((prof.nome || '') + ' ' + (prof.sobrenome || '')).trim() || user.email;
+        }
       }
-    }
-  } catch (e) { console.warn('Erro obterNomeUsuario:', e); }
-  return 'Sistema';
-}
+    } catch (e) { console.warn('Erro obterNomeUsuario:', e); }
+    return 'Sistema';
+  }
 
   // =========================================================
-  // 🔥 PRIORIDADE DE COBRANÇA (novo)
+  // 🔥 PRIORIDADE DE COBRANÇA
   // Retorna o grau de urgência do cliente com base na fatura
   // mais crítica: dias de atraso (ou dias até vencer) + rótulo.
   // =========================================================
   function calcularPrioridade(cli, hoje) {
     var linhas = cli.linhasTelefonicas || [];
-    var maxAtraso = 0;              // dias de atraso do pior caso
-    var minDiasVencer = Infinity;   // menor qtd de dias para vencer
+    var maxAtraso = 0;
+    var minDiasVencer = Infinity;
 
     for (var i = 0; i < linhas.length; i++) {
       var fats = linhas[i].faturas || [];
@@ -855,7 +1075,7 @@ const MAP = {
         if (s === 'PAGA') s = 'PAGO';
         if (s === 'PAGO') continue;
 
-        var diff = Math.round((v - hoje) / 86400000); // negativo = atrasado
+        var diff = Math.round((v - hoje) / 86400000);
         if (diff < 0) {
           var atraso = Math.abs(diff);
           if (atraso > maxAtraso) maxAtraso = atraso;
@@ -865,29 +1085,25 @@ const MAP = {
       }
     }
 
-    // Chave de ordenação: atrasado vem SEMPRE antes do "a vencer"
-    // Quanto mais atrasado, MENOR a sortKey (mais no topo).
-    // Quanto mais próximo de vencer, MENOR a sortKey.
-    var sortKey;
-    var grau, rotulo, rankClass, pillClass;
+    var sortKey, grau, rotulo, rankClass, pillClass;
 
     if (maxAtraso > 0) {
-      sortKey = -maxAtraso; // ex: -30 fica antes de -5
+      sortKey = -maxAtraso;
       if (maxAtraso >= 30) {
         grau = 1; rotulo = 'CRÍTICO'; rankClass = 'rank-critical'; pillClass = 'atraso-critico';
       } else if (maxAtraso >= 15) {
-        grau = 2; rotulo = 'ALTO';    rankClass = 'rank-high';     pillClass = 'atraso-alto';
+        grau = 2; rotulo = 'ALTO'; rankClass = 'rank-high'; pillClass = 'atraso-alto';
       } else if (maxAtraso >= 6) {
-        grau = 3; rotulo = 'MÉDIO';   rankClass = 'rank-medium';   pillClass = 'atraso-medio';
+        grau = 3; rotulo = 'MÉDIO'; rankClass = 'rank-medium'; pillClass = 'atraso-medio';
       } else {
-        grau = 4; rotulo = 'BAIXO';   rankClass = 'rank-low';      pillClass = 'atraso-baixo';
+        grau = 4; rotulo = 'BAIXO'; rankClass = 'rank-low'; pillClass = 'atraso-baixo';
       }
     } else if (minDiasVencer !== Infinity) {
-      sortKey = minDiasVencer;   // 0 (hoje) fica antes de 3, 7, 14...
-      grau = 5; rotulo = 'A VENCER'; rankClass = 'rank-near';      pillClass = 'atraso-vence';
+      sortKey = minDiasVencer;
+      grau = 5; rotulo = 'A VENCER'; rankClass = 'rank-near'; pillClass = 'atraso-vence';
     } else {
       sortKey = Infinity;
-      grau = 6; rotulo = 'EM DIA';   rankClass = 'rank-ok';        pillClass = 'atraso-vence';
+      grau = 6; rotulo = 'EM DIA'; rankClass = 'rank-ok'; pillClass = 'atraso-vence';
     }
 
     return {
@@ -981,45 +1197,45 @@ const MAP = {
   // =========================================================
   // CARREGAR DADOS
   // =========================================================
- function carregarDados() {
-  var loading = document.getElementById('loading');
-  var tbody = document.getElementById('tbody-clientes');
-  loading.style.display = 'block';
-  loading.innerHTML = '⏳ Sincronizando Motor Inteligente...';
-  tbody.innerHTML = '';
+  function carregarDados() {
+    var loading = document.getElementById('loading');
+    var tbody = document.getElementById('tbody-clientes');
+    loading.style.display = 'block';
+    loading.innerHTML = '⏳ Sincronizando Motor Inteligente...';
+    tbody.innerHTML = '';
 
-  google.script.run
-    .withSuccessHandler(function(dados) {
-      // 🔥 Supabase devolve array de objetos direto (não é mais string JSON)
-      document.getElementById('loading').style.display = 'none';
+    google.script.run
+      .withSuccessHandler(function(dados) {
+        // 🔥 Supabase devolve array de objetos direto (não é mais string JSON)
+        document.getElementById('loading').style.display = 'none';
 
-      try {
-        if (!dados || !Array.isArray(dados)) {
+        try {
+          if (!dados || !Array.isArray(dados)) {
+            document.getElementById('loading').innerHTML =
+              '<div style="color:#ef4444; text-align:center; padding:1rem;">⚠️ Nenhum dado recebido do banco.</div>';
+            document.getElementById('loading').style.display = 'block';
+            return;
+          }
+
+          console.log(`✅ ${dados.length} cliente(s) carregado(s) do Supabase`);
+          cacheClientes = dados;
+          renderizarTabela(cacheClientes);
+
+        } catch (e) {
+          console.error('❌ Erro ao processar dados:', e);
           document.getElementById('loading').innerHTML =
-            '<div style="color:#ef4444; text-align:center; padding:1rem;">⚠️ Nenhum dado recebido do banco.</div>';
+            '<div style="color:#ef4444; text-align:center; padding:1rem;">❌ Erro: ' + e.message + '</div>';
           document.getElementById('loading').style.display = 'block';
-          return;
         }
-
-        console.log(`✅ ${dados.length} cliente(s) carregado(s) do Supabase`);
-        cacheClientes = dados;
-        renderizarTabela(cacheClientes);
-
-      } catch (e) {
-        console.error('❌ Erro ao processar dados:', e);
+      })
+      .withFailureHandler(function(erro) {
+        console.error('❌ Erro na RPC:', erro);
         document.getElementById('loading').innerHTML =
-          '<div style="color:#ef4444; text-align:center; padding:1rem;">❌ Erro: ' + e.message + '</div>';
+          '<div style="color:#ef4444;">❌ Erro ao carregar: ' + (erro.message || erro || 'Falha de comunicação') + '</div>';
         document.getElementById('loading').style.display = 'block';
-      }
-    })
-    .withFailureHandler(function(erro) {
-      console.error('❌ Erro na RPC:', erro);
-      document.getElementById('loading').innerHTML =
-        '<div style="color:#ef4444;">❌ Erro ao carregar: ' + (erro.message || erro || 'Falha de comunicação') + '</div>';
-      document.getElementById('loading').style.display = 'block';
-    })
-    .obterDadosFaturasFrontend();
-}
+      })
+      .obterDadosFaturasFrontend();
+  }
 
   // =========================================================
   // PROCESSAR DADOS
@@ -1047,456 +1263,485 @@ const MAP = {
   // =========================================================
   // RENDERIZAR TABELA E KPIs
   // =========================================================
-function renderizarTabela(clientes) {
-  var kpiAtrasadas = 0;
-  var kpiVenceBreve = 0;
-  var kpiRecebidas = 0;
-  var hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  var limite7Dias = new Date(hoje);
-  limite7Dias.setDate(hoje.getDate() + 7);
-
-  // ═══════════════════════════════════════════════════════════
-  // 🎯 ORDENAÇÃO INTELIGENTE DE COBRANÇA
-  //   1) Clientes com fatura ATRASADA no topo,
-  //      ordenados do MAIS atrasado para o MENOS atrasado.
-  //   2) Em seguida, clientes que vão VENCER,
-  //      ordenados do mais próximo para o mais distante.
-  // ═══════════════════════════════════════════════════════════
-  var prioridades = {};
-  for (var pi = 0; pi < clientes.length; pi++) {
-    prioridades[pi] = calcularPrioridade(clientes[pi], hoje);
-  }
-
-  var indicesOrdenados = clientes.map(function (_, i) { return i; });
-  indicesOrdenados.sort(function (a, b) {
-    var pa = prioridades[a];
-    var pb = prioridades[b];
-    if (pa.sortKey !== pb.sortKey) return pa.sortKey - pb.sortKey;
-    var na = String(clientes[a].nomeCliente || '');
-    var nb = String(clientes[b].nomeCliente || '');
-    return na.localeCompare(nb);
-  });
-
-  // Reconstrói array na ordem de prioridade
-  clientes = indicesOrdenados.map(function (i) { return clientes[i]; });
-
-  var tbody = document.getElementById('tbody-clientes');
-  var html = '';
-  var posicao = 0; // contador visual de ranking
-
-  if (!clientes || clientes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">📭</div><div>Nenhuma fatura pendente encontrada.</div></div></td></tr>';
-    document.getElementById('kpi-atrasadas').innerText = '0';
-    document.getElementById('kpi-vence-breve').innerText = '0';
-    document.getElementById('kpi-recebidas').innerText = '0';
-    document.getElementById('loading').style.display = 'none';
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-    return;
-  }
-
-  var clienteIndex = 0;
-
-  for (var c = 0; c < clientes.length; c++) {
-    var cliente = clientes[c];
-    var faturaMaisCritica = null;
-    var htmlLinhas = '';
-    var todasFaturas = [];
-    var temFaturaProxima = false;
-
-    var contatoRaw = cliente.contatoFinanceiro || '';
-    var numeroContato = limparNumero(contatoRaw);
-
-   for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
-      var linhaTel = cliente.linhasTelefonicas[l];
-      htmlLinhas += '<div class="linha-item">' +
-                       '<span style="font-size:0.75rem; margin-right:2px;">📱</span>' +
-                       '<span class="numero">' + linhaTel.numero + '</span>' +
-                       '<span class="plano">' + linhaTel.plano + '</span>' +
-                     '</div>';
-
-      for (var f = 0; f < linhaTel.faturas.length; f++) {
-        var fatura = linhaTel.faturas[f];
-        var dataVenc = parseDataSemTimezone(fatura.vencimento);
-              var status = fatura.status.toUpperCase();
-        // 🔥 Normaliza PAGO/PAGA para PAGO (padrão interno do frontend)
-        if (status === 'PAGA') status = 'PAGO';
-        if (status === 'PENDENTE' && dataVenc < hoje) status = 'ATRASADO';
-
-        // Data de pagamento (se existir)
-        var dataPagamento = fatura.dataPagamento ? new Date(fatura.dataPagamento) : null;
-        if (dataPagamento) dataPagamento.setHours(0, 0, 0, 0);
-
-        // KPIs
-        if (status === 'ATRASADO') kpiAtrasadas++;
-        if (status === 'PENDENTE' && dataVenc >= hoje && dataVenc <= limite7Dias) kpiVenceBreve++;
-        if (status === 'PAGO' &&
-            dataVenc.getMonth() === hoje.getMonth() &&
-            dataVenc.getFullYear() === hoje.getFullYear()) kpiRecebidas++;
-
-        todasFaturas.push({
-          mes: fatura.mes,
-          vencimento: fatura.vencimento,
-          status: fatura.status,
-          colunaStatusPlanilha: fatura.colunaStatusPlanilha,
-          numeroLinha: linhaTel.numero,
-          plano: linhaTel.plano,
-          linhaPlanilha: linhaTel.linhaPlanilha,
-          dataVencObj: dataVenc,
-          statusExibido: status,
-          dataPagamento: dataPagamento
-        });
-
-        // 🔥 REGRA DE FILTRO: cliente aparece se:
-        // 1) fatura não paga E vence em até 14 dias (ou já venceu)
-        // 2) fatura paga HOJE (para permitir estorno até o final do dia)
-        if (status !== 'PAGO') {
-          var diffDias = Math.ceil((dataVenc - hoje) / (1000 * 60 * 60 * 24));
-          if (diffDias <= 14) {
-            temFaturaProxima = true;
-          }
-        } else if (dataPagamento) {
-          // Verifica se foi paga hoje (comparação dia/mês/ano)
-          if (dataPagamento.getFullYear() === hoje.getFullYear() &&
-              dataPagamento.getMonth() === hoje.getMonth() &&
-              dataPagamento.getDate() === hoje.getDate()) {
-            temFaturaProxima = true;
-          }
-        }
-
-        // Atualiza a fatura mais crítica (para exibir no resumo)
-        // Só considera se NÃO estiver paga OU se estiver paga hoje
-        var considerarParaResumo = (status !== 'PAGO') ||
-          (status === 'PAGO' && dataPagamento &&
-           dataPagamento.getFullYear() === hoje.getFullYear() &&
-           dataPagamento.getMonth() === hoje.getMonth() &&
-           dataPagamento.getDate() === hoje.getDate());
-
-        if (considerarParaResumo) {
-          if (!faturaMaisCritica) {
-            faturaMaisCritica = {
-              mes: fatura.mes,
-              vencimento: fatura.vencimento,
-              statusCalc: status,
-              dataVencObj: dataVenc,
-              numLinha: linhaTel.numero
-            };
-          } else if (status === 'ATRASADO' && faturaMaisCritica.statusCalc !== 'ATRASADO') {
-            faturaMaisCritica = {
-              mes: fatura.mes,
-              vencimento: fatura.vencimento,
-              statusCalc: status,
-              dataVencObj: dataVenc,
-              numLinha: linhaTel.numero
-            };
-          } else if (status !== 'PAGO' && faturaMaisCritica.statusCalc === 'PAGO') {
-            faturaMaisCritica = {
-              mes: fatura.mes,
-              vencimento: fatura.vencimento,
-              statusCalc: status,
-              dataVencObj: dataVenc,
-              numLinha: linhaTel.numero
-            };
-          }
-        }
-      }
-    }
-
-    // 🔥 FILTRO PRINCIPAL: se não houver nenhuma fatura relevante, PULA este cliente
-    if (!temFaturaProxima) {
-      continue;
-    }
-
-    // Ordena todas as faturas por data
-    todasFaturas.sort(function(a, b) {
-      return a.dataVencObj - b.dataVencObj;
-    });
-
-    // Agrupa por data de vencimento
-    var grupos = {};
-    for (var i = 0; i < todasFaturas.length; i++) {
-      var f = todasFaturas[i];
-      var dataKey = f.dataVencObj.toLocaleDateString('pt-BR');
-      if (!grupos[dataKey]) {
-        grupos[dataKey] = {
-          data: dataKey,
-          dataObj: f.dataVencObj,
-          faturas: [],
-          numeros: new Set(),
-          celulas: [],
-          totalPendentes: 0,
-          primeiraFatura: f
-        };
-      }
-      grupos[dataKey].faturas.push(f);
-      grupos[dataKey].numeros.add(f.numeroLinha);
-
-      // 🔥 SÓ considera como pendente se NÃO estiver paga
-      // (faturas pagas hoje NÃO são consideradas pendentes para o botão)
-      if (f.statusExibido !== 'PAGO') {
-        grupos[dataKey].celulas.push({ linha: f.linhaPlanilha, coluna: f.colunaStatusPlanilha });
-        grupos[dataKey].totalPendentes++;
-      }
-    }
-
-    var gruposOrdenados = Object.keys(grupos).sort(function(a, b) {
-      return new Date(a.split('/').reverse().join('/')) - new Date(b.split('/').reverse().join('/'));
-    });
-
-    var codigoCliente = cliente.codigoCliente;
-    var nomeCliente = cliente.nomeCliente || '';
-    var resp = cliente.nomeResponsavel || 'N/A';
-    var cpfCnpj = cliente.cpfCnpj || '';
-    var origem = cliente.origem || 'N/A';
-    var email = cliente.email || '';
-
-    var detailId = 'detail-' + (++clienteIndex);
-
-    var badgeClass = 'badge-pendente';
-    var statusTexto = 'Pendente';
-    var acao = { texto: 'Ver Detalhes', classe: 'btn-info', icone: 'eye', exibirWarning: false };
-
-    if (faturaMaisCritica) {
-      var st = faturaMaisCritica.statusCalc;
-     if (st === 'PAGO') {
-        badgeClass = 'badge-pago';
-        statusTexto = '✅ Pago';
-        acao = { texto: 'Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
-      } else if (st === 'ATRASADO') {
-        badgeClass = 'badge-atrasado';
-        statusTexto = '🔴 Atrasado';
-        acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
-     } else {
-        badgeClass = 'badge-pendente';
-        statusTexto = '⏳ Pendente';
-        acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
-      }
-    }
-
-    var dataFormatada = faturaMaisCritica ? faturaMaisCritica.dataVencObj.toLocaleDateString('pt-BR') : '--';
-    var alerta = acao.exibirWarning ?
-      '<div class="inadimplencia-tag"><i data-lucide="alert-circle" size="12"></i> IMPACTO NA QUALIDADE</div>' :
-      '';
-
-    // ---- LINHA PRINCIPAL ----
-   var rowStatusClass = '';
-if (faturaMaisCritica) {
-  var stRow = faturaMaisCritica.statusCalc;
-  if (stRow === 'PAGO') rowStatusClass = 'row-success';
-  else if (stRow === 'ATRASADO') rowStatusClass = 'row-danger';
-  else rowStatusClass = 'row-warning';
-}
+  function renderizarTabela(clientes) {
+    var kpiAtrasadas = 0;
+    var kpiVenceBreve = 0;
+    var kpiRecebidas = 0;
+    var hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    var limite7Dias = new Date(hoje);
+    limite7Dias.setDate(hoje.getDate() + 7);
 
     // ═══════════════════════════════════════════════════════════
-    // 🎯 COLUNA "PRIORIDADE" — rank visual + dias de atraso
+    // 🔥 JANELA CONFIGURÁVEL (padrão 30 dias)
     // ═══════════════════════════════════════════════════════════
-    posicao++;
-    var prio = prioridades[clientes.indexOf(cliente)] || calcularPrioridade(cliente, hoje);
+    var janelaDias = Number(
+      (document.getElementById('janela-dias') || {}).value || 30
+    );
 
-    // Pega a prioridade correta pelo índice atual (após reordenação)
-    // Como o array foi reordenado, precisamos recalcular com base no cliente
-    prio = calcularPrioridade(cliente, hoje);
-
-    var rankTexto = '#' + posicao;
-    var rankClass = prio.rankClass;
-
-    // Linha de detalhe da prioridade (dias de atraso / a vencer)
-    var prioridadeDetalhe = '';
-    if (prio.maxAtraso > 0) {
-      prioridadeDetalhe = '<span class="atraso-pill ' + prio.pillClass + '">' +
-                            '⚠️ ' + prio.maxAtraso + ' dia' + (prio.maxAtraso > 1 ? 's' : '') + ' em atraso' +
-                          '</span>';
-    } else if (prio.minDiasVencer === 0) {
-      prioridadeDetalhe = '<span class="atraso-pill ' + prio.pillClass + '">🔔 Vence hoje</span>';
-    } else if (prio.minDiasVencer !== Infinity && prio.minDiasVencer <= 14) {
-      prioridadeDetalhe = '<span class="atraso-pill ' + prio.pillClass + '">⏳ Vence em ' + prio.minDiasVencer + 'd</span>';
-    } else {
-      prioridadeDetalhe = '<span class="atraso-pill atraso-vence">✅ Em dia</span>';
+    // ═══════════════════════════════════════════════════════════
+    // 🎯 ORDENAÇÃO INTELIGENTE DE COBRANÇA
+    //   1) Clientes com fatura ATRASADA no topo,
+    //      ordenados do MAIS atrasado para o MENOS atrasado.
+    //   2) Em seguida, clientes que vão VENCER,
+    //      ordenados do mais próximo para o mais distante.
+    // ═══════════════════════════════════════════════════════════
+    var prioridades = {};
+    for (var pi = 0; pi < clientes.length; pi++) {
+      prioridades[pi] = calcularPrioridade(clientes[pi], hoje);
     }
 
-    html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId + '">' +
-      '<td style="text-align:center;">' +
-        '<div class="rank-badge ' + rankClass + '" title="' + prio.rotulo + '">' + rankTexto + '</div>' +
-        '<div style="margin-top:4px; text-align:center;">' + prioridadeDetalhe + '</div>' +
-      '</td>' +
-      '<td>' +
-      '<button class="expand-btn" onclick="toggleDetail(\'' + detailId + '\')" id="btn-' + detailId + '">▶</button>' +
-      '</td>' +
-      '<td>' +   '<span class="codigo-copiavel" onclick="copiarCodigoCliente(this, \'' + codigoCliente + '\')" title="Clique para copiar">' +     codigoCliente +     '<span class="copy-hint">📋</span>' +   '</span>' + '</td>' +
-    '<td>' +
-  '<div class="client-name">' + nomeCliente + '</div>' +
-  '<div class="client-line">👤 Resp: <strong>' + resp + '</strong></div>' +
-  '<div class="client-line">📞 ' + (contatoRaw || 'Sem número') + '</div>' +
-  '<div class="client-line mono">🆔 ' + cpfCnpj + '</div>' +
-  '<div class="client-line origin">🏢 ' + origem + ' • ✉️ ' + email + '</div>' +
-'</td>' +
-  '<td class="linhas-cell">' + htmlLinhas + '</td>' +
-    '<td>' +
-  alerta +
-  '<div style="font-weight:700; font-size:0.82rem; color:' + (faturaMaisCritica && faturaMaisCritica.statusCalc === 'ATRASADO' ? '#991b1b' : 'var(--text-primary)') + ';">📅 ' + dataFormatada + '</div>' +
-  '<div class="client-line" style="font-size:0.68rem;">📱 Ref: ' + (faturaMaisCritica ? faturaMaisCritica.numLinha : '--') + ' (Mês ' + (faturaMaisCritica ? faturaMaisCritica.mes : '--') + ')</div>' +
-'</td>' +
-      '<td><span class="badge ' + badgeClass + '">' + statusTexto + '</span></td>' +
-      '<td>' +
-      '<button class="btn-action ' + acao.classe + '" onclick="toggleDetail(\'' + detailId + '\')">' +
-          acao.texto +
-        '</button>' +
-      '</td>' +
-    '</tr>';
+    var indicesOrdenados = clientes.map(function (_, i) { return i; });
+    indicesOrdenados.sort(function (a, b) {
+      var pa = prioridades[a];
+      var pb = prioridades[b];
+      if (pa.sortKey !== pb.sortKey) return pa.sortKey - pb.sortKey;
+      var na = String(clientes[a].nomeCliente || '');
+      var nb = String(clientes[b].nomeCliente || '');
+      return na.localeCompare(nb);
+    });
 
-    // ---- LINHA DE DETALHE ----
-    var detalheHtml = '<tr class="detail-row" id="' + detailId + '" style="display:none;">' +
-        '<td colspan="8">' +
-          '<div class="detail-content">' +
-            '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">' +
-              '<strong style="font-size:1rem;">📋 Registro de Faturas do cliente</strong>' +
-              '<span style="font-size:0.8rem; color:var(--text-muted);">' + todasFaturas.length + ' registros</span>' +
-            '</div>';
+    // Reconstrói array na ordem de prioridade
+    clientes = indicesOrdenados.map(function (i) { return clientes[i]; });
 
-    for (var g = 0; g < gruposOrdenados.length; g++) {
-      var dataKey = gruposOrdenados[g];
-      var grupo = grupos[dataKey];
-      var totalPendentes = grupo.totalPendentes;
-      var numerosList = Array.from(grupo.numeros).join(', ');
-      var estaPago = totalPendentes === 0;
-      var badgeCls = estaPago ? 'pago' : '';
-      var statusLabel = estaPago ? 'Pago' : totalPendentes + ' pendente(s)';
+    var tbody = document.getElementById('tbody-clientes');
+    var html = '';
+    var posicao = 0;
 
-      var refFatura = grupo.faturas[0] || {};
-      var linhaRef = refFatura.numeroLinha || '';
-      var mesRef = refFatura.mes || '';
-      var statusRef = refFatura.statusExibido || 'PENDENTE';
+    if (!clientes || clientes.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">📭</div><div>Nenhuma fatura pendente encontrada.</div></div></td></tr>';
+      document.getElementById('kpi-atrasadas').innerText = '0';
+      document.getElementById('kpi-vence-breve').innerText = '0';
+      document.getElementById('kpi-recebidas').innerText = '0';
+      document.getElementById('loading').style.display = 'none';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+      return;
+    }
 
-      var linkCall = '#';
-      var botaoWhatsDisabled = true;
-      var botaoCallDisabled = true;
+    var clienteIndex = 0;
 
-      var msg = '';
-      var msgEncoded = '';
+    for (var c = 0; c < clientes.length; c++) {
+      var cliente = clientes[c];
+      var faturaMaisCritica = null;
+      var htmlLinhas = '';
+      var todasFaturas = [];
+      var temFaturaProxima = false;
 
-      if (numeroContato && numeroContato.length >= 10) {
-        botaoWhatsDisabled = false;
-        botaoCallDisabled = false;
+      var contatoRaw = cliente.contatoFinanceiro || '';
+      var numeroContato = limparNumero(contatoRaw);
 
-        msg = gerarMensagemWhatsApp(
-          grupo.dataObj,
-          statusRef,
-          cliente.nomeResponsavel || cliente.nomeCliente,
-          cliente.nomeCliente,
-          Array.from(grupo.numeros)
-        );
+      // 🔥 BLINDAGEM: protege contra linhasTelefonicas ausente
+      var _linhas = cliente.linhasTelefonicas || [];
 
-        msgEncoded = encodeURIComponent(msg);
-        linkCall = 'tel:' + numeroContato;
+      for (var l = 0; l < _linhas.length; l++) {
+        var linhaTel = _linhas[l] || {};
+        var _faturas = linhaTel.faturas || [];
+
+        htmlLinhas += '<div class="linha-item">' +
+                         '<span style="font-size:0.75rem; margin-right:2px;">📱</span>' +
+                         '<span class="numero">' + (linhaTel.numero || '—') + '</span>' +
+                         '<span class="plano">' + (linhaTel.plano || '') + '</span>' +
+                       '</div>';
+
+        for (var f = 0; f < _faturas.length; f++) {
+          var fatura = _faturas[f] || {};
+          var dataVenc = parseDataSemTimezone(fatura.vencimento);
+          if (!dataVenc) continue;
+
+          // 🔥 BLINDAGEM: protege contra status nulo/undefined
+          var status = String(fatura.status || '').toUpperCase();
+          if (!status) continue;
+
+          // 🔥 Normaliza PAGO/PAGA para PAGO (padrão interno do frontend)
+          if (status === 'PAGA') status = 'PAGO';
+          if (status === 'PENDENTE' && dataVenc < hoje) status = 'ATRASADO';
+
+          // Data de pagamento (se existir)
+          var dataPagamento = fatura.dataPagamento ? new Date(fatura.dataPagamento) : null;
+          if (dataPagamento) dataPagamento.setHours(0, 0, 0, 0);
+
+          // KPIs
+          if (status === 'ATRASADO') kpiAtrasadas++;
+          if (status === 'PENDENTE' && dataVenc >= hoje && dataVenc <= limite7Dias) kpiVenceBreve++;
+          if (status === 'PAGO' &&
+              dataVenc.getMonth() === hoje.getMonth() &&
+              dataVenc.getFullYear() === hoje.getFullYear()) kpiRecebidas++;
+
+          todasFaturas.push({
+            mes: fatura.mes,
+            vencimento: fatura.vencimento,
+            status: fatura.status,
+            colunaStatusPlanilha: fatura.colunaStatusPlanilha,
+            numeroLinha: linhaTel.numero,
+            plano: linhaTel.plano,
+            linhaPlanilha: linhaTel.linhaPlanilha,
+            dataVencObj: dataVenc,
+            statusExibido: status,
+            dataPagamento: dataPagamento
+          });
+
+          // 🔥 FILTRO: atrasados SEMPRE aparecem (independente da janela);
+          //    pendentes respeitam a janela configurada;
+          //    faturas pagas hoje aparecem (para permitir estorno).
+          if (status === 'ATRASADO') {
+            temFaturaProxima = true;
+          } else if (status !== 'PAGO') {
+            var diffDias = Math.ceil((dataVenc - hoje) / (1000 * 60 * 60 * 24));
+            if (diffDias <= janelaDias) {
+              temFaturaProxima = true;
+            }
+          } else if (dataPagamento) {
+            if (dataPagamento.getFullYear() === hoje.getFullYear() &&
+                dataPagamento.getMonth() === hoje.getMonth() &&
+                dataPagamento.getDate() === hoje.getDate()) {
+              temFaturaProxima = true;
+            }
+          }
+
+          // Atualiza a fatura mais crítica (para exibir no resumo)
+          var considerarParaResumo = (status !== 'PAGO') ||
+            (status === 'PAGO' && dataPagamento &&
+             dataPagamento.getFullYear() === hoje.getFullYear() &&
+             dataPagamento.getMonth() === hoje.getMonth() &&
+             dataPagamento.getDate() === hoje.getDate());
+
+          if (considerarParaResumo) {
+            if (!faturaMaisCritica) {
+              faturaMaisCritica = {
+                mes: fatura.mes,
+                vencimento: fatura.vencimento,
+                statusCalc: status,
+                dataVencObj: dataVenc,
+                numLinha: linhaTel.numero
+              };
+            } else if (status === 'ATRASADO' && faturaMaisCritica.statusCalc !== 'ATRASADO') {
+              faturaMaisCritica = {
+                mes: fatura.mes,
+                vencimento: fatura.vencimento,
+                statusCalc: status,
+                dataVencObj: dataVenc,
+                numLinha: linhaTel.numero
+              };
+            } else if (status !== 'PAGO' && faturaMaisCritica.statusCalc === 'PAGO') {
+              faturaMaisCritica = {
+                mes: fatura.mes,
+                vencimento: fatura.vencimento,
+                statusCalc: status,
+                dataVencObj: dataVenc,
+                numLinha: linhaTel.numero
+              };
+            }
+          }
+        }
       }
 
-      var linkWhats = '#';
-      if (!botaoWhatsDisabled) {
-        linkWhats = 'https://api.whatsapp.com/send?phone=55' + numeroContato + '&text=' + msgEncoded;
+      // 🔥 FILTRO PRINCIPAL: se não houver nenhuma fatura relevante, PULA este cliente
+      if (!temFaturaProxima) {
+        continue;
       }
 
-     var statusEmoji = estaPago ? '✅' : '⏳';
-detalheHtml += '<div class="grupo-card">' +
-        '<div class="grupo-header">' +
-          '<div class="grupo-info">' +
-            '<strong>📅 ' + dataKey + '</strong>' +
-            '<span class="qtd">📊 ' + grupo.faturas.length + ' linha(s)</span>' +
-            '<span class="numeros">📱 ' + numerosList + '</span>' +
-            '<span class="badge-grupo ' + badgeCls + '">' + statusEmoji + ' ' + (estaPago ? 'Pago' : totalPendentes + ' pendente(s)') + '</span>' +
-          '</div>' +
-          '<div class="grupo-actions">';
+      // Ordena todas as faturas por data
+      todasFaturas.sort(function(a, b) {
+        return a.dataVencObj - b.dataVencObj;
+      });
 
-      // ----- BOTÃO MARCAR COMO PAGO / DESFAZER PAGO -----
-      if (!estaPago) {
-        detalheHtml += '<button class="btn-action btn-success-action" onclick="darBaixaGrupo(\'' + codigoCliente + '\', \'' + dataKey + '\')">' +
-          '✅ Marcar como Pago' +
-        '</button>';
+      // Agrupa por data de vencimento
+      var grupos = {};
+      for (var i = 0; i < todasFaturas.length; i++) {
+        var f = todasFaturas[i];
+        var dataKey = f.dataVencObj.toLocaleDateString('pt-BR');
+        if (!grupos[dataKey]) {
+          grupos[dataKey] = {
+            data: dataKey,
+            dataObj: f.dataVencObj,
+            faturas: [],
+            numeros: new Set(),
+            celulas: [],
+            totalPendentes: 0,
+            primeiraFatura: f
+          };
+        }
+        grupos[dataKey].faturas.push(f);
+        grupos[dataKey].numeros.add(f.numeroLinha);
+
+        if (f.statusExibido !== 'PAGO') {
+          grupos[dataKey].celulas.push({ linha: f.linhaPlanilha, coluna: f.colunaStatusPlanilha });
+          grupos[dataKey].totalPendentes++;
+        }
+      }
+
+      var gruposOrdenados = Object.keys(grupos).sort(function(a, b) {
+        return new Date(a.split('/').reverse().join('/')) - new Date(b.split('/').reverse().join('/'));
+      });
+
+      var codigoCliente = cliente.codigoCliente;
+      var nomeCliente = cliente.nomeCliente || '';
+      var resp = cliente.nomeResponsavel || 'N/A';
+      var cpfCnpj = cliente.cpfCnpj || '';
+      var origem = cliente.origem || 'N/A';
+      var email = cliente.email || '';
+
+      var detailId = 'detail-' + (++clienteIndex);
+
+      var badgeClass = 'badge-pendente';
+      var statusTexto = 'Pendente';
+      var acao = { texto: 'Ver Detalhes', classe: 'btn-info', icone: 'eye', exibirWarning: false };
+
+      if (faturaMaisCritica) {
+        var st = faturaMaisCritica.statusCalc;
+        if (st === 'PAGO') {
+          badgeClass = 'badge-pago';
+          statusTexto = '✅ Pago';
+          acao = { texto: 'Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
+        } else if (st === 'ATRASADO') {
+          badgeClass = 'badge-atrasado';
+          statusTexto = '🔴 Atrasado';
+          acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
+        } else {
+          badgeClass = 'badge-pendente';
+          statusTexto = '⏳ Pendente';
+          acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
+        }
+      }
+
+      var dataFormatada = faturaMaisCritica ? faturaMaisCritica.dataVencObj.toLocaleDateString('pt-BR') : '--';
+      var alerta = acao.exibirWarning ?
+        '<div class="inadimplencia-tag"><i data-lucide="alert-circle" size="12"></i> IMPACTO NA QUALIDADE</div>' :
+        '';
+
+      // ---- LINHA PRINCIPAL ----
+      var rowStatusClass = '';
+      if (faturaMaisCritica) {
+        var stRow = faturaMaisCritica.statusCalc;
+        if (stRow === 'PAGO') rowStatusClass = 'row-success';
+        else if (stRow === 'ATRASADO') rowStatusClass = 'row-danger';
+        else rowStatusClass = 'row-warning';
+      }
+
+      // ═══════════════════════════════════════════════════════════
+      // 🎯 COLUNA "PRIORIDADE" — rank visual + dias de atraso
+      // ═══════════════════════════════════════════════════════════
+      posicao++;
+      var prio = calcularPrioridade(cliente, hoje);
+
+      var rankTexto = '#' + posicao;
+      var rankClass = prio.rankClass;
+
+      var prioridadeDetalhe = '';
+      if (prio.maxAtraso > 0) {
+        prioridadeDetalhe = '<span class="atraso-pill ' + prio.pillClass + '">' +
+                              '⚠️ ' + prio.maxAtraso + 'd atraso' +
+                            '</span>';
+      } else if (prio.minDiasVencer === 0) {
+        prioridadeDetalhe = '<span class="atraso-pill ' + prio.pillClass + '">🔔 Vence hoje</span>';
+      } else if (prio.minDiasVencer !== Infinity && prio.minDiasVencer <= janelaDias) {
+        prioridadeDetalhe = '<span class="atraso-pill ' + prio.pillClass + '">⏳ Vence em ' + prio.minDiasVencer + 'd</span>';
       } else {
-        detalheHtml += '<button class="btn-action btn-warning-action" onclick="estornarGrupo(\'' + codigoCliente + '\', \'' + dataKey + '\')">' +
-          '↩️ Desfazer Pago' +
-        '</button>';
+        prioridadeDetalhe = '<span class="atraso-pill atraso-vence">✅ Em dia</span>';
       }
 
-      // ----- BOTÃO WHATSAPP -----
-      if (!botaoWhatsDisabled) {
-       detalheHtml += '<a href="' + linkWhats + '" target="_blank" class="btn-action btn-whatsapp" ' +
-          'onclick="registrarLogWhatsAppFrontend(\'' + codigoCliente + '\', \'' + dataKey + '\'); return true;" ' +
-          'title="Enviar mensagem via WhatsApp">' +
-          '💬 WhatsApp' +
-        '</a>';
-      } else {
-        detalheHtml += '<span class="btn-action btn-disabled" title="Número inválido">' +
-          '<i data-lucide="message-circle" size="14"></i> WhatsApp' +
-        '</span>';
-      }
-
-      // ----- BOTÃO LIGAÇÃO -----
-      if (!botaoCallDisabled) {
-        detalheHtml += '<a href="' + linkCall + '" class="btn-action btn-call" title="Ligar para o cliente">' +
-          '📞 Ligar' +
-        '</a>';
-      } else {
-        detalheHtml += '<span class="btn-action btn-disabled" title="Número inválido">' +
-          '<i data-lucide="phone" size="14"></i> Ligar' +
-        '</span>';
-      }
-
-      detalheHtml += '</div>' +
-          '</div>' +
-        '</div>';
-    }
-
-    // ----- BOTÃO BAIXAR TODAS PENDENTES -----
-    var totalPendentesCliente = 0;
-    for (var p = 0; p < todasFaturas.length; p++) {
-      if (todasFaturas[p].statusExibido !== 'PAGO') {
-        totalPendentesCliente++;
-      }
-    }
-    if (totalPendentesCliente > 0) {
-     detalheHtml += '<div class="detail-actions">' +
-        '<button class="btn-action btn-success-action" onclick="baixarTodasPendentes(\'' + codigoCliente + '\')">' +
-          '✅ Baixar todas as ' + totalPendentesCliente + ' pendentes' +
-        '</button>' +
-      '</div>';
-    }
-
-    detalheHtml += '</div>' +
+      html += '<tr class="main-row ' + rowStatusClass + '" data-detail="' + detailId + '">' +
+        '<td style="text-align:center;">' +
+          '<div class="rank-badge ' + rankClass + '" title="' + prio.rotulo + '">' + rankTexto + '</div>' +
+          '<div style="margin-top:4px; text-align:center;">' + prioridadeDetalhe + '</div>' +
+        '</td>' +
+        '<td>' +
+          '<button class="expand-btn" onclick="toggleDetail(\'' + detailId + '\')" id="btn-' + detailId + '">▶</button>' +
+        '</td>' +
+        '<td>' +
+          '<span class="codigo-copiavel" onclick="copiarCodigoCliente(this, \'' + codigoCliente + '\')" title="Clique para copiar">' +
+            codigoCliente +
+            '<span class="copy-hint">📋</span>' +
+          '</span>' +
+        '</td>' +
+        '<td>' +
+          '<div class="client-name">' + nomeCliente + '</div>' +
+          '<div class="client-line">👤 Resp: <strong>' + resp + '</strong></div>' +
+          '<div class="client-line">📞 ' + (contatoRaw || 'Sem número') + '</div>' +
+          '<div class="client-line mono">🆔 ' + cpfCnpj + '</div>' +
+          '<div class="client-line origin">🏢 ' + origem + ' • ✉️ ' + email + '</div>' +
+        '</td>' +
+        '<td class="linhas-cell">' + htmlLinhas + '</td>' +
+        '<td>' +
+          alerta +
+          '<div style="font-weight:700; font-size:0.82rem; color:' + (faturaMaisCritica && faturaMaisCritica.statusCalc === 'ATRASADO' ? '#991b1b' : 'var(--text-primary)') + ';">📅 ' + dataFormatada + '</div>' +
+          '<div class="client-line" style="font-size:0.68rem;">📱 Ref: ' + (faturaMaisCritica ? faturaMaisCritica.numLinha : '--') + ' (Mês ' + (faturaMaisCritica ? faturaMaisCritica.mes : '--') + ')</div>' +
+        '</td>' +
+        '<td><span class="badge ' + badgeClass + '">' + statusTexto + '</span></td>' +
+        '<td>' +
+          '<button class="btn-action ' + acao.classe + '" onclick="toggleDetail(\'' + detailId + '\')">' +
+            acao.texto +
+          '</button>' +
         '</td>' +
       '</tr>';
 
-    html += detalheHtml;
+      // ---- LINHA DE DETALHE ----
+      var detalheHtml = '<tr class="detail-row" id="' + detailId + '" style="display:none;">' +
+          '<td colspan="8">' +
+            '<div class="detail-content">' +
+              '<div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">' +
+                '<strong style="font-size:1rem;">📋 Registro de Faturas do cliente</strong>' +
+                '<span style="font-size:0.8rem; color:var(--text-muted);">' + todasFaturas.length + ' registros</span>' +
+              '</div>';
+
+      for (var g = 0; g < gruposOrdenados.length; g++) {
+        var dataKey = gruposOrdenados[g];
+        var grupo = grupos[dataKey];
+        var totalPendentes = grupo.totalPendentes;
+        var numerosList = Array.from(grupo.numeros).join(', ');
+        var estaPago = totalPendentes === 0;
+        var badgeCls = estaPago ? 'pago' : '';
+        var statusLabel = estaPago ? 'Pago' : totalPendentes + ' pendente(s)';
+
+        var refFatura = grupo.faturas[0] || {};
+        var linhaRef = refFatura.numeroLinha || '';
+        var mesRef = refFatura.mes || '';
+        var statusRef = refFatura.statusExibido || 'PENDENTE';
+
+        var linkCall = '#';
+        var botaoWhatsDisabled = true;
+        var botaoCallDisabled = true;
+
+        var msg = '';
+        var msgEncoded = '';
+
+        if (numeroContato && numeroContato.length >= 10) {
+          botaoWhatsDisabled = false;
+          botaoCallDisabled = false;
+
+          msg = gerarMensagemWhatsApp(
+            grupo.dataObj,
+            statusRef,
+            cliente.nomeResponsavel || cliente.nomeCliente,
+            cliente.nomeCliente,
+            Array.from(grupo.numeros)
+          );
+
+          msgEncoded = encodeURIComponent(msg);
+          linkCall = 'tel:' + numeroContato;
+        }
+
+        var linkWhats = '#';
+        if (!botaoWhatsDisabled) {
+          linkWhats = 'https://api.whatsapp.com/send?phone=55' + numeroContato + '&text=' + msgEncoded;
+        }
+
+        var statusEmoji = estaPago ? '✅' : '⏳';
+        detalheHtml += '<div class="grupo-card">' +
+          '<div class="grupo-header">' +
+            '<div class="grupo-info">' +
+              '<strong>📅 ' + dataKey + '</strong>' +
+              '<span class="qtd">📊 ' + grupo.faturas.length + ' linha(s)</span>' +
+              '<span class="numeros">📱 ' + numerosList + '</span>' +
+              '<span class="badge-grupo ' + badgeCls + '">' + statusEmoji + ' ' + (estaPago ? 'Pago' : totalPendentes + ' pendente(s)') + '</span>' +
+            '</div>' +
+            '<div class="grupo-actions">';
+
+        // ----- BOTÃO MARCAR COMO PAGO / DESFAZER PAGO -----
+        if (!estaPago) {
+          detalheHtml += '<button class="btn-action btn-success-action" onclick="darBaixaGrupo(\'' + codigoCliente + '\', \'' + dataKey + '\')">' +
+            '✅ Marcar como Pago' +
+          '</button>';
+        } else {
+          detalheHtml += '<button class="btn-action btn-warning-action" onclick="estornarGrupo(\'' + codigoCliente + '\', \'' + dataKey + '\')">' +
+            '↩️ Desfazer Pago' +
+          '</button>';
+        }
+
+        // ----- BOTÃO WHATSAPP -----
+        if (!botaoWhatsDisabled) {
+          detalheHtml += '<a href="' + linkWhats + '" target="_blank" class="btn-action btn-whatsapp" ' +
+            'onclick="registrarLogWhatsAppFrontend(\'' + codigoCliente + '\', \'' + dataKey + '\'); return true;" ' +
+            'title="Enviar mensagem via WhatsApp">' +
+            '💬 WhatsApp' +
+          '</a>';
+        } else {
+          detalheHtml += '<span class="btn-action btn-disabled" title="Número inválido">' +
+            '<i data-lucide="message-circle" size="14"></i> WhatsApp' +
+          '</span>';
+        }
+
+        // ----- BOTÃO LIGAÇÃO -----
+        if (!botaoCallDisabled) {
+          detalheHtml += '<a href="' + linkCall + '" class="btn-action btn-call" title="Ligar para o cliente">' +
+            '📞 Ligar' +
+          '</a>';
+        } else {
+          detalheHtml += '<span class="btn-action btn-disabled" title="Número inválido">' +
+            '<i data-lucide="phone" size="14"></i> Ligar' +
+          '</span>';
+        }
+
+        detalheHtml += '</div>' +
+            '</div>' +
+          '</div>';
+      }
+
+      // ----- BOTÃO BAIXAR TODAS PENDENTES -----
+      var totalPendentesCliente = 0;
+      for (var p = 0; p < todasFaturas.length; p++) {
+        if (todasFaturas[p].statusExibido !== 'PAGO') {
+          totalPendentesCliente++;
+        }
+      }
+      if (totalPendentesCliente > 0) {
+        detalheHtml += '<div class="detail-actions">' +
+          '<button class="btn-action btn-success-action" onclick="baixarTodasPendentes(\'' + codigoCliente + '\')">' +
+            '✅ Baixar todas as ' + totalPendentesCliente + ' pendentes' +
+          '</button>' +
+        '</div>';
+      }
+
+      detalheHtml += '</div>' +
+          '</td>' +
+        '</tr>';
+
+      html += detalheHtml;
+    }
+
+    // Se nenhum cliente passou no filtro
+    if (html === '') {
+      tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">🎉</div><div style="font-weight:700; color:#10b981;">Todas as faturas estão em dia!</div><div style="font-size:0.8rem; margin-top:0.25rem;">Sem atrasos e nada vencendo nos próximos ' + janelaDias + ' dias.</div></div></td></tr>';
+    } else {
+      tbody.innerHTML = html;
+    }
+
+    document.getElementById('kpi-atrasadas').innerText = kpiAtrasadas;
+    document.getElementById('kpi-vence-breve').innerText = kpiVenceBreve;
+    document.getElementById('kpi-recebidas').innerText = kpiRecebidas;
+    document.getElementById('loading').style.display = 'none';
+
+    // ═══════════════════════════════════════════════════════════
+    // 🔥 INFO DA JANELA ATIVA
+    // ═══════════════════════════════════════════════════════════
+    var infoJanela = document.getElementById('info-janela');
+    if (infoJanela) {
+      var totalMostrados = tbody.querySelectorAll('tr.main-row').length;
+      infoJanela.textContent = totalMostrados + ' cliente(s) • ' +
+        (janelaDias >= 9999 ? 'todos os pendentes' : 'próximos ' + janelaDias + ' dias');
+    }
+
+    // 🔥 Badge "Em risco" = clientes com pelo menos 1 fatura ATRASADA
+    var _hojeBadge = new Date();
+    _hojeBadge.setHours(0,0,0,0);
+    var totalEmRisco = cacheClientes.filter(function (c) {
+      var lts = c.linhasTelefonicas || [];
+      for (var i = 0; i < lts.length; i++) {
+        var fs = lts[i].faturas || [];
+        for (var j = 0; j < fs.length; j++) {
+          var v = parseDataSemTimezone(fs[j].vencimento);
+          if (!v) continue;
+          var s = String(fs[j].status || '').toUpperCase();
+          if (s === 'PAGA') s = 'PAGO';
+          if (s !== 'PAGO' && v < _hojeBadge) return true;
+        }
+      }
+      return false;
+    }).length;
+    var badgeRisco = document.getElementById('badge-risco');
+    if (badgeRisco) badgeRisco.textContent = totalEmRisco;
+    if (typeof lucide !== 'undefined') lucide.createIcons();
   }
-
-  // Se nenhum cliente passou no filtro
-  if (html === '') {
-    tbody.innerHTML = '<tr><td colspan="8"><div class="empty-state"><div style="font-size:3rem; margin-bottom:0.5rem;">🎉</div><div style="font-weight:700; color:#10b981;">Todas as faturas estão em dia!</div><div style="font-size:0.8rem; margin-top:0.25rem;">Nenhum vencimento nos próximos 14 dias.</div></div></td></tr>';
-  } else {
-    tbody.innerHTML = html;
-  }
-
-  document.getElementById('kpi-atrasadas').innerText = kpiAtrasadas;
-  document.getElementById('kpi-vence-breve').innerText = kpiVenceBreve;
-  document.getElementById('kpi-recebidas').innerText = kpiRecebidas;
-  document.getElementById('loading').style.display = 'none';
-
-  // 🔥 Badge "Em risco" = clientes com pelo menos 1 fatura ATRASADA
-  const totalEmRisco = cacheClientes.filter(c => {
-    return (c.linhasTelefonicas || []).some(lt =>
-      (lt.faturas || []).some(f => {
-        const venc = parseDataSemTimezone(f.vencimento);
-        if (!venc) return false;
-        const h = new Date(); h.setHours(0,0,0,0);
-        let st = String(f.status || '').toUpperCase();
-        if (st === 'PAGA') st = 'PAGO';
-        return st !== 'PAGO' && venc < h;
-      })
-    );
-  }).length;
-  const badgeRisco = document.getElementById('badge-risco');
-  if (badgeRisco) badgeRisco.textContent = totalEmRisco;
-  if (typeof lucide !== 'undefined') lucide.createIcons();
-}
 
   // =========================================================
   // TOGGLE EXPANSÃO
@@ -1518,7 +1763,7 @@ detalheHtml += '<div class="grupo-card">' +
   // =========================================================
   // ALGORITMO DE COBRANÇA (auxiliar)
   // =========================================================
- function obterAcaoCobranca(dataVencObj, status) {
+  function obterAcaoCobranca(dataVencObj, status) {
     if (status === 'PAGO') return { texto: '✅ Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
 
     var hoje = new Date();
@@ -1542,76 +1787,74 @@ detalheHtml += '<div class="grupo-card">' +
   // =========================================================
   // DAR BAIXA EM UM GRUPO (por data de vencimento) - COM LOG
   // =========================================================
-async function darBaixaGrupo(codigoCliente, dataVencimento) {
-  var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
-  if (!cliente) {
-    alert('Cliente não encontrado.');
-    return;
-  }
-
-  var celulas = [];
-  var agora = new Date();
-  agora.setHours(0, 0, 0, 0);
-  var dataPagamento = agora.toISOString();
-
-  for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
-    var linha = cliente.linhasTelefonicas[l];
-    for (var f = 0; f < linha.faturas.length; f++) {
-      var fatura = linha.faturas[f];
-      var dataFatura = parseDataSemTimezone(fatura.vencimento);
-      if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento && !['PAGO','PAGA'].includes(fatura.status.toUpperCase())) {
-        celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
-      }
+  async function darBaixaGrupo(codigoCliente, dataVencimento) {
+    var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
+    if (!cliente) {
+      alert('Cliente não encontrado.');
+      return;
     }
-  }
 
-  if (celulas.length === 0) {
-    alert('Nenhuma fatura pendente para este vencimento.');
-    return;
-  }
+    var celulas = [];
+    var agora = new Date();
+    agora.setHours(0, 0, 0, 0);
+    var dataPagamento = agora.toISOString();
 
-  if (!confirm('Deseja baixar ' + celulas.length + ' fatura(s) com vencimento ' + dataVencimento + '?')) return;
-
-  var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
-
-  google.script.run
-    .withSuccessHandler(function(res) {
-      // 🔥 VALIDA O RETORNO DO RPC ANTES DE MEXER NO CACHE
-      if (!res || res.success !== true) {
-        const motivo = res?.message || 'O servidor não confirmou a operação.';
-        console.error('❌ Baixa recusada pelo servidor:', res);
-        alert('⚠️ A baixa NÃO foi aplicada: ' + motivo);
-        return;
-      }
-
-      const afetadas = Number(res.linhas_afetadas ?? 0);
-      if (afetadas === 0) {
-        console.error('❌ RPC retornou sucesso mas afetou 0 linhas.', res);
-        alert('⚠️ O banco não foi atualizado (0 linhas afetadas). Verifique permissões ou IDs.');
-        return;
-      }
-
-      // ✅ Sucesso real — atualiza o cache local
-      for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
-        var linha2 = cliente.linhasTelefonicas[l2];
-        for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
-          var fatura2 = linha2.faturas[f2];
-          var dataFatura2 = parseDataSemTimezone(fatura2.vencimento);
-          if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento && !['PAGO','PAGA'].includes(fatura2.status.toUpperCase())) {
-            fatura2.status = 'PAGO';
-            fatura2.dataPagamento = dataPagamento;
-          }
+    for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
+      var linha = cliente.linhasTelefonicas[l];
+      for (var f = 0; f < linha.faturas.length; f++) {
+        var fatura = linha.faturas[f];
+        var dataFatura = parseDataSemTimezone(fatura.vencimento);
+        if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento && !['PAGO','PAGA'].includes(String(fatura.status || '').toUpperCase())) {
+          celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
         }
       }
-      renderizarTabela(cacheClientes);
-      alert('✅ ' + afetadas + ' fatura(s) baixada(s) com sucesso!');
-    })
-    .withFailureHandler(function(erro) {
-      console.error('❌ Erro na RPC de baixa:', erro);
-      alert('❌ Erro: ' + erro);
-    })
-    .atualizarStatusFaturasComLog(celulas, nomeUsuario);
-}
+    }
+
+    if (celulas.length === 0) {
+      alert('Nenhuma fatura pendente para este vencimento.');
+      return;
+    }
+
+    if (!confirm('Deseja baixar ' + celulas.length + ' fatura(s) com vencimento ' + dataVencimento + '?')) return;
+
+    var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res || res.success !== true) {
+          const motivo = res?.message || 'O servidor não confirmou a operação.';
+          console.error('❌ Baixa recusada pelo servidor:', res);
+          alert('⚠️ A baixa NÃO foi aplicada: ' + motivo);
+          return;
+        }
+
+        const afetadas = Number(res.linhas_afetadas ?? 0);
+        if (afetadas === 0) {
+          console.error('❌ RPC retornou sucesso mas afetou 0 linhas.', res);
+          alert('⚠️ O banco não foi atualizado (0 linhas afetadas). Verifique permissões ou IDs.');
+          return;
+        }
+
+        for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
+          var linha2 = cliente.linhasTelefonicas[l2];
+          for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
+            var fatura2 = linha2.faturas[f2];
+            var dataFatura2 = parseDataSemTimezone(fatura2.vencimento);
+            if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento && !['PAGO','PAGA'].includes(String(fatura2.status || '').toUpperCase())) {
+              fatura2.status = 'PAGO';
+              fatura2.dataPagamento = dataPagamento;
+            }
+          }
+        }
+        renderizarTabela(cacheClientes);
+        alert('✅ ' + afetadas + ' fatura(s) baixada(s) com sucesso!');
+      })
+      .withFailureHandler(function(erro) {
+        console.error('❌ Erro na RPC de baixa:', erro);
+        alert('❌ Erro: ' + erro);
+      })
+      .atualizarStatusFaturasComLog(celulas, nomeUsuario);
+  }
 
   // =========================================================
   // BAIXAR TODAS AS PENDENTES DO CLIENTE - COM LOG
@@ -1628,7 +1871,7 @@ async function darBaixaGrupo(codigoCliente, dataVencimento) {
       var linha = cliente.linhasTelefonicas[l];
       for (var f = 0; f < linha.faturas.length; f++) {
         var fatura = linha.faturas[f];
-               if (!['PAGO','PAGA'].includes(fatura.status.toUpperCase())) {
+        if (!['PAGO','PAGA'].includes(String(fatura.status || '').toUpperCase())) {
           celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
         }
       }
@@ -1641,16 +1884,17 @@ async function darBaixaGrupo(codigoCliente, dataVencimento) {
 
     if (!confirm('Deseja baixar todas as ' + celulas.length + ' faturas pendentes deste cliente?')) return;
 
-    var nomeUsuario = obterNomeUsuario();
+    var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
 
     google.script.run
       .withSuccessHandler(function() {
         for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
           var linha2 = cliente.linhasTelefonicas[l2];
           for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
-                       if (!['PAGO','PAGA'].includes(linha2.faturas[f2].status.toUpperCase())) {
+            if (!['PAGO','PAGA'].includes(String(linha2.faturas[f2].status || '').toUpperCase())) {
               linha2.faturas[f2].status = 'PAGO';
-            }          }
+            }
+          }
         }
         renderizarTabela(cacheClientes);
         alert('✅ ' + celulas.length + ' faturas baixadas com sucesso! Logs registrados.');
@@ -1673,509 +1917,516 @@ async function darBaixaGrupo(codigoCliente, dataVencimento) {
       carregarDados();
     });
   }
+
   // =========================================================
-// ESTORNAR GRUPO (desfaz o pagamento)
-// =========================================================
-async function estornarGrupo(codigoCliente, dataVencimento) {
-  var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
-  if (!cliente) {
-    alert('Cliente não encontrado.');
-    return;
-  }
-
-  // Coleta as células que estão marcadas como PAGO/PAGA para este vencimento
-  var celulas = [];
-  for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
-    var linha = cliente.linhasTelefonicas[l];
-    for (var f = 0; f < linha.faturas.length; f++) {
-      var fatura = linha.faturas[f];
-      var dataFatura = parseDataSemTimezone(fatura.vencimento);
-      if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento &&
-          ['PAGO','PAGA'].includes(fatura.status.toUpperCase())) {
-        celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
-      }
+  // ESTORNAR GRUPO (desfaz o pagamento)
+  // =========================================================
+  async function estornarGrupo(codigoCliente, dataVencimento) {
+    var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
+    if (!cliente) {
+      alert('Cliente não encontrado.');
+      return;
     }
-  }
 
-  if (celulas.length === 0) {
-    alert('Nenhuma fatura paga encontrada para este vencimento.');
-    return;
-  }
-
-  if (!confirm('Deseja estornar ' + celulas.length + ' fatura(s) com vencimento ' + dataVencimento + '? Isso irá reverter para PENDENTE.')) return;
-
-  // 🔥 BUGFIX: obterNomeUsuario() é async — precisa de await
-  var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
-
-  google.script.run
-    .withSuccessHandler(function(res) {
-      // 🔥 VALIDA O RETORNO DO RPC ANTES DE MEXER NO CACHE
-      if (!res || res.success !== true) {
-        const motivo = res?.message || 'O servidor não confirmou a operação.';
-        console.error('❌ Estorno recusado pelo servidor:', res);
-        alert('⚠️ O estorno NÃO foi aplicado: ' + motivo);
-        return;
-      }
-
-      const afetadas = Number(res.linhas_afetadas ?? 0);
-      if (afetadas === 0) {
-        console.error('❌ RPC retornou sucesso mas afetou 0 linhas.', res);
-        alert('⚠️ O banco não foi atualizado (0 linhas afetadas). Verifique permissões ou IDs.');
-        return;
-      }
-
-      // ✅ Sucesso real — atualiza o cache local
-      for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
-        var linha2 = cliente.linhasTelefonicas[l2];
-        for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
-          var fatura2 = linha2.faturas[f2];
-          var dataFatura2 = parseDataSemTimezone(fatura2.vencimento);   // 🔥 trocado
-          if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento &&
-              ['PAGO','PAGA'].includes(fatura2.status.toUpperCase())) {
-            fatura2.status = 'PENDENTE';
-            fatura2.dataPagamento = null;     // 🔥 limpa a data de pagamento ao estornar
-          }
+    // Coleta as células que estão marcadas como PAGO/PAGA para este vencimento
+    var celulas = [];
+    for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
+      var linha = cliente.linhasTelefonicas[l];
+      for (var f = 0; f < linha.faturas.length; f++) {
+        var fatura = linha.faturas[f];
+        var dataFatura = parseDataSemTimezone(fatura.vencimento);
+        if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento &&
+            ['PAGO','PAGA'].includes(String(fatura.status || '').toUpperCase())) {
+          celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
         }
       }
-      renderizarTabela(cacheClientes);
-      alert('✅ ' + afetadas + ' fatura(s) estornada(s) com sucesso!');
-    })
-    .withFailureHandler(function(erro) {
-      console.error('❌ Erro na RPC de estorno:', erro);
-      alert('❌ Erro: ' + erro);
-    })
-    .estornarStatusFaturas(celulas, nomeUsuario);
-}
-function enviarWhatsAppComLog(numeroContato, msg, codigoCliente, dataVencimento) {
-  var url = 'https://api.whatsapp.com/send?phone=55' + numeroContato + '&text=' + encodeURIComponent(msg);
-  
-  // Abrir o WhatsApp em nova aba
-  window.open(url, '_blank');
-  
-  // Registrar log no backend
-  var nomeUsuario = obterNomeUsuario();
-  google.script.run
-    .withFailureHandler(function(erro) {
-      console.error('Erro ao registrar log do WhatsApp:', erro);
-    })
-    .registrarLogWhatsApp(codigoCliente, dataVencimento, nomeUsuario);
-}
-async function registrarLogWhatsAppFrontend(codigoCliente, dataVencimento) {
-  var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
-  if (!cliente) {
-    return; // não faz nada se não encontrar
+    }
+
+    if (celulas.length === 0) {
+      alert('Nenhuma fatura paga encontrada para este vencimento.');
+      return;
+    }
+
+    if (!confirm('Deseja estornar ' + celulas.length + ' fatura(s) com vencimento ' + dataVencimento + '? Isso irá reverter para PENDENTE.')) return;
+
+    var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (!res || res.success !== true) {
+          const motivo = res?.message || 'O servidor não confirmou a operação.';
+          console.error('❌ Estorno recusado pelo servidor:', res);
+          alert('⚠️ O estorno NÃO foi aplicado: ' + motivo);
+          return;
+        }
+
+        const afetadas = Number(res.linhas_afetadas ?? 0);
+        if (afetadas === 0) {
+          console.error('❌ RPC retornou sucesso mas afetou 0 linhas.', res);
+          alert('⚠️ O banco não foi atualizado (0 linhas afetadas). Verifique permissões ou IDs.');
+          return;
+        }
+
+        for (var l2 = 0; l2 < cliente.linhasTelefonicas.length; l2++) {
+          var linha2 = cliente.linhasTelefonicas[l2];
+          for (var f2 = 0; f2 < linha2.faturas.length; f2++) {
+            var fatura2 = linha2.faturas[f2];
+            var dataFatura2 = parseDataSemTimezone(fatura2.vencimento);
+            if (dataFatura2.toLocaleDateString('pt-BR') === dataVencimento &&
+                ['PAGO','PAGA'].includes(String(fatura2.status || '').toUpperCase())) {
+              fatura2.status = 'PENDENTE';
+              fatura2.dataPagamento = null;
+            }
+          }
+        }
+        renderizarTabela(cacheClientes);
+        alert('✅ ' + afetadas + ' fatura(s) estornada(s) com sucesso!');
+      })
+      .withFailureHandler(function(erro) {
+        console.error('❌ Erro na RPC de estorno:', erro);
+        alert('❌ Erro: ' + erro);
+      })
+      .estornarStatusFaturas(celulas, nomeUsuario);
   }
 
-  // Coletar células para log (todas as faturas do grupo)
-  var celulas = [];
-  for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
-    var linha = cliente.linhasTelefonicas[l];
-    for (var f = 0; f < linha.faturas.length; f++) {
-      var fatura = linha.faturas[f];
-           var dataFatura = parseDataSemTimezone(fatura.vencimento);
-      if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento) {
-        celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
+  function enviarWhatsAppComLog(numeroContato, msg, codigoCliente, dataVencimento) {
+    var url = 'https://api.whatsapp.com/send?phone=55' + numeroContato + '&text=' + encodeURIComponent(msg);
+
+    // Abrir o WhatsApp em nova aba
+    window.open(url, '_blank');
+
+    // Registrar log no backend
+    var nomeUsuario = obterNomeUsuario();
+    google.script.run
+      .withFailureHandler(function(erro) {
+        console.error('Erro ao registrar log do WhatsApp:', erro);
+      })
+      .registrarLogWhatsApp(codigoCliente, dataVencimento, nomeUsuario);
+  }
+
+  async function registrarLogWhatsAppFrontend(codigoCliente, dataVencimento) {
+    var cliente = cacheClientes.find(function(c) { return c.codigoCliente == codigoCliente; });
+    if (!cliente) {
+      return; // não faz nada se não encontrar
+    }
+
+    // Coletar células para log (todas as faturas do grupo)
+    var celulas = [];
+    for (var l = 0; l < cliente.linhasTelefonicas.length; l++) {
+      var linha = cliente.linhasTelefonicas[l];
+      for (var f = 0; f < linha.faturas.length; f++) {
+        var fatura = linha.faturas[f];
+        var dataFatura = parseDataSemTimezone(fatura.vencimento);
+        if (dataFatura.toLocaleDateString('pt-BR') === dataVencimento) {
+          celulas.push({ linha: linha.linhaPlanilha, coluna: fatura.colunaStatusPlanilha });
+        }
       }
     }
-  }
 
-  if (celulas.length === 0) {
-    return;
-  }
-
-  // 🔥 await na função async
-  var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
-
-  // Envia o log em background (não espera resposta para não travar)
-  google.script.run
-    .withFailureHandler(function(erro) {
-      console.warn('Erro ao registrar log do WhatsApp:', erro);
-    })
-    .registrarLogWhatsApp(celulas, nomeUsuario);
-}
-  function copiarCodigoCliente(el, codigo) {
-  if (!codigo) return;
-
-  const texto = String(codigo).trim();
-
-  // Fallback robusto (funciona em http:// também)
-  const _copy = (t) => {
-    if (navigator.clipboard && window.isSecureContext) {
-      return navigator.clipboard.writeText(t);
+    if (celulas.length === 0) {
+      return;
     }
-    return new Promise((resolve, reject) => {
-      const ta = document.createElement('textarea');
-      ta.value = t;
-      ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
-      document.body.appendChild(ta);
-      ta.focus();
-      ta.select();
-      try {
-        document.execCommand('copy') ? resolve() : reject();
-      } catch (e) { reject(e); }
-      finally { document.body.removeChild(ta); }
+
+    var nomeUsuario = await obterNomeUsuario().catch(() => 'Sistema');
+
+    // Envia o log em background (não espera resposta para não travar)
+    google.script.run
+      .withFailureHandler(function(erro) {
+        console.warn('Erro ao registrar log do WhatsApp:', erro);
+      })
+      .registrarLogWhatsApp(celulas, nomeUsuario);
+  }
+
+  function copiarCodigoCliente(el, codigo) {
+    if (!codigo) return;
+
+    const texto = String(codigo).trim();
+
+    // Fallback robusto (funciona em http:// também)
+    const _copy = (t) => {
+      if (navigator.clipboard && window.isSecureContext) {
+        return navigator.clipboard.writeText(t);
+      }
+      return new Promise((resolve, reject) => {
+        const ta = document.createElement('textarea');
+        ta.value = t;
+        ta.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+        document.body.appendChild(ta);
+        ta.focus();
+        ta.select();
+        try {
+          document.execCommand('copy') ? resolve() : reject();
+        } catch (e) { reject(e); }
+        finally { document.body.removeChild(ta); }
+      });
+    };
+
+    _copy(texto).then(() => {
+      // feedback visual
+      el.classList.add('copiado');
+      const hint = el.querySelector('.copy-hint');
+      if (hint) hint.textContent = '✅';
+      setTimeout(() => {
+        el.classList.remove('copiado');
+        if (hint) hint.textContent = '📋';
+      }, 1400);
+    }).catch(err => {
+      console.warn('Falha ao copiar:', err);
+      alert('Não foi possível copiar. Código: ' + texto);
     });
+  }
+  window.copiarCodigoCliente = copiarCodigoCliente;
+
+  // ═══════════════════════════════════════════════════════════
+  // NAVEGAÇÃO DE ABAS
+  // ═══════════════════════════════════════════════════════════
+  let abaAtivaFaturas = 'risco';
+
+  window.mudarAbaFaturas = function(novaAba) {
+    abaAtivaFaturas = novaAba;
+
+    // Botões
+    document.querySelectorAll('.tab-fatura').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.tab === novaAba);
+    });
+
+    // Conteúdo
+    ['risco', 'hoje', 'todas', 'recentes', 'cliente'].forEach(id => {
+      const el = document.getElementById('tab-content-' + id);
+      if (el) el.style.display = (id === novaAba) ? 'block' : 'none';
+    });
+
+    // KPIs só aparecem na aba risco
+    const kpiGrid = document.getElementById('kpi-grid-risco');
+    if (kpiGrid) kpiGrid.style.display = (novaAba === 'risco') ? 'grid' : 'none';
+
+    // Carrega os dados da aba
+    if (novaAba === 'hoje')      carregarAbaHoje();
+    if (novaAba === 'todas')     carregarAbaTodas();
+    if (novaAba === 'recentes')  carregarAbaRecentes();
+    if (novaAba === 'cliente')   carregarAbaCliente();
   };
 
-  _copy(texto).then(() => {
-    // feedback visual
-    el.classList.add('copiado');
-    const hint = el.querySelector('.copy-hint');
-    if (hint) hint.textContent = '✅';
+  // ═══════════════════════════════════════════════════════════
+  // BUSCA GLOBAL
+  // ═══════════════════════════════════════════════════════════
+  window.executarBuscaGlobal = function() {
+    const termo = (document.getElementById('busca-global').value || '').trim();
+    if (!termo) {
+      showToast('Digite algo para buscar', 'warning');
+      return;
+    }
+
+    // Vai pra aba "Por cliente" com o termo aplicado
+    mudarAbaFaturas('cliente');
+
+    // Aguarda a aba montar e executa a busca
     setTimeout(() => {
-      el.classList.remove('copiado');
-      if (hint) hint.textContent = '📋';
-    }, 1400);
-  }).catch(err => {
-    console.warn('Falha ao copiar:', err);
-    alert('Não foi possível copiar. Código: ' + texto);
-  });
-}
-window.copiarCodigoCliente = copiarCodigoCliente;
-// ═══════════════════════════════════════════════════════════
-// NAVEGAÇÃO DE ABAS
-// ═══════════════════════════════════════════════════════════
-let abaAtivaFaturas = 'risco';
+      const input = document.getElementById('busca-cliente-input');
+      if (input) {
+        input.value = termo;
+        executarBuscaCliente();
+      }
+    }, 150);
+  };
 
-window.mudarAbaFaturas = function(novaAba) {
-  abaAtivaFaturas = novaAba;
+  // ═══════════════════════════════════════════════════════════
+  // ABA: VENCEM HOJE
+  // ═══════════════════════════════════════════════════════════
+  async function carregarAbaHoje() {
+    const tbody = document.getElementById('tbody-hoje');
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div>Carregando...</td></tr>';
 
-  // Botões
-  document.querySelectorAll('.tab-fatura').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === novaAba);
-  });
+    try {
+      const todas = await window.sb.rpc('faturas_todas', { p_status: 'PENDENTE', p_busca: null, p_limite: 500 });
+      if (todas.error) throw todas.error;
 
-  // Conteúdo
-  ['risco', 'hoje', 'todas', 'recentes', 'cliente'].forEach(id => {
-    const el = document.getElementById('tab-content-' + id);
-    if (el) el.style.display = (id === novaAba) ? 'block' : 'none';
-  });
+      const hoje = new Date().toISOString().split('T')[0];
+      const doDia = (todas.data || []).filter(f => f.vencimento === hoje);
 
-  // KPIs só aparecem na aba risco
-  const kpiGrid = document.getElementById('kpi-grid-risco');
-  if (kpiGrid) kpiGrid.style.display = (novaAba === 'risco') ? 'grid' : 'none';
+      // 🔥 Atualiza o badge "Hoje" (com ou sem resultados)
+      const badgeHoje = document.getElementById('badge-hoje');
+      if (badgeHoje) badgeHoje.textContent = doDia.length;
 
-  // Carrega os dados da aba
-  if (novaAba === 'hoje')      carregarAbaHoje();
-  if (novaAba === 'todas')     carregarAbaTodas();
-  if (novaAba === 'recentes')  carregarAbaRecentes();
-  if (novaAba === 'cliente')   carregarAbaCliente();
-};
+      if (doDia.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div style="font-size:2rem; margin-bottom:0.5rem;">🎉</div>Nenhuma fatura vence hoje.</td></tr>';
+        return;
+      }
 
-// ═══════════════════════════════════════════════════════════
-// BUSCA GLOBAL
-// ═══════════════════════════════════════════════════════════
-window.executarBuscaGlobal = function() {
-  const termo = (document.getElementById('busca-global').value || '').trim();
-  if (!termo) {
-    showToast('Digite algo para buscar', 'warning');
-    return;
+      tbody.innerHTML = doDia.map(f => `
+        <tr>
+          <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
+              <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(f.cpf_cnpj || '')}</div></td>
+          <td>📱 ${escapeHtml(f.linha || '—')}</td>
+          <td>${escapeHtml(f.plano || '—')}</td>
+          <td style="color:#b45309; font-weight:700;">${formatarData(f.vencimento)}</td>
+          <td><span class="badge badge-pendente">⏳ Pendente</span></td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
+
+      // 🔥 Em caso de erro, zera o badge
+      const badgeHoje = document.getElementById('badge-hoje');
+      if (badgeHoje) badgeHoje.textContent = '0';
+    }
   }
 
-  // Vai pra aba "Por cliente" com o termo aplicado
-  mudarAbaFaturas('cliente');
+  // ═══════════════════════════════════════════════════════════
+  // ABA: TODAS
+  // ═══════════════════════════════════════════════════════════
+  async function carregarAbaTodas() {
+    const tbody = document.getElementById('tbody-todas');
+    const info  = document.getElementById('info-total-todas');
+    const status = document.getElementById('filtro-status-todas')?.value || null;
+    const busca  = document.getElementById('filtro-busca-todas')?.value || null;
 
-  // Aguarda a aba montar e executa a busca
-  setTimeout(() => {
-    const input = document.getElementById('busca-cliente-input');
-    if (input) {
-      input.value = termo;
-      executarBuscaCliente();
-    }
-  }, 150);
-};
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div>Carregando...</td></tr>';
 
-// ═══════════════════════════════════════════════════════════
-// ABA: VENCEM HOJE
-// ═══════════════════════════════════════════════════════════
-async function carregarAbaHoje() {
-  const tbody = document.getElementById('tbody-hoje');
-  tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div>Carregando...</td></tr>';
+    try {
+      const { data, error } = await window.sb.rpc('faturas_todas', {
+        p_status: status,
+        p_busca: busca,
+        p_limite: 500
+      });
+      if (error) throw error;
 
-  try {
-    const todas = await window.sb.rpc('faturas_todas', { p_status: 'PENDENTE', p_busca: null, p_limite: 500 });
-    if (todas.error) throw todas.error;
+      const total = (data || []).length;
 
-    const hoje = new Date().toISOString().split('T')[0];
-    const doDia = (todas.data || []).filter(f => f.vencimento === hoje);
+      // 🔥 Atualiza o badge "Todas" só quando NÃO há filtros ativos
+      const semFiltros = !status && !busca;
+      if (semFiltros) {
+        const badgeTodas = document.getElementById('badge-todas');
+        if (badgeTodas) badgeTodas.textContent = total;
+      }
 
-    // 🔥 Atualiza o badge "Hoje" (com ou sem resultados)
-    const badgeHoje = document.getElementById('badge-hoje');
-    if (badgeHoje) badgeHoje.textContent = doDia.length;
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhuma fatura encontrada com esses filtros.</td></tr>';
+        info.textContent = '';
+        return;
+      }
 
-    if (doDia.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div style="font-size:2rem; margin-bottom:0.5rem;">🎉</div>Nenhuma fatura vence hoje.</td></tr>';
-      return;
-    }
+      info.textContent = `${total} fatura(s) encontrada(s)`;
+      tbody.innerHTML = data.map(f => `
+        <tr>
+          <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
+              <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(f.cpf_cnpj || '')}</div></td>
+          <td>📱 ${escapeHtml(f.linha || '—')}</td>
+          <td>${escapeHtml(f.plano || '—')}</td>
+          <td style="font-weight:700; color:${f.status === 'PAGO' ? '#065f46' : f.vencimento < new Date().toISOString().split('T')[0] ? '#991b1b' : '#b45309'};">${formatarData(f.vencimento)}</td>
+          <td>${f.status === 'PAGO' ? '<span class="badge badge-pago">✅ Pago</span>' : '<span class="badge badge-pendente">⏳ Pendente</span>'}</td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
 
-    tbody.innerHTML = doDia.map(f => `
-      <tr>
-        <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
-            <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(f.cpf_cnpj || '')}</div></td>
-        <td>📱 ${escapeHtml(f.linha || '—')}</td>
-        <td>${escapeHtml(f.plano || '—')}</td>
-        <td style="color:#b45309; font-weight:700;">${formatarData(f.vencimento)}</td>
-        <td><span class="badge badge-pendente">⏳ Pendente</span></td>
-      </tr>
-    `).join('');
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
-
-    // 🔥 Em caso de erro, zera o badge
-    const badgeHoje = document.getElementById('badge-hoje');
-    if (badgeHoje) badgeHoje.textContent = '0';
-  }
-}
-// ═══════════════════════════════════════════════════════════
-// ABA: TODAS
-// ═══════════════════════════════════════════════════════════
-async function carregarAbaTodas() {
-  const tbody = document.getElementById('tbody-todas');
-  const info  = document.getElementById('info-total-todas');
-  const status = document.getElementById('filtro-status-todas')?.value || null;
-  const busca  = document.getElementById('filtro-busca-todas')?.value || null;
-
-  tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div>Carregando...</td></tr>';
-
-  try {
-    const { data, error } = await window.sb.rpc('faturas_todas', {
-      p_status: status,
-      p_busca: busca,
-      p_limite: 500
-    });
-    if (error) throw error;
-
-    const total = (data || []).length;
-
-    // 🔥 Atualiza o badge "Todas" só quando NÃO há filtros ativos
-    // (senão o badge muda a cada filtro, o que não faz sentido)
-    const semFiltros = !status && !busca;
-    if (semFiltros) {
+      // 🔥 Em caso de erro, zera o badge
       const badgeTodas = document.getElementById('badge-todas');
-      if (badgeTodas) badgeTodas.textContent = total;
+      if (badgeTodas) badgeTodas.textContent = '0';
     }
-
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhuma fatura encontrada com esses filtros.</td></tr>';
-      info.textContent = '';
-      return;
-    }
-
-    info.textContent = `${total} fatura(s) encontrada(s)`;
-    tbody.innerHTML = data.map(f => `
-      <tr>
-        <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
-            <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(f.cpf_cnpj || '')}</div></td>
-        <td>📱 ${escapeHtml(f.linha || '—')}</td>
-        <td>${escapeHtml(f.plano || '—')}</td>
-        <td style="font-weight:700; color:${f.status === 'PAGO' ? '#065f46' : f.vencimento < new Date().toISOString().split('T')[0] ? '#991b1b' : '#b45309'};">${formatarData(f.vencimento)}</td>
-        <td>${f.status === 'PAGO' ? '<span class="badge badge-pago">✅ Pago</span>' : '<span class="badge badge-pendente">⏳ Pendente</span>'}</td>
-      </tr>
-    `).join('');
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
-
-    // 🔥 Em caso de erro, zera o badge
-    const badgeTodas = document.getElementById('badge-todas');
-    if (badgeTodas) badgeTodas.textContent = '0';
   }
-}
 
-// ═══════════════════════════════════════════════════════════
-// ABA: RECENTES
-// ═══════════════════════════════════════════════════════════
-async function carregarAbaRecentes() {
-  const tbody = document.getElementById('tbody-recentes');
-  tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div>Carregando...</td></tr>';
+  // ═══════════════════════════════════════════════════════════
+  // ABA: RECENTES
+  // ═══════════════════════════════════════════════════════════
+  async function carregarAbaRecentes() {
+    const tbody = document.getElementById('tbody-recentes');
+    tbody.innerHTML = '<tr><td colspan="5" class="empty-state"><div class="loading-spinner"></div>Carregando...</td></tr>';
 
-  try {
-    const { data, error } = await window.sb.rpc('faturas_recentes', { p_limite: 100 });
-    if (error) throw error;
+    try {
+      const { data, error } = await window.sb.rpc('faturas_recentes', { p_limite: 100 });
+      if (error) throw error;
 
-    if (!data || data.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhuma fatura paga recentemente.</td></tr>';
-      return;
+      if (!data || data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" class="empty-state">Nenhuma fatura paga recentemente.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = data.map(f => `
+        <tr>
+          <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
+              <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(f.cpf_cnpj || '')}</div></td>
+          <td>📱 ${escapeHtml(f.linha || '—')}</td>
+          <td>${escapeHtml(f.plano || '—')}</td>
+          <td style="color:#065f46; font-weight:700;">${f.data_pagamento ? formatarDataHora(f.data_pagamento) : '—'}</td>
+          <td><span class="badge badge-pago">✅ Pago</span></td>
+        </tr>
+      `).join('');
+    } catch (e) {
+      tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
     }
-
-    tbody.innerHTML = data.map(f => `
-      <tr>
-        <td><div style="font-weight:700;">${escapeHtml(f.nome_cliente)}</div>
-            <div style="font-size:0.7rem; color:#94a3b8;">${escapeHtml(f.cpf_cnpj || '')}</div></td>
-        <td>📱 ${escapeHtml(f.linha || '—')}</td>
-        <td>${escapeHtml(f.plano || '—')}</td>
-        <td style="color:#065f46; font-weight:700;">${f.data_pagamento ? formatarDataHora(f.data_pagamento) : '—'}</td>
-        <td><span class="badge badge-pago">✅ Pago</span></td>
-      </tr>
-    `).join('');
-  } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="5" class="empty-state" style="color:#ef4444;">Erro: ${e.message}</td></tr>`;
   }
-}
 
-// ═══════════════════════════════════════════════════════════
-// ABA: POR CLIENTE
-// ═══════════════════════════════════════════════════════════
-function carregarAbaCliente() {
-  const container = document.getElementById('resultado-cliente');
-  container.innerHTML = `
-    <div style="background: white; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid var(--border-color);">
-      <div style="display: flex; gap: 8px;">
-        <input type="text" id="busca-cliente-input"
-               placeholder="Digite CNPJ, razão social, código ou telefone..."
-               style="flex: 1; padding: 12px 16px; border: 2px solid var(--border-color); border-radius: 10px; font-size: 0.9rem; font-family: inherit; outline: none;"
-               onkeydown="if (event.key === 'Enter') executarBuscaCliente()">
-        <button onclick="executarBuscaCliente()"
-                style="padding: 0 28px; background: var(--primary-gradient); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit;">
-          🔎 Pesquisar
-        </button>
-      </div>
-    </div>
-    <div id="resultado-cliente-dados">
-      <div class="empty-consulta">
-        <i class="fas fa-user-search"></i>
-        <h3>Busque por um cliente</h3>
-        <p>Digite CNPJ, razão social, código ou telefone para ver todas as faturas.</p>
-      </div>
-    </div>
-  `;
-}
-
-window.executarBuscaCliente = async function() {
-  const input = document.getElementById('busca-cliente-input');
-  const termo = (input?.value || '').trim();
-  if (!termo) { showToast('Digite algo para buscar', 'warning'); return; }
-
-  const container = document.getElementById('resultado-cliente-dados');
-  container.innerHTML = '<div class="empty-consulta"><div class="loading-spinner" style="margin: 0 auto 1rem;"></div><h3>Consultando...</h3></div>';
-
-  try {
-    const { data, error } = await window.sb.rpc('faturas_por_cliente', { p_termo: termo });
-    if (error) throw error;
-
-    if (!data || !data.success) {
-      container.innerHTML = `<div class="empty-consulta" style="color:#ef4444;"><h3>Erro ao buscar</h3><p>${escapeHtml(data?.message || 'Erro desconhecido')}</p></div>`;
-      return;
-    }
-
-    if (!data.encontrado) {
-      container.innerHTML = `<div class="empty-consulta"><i class="fas fa-search-minus"></i><h3>Cliente não encontrado</h3><p>Nenhuma fatura para "${escapeHtml(termo)}"</p></div>`;
-      return;
-    }
-
-    const c = data.cliente;
-    const kpis = data.kpis;
-    const faturas = data.faturas || [];
-
-    let html = `
-      <div class="cliente-card-faturas">
-        <h3>🏢 ${escapeHtml(c.nome_cliente || '—')}</h3>
-        <div style="font-size: 0.8rem; color: var(--text-muted);">
-          <b>CNPJ:</b> ${escapeHtml(c.cpf_cnpj || '—')}
-          ${c.codigo_cliente ? `&nbsp;•&nbsp; <b>Código:</b> ${escapeHtml(c.codigo_cliente)}` : ''}
-        </div>
-
-        <div class="cliente-info-grid">
-          <div><span>Responsável</span><b>${escapeHtml(c.responsavel || '—')}</b></div>
-          <div><span>Contato</span><b>${escapeHtml(c.contato_final || '—')}</b></div>
-          <div><span>E-mail</span><b>${escapeHtml(c.email || '—')}</b></div>
-        </div>
-
-        <div class="kpis-cliente">
-          <div class="kpi-cliente"><div class="label">Total faturas</div><div class="valor">${kpis.total_faturas}</div></div>
-          <div class="kpi-cliente vermelho"><div class="label">Em atraso</div><div class="valor">${kpis.em_atraso}</div></div>
-          <div class="kpi-cliente amarelo"><div class="label">Pendentes</div><div class="valor">${kpis.pendentes}</div></div>
-          <div class="kpi-cliente verde"><div class="label">Pagas</div><div class="valor">${kpis.pagas}</div></div>
-        </div>
-
-        <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
-          📱 ${kpis.total_linhas} linha(s) cadastrada(s)
+  // ═══════════════════════════════════════════════════════════
+  // ABA: POR CLIENTE
+  // ═══════════════════════════════════════════════════════════
+  function carregarAbaCliente() {
+    const container = document.getElementById('resultado-cliente');
+    container.innerHTML = `
+      <div style="background: white; border-radius: 16px; padding: 1.25rem; margin-bottom: 1rem; border: 1px solid var(--border-color);">
+        <div style="display: flex; gap: 8px;">
+          <input type="text" id="busca-cliente-input"
+                 placeholder="Digite CNPJ, razão social, código ou telefone..."
+                 style="flex: 1; padding: 12px 16px; border: 2px solid var(--border-color); border-radius: 10px; font-size: 0.9rem; font-family: inherit; outline: none;"
+                 onkeydown="if (event.key === 'Enter') executarBuscaCliente()">
+          <button onclick="executarBuscaCliente()"
+                  style="padding: 0 28px; background: var(--primary-gradient); color: white; border: none; border-radius: 10px; font-weight: 700; font-size: 0.85rem; cursor: pointer; font-family: inherit;">
+            🔎 Pesquisar
+          </button>
         </div>
       </div>
-
-      <div class="cliente-card-faturas">
-        <h3 style="font-size: 0.95rem;">📋 Histórico de Faturas (${faturas.length})</h3>
-        <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.75rem;">
-          <thead>
-            <tr style="border-bottom: 2px solid var(--border-color);">
-              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">#</th>
-              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">📱 Linha</th>
-              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">📋 Plano</th>
-              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">📅 Vencimento</th>
-              <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">🚦 Status</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${faturas.map(f => {
-              const venc = new Date(f.vencimento + 'T00:00:00');
-              const hoje = new Date(); hoje.setHours(0,0,0,0);
-              const atrasada = f.status === 'PENDENTE' && venc < hoje;
-              const corVenc = f.status === 'PAGO' ? '#065f46' : atrasada ? '#991b1b' : '#b45309';
-              const badge = f.status === 'PAGO'
-                ? '<span class="badge badge-pago">✅ Pago</span>'
-                : atrasada
-                  ? '<span class="badge badge-atrasado">🔴 Atrasado</span>'
-                  : '<span class="badge badge-pendente">⏳ Pendente</span>';
-              return `
-                <tr style="border-bottom: 1px solid #f1f5f9;">
-                  <td style="padding: 8px; font-weight: 700; color: var(--text-muted);">${f.numero_sequencial || '—'}</td>
-                  <td style="padding: 8px;">📱 ${escapeHtml(f.linha || '—')}</td>
-                  <td style="padding: 8px;">${escapeHtml(f.plano || '—')}</td>
-                  <td style="padding: 8px; font-weight: 700; color: ${corVenc};">${formatarData(f.vencimento)}</td>
-                  <td style="padding: 8px;">${badge}</td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
+      <div id="resultado-cliente-dados">
+        <div class="empty-consulta">
+          <i class="fas fa-user-search"></i>
+          <h3>Busque por um cliente</h3>
+          <p>Digite CNPJ, razão social, código ou telefone para ver todas as faturas.</p>
+        </div>
       </div>
     `;
-
-    container.innerHTML = html;
-  } catch (e) {
-    container.innerHTML = `<div class="empty-consulta" style="color:#ef4444;"><h3>Erro</h3><p>${escapeHtml(e.message)}</p></div>`;
   }
-};
 
-// ═══════════════════════════════════════════════════════════
-// UTILS
-// ═══════════════════════════════════════════════════════════
-function formatarData(iso) {
-  if (!iso) return '—';
+  window.executarBuscaCliente = async function() {
+    const input = document.getElementById('busca-cliente-input');
+    const termo = (input?.value || '').trim();
+    if (!termo) { showToast('Digite algo para buscar', 'warning'); return; }
 
-  // Se já vier no formato BR (dd/mm/yyyy), devolve como está
-  if (typeof iso === 'string' && iso.includes('/')) return iso;
+    const container = document.getElementById('resultado-cliente-dados');
+    container.innerHTML = '<div class="empty-consulta"><div class="loading-spinner" style="margin: 0 auto 1rem;"></div><h3>Consultando...</h3></div>';
 
-  // Se for string ISO (2026-10-20 ou 2026-10-20T00:00:00Z), extrai só a data
-  // SEM passar pelo construtor Date — evita o shift de timezone
-  if (typeof iso === 'string') {
-    const dataLimpa = iso.split('T')[0];
-    const partes = dataLimpa.split('-');
-    if (partes.length === 3) {
-      const [a, m, d] = partes;
+    try {
+      const { data, error } = await window.sb.rpc('faturas_por_cliente', { p_termo: termo });
+      if (error) throw error;
+
+      if (!data || !data.success) {
+        container.innerHTML = `<div class="empty-consulta" style="color:#ef4444;"><h3>Erro ao buscar</h3><p>${escapeHtml(data?.message || 'Erro desconhecido')}</p></div>`;
+        return;
+      }
+
+      if (!data.encontrado) {
+        container.innerHTML = `<div class="empty-consulta"><i class="fas fa-search-minus"></i><h3>Cliente não encontrado</h3><p>Nenhuma fatura para "${escapeHtml(termo)}"</p></div>`;
+        return;
+      }
+
+      const c = data.cliente;
+      const kpis = data.kpis;
+      const faturas = data.faturas || [];
+
+      let html = `
+        <div class="cliente-card-faturas">
+          <h3>🏢 ${escapeHtml(c.nome_cliente || '—')}</h3>
+          <div style="font-size: 0.8rem; color: var(--text-muted);">
+            <b>CNPJ:</b> ${escapeHtml(c.cpf_cnpj || '—')}
+            ${c.codigo_cliente ? `&nbsp;•&nbsp; <b>Código:</b> ${escapeHtml(c.codigo_cliente)}` : ''}
+          </div>
+
+          <div class="cliente-info-grid">
+            <div><span>Responsável</span><b>${escapeHtml(c.responsavel || '—')}</b></div>
+            <div><span>Contato</span><b>${escapeHtml(c.contato_final || '—')}</b></div>
+            <div><span>E-mail</span><b>${escapeHtml(c.email || '—')}</b></div>
+          </div>
+
+          <div class="kpis-cliente">
+            <div class="kpi-cliente"><div class="label">Total faturas</div><div class="valor">${kpis.total_faturas}</div></div>
+            <div class="kpi-cliente vermelho"><div class="label">Em atraso</div><div class="valor">${kpis.em_atraso}</div></div>
+            <div class="kpi-cliente amarelo"><div class="label">Pendentes</div><div class="valor">${kpis.pendentes}</div></div>
+            <div class="kpi-cliente verde"><div class="label">Pagas</div><div class="valor">${kpis.pagas}</div></div>
+          </div>
+
+          <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 0.5rem;">
+            📱 ${kpis.total_linhas} linha(s) cadastrada(s)
+          </div>
+        </div>
+
+        <div class="cliente-card-faturas">
+          <h3 style="font-size: 0.95rem;">📋 Histórico de Faturas (${faturas.length})</h3>
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 0.75rem;">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-color);">
+                <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">#</th>
+                <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">📱 Linha</th>
+                <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">📋 Plano</th>
+                <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">📅 Vencimento</th>
+                <th style="padding: 8px; text-align: left; font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;">🚦 Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${faturas.map(f => {
+                const venc = new Date(f.vencimento + 'T00:00:00');
+                const hoje = new Date(); hoje.setHours(0,0,0,0);
+                const atrasada = f.status === 'PENDENTE' && venc < hoje;
+                const corVenc = f.status === 'PAGO' ? '#065f46' : atrasada ? '#991b1b' : '#b45309';
+                const badge = f.status === 'PAGO'
+                  ? '<span class="badge badge-pago">✅ Pago</span>'
+                  : atrasada
+                    ? '<span class="badge badge-atrasado">🔴 Atrasado</span>'
+                    : '<span class="badge badge-pendente">⏳ Pendente</span>';
+                return `
+                  <tr style="border-bottom: 1px solid #f1f5f9;">
+                    <td style="padding: 8px; font-weight: 700; color: var(--text-muted);">${f.numero_sequencial || '—'}</td>
+                    <td style="padding: 8px;">📱 ${escapeHtml(f.linha || '—')}</td>
+                    <td style="padding: 8px;">${escapeHtml(f.plano || '—')}</td>
+                    <td style="padding: 8px; font-weight: 700; color: ${corVenc};">${formatarData(f.vencimento)}</td>
+                    <td style="padding: 8px;">${badge}</td>
+                  </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      `;
+
+      container.innerHTML = html;
+    } catch (e) {
+      container.innerHTML = `<div class="empty-consulta" style="color:#ef4444;"><h3>Erro</h3><p>${escapeHtml(e.message)}</p></div>`;
+    }
+  };
+
+  // ═══════════════════════════════════════════════════════════
+  // UTILS
+  // ═══════════════════════════════════════════════════════════
+  function formatarData(iso) {
+    if (!iso) return '—';
+
+    // Se já vier no formato BR (dd/mm/yyyy), devolve como está
+    if (typeof iso === 'string' && iso.includes('/')) return iso;
+
+    // Se for string ISO (2026-10-20 ou 2026-10-20T00:00:00Z), extrai só a data
+    // SEM passar pelo construtor Date — evita o shift de timezone
+    if (typeof iso === 'string') {
+      const dataLimpa = iso.split('T')[0];
+      const partes = dataLimpa.split('-');
+      if (partes.length === 3) {
+        const [a, m, d] = partes;
+        return `${d}/${m}/${a}`;
+      }
+      return iso;
+    }
+
+    // Fallback pra Date object — usa UTC (não local)
+    if (iso instanceof Date) {
+      const d = String(iso.getUTCDate()).padStart(2, '0');
+      const m = String(iso.getUTCMonth() + 1).padStart(2, '0');
+      const a = iso.getUTCFullYear();
       return `${d}/${m}/${a}`;
     }
-    return iso;
+
+    return String(iso);
   }
 
-  // Fallback pra Date object — usa UTC (não local)
-  if (iso instanceof Date) {
-    const d = String(iso.getUTCDate()).padStart(2, '0');
-    const m = String(iso.getUTCMonth() + 1).padStart(2, '0');
-    const a = iso.getUTCFullYear();
-    return `${d}/${m}/${a}`;
+  function formatarDataHora(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
   }
 
-  return String(iso);
-}
-function formatarDataHora(iso) {
-  if (!iso) return '—';
-  const d = new Date(iso);
-  return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-}
-function escapeHtml(t) {
-  if (!t) return '';
-  return String(t).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
-}
+  function escapeHtml(t) {
+    if (!t) return '';
+    return String(t).replace(/[&<>"']/g, m => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[m]));
+  }
+
+  function showToast(msg, tipo) {
+    console.log(`[${tipo}]`, msg);
+  }
 </script>
 </body>
 </html>
