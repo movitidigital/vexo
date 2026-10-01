@@ -1090,7 +1090,7 @@ function renderLinhasConferencia() {
 
     const botoes = podeAgir ? `
       <div style="display:flex; gap:4px; justify-content:center; flex-wrap:wrap;">
-        <button onclick="confValidarLinha('${v.venda_id}', 'VALIDADA')" 
+        <button onclick="confValidarLinha('${v.comissao_id}', 'VALIDADA')" 
           ${statusAtual === 'VALIDADA' ? 'disabled' : ''}
           title="${statusAtual === 'VALIDADA' ? 'Status atual' : 'Marcar como Validada'}"
           style="${btnStyle(statusAtual === 'VALIDADA', '#10b981')}padding:5px 9px;border-radius:6px;cursor:${statusAtual === 'VALIDADA' ? 'default' : 'pointer'};font-size:10px;font-weight:700;">
@@ -1139,29 +1139,22 @@ function renderLinhasConferencia() {
   $('conf-contador').textContent = `${vendas.length - pendentes} de ${vendas.length} validadas`;
 }
 
-// 🔥 FUNÇÃO PRINCIPAL: Faz a validação no banco (Individual)
-async function confValidarLinha(vendaId, status) {
+async function confValidarLinha(comissaoId, status) {
   const sb = getSb();
   if (!sb) return;
 
-  // 🔥 DEBUG: mostra o ID que está sendo enviado
-  console.log('🔍 [VALIDAR] Recebido:', { vendaId, status, consultor: _confState.consultor, mes: _confState.mes, ano: _confState.ano });
+  console.log('🔍 [VALIDAR] Recebido:', { comissaoId, status, mes: _confState.mes, ano: _confState.ano });
 
-  if (!vendaId || vendaId === 'null' || vendaId === 'undefined') {
-    alert('❌ Erro: O ID desta venda não foi encontrado no sistema. Feche a janela e tente novamente.');
+  if (!comissaoId || comissaoId === 'null' || comissaoId === 'undefined') {
+    alert('❌ Erro: O ID desta comissão não foi encontrado. Feche a janela e tente novamente.');
     return;
   }
 
-  let obs = null, dataAtivacao = null;
+  let obs = null;
 
   if (status === 'CORRIGIDA') {
     obs = prompt('Motivo da correção:'); 
     if (obs === null) return;
-    const dt = prompt('Nova data de ativação (DD/MM/AAAA) — vazio pra manter:');
-    if (dt && /^\d{2}\/\d{2}\/\d{4}$/.test(dt.trim())) {
-      const [d, m, a] = dt.trim().split('/');
-      dataAtivacao = `${a}-${m}-${d}`;
-    }
   } else if (status === 'REJEITADA') {
     obs = prompt('Motivo da rejeição:'); 
     if (obs === null) return;
@@ -1174,13 +1167,13 @@ async function confValidarLinha(vendaId, status) {
 
   try {
     const payload = {
-      p_venda_id: vendaId, 
+      p_venda_id: comissaoId,  // 🔥 Envia como venda_id (a função SQL tem fallback para buscar por id também)
       p_status: status, 
       p_observacao: obs || 'Validação individual',
       p_mes_competencia: parseInt(_confState.mes, 10),
       p_ano_competencia: parseInt(_confState.ano, 10)
     };
-    console.log('🚀 [VALIDAR] Enviando payload:', payload);
+    console.log('🚀 [VALIDAR] Payload:', payload);
 
     const { data, error } = await sb.rpc('admin_validar_venda_consultor', payload);
     
@@ -1195,7 +1188,7 @@ async function confValidarLinha(vendaId, status) {
     
     await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
   } catch (e) { 
-    console.error('❌ [VALIDAR] Erro capturado:', e);
+    console.error('❌ [VALIDAR] Erro:', e);
     alert('❌ ' + (e.message || e)); 
   }
 }
@@ -1961,6 +1954,7 @@ ${cargo === 'GERENTE' ? `
   window.confValidarLinha = confValidarLinha;
   window.confValidarTudo = confValidarTudo;
   window.confLiberarEspelho = confLiberarEspelho;
+  window._confState = _confState;
 
   
 
