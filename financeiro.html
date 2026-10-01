@@ -1143,12 +1143,12 @@ async function confValidarLinha(comissaoId, status) {
   const sb = getSb();
   if (!sb) return;
 
-  // Encontra a venda correspondente no estado para ter os dados auxiliares
+  // Encontra a venda correspondente no estado
   const venda = (_confState.vendas || []).find(v => 
     v.comissao_id === comissaoId || v.venda_id === comissaoId
-  );
+  ) || (_confState.vendas || []).find(v => v.comissao_id === comissaoId);
 
-  if (!venda && (!comissaoId || comissaoId === 'null')) {
+  if (!venda) {
     alert('❌ Erro: linha não encontrada no estado. Feche a janela e tente novamente.');
     return;
   }
@@ -1167,8 +1167,12 @@ async function confValidarLinha(comissaoId, status) {
     obs = 'Status revertido para pendente';
   }
 
-  // 🔥 Estratégia 1: tentar validação por comissao_id (se existir)
-  if (comissaoId && comissaoId !== 'null' && comissaoId !== 'undefined') {
+  // ═══════════════════════════════════════════════════════
+  // ESTRATÉGIA 1: tentar por comissao_id (só se for UUID completo)
+  // ═══════════════════════════════════════════════════════
+  const idValido = comissaoId && comissaoId !== 'null' && comissaoId !== 'undefined' && comissaoId.length === 36;
+  
+  if (idValido) {
     try {
       const { data, error } = await sb.rpc('admin_validar_venda_consultor', {
         p_venda_id: comissaoId,
@@ -1182,35 +1186,39 @@ async function confValidarLinha(comissaoId, status) {
         await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
         return;
       }
-      console.warn('⚠️ Falhou por ID, tentando por linha...', data?.message);
+      console.warn('⚠️ Falhou por ID (tentando fallback):', data?.message);
     } catch (e) {
-      console.warn('⚠️ Erro por ID:', e.message);
+      console.warn('⚠️ Erro por ID (tentando fallback):', e.message);
     }
   }
 
-  // 🔥 Estratégia 2 (fallback): usar numero_linha + consultor + mês
-  if (venda?.numero_linha) {
-    try {
-      const { data, error } = await sb.rpc('admin_validar_por_linha', {
-        p_numero_linha: String(venda.numero_linha),
-        p_consultor_nome: _confState.consultor,
-        p_mes: parseInt(_confState.mes, 10),
-        p_ano: parseInt(_confState.ano, 10),
-        p_status: status,
-        p_observacao: obs || 'Validação individual (fallback)'
-      });
-      if (error) throw error;
-      if (!data?.success) throw new Error(data?.message || 'Erro');
-      await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
-      return;
-    } catch (e) {
-      console.error('❌ Erro fallback:', e);
-      alert('❌ Não foi possível validar: ' + (e.message || e));
-      return;
-    }
+  // ═══════════════════════════════════════════════════════
+  // ESTRATÉGIA 2 (FALLBACK): buscar por numero_linha + consultor + mês
+  // ═══════════════════════════════════════════════════════
+  const numeroLinha = venda.numero_linha || venda.numero_da_linha || null;
+  
+  if (!numeroLinha) {
+    alert('❌ Erro: número de linha não disponível para este registro.\n\nDados disponíveis: ' + JSON.stringify(Object.keys(venda)));
+    return;
   }
 
-  alert('❌ Erro: Nenhum identificador válido disponível para esta linha.');
+  try {
+    const { data, error } = await sb.rpc('admin_validar_por_linha', {
+      p_numero_linha: String(numeroLinha),
+      p_consultor_nome: _confState.consultor,
+      p_mes: parseInt(_confState.mes, 10),
+      p_ano: parseInt(_confState.ano, 10),
+      p_status: status,
+      p_observacao: obs || 'Validação individual (via fallback)'
+    });
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.message || 'Erro');
+    if (data.transferida) alert('✅ Comissão transferida para este mês!');
+    await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
+  } catch (e) {
+    console.error('❌ [FALLBACK] Erro:', e);
+    alert('❌ Não foi possível validar: ' + (e.message || e));
+  }
 }
 
 async function confValidarTudo() {
