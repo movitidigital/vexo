@@ -1108,6 +1108,11 @@ function renderLinhasConferencia() {
           style="${btnStyle(statusAtual === 'REJEITADA', '#ef4444')}padding:5px 9px;border-radius:6px;cursor:${statusAtual === 'REJEITADA' ? 'default' : 'pointer'};font-size:10px;font-weight:700;">
           ✕ Rejeitar
         </button>
+        <button onclick="confRecusarDefinitivo('${v.numero_linha || v.numero_da_linha}', '${v.cliente || ''}')" 
+  title="Marcar como RECUSADA DEFINITIVAMENTE — nunca será paga"
+  style="background:#7f1d1d;color:white;border:none;padding:5px 9px;border-radius:6px;cursor:pointer;font-size:10px;font-weight:700;">
+  ⛔ Recusar Def.
+</button>
         ${statusAtual !== 'PENDENTE' ? `
           <button onclick="confValidarLinha('${v.comissao_id || v.venda_id}', 'PENDENTE')" 
             title="Desfazer e voltar para Pendente"
@@ -1138,7 +1143,40 @@ function renderLinhasConferencia() {
   const pendentes = vendas.filter(v => (v.status_validacao || 'PENDENTE') === 'PENDENTE').length;
   $('conf-contador').textContent = `${vendas.length - pendentes} de ${vendas.length} validadas`;
 }
+async function confRecusarDefinitivo(numeroLinha, cliente) {
+  const sb = getSb();
+  if (!sb) return;
 
+  if (!numeroLinha) {
+    alert('❌ Número da linha não disponível.');
+    return;
+  }
+
+  const confirmacao = prompt(
+    `⛔ RECUSAR DEFINITIVAMENTE\n\n` +
+    `Cliente: ${cliente}\n` +
+    `Linha: ${numeroLinha}\n\n` +
+    `Esta comissão NUNCA será paga. A TIM não pagará esta linha.\n` +
+    `Esta ação remove a comissão dos próximos espelhos.\n\n` +
+    `Digite o motivo (ou deixe vazio para confirmar):`
+  );
+
+  if (confirmacao === null) return; // cancelou
+
+  try {
+    const { data, error } = await sb.rpc('admin_recusar_definitivo', {
+      p_numero_linha: String(numeroLinha),
+      p_motivo: confirmacao || 'Recusada definitivamente pelo financeiro'
+    });
+    if (error) throw error;
+    if (!data?.success) throw new Error(data?.message || 'Erro');
+    
+    alert('✅ Comissão recusada definitivamente.\nEla não aparecerá mais em nenhum espelho.');
+    await abrirConferenciaConsultor(_confState.consultor, _confState.mes, _confState.ano);
+  } catch (e) {
+    alert('❌ ' + (e.message || e));
+  }
+}
 async function confValidarLinha(comissaoId, status) {
   const sb = getSb();
   if (!sb) return;
