@@ -2392,8 +2392,7 @@ window.FinAdm = (function () {
       const { data, error } = await sbClient.rpc('admin_liberar_espelho', { p_parceiro_id: pid, p_mes: mes, p_ano: ano });
       if (error) throw error;
       if (!data?.success) throw new Error(data?.message || 'Erro');
-      alert(`✅ Espelho liberado!\nValor: R$ ${Number(data.valor_comissao || 0).toFixed(2)}\nLinhas: ${data.qtd_linhas}`);
-      await carregar();
+alert( `✅ Espelho liberado!\n` + `Valor: ${fmt(data.valor_comissao || 0)}\n` + `Linhas: ${data.qtd_linhas}` + (data.movidas > 0 ? `\n\n↩ ${data.movidas} comissão(ões) rejeitada(s) movida(s) para o próximo mês.` : '') );      await carregar();
     } catch (e) { alert('❌ ' + (e.message || e)); }
   }
 
