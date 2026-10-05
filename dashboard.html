@@ -2359,7 +2359,7 @@ async function inicializarDados() {
       console.log(`🔵 [DASH] ${listaConsultores.length} consultores mapeados`);
     } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
 
-    // ---- 3. Busca METAS_CONFIG (COM DEBUG PARA ACHAR O PROBLEMA) ----
+    // ---- 3. Busca METAS_LOJA (TABELA CORRETA DO GESTOR DE METAS) ----
     let metaFaturamento = 0, metaFaturamentoSup = 0;
     let metaPortabilidade = 0, metaPortabilidadeSup = 0;
     let metaRenegociacao = 0, metaRenegociacaoSup = 0;
@@ -2367,21 +2367,19 @@ async function inicializarDados() {
 
     try {
       const { data: metaDB, error: errMeta } = await sb
-        .from('metas_config')
+        .from('metas_loja')
         .select('*')
-        .eq('ano', anoSelecionado);
+        .eq('ano_referencia', anoSelecionado);
 
       if (errMeta) {
-        console.warn('⚠️ [DASH] metas_config erro:', errMeta.message);
+        console.warn('⚠️ [DASH] metas_loja erro:', errMeta.message);
       } else {
-        // 👇 DEBUG: Veja no console (F12) o que o banco está retornando
-        console.log(`🔵 [DASH] metas_config: ${metaDB?.length || 0} registros para ${anoSelecionado}`, metaDB);
+        console.log(`🔵 [DASH] metas_loja: ${metaDB?.length || 0} registros para ${anoSelecionado}`, metaDB);
         
         if (metaDB && metaDB.length > 0) {
-          const metaDoMes = metaDB.find(m => {
-            const mNum = mapaMesesNum[String(m.mes).toUpperCase().trim()] || parseInt(m.mes);
-            return mNum === mesNumericoSelecionado;
-          });
+          // 👇 CORREÇÃO: mes_referencia é um número (integer), então a busca é direta
+          const metaDoMes = metaDB.find(m => Number(m.mes_referencia) === mesNumericoSelecionado);
+
           if (metaDoMes) {
             metaFaturamento      = Number(metaDoMes.fat_target) || 0;
             metaFaturamentoSup   = Number(metaDoMes.fat_sup) || 0;
@@ -2390,13 +2388,14 @@ async function inicializarDados() {
             metaRenegociacao     = Number(metaDoMes.reneg_target) || 0;
             metaRenegociacaoSup  = Number(metaDoMes.reneg_sup) || 0;
             metaEncontrada = true;
-            console.log(`✅ [DASH] Meta do mês encontrada: FAT R$ ${metaFaturamento} | PORT R$ ${metaPortabilidade}`);
+            console.log(`✅ [DASH] Meta do mês encontrada em metas_loja: FAT R$ ${metaFaturamento} | PORT R$ ${metaPortabilidade}`);
           } else {
-            console.warn(`⚠️ [DASH] Nenhuma meta cadastrada para ${mesSelecionado}/${anoSelecionado}. Verifique a coluna 'mes' na tabela metas_config.`);
+            console.warn(`⚠️ [DASH] Nenhuma meta cadastrada em metas_loja para o mês ${mesNumericoSelecionado}/${anoSelecionado}.`);
+            console.log('🔍 Meses disponíveis no banco:', metaDB.map(m => m.mes_referencia));
           }
         }
       }
-    } catch (e) { console.warn('⚠️ metas_config indisponível:', e.message); }
+    } catch (e) { console.warn('⚠️ metas_loja indisponível:', e.message); }
 
     // ---- 4. Busca VENDAS ----
     console.log('🔵 [DASH] Buscando VENDAS...');
@@ -2450,10 +2449,10 @@ async function inicializarDados() {
     const listaVendasDashboard = [];
     let ignoradasCancel = 0;
     let ignoradasModalidade = 0;
-    let ignoradasParceiro = 0; // 👈 NOVO CONTADOR
+    let ignoradasParceiro = 0; // 👈 CONTADOR DE VENDAS DE PARCEIROS
 
     (dataVendas || []).forEach(v => {
-      // 👇 CORREÇÃO 1: FILTRA VENDAS DE PARCEIROS AQUI
+      // 👇 FILTRA VENDAS DE PARCEIROS AQUI
       const origem = String(v.origem || '').toUpperCase().trim();
       if (origem !== 'INTERNO') {
         ignoradasParceiro++;
