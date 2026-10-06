@@ -1231,6 +1231,63 @@
   <!-- 📊 META DA LOJA (cards existentes) -->
   <div class="grid-metas" id="container-grid-metas" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;"></div>
 
+  <!-- 👇 NOVO BLOCO: VISÃO GLOBAL (INTERNOS + PARCEIROS) -->
+  <div id="bloco-visao-global" style="display: none; margin-top: 30px;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+      <h3 style="color: #e2e8f0; font-size: 16px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 18px;">🌍</span> Visão Global (Internos + Parceiros)
+      </h3>
+      <span style="font-size: 10px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 4px 12px; border-radius: 20px; font-weight: 700; border: 1px solid rgba(59, 130, 246, 0.3);">
+        ACESSO RESTRITO À GESTÃO
+      </span>
+    </div>
+    
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+      <!-- Bloco Entrantes -->
+      <div style="background: #1e293b; border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 16px; padding: 20px; border-top: 4px solid #f59e0b; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+          <span style="font-size: 24px;">⏳</span>
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.5px;">Pedidos Entrantes (Mês)</div>
+            <div style="font-size: 10px; color: #64748b;">Aguardando ativação na TIM</div>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-size: 28px; font-weight: 900; color: white;" id="global-entrantes-fat">R$ 0,00</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;" id="global-entrantes-qtd">0 pedidos</div>
+          </div>
+          <div style="text-align: right; font-size: 11px; color: #94a3b8; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 10px;">
+            <div style="margin-bottom: 2px;">🔵 Internos: <b id="global-entrantes-int" style="color:#cbd5e1;">0</b></div>
+            <div>🟣 Parceiros: <b id="global-entrantes-parc" style="color:#cbd5e1;">0</b></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bloco Ativos -->
+      <div style="background: #1e293b; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 16px; padding: 20px; border-top: 4px solid #10b981; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
+        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
+          <span style="font-size: 24px;">✅</span>
+          <div>
+            <div style="font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px;">Pedidos Ativos (Mês)</div>
+            <div style="font-size: 10px; color: #64748b;">Ativações confirmadas</div>
+          </div>
+        </div>
+        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
+          <div>
+            <div style="font-size: 28px; font-weight: 900; color: white;" id="global-ativos-fat">R$ 0,00</div>
+            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;" id="global-ativos-qtd">0 pedidos</div>
+          </div>
+          <div style="text-align: right; font-size: 11px; color: #94a3b8; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 10px;">
+            <div style="margin-bottom: 2px;">🔵 Internos: <b id="global-ativos-int" style="color:#cbd5e1;">0</b></div>
+            <div>🟣 Parceiros: <b id="global-ativos-parc" style="color:#cbd5e1;">0</b></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- 👆 FIM DO NOVO BLOCO -->
+      
   <!-- 👥 METAS INDIVIDUAIS DO TIME -->
   <div id="bloco-desempenho-time" style="margin-top: 35px;">
     <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
@@ -2543,6 +2600,66 @@ async function inicializarDados() {
         : ''
     };
 
+    // ---- 7.1 VISÃO GLOBAL (INTERNOS + PARCEIROS) - APENAS PARA GESTÃO ----
+    const role = String(perfilLogado?.role || '').toUpperCase().trim();
+    const perfisPermitidos = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
+    const blocoGlobal = document.getElementById('bloco-visao-global');
+
+    if (perfisPermitidos.includes(role) && blocoGlobal) {
+      blocoGlobal.style.display = 'block';
+
+      let gEntrFat = 0, gEntrQtd = 0, gEntrInt = 0, gEntrParc = 0;
+      let gAtivFat = 0, gAtivQtd = 0, gAtivInt = 0, gAtivParc = 0;
+
+      (dataVendas || []).forEach(v => {
+        // Ignora cancelados
+        const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
+        if (statusBruto.includes('CANCELADO')) return;
+
+        const origem = String(v.origem || '').toUpperCase().trim();
+        const isParceiro = origem === 'PARCEIRO' || (v.parceiro_id && String(v.parceiro_id).trim() !== 'null');
+        const valorVenda = parseValor(v.valor_contratado);
+
+        // --- ENTRANTES (Pendentes no mês selecionado) ---
+        if (!v.status_etapa || Number(v.status_etapa) < 6) {
+          const dVenda = parseDataBR(v.data_da_venda);
+          if (dVenda && (dVenda.getMonth() + 1) === mesNumericoSelecionado && dVenda.getFullYear() === anoSelecionado) {
+            gEntrFat += valorVenda;
+            gEntrQtd++;
+            if (isParceiro) gEntrParc++; else gEntrInt++;
+          }
+        }
+
+        // --- ATIVOS (Ativados no mês selecionado) ---
+        if (Number(v.status_etapa) === 6) {
+          const dAtiv = parseDataBR(v.data_de_ativacao_no_radar);
+          if (dAtiv && (dAtiv.getMonth() + 1) === mesNumericoSelecionado && dAtiv.getFullYear() === anoSelecionado) {
+            gAtivFat += valorVenda;
+            gAtivQtd++;
+            if (isParceiro) gAtivParc++; else gAtivInt++;
+          }
+        }
+      });
+
+      // Atualiza a tela
+      const fmtBRLGlobal = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      
+      document.getElementById('global-entrantes-fat').innerText = fmtBRLGlobal(gEntrFat);
+      document.getElementById('global-entrantes-qtd').innerText = `${gEntrQtd} pedido${gEntrQtd !== 1 ? 's' : ''}`;
+      document.getElementById('global-entrantes-int').innerText = gEntrInt;
+      document.getElementById('global-entrantes-parc').innerText = gEntrParc;
+
+      document.getElementById('global-ativos-fat').innerText = fmtBRLGlobal(gAtivFat);
+      document.getElementById('global-ativos-qtd').innerText = `${gAtivQtd} pedido${gAtivQtd !== 1 ? 's' : ''}`;
+      document.getElementById('global-ativos-int').innerText = gAtivInt;
+      document.getElementById('global-ativos-parc').innerText = gAtivParc;
+
+      console.log(`🌍 [DASH] Visão Global calculada: Entrantes ${gEntrQtd} (${fmtBRLGlobal(gEntrFat)}) | Ativos ${gAtivQtd} (${fmtBRLGlobal(gAtivFat)})`);
+    } else if (blocoGlobal) {
+      // Esconde o bloco para consultores comuns
+      blocoGlobal.style.display = 'none';
+    }
+    
     console.log('🔵 [DASH] Chamando renderizarDashboard...');
     renderizarDashboard(dados);
     console.log('🟢 [DASH] Renderizado com sucesso!');
