@@ -678,17 +678,17 @@
             <input type="email" id="up-email" class="up-input" placeholder="parceiro@empresa.com">
           </div>
         </div>
-        <div class="up-row">
-          <div class="up-fg full">
-            <label>Senha inicial *</label>
-            <div class="up-senha-wrap">
-              <input type="text" id="up-senha" class="up-input" placeholder="Mínimo 6 caracteres">
-              <button type="button" class="up-gerar-btn" onclick="UP.gerarSenha()" title="Gerar senha aleatória">
-                <i class="fas fa-dice"></i>
-              </button>
-            </div>
-          </div>
-        </div>
+       <div class="up-row" id="up-senha-row">
+  <div class="up-fg full">
+    <label>Senha inicial *</label>
+    <div class="up-senha-wrap">
+      <input type="text" id="up-senha" class="up-input" placeholder="Mínimo 6 caracteres">
+      <button type="button" class="up-gerar-btn" onclick="UP.gerarSenha()" title="Gerar senha aleatória">
+        <i class="fas fa-dice"></i>
+      </button>
+    </div>
+  </div>
+</div>
       </div>
 
       <!-- ─── COMISSÃO ─── -->
@@ -1040,9 +1040,13 @@
       $('up-cidade').value = p.cidade || '';
       $('up-uf').value = p.uf || '';
 
-      // Esconde a seção de acesso (email/senha) na edição
-      $('up-fs-acesso').style.display = 'none';
+      // Mostra a seção de acesso, mas esconde a senha (que não é editável aqui)
+      $('up-fs-acesso').style.display = '';
+      $('up-senha-row').style.display = 'none';
       $('up-fs-status').style.display = '';
+
+      // Preenche o e-mail atual do parceiro
+      $('up-email').value = p.email_login || '';
 
       // Status atual
       $('up-status').value = p.status || 'ATIVO';
@@ -1166,7 +1170,7 @@
            // ─── EDITAR ───────────────────────────────────
       if (editando) {
         const status = $('up-status').value;
-        const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
+                const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
           p_parceiro_id: editId,
           p_nome_razao: nome,
           p_nome_fantasia: nomeFantasia,
@@ -1176,7 +1180,8 @@
           p_uf: uf,
           p_comissao_config: comissao_config,
           p_status: status,
-          p_tipo: tipo                // 🔥 AQUI — envia o tipo
+          p_tipo: tipo,
+          p_email: $('up-email').value.trim().toLowerCase() 
         });
 
         if (error) throw error;
