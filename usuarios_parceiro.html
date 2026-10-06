@@ -1167,10 +1167,14 @@
         });
       }
 
-           // ─── EDITAR ───────────────────────────────────
+      // ─── EDITAR ───────────────────────────────────
       if (editando) {
         const status = $('up-status').value;
-               const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
+        const novoEmail = $('up-email').value.trim().toLowerCase();
+        const emailAntigo = (PARCEIROS.find(x => x.id === editId)?.email_login || '').toLowerCase();
+
+        // 1. Roda a RPC normal (atualiza parceiros + profiles)
+        const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
           p_parceiro_id: editId,
           p_nome_razao: nome,
           p_nome_fantasia: nomeFantasia,
@@ -1181,13 +1185,37 @@
           p_comissao_config: comissao_config,
           p_status: status,
           p_tipo: tipo,
-          p_email: $('up-email').value.trim().toLowerCase() // 👈 ADICIONE ESTA LINHA
+          p_email: novoEmail
         });
 
         if (error) throw error;
         if (!data?.success) throw new Error(data?.message || 'Erro ao salvar');
 
-        toast('✅ Parceiro atualizado!', 'success');
+        // 2. Se o e-mail mudou, chama a Edge Function para atualizar o auth.users
+        if (novoEmail && novoEmail !== emailAntigo && data.profile_id) {
+          try {
+            const { data: funcData, error: funcError } = await window.sb.functions.invoke(
+              'alterar-email-usuario',
+              {
+                body: {
+                  user_id: data.profile_id,
+                  novo_email: novoEmail, // 👈 NOME CORRETO QUE A EDGE FUNCTION ESPERA
+                  quem_alterou: PROFILE?.nome || PROFILE?.email || 'sistema'
+                }
+              }
+            );
+
+            if (funcError) throw funcError;
+            if (!funcData?.success) throw new Error(funcData?.message || 'Erro ao atualizar login');
+
+            toast('✅ Parceiro e login atualizados!', 'success');
+          } catch (eAuth) {
+            console.warn('⚠️ Perfil atualizado, mas login falhou:', eAuth);
+            toast('⚠️ Perfil salvo, mas LOGIN não atualizado.', 'warning');
+          }
+        } else {
+          toast('✅ Parceiro atualizado!', 'success');
+        }
       }
       // ─── CRIAR ────────────────────────────────────
       else {
