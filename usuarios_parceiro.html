@@ -1170,7 +1170,7 @@
            // ─── EDITAR ───────────────────────────────────
       if (editando) {
         const status = $('up-status').value;
-                const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
+               const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
           p_parceiro_id: editId,
           p_nome_razao: nome,
           p_nome_fantasia: nomeFantasia,
@@ -1181,7 +1181,7 @@
           p_comissao_config: comissao_config,
           p_status: status,
           p_tipo: tipo,
-          p_email: $('up-email').value.trim().toLowerCase() 
+          p_email: $('up-email').value.trim().toLowerCase() // 👈 ADICIONE ESTA LINHA
         });
 
         if (error) throw error;
