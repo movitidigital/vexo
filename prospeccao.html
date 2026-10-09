@@ -2819,15 +2819,23 @@ function consultarCNPJ(valor) {
     if(el) {
       el.placeholder = "⏳ Buscando...";
       el.style.backgroundColor = "#fffde7";
+      // Remove destaque de erro anterior, se houver
+      el.style.borderColor = "#ddd"; 
     }
   });
 
+  // Utiliza apenas a BrasilAPI (mais estável e sem problema de CORS)
   fetch("https://brasilapi.com.br/api/cnpj/v1/" + cnpjLimpo)
     .then(response => {
-      if (!response.ok) throw new Error();
+      if (!response.ok) throw new Error("CNPJ não encontrado ou API indisponível");
       return response.json();
     })
     .then(res => {
+      // Validação extra para garantir que a API retornou algo útil
+      if (!res.razao_social && !res.nome_fantasia) {
+          throw new Error("Dados incompletos retornados pela API");
+      }
+
       document.getElementById('p_razao').value = res.razao_social || res.nome_fantasia || "";
       document.getElementById('p_cep').value = res.cep || "";
       document.getElementById('p_endereco').value = (res.tipo_logradouro ? res.tipo_logradouro + " " : "") + (res.logradouro || "");
@@ -2860,45 +2868,19 @@ function consultarCNPJ(valor) {
       
       finalizarConsulta(campos, "Dados importados com sucesso!");
     })
-    .catch(() => {
-      fetch("https://receitaws.com.br/v1/cnpj/" + cnpjLimpo)
-        .then(response => response.json())
-        .then(res => {
-          if (res && res.status !== "ERROR") {
-            document.getElementById('p_razao').value = res.nome || "";
-            document.getElementById('p_cep').value = res.cep ? res.cep.replace(/[^\d]/g, '') : "";
-            document.getElementById('p_endereco').value = res.logradouro || "";
-            document.getElementById('p_numero').value = res.numero || "";
-            document.getElementById('p_bairro').value = res.bairro || "";
-            document.getElementById('p_cidade').value = res.municipio || "";
-            document.getElementById('p_uf').value = res.uf || "";
-            
-            if (res.abertura) {
-              const dataParts = res.abertura.split('/');
-              if (dataParts.length === 3) {
-                document.getElementById('p_data_abertura').value = `${dataParts[0]}/${dataParts[1]}/${dataParts[2]}`;
-              } else {
-                document.getElementById('p_data_abertura').value = res.abertura;
-              }
-            }
-            
-            if (res.natureza_juridica) {
-              document.getElementById('p_natureza_juridica').value = res.natureza_juridica;
-            }
-            
-            if (res.telefone) {
-              const tel = res.telefone.split('/')[0].trim();
-              document.getElementById('p_contato').value = tel.replace(/[^\d]/g, '');
-            }
-            
-            finalizarConsulta(campos, "Dados importados via Backup!");
-          } else {
-            finalizarConsulta(campos, "CNPJ não encontrado.", "erro");
-          }
-        })
-        .catch(() => {
-          finalizarConsulta(campos, "Serviços indisponíveis. Preencha manualmente.", "erro");
-        });
+    .catch((erro) => {
+      console.error("Erro na consulta do CNPJ:", erro);
+      
+      // Limpa os placeholders e avisa o usuário de forma clara
+      finalizarConsulta(campos, "⚠️ API de consulta offline ou CNPJ não encontrado. Por favor, preencha os dados da empresa MANUALMENTE.", "erro");
+      
+      // Foca no campo Razão Social para o usuário digitar e destaca em vermelho
+      const campoRazao = document.getElementById('p_razao');
+      if (campoRazao) {
+        campoRazao.focus();
+        campoRazao.style.borderColor = "#ef4444"; // Borda vermelha
+        campoRazao.style.backgroundColor = "#fee2e2"; // Fundo vermelho claro
+      }
     });
 }
 
