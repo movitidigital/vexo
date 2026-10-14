@@ -1951,47 +1951,37 @@
   // ============================================
   // CARREGAR TICKETS
   // ============================================
-function carregarTickets() {
+async function carregarTickets() {
   const container = document.getElementById('tickets-container');
   container.innerHTML = '<div class="skeleton-ticket"><div style="height: 100px; background: #f1f5f9; border-radius: 8px;"></div></div>';
   
   const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const usuarioId = user.matricula || user.username || user.email;
-  const cargoUsuario = user.role || user.cargo || 'PARCEIRO';
-  
-  google.script.run
-    .withSuccessHandler(function(tickets) {
-      ticketsAtuais = tickets || [];
-      
-      // 🌟 ORDENAR OS TICKETS JÁ NA CARGA
-      ticketsAtuais.sort((a, b) => {
-        const isResolvidoA = (a.status === 'resolvido' || a.status === 'fechado');
-        const isResolvidoB = (b.status === 'resolvido' || b.status === 'fechado');
-        
-        if (isResolvidoA !== isResolvidoB) {
-          return isResolvidoA ? 1 : -1;
-        }
-        
-        if (!isResolvidoA && !isResolvidoB) {
-          const dataA = parseDataParaOrdenacao(a.data_criacao);
-          const dataB = parseDataParaOrdenacao(b.data_criacao);
-          return dataA - dataB;
-        }
-        
-        const dataResolucaoA = a.data_resolucao ? parseDataParaOrdenacao(a.data_resolucao) : 0;
-        const dataResolucaoB = b.data_resolucao ? parseDataParaOrdenacao(b.data_resolucao) : 0;
-        return dataResolucaoB - dataResolucaoA;
-      });
-      
-      renderizarTickets();
-      atualizarEstatisticas();
-    })
-    .withFailureHandler(function(err) {
-      console.error('Erro ao carregar tickets:', err);
-      container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">❌ Erro ao carregar tickets. Tente novamente.</div>';
-      notificacaoVexo('Erro ao carregar tickets. Tente novamente.', 'error');
-    })
-    .p_listarTickets(usuarioId, cargoUsuario);
+  const isMaster = ['MASTER', 'ADMINISTRADOR', 'BACKOFFICE', 'GERENTE'].includes(String(user.role || '').toUpperCase());
+
+  try {
+    let query = window.sb.from('suporte_tickets').select('*');
+    
+    if (!isMaster) {
+      query = query.eq('parceiro_id', user.id);
+    }
+    
+    const { data, error } = await query.order('data_criacao', { ascending: false });
+    if (error) throw error;
+
+    ticketsAtuais = data || [];
+
+    // Atualiza Set de IDs conhecidos
+    if (ticketsAtuais.length > 0) {
+      ticketsIdsConhecidos = new Set(ticketsAtuais.map(t => t.id));
+    }
+
+    renderizarTickets();
+    atualizarEstatisticas();
+  } catch (err) {
+    console.error('Erro ao carregar tickets:', err);
+    container.innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">❌ Erro ao carregar tickets.</div>';
+    notificacaoVexo('Erro ao carregar tickets.', 'error');
+  }
 }
 
  function renderizarTickets() {
@@ -2231,7 +2221,7 @@ function mudarAbaSuporte(aba) {
     }, 300);
   }
 
- async function criarTicket() {
+async function criarTicket() {
   const titulo = document.getElementById('ticket-titulo').value.trim();
   const descricao = document.getElementById('ticket-descricao').value.trim();
   const prioridade = document.getElementById('ticket-prioridade').value;
@@ -2248,143 +2238,100 @@ function mudarAbaSuporte(aba) {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Criando...';
   
   const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const parceiroNome = user.username || user.nome || 'Parceiro';
-  const parceiroId = user.matricula || user.username || user.email;
   
-  // Processar upload de anexos
-  let anexosUrls = [];
-  for (const file of arquivosParaUpload) {
-    try {
-      const base64 = await convertFileToBase64(file);
-      const result = await new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler(resolve)
-          .withFailureHandler(reject)
-          .p_uploadAnexoTicket(base64, file.name, parceiroId);
-      });
-      if (result && result.success) {
-        anexosUrls.push(result.url);
-      }
-    } catch(e) {
-      console.error('Erro upload anexo:', e);
-    }
-  }
-  
+  // 🔥 Pega o tenant_id do profile do usuário
+  let tenantId = null;
+  try {
+    const { data: prof } = await window.sb.from('profiles').select('tenant_id').eq('id', user.id).single();
+    tenantId = prof?.tenant_id || null;
+  } catch(e) {}
+
   const dados = {
     titulo: titulo,
     descricao: descricao,
     prioridade: prioridade,
     categoria: categoria,
     cliente: cliente,
-    parceiro_nome: parceiroNome,
-    parceiro_id: parceiroId,
-    anexos: anexosUrls
+    parceiro_nome: user.username || user.nome || 'Parceiro',
+    parceiro_id: user.id,
+    tenant_id: tenantId,
+    status: 'aberto',
+    anexos: []
   };
   
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res && res.success) {
-        fecharModalNovoTicket();
-        carregarTickets();
-        notificacaoVexo('Chamado aberto com sucesso! O suporte VEXO responderá em breve.', 'success');
-      } else {
-        notificacaoVexo('Erro ao criar chamado: ' + (res ? res.message : 'Erro desconhecido'), 'error');
-      }
-      btn.disabled = false;
-      btn.innerHTML = 'Criar Chamado';
-    })
-    .withFailureHandler(function(err) {
-      notificacaoVexo('Erro de comunicação: ' + err, 'error');
-      btn.disabled = false;
-      btn.innerHTML = 'Criar Chamado';
-    })
-    .p_criarTicket(dados);
+  try {
+    const { error } = await window.sb.from('suporte_tickets').insert([dados]);
+    if (error) throw error;
+
+    fecharModalNovoTicket();
+    await carregarTickets();
+    notificacaoVexo('Chamado aberto com sucesso!', 'success');
+  } catch (err) {
+    console.error('Erro ao criar ticket:', err);
+    notificacaoVexo('Erro ao criar chamado: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = 'Criar Chamado';
+  }
 }
 
   // ============================================
   // MODAL: DETALHES E RESPOSTAS
   // ============================================
-function abrirModalDetalhes(ticketId) {
+async function abrirModalDetalhes(ticketId) {
   ticketSelecionadoId = ticketId;
-  
-  const ticket = ticketsAtuais.find(t => t.id === ticketId);
-  
-  if (!ticket) {
-    notificacaoVexo('Ticket não encontrado', 'error');
-    return;
-  }
-  
-  document.getElementById('detalhes-titulo').innerHTML = `<i class="fa-solid fa-ticket"></i> #${ticket.id} - ${escapeHtml(ticket.titulo)}`;
   
   const modal = document.getElementById('modal-detalhes-ticket');
   modal.style.display = 'flex';
-  setTimeout(() => {
-    modal.style.opacity = '1';
-  }, 10);
+  setTimeout(() => { modal.style.opacity = '1'; }, 10);
   
-  renderizarDetalhesTicket(ticket);
-  
-  // Controlar visibilidade dos botões
-  const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const cargoUsuario = user.role || user.cargo || '';
-  const isMaster = (cargoUsuario === 'MASTER' || cargoUsuario === 'ADMINISTRADOR');
-  const isParceiro = (cargoUsuario === 'PARCEIRO');
-  const isResolvido = (ticket.status === 'resolvido' || ticket.status === 'fechado');
-  
-  const btnResolver = document.getElementById('btn-resolver-ticket');
-  const btnReabrir = document.getElementById('btn-reabrir-ticket');
-  const btnResponder = document.querySelector('#modal-detalhes-ticket button[onclick="responderTicket()"]');
-  const textareaResposta = document.getElementById('resposta-texto');
-  const anexoInput = document.getElementById('resposta-anexo');
-  
-  if (isResolvido) {
-    // Ticket resolvido
-    if (btnResolver) btnResolver.style.display = 'none';
+  document.getElementById('detalhes-conteudo').innerHTML = '<div style="text-align: center; padding: 40px;"><i class="fa-solid fa-spinner fa-spin" style="font-size: 30px;"></i></div>';
+
+  try {
+    const { data: ticket, error: errT } = await window.sb
+      .from('suporte_tickets').select('*').eq('id', ticketId).single();
+    if (errT) throw errT;
+
+    const { data: respostas, error: errR } = await window.sb
+      .from('suporte_respostas').select('*').eq('ticket_id', ticketId).order('data', { ascending: true });
+    if (errR) throw errR;
+
+    ticket.respostas = respostas || [];
+
+    document.getElementById('detalhes-titulo').innerHTML = `<i class="fa-solid fa-ticket"></i> #${ticket.id.substring(0,8)} - ${escapeHtml(ticket.titulo)}`;
     
-    // Botão reabrir: visível apenas para PARCEIRO
-    if (btnReabrir) {
-      btnReabrir.style.display = isParceiro ? 'block' : 'none';
-    }
+    renderizarDetalhesTicket(ticket);
     
-    // Desabilitar resposta para ambos
-    if (btnResponder) {
-      btnResponder.disabled = true;
-      btnResponder.style.opacity = '0.5';
-      btnResponder.style.cursor = 'not-allowed';
-    }
-    if (textareaResposta) {
-      textareaResposta.disabled = true;
-      textareaResposta.placeholder = 'Este ticket já foi resolvido. Caso precise, clique em "Reabrir Ticket".';
-      textareaResposta.style.background = '#f8fafc';
-    }
-    if (anexoInput) {
-      anexoInput.disabled = true;
-      anexoInput.style.display = 'none';
-    }
-  } else {
-    // Ticket aberto
-    if (btnReabrir) btnReabrir.style.display = 'none';
-    if (btnResponder) {
-      btnResponder.disabled = false;
-      btnResponder.style.opacity = '1';
-      btnResponder.style.cursor = 'pointer';
-    }
-    if (textareaResposta) {
-      textareaResposta.disabled = false;
-      textareaResposta.placeholder = 'Digite sua resposta aqui...';
-      textareaResposta.style.background = 'white';
-    }
-    if (anexoInput) {
-      anexoInput.disabled = false;
-      anexoInput.style.display = 'block';
-    }
+    // Controle dos botões
+    const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const cargoUsuario = String(user.role || user.cargo || '').toUpperCase();
+    const isMaster = ['MASTER', 'ADMINISTRADOR', 'BACKOFFICE'].includes(cargoUsuario);
+    const isParceiro = (cargoUsuario === 'PARCEIRO' || cargoUsuario === 'FREELANCER');
+    const isResolvido = (ticket.status === 'resolvido' || ticket.status === 'fechado');
     
-    // Botão resolver: visível apenas para MASTER
-    if (btnResolver && isMaster) {
-      btnResolver.style.display = 'block';
-    } else if (btnResolver) {
-      btnResolver.style.display = 'none';
+    const btnResolver = document.getElementById('btn-resolver-ticket');
+    const btnReabrir = document.getElementById('btn-reabrir-ticket');
+    const btnResponder = document.querySelector('#modal-detalhes-ticket button[onclick="responderTicket()"]');
+    const textareaResposta = document.getElementById('resposta-texto');
+    const anexoInput = document.getElementById('resposta-anexo');
+    
+    if (isResolvido) {
+      if (btnResolver) btnResolver.style.display = 'none';
+      if (btnReabrir) btnReabrir.style.display = isParceiro ? 'block' : 'none';
+      if (btnResponder) { btnResponder.disabled = true; btnResponder.style.opacity = '0.5'; }
+      if (textareaResposta) { textareaResposta.disabled = true; textareaResposta.placeholder = 'Este ticket já foi resolvido. Caso precise, clique em "Reabrir Ticket".'; }
+      if (anexoInput) anexoInput.style.display = 'none';
+    } else {
+      if (btnReabrir) btnReabrir.style.display = 'none';
+      if (btnResponder) { btnResponder.disabled = false; btnResponder.style.opacity = '1'; }
+      if (textareaResposta) { textareaResposta.disabled = false; textareaResposta.placeholder = 'Digite sua resposta aqui...'; }
+      if (anexoInput) anexoInput.style.display = 'block';
+      if (btnResolver && isMaster) btnResolver.style.display = 'block';
+      else if (btnResolver) btnResolver.style.display = 'none';
     }
+  } catch (err) {
+    console.error('Erro ao abrir detalhes:', err);
+    document.getElementById('detalhes-conteudo').innerHTML = '<div style="text-align:center;padding:40px;color:#ef4444;">Erro ao carregar detalhes do ticket.</div>';
   }
 }
   
@@ -2537,42 +2484,35 @@ function configurarRatingStarsModal() {
   });
 }
 // Função para enviar avaliação do modal
-function enviarAvaliacaoModal(ticketId) {
+async function enviarAvaliacaoModal(ticketId) {
   if (ratingModalSelecionado === 0) {
-    notificacaoVexo('Por favor, selecione uma nota de 1 a 5 estrelas!', 'warning');
+    notificacaoVexo('Selecione uma nota de 1 a 5 estrelas!', 'warning');
     return;
   }
   
   const comentario = document.getElementById('avaliacao-comentario-modal').value;
   const btn = event.target;
   const textoOriginal = btn.innerHTML;
-  
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
   
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res && res.success) {
-        notificacaoVexo('Obrigado por avaliar nosso atendimento!', 'success');
-        // Recarregar os detalhes do ticket para mostrar a avaliação
-        const ticket = ticketsAtuais.find(t => t.id === ticketId);
-        if (ticket) {
-          ticket.avaliacao_nota = ratingModalSelecionado;
-          ticket.avaliacao_comentario = comentario;
-          renderizarDetalhesTicket(ticket);
-        }
-      } else {
-        notificacaoVexo('Erro ao enviar avaliação', 'error');
-      }
-      btn.disabled = false;
-      btn.innerHTML = textoOriginal;
-    })
-    .withFailureHandler(function(err) {
-      notificacaoVexo('Erro de comunicação: ' + err, 'error');
-      btn.disabled = false;
-      btn.innerHTML = textoOriginal;
-    })
-    .p_avaliarAtendimento(ticketId, ratingModalSelecionado, comentario);
+  try {
+    const { error } = await window.sb
+      .from('suporte_tickets')
+      .update({ avaliacao_nota: ratingModalSelecionado, avaliacao_comentario: comentario })
+      .eq('id', ticketId);
+    if (error) throw error;
+
+    notificacaoVexo('Obrigado por avaliar!', 'success');
+    await carregarTickets();
+    await abrirModalDetalhes(ticketId);
+  } catch (err) {
+    console.error('Erro avaliação:', err);
+    notificacaoVexo('Erro ao enviar avaliação', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = textoOriginal;
+  }
 }
   
   function fecharModalDetalhes() {
@@ -2585,8 +2525,7 @@ function enviarAvaliacaoModal(ticketId) {
     }, 300);
   }
   
- async function responderTicket() {
-  // Verificar se o ticket ainda está aberto
+async function responderTicket() {
   const ticket = ticketsAtuais.find(t => t.id === ticketSelecionadoId);
   if (!ticket) {
     notificacaoVexo('Ticket não encontrado', 'error');
@@ -2594,7 +2533,7 @@ function enviarAvaliacaoModal(ticketId) {
   }
   
   if (ticket.status === 'resolvido' || ticket.status === 'fechado') {
-    notificacaoVexo('Este ticket já foi resolvido. Não é possível enviar mais respostas.', 'warning');
+    notificacaoVexo('Este ticket já foi resolvido.', 'warning');
     return;
   }
   
@@ -2610,76 +2549,54 @@ function enviarAvaliacaoModal(ticketId) {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
   
   const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const parceiroNome = user.username || user.nome || 'Parceiro';
-  
-  let anexoUrl = null;
-  const anexoFile = document.getElementById('resposta-anexo').files[0];
-  if (anexoFile) {
-    try {
-      const base64 = await convertFileToBase64(anexoFile);
-      const result = await new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler(resolve)
-          .withFailureHandler(reject)
-          .p_uploadAnexoTicket(base64, anexoFile.name, ticketSelecionadoId);
-      });
-      if (result && result.success) {
-        anexoUrl = result.url;
-      }
-    } catch(e) {
-      console.error('Erro upload anexo:', e);
-    }
-  }
   
   const dados = {
     ticket_id: ticketSelecionadoId,
     mensagem: mensagem,
-    autor_nome: parceiroNome,
+    autor_nome: user.username || user.nome || 'Parceiro',
     autor_tipo: 'parceiro',
-    anexo_url: anexoUrl
+    anexos: []
   };
   
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res && res.success) {
-        document.getElementById('resposta-texto').value = '';
-        document.getElementById('resposta-anexo').value = '';
-        carregarTickets();
-        
-        const ticketAtualizado = ticketsAtuais.find(t => t.id === ticketSelecionadoId);
-        if (ticketAtualizado) {
-          renderizarDetalhesTicket(ticketAtualizado);
-        }
-        notificacaoVexo('Resposta enviada com sucesso!', 'success');
-      } else {
-        notificacaoVexo('Erro ao enviar resposta', 'error');
-      }
-      btn.disabled = false;
-      btn.innerHTML = textoOriginal;
-    })
-    .withFailureHandler(function(err) {
-      notificacaoVexo('Erro de comunicação: ' + err, 'error');
-      btn.disabled = false;
-      btn.innerHTML = textoOriginal;
-    })
-    .p_responderTicket(dados);
+  try {
+    const { error } = await window.sb.from('suporte_respostas').insert([dados]);
+    if (error) throw error;
+
+    document.getElementById('resposta-texto').value = '';
+    document.getElementById('resposta-anexo').value = '';
+    await carregarTickets();
+    
+    const ticketAtualizado = ticketsAtuais.find(t => t.id === ticketSelecionadoId);
+    if (ticketAtualizado) {
+      await abrirModalDetalhes(ticketSelecionadoId);
+    }
+    notificacaoVexo('Resposta enviada com sucesso!', 'success');
+  } catch (err) {
+    console.error('Erro ao responder:', err);
+    notificacaoVexo('Erro ao enviar resposta: ' + err.message, 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = textoOriginal;
+  }
 }
   
   // ============================================
   // BASE DE CONHECIMENTO
   // ============================================
-  function carregarBaseConhecimento() {
-    google.script.run
-      .withSuccessHandler(function(artigos) {
-        kbArtigos = artigos || [];
-        renderizarKBArticles();
-      })
-      .withFailureHandler(function(err) {
-        console.error('Erro ao carregar KB:', err);
-        document.getElementById('kb-articles').innerHTML = '<div style="text-align: center; padding: 40px; color: #ef4444;">❌ Erro ao carregar base de conhecimento</div>';
-      })
-      .p_listarBaseConhecimento();
+async function carregarBaseConhecimento() {
+  try {
+    const { data, error } = await window.sb
+      .from('suporte_base_conhecimento')
+      .select('*')
+      .order('data_atualizacao', { ascending: false });
+    if (error) throw error;
+    kbArtigos = data || [];
+    renderizarKBArticles();
+  } catch (err) {
+    console.error('Erro ao carregar KB:', err);
+    document.getElementById('kb-articles').innerHTML = '<div style="text-align: center; padding: 40px; color: #94a3b8;">Nenhum artigo disponível ainda.</div>';
   }
+}
   
   function renderizarKBArticles() {
     const container = document.getElementById('kb-articles');
@@ -2765,7 +2682,7 @@ function enviarAvaliacaoModal(ticketId) {
     }, 300);
   }
   
-  function enviarAvaliacao() {
+async function enviarAvaliacao() {
   if (ratingSelecionado === 0) {
     notificacaoVexo('Por favor, selecione uma nota de 1 a 5 estrelas!', 'warning');
     return;
@@ -2774,28 +2691,26 @@ function enviarAvaliacaoModal(ticketId) {
   const comentario = document.getElementById('avaliacao-comentario').value;
   const btn = event.target;
   const textoOriginal = btn.innerHTML;
-  
   btn.disabled = true;
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
   
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res && res.success) {
-        notificacaoVexo('Obrigado por avaliar nosso atendimento!', 'success');
-        fecharModalAvaliacao();
-        carregarTickets();
-      } else {
-        notificacaoVexo('Erro ao enviar avaliação', 'error');
-      }
-      btn.disabled = false;
-      btn.innerHTML = textoOriginal;
-    })
-    .withFailureHandler(function(err) {
-      notificacaoVexo('Erro de comunicação: ' + err, 'error');
-      btn.disabled = false;
-      btn.innerHTML = textoOriginal;
-    })
-    .p_avaliarAtendimento(avaliacaoTicketId, ratingSelecionado, comentario);
+  try {
+    const { error } = await window.sb
+      .from('suporte_tickets')
+      .update({ avaliacao_nota: ratingSelecionado, avaliacao_comentario: comentario })
+      .eq('id', avaliacaoTicketId);
+    if (error) throw error;
+
+    notificacaoVexo('Obrigado por avaliar!', 'success');
+    fecharModalAvaliacao();
+    await carregarTickets();
+  } catch (err) {
+    console.error('Erro avaliação:', err);
+    notificacaoVexo('Erro ao enviar avaliação', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = textoOriginal;
+  }
 }
   
   // ============================================
@@ -2843,58 +2758,52 @@ window.toggleAutoRefresh = toggleAutoRefresh;
   /**
  * Resolver ticket (marcar como resolvido)
  */
-function resolverTicket() {
-  if (!ticketSelecionadoId) {
-    notificacaoVexo('Nenhum ticket selecionado', 'warning');
-    return;
-  }
+async function resolverTicket() {
+  if (!ticketSelecionadoId) return;
   
   const ticket = ticketsAtuais.find(t => t.id === ticketSelecionadoId);
-  if (!ticket) {
-    notificacaoVexo('Ticket não encontrado', 'error');
-    return;
-  }
-  
+  if (!ticket) return;
   if (ticket.status === 'resolvido' || ticket.status === 'fechado') {
     notificacaoVexo('Este ticket já está resolvido!', 'warning');
     return;
   }
   
   const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const cargoUsuario = user.role || user.cargo || '';
-  const isMaster = (cargoUsuario === 'MASTER' || cargoUsuario === 'ADMINISTRADOR');
+  const cargoUsuario = String(user.role || user.cargo || '').toUpperCase();
+  const isMaster = ['MASTER', 'ADMINISTRADOR', 'BACKOFFICE'].includes(cargoUsuario);
+  if (!isMaster) { notificacaoVexo('Sem permissão.', 'warning'); return; }
   
-  if (!isMaster) {
-    notificacaoVexo('Apenas usuários MASTER podem resolver tickets.', 'warning');
-    return;
-  }
-  
-  // 🌟 PEGAR A MENSAGEM DA CAIXA DE RESPOSTA
   const mensagemResposta = document.getElementById('resposta-texto').value.trim();
   
-  // Usar confirmação personalizada
-  let mensagemConfirmacao = `⚠️ Tem certeza que deseja marcar o ticket #${ticket.id} como RESOLVIDO?\n\nIsso irá finalizar o chamado.`;
+  if (!confirm(`Marcar o ticket como RESOLVIDO?`)) return;
   
-  if (mensagemResposta) {
-    mensagemConfirmacao += `\n\n📝 Sua resposta será enviada:\n"${mensagemResposta.substring(0, 100)}${mensagemResposta.length > 100 ? '...' : ''}"`;
-  }
-  
-  confirmarVexo(
-    mensagemConfirmacao,
-    'Resolver Ticket',
-    function() {
-      // 🌟 PRIMEIRO: ENVIA A RESPOSTA (SE TIVER MENSAGEM)
-      if (mensagemResposta) {
-        enviarRespostaAntesResolver(mensagemResposta, ticket.id);
-      } else {
-        // Sem resposta, só resolve
-        executarResolverTicket(ticket.id);
-      }
-    },
-    function() {
-      notificacaoVexo('Operação cancelada.', 'info');
+  try {
+    // Se tiver mensagem, salva a resposta primeiro
+    if (mensagemResposta) {
+      await window.sb.from('suporte_respostas').insert([{
+        ticket_id: ticket.id,
+        mensagem: mensagemResposta,
+        autor_nome: user.username || user.nome || 'Suporte VEXO',
+        autor_tipo: 'suporte',
+        anexos: []
+      }]);
     }
-  );
+    
+    // Atualiza status do ticket
+    const { error } = await window.sb
+      .from('suporte_tickets')
+      .update({ status: 'resolvido', data_resolucao: new Date().toISOString() })
+      .eq('id', ticket.id);
+    if (error) throw error;
+
+    notificacaoVexo('Ticket resolvido com sucesso!', 'success');
+    document.getElementById('resposta-texto').value = '';
+    fecharModalDetalhes();
+    await carregarTickets();
+  } catch (err) {
+    console.error('Erro ao resolver:', err);
+    notificacaoVexo('Erro ao resolver ticket', 'error');
+  }
 }
 
 // 🌟 NOVA FUNÇÃO: Envia resposta e depois resolve o ticket
@@ -3227,11 +3136,10 @@ function fecharModalReabertura() {
 }
 
 // Confirmar reabertura
-function confirmarReabertura() {
+async function confirmarReabertura() {
   const motivo = document.getElementById('motivo-reabertura').value.trim();
-  
   if (!motivo) {
-    notificacaoVexo('Por favor, descreva o motivo da reabertura.', 'warning');
+    notificacaoVexo('Descreva o motivo da reabertura.', 'warning');
     return;
   }
   
@@ -3241,27 +3149,35 @@ function confirmarReabertura() {
   btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Enviando...';
   
   const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const parceiroNome = user.username || user.nome || 'Parceiro';
   
-  google.script.run
-    .withSuccessHandler(function(res) {
-      if (res && res.success) {
-        notificacaoVexo('Ticket reaberto com sucesso! O suporte irá analisar.', 'success');
-        fecharModalReabertura();
-        fecharModalDetalhes();
-        carregarTickets(); // Recarregar lista
-      } else {
-        notificacaoVexo('Erro: ' + (res ? res.message : 'Erro desconhecido'), 'error');
-      }
-      btn.disabled = false;
-      btn.innerHTML = textoOriginal;
-    })
-    .withFailureHandler(function(err) {
-      notificacaoVexo('Erro de comunicação: ' + err, 'error');
-      btn.disabled = false;
-      btn.innerHTML = textoOriginal;
-    })
-    .p_reabrirTicket(ticketReaberturaId, motivo, parceiroNome);
+  try {
+    // Insere a resposta
+    await window.sb.from('suporte_respostas').insert([{
+      ticket_id: ticketReaberturaId,
+      mensagem: `🔄 REABERTURA: ${motivo}`,
+      autor_nome: user.username || user.nome || 'Parceiro',
+      autor_tipo: 'parceiro',
+      anexos: []
+    }]);
+
+    // Reabre o ticket
+    const { error } = await window.sb
+      .from('suporte_tickets')
+      .update({ status: 'aberto', data_resolucao: null })
+      .eq('id', ticketReaberturaId);
+    if (error) throw error;
+
+    notificacaoVexo('Ticket reaberto com sucesso!', 'success');
+    fecharModalReabertura();
+    fecharModalDetalhes();
+    await carregarTickets();
+  } catch (err) {
+    console.error('Erro reabertura:', err);
+    notificacaoVexo('Erro ao reabrir ticket', 'error');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = textoOriginal;
+  }
 }
 
 // ============================================
@@ -4361,81 +4277,35 @@ function iniciarAutoRefresh() {
 // Verificar se há novos tickets
 async function verificarNovosTickets() {
   const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const usuarioId = user.matricula || user.username || user.email;
-  const cargoUsuario = user.role || user.cargo || 'PARCEIRO';
-  
-  return new Promise((resolve) => {
-    google.script.run
-      .withSuccessHandler(function(tickets) {
-        if (!tickets || tickets.length === 0) {
-          resolve();
-          return;
-        }
-        
-        // Salvar os IDs atuais dos tickets
-        const idsAtuais = new Set(tickets.map(t => t.id));
-        
-        // Verificar novos tickets (IDs que não existiam antes)
-        const novosTickets = tickets.filter(t => !ticketsIdsConhecidos.has(t.id));
-        
-        if (novosTickets.length > 0) {
-          console.log(`🎯 ${novosTickets.length} novo(s) ticket(s) detectado(s)!`);
-          
-          // Atualizar lista de IDs conhecidos
-          ticketsIdsConhecidos = idsAtuais;
-          
-          // Atualizar tickets globais
-          const ticketsAtuaisOrdenados = [...tickets].sort((a, b) => {
-            const isResolvidoA = (a.status === 'resolvido' || a.status === 'fechado');
-            const isResolvidoB = (b.status === 'resolvido' || b.status === 'fechado');
-            if (isResolvidoA !== isResolvidoB) return isResolvidoA ? 1 : -1;
-            if (!isResolvidoA && !isResolvidoB) {
-              const dataA = parseDataParaOrdenacao(a.data_criacao);
-              const dataB = parseDataParaOrdenacao(b.data_criacao);
-              return dataA - dataB;
-            }
-            const dataResolucaoA = a.data_resolucao ? parseDataParaOrdenacao(a.data_resolucao) : 0;
-            const dataResolucaoB = b.data_resolucao ? parseDataParaOrdenacao(b.data_resolucao) : 0;
-            return dataResolucaoB - dataResolucaoA;
-          });
-          
-          ticketsAtuais = ticketsAtuaisOrdenados;
-          
-          // Re-renderizar tickets
-          renderizarTickets();
-          atualizarEstatisticas();
-          
-          // Mostrar notificação visual
-          novosTickets.forEach(ticket => {
-            notificacaoVexo(
-              `📋 Novo ticket #${ticket.id}: ${ticket.titulo.substring(0, 50)}`,
-              'info',
-              '🆕 Novo Chamado!'
-            );
-          });
-          
-          // Tocar som (opcional - comentado por padrão)
-          // tocarSomNovoTicket();
-          
-          // Scroll suave para o novo ticket (opcional)
-          const novoCard = document.querySelector(`.ticket-card:has(.ticket-id:contains('${novosTickets[0].id}'))`);
-          if (novoCard) {
-            novoCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          }
-        } else {
-          // Mesmo sem novos tickets, atualizar estatísticas (SLA, etc)
-          ticketsAtuais = tickets;
-          atualizarEstatisticas();
-        }
-        
-        resolve();
-      })
-      .withFailureHandler(function(err) {
-        console.error('Erro ao verificar novos tickets:', err);
-        resolve();
-      })
-      .p_listarTickets(usuarioId, cargoUsuario);
-  });
+  const isMaster = ['MASTER', 'ADMINISTRADOR', 'BACKOFFICE', 'GERENTE'].includes(String(user.role || '').toUpperCase());
+
+  try {
+    let query = window.sb.from('suporte_tickets').select('*');
+    if (!isMaster) query = query.eq('parceiro_id', user.id);
+    
+    const { data, error } = await query.order('data_criacao', { ascending: false });
+    if (error) throw error;
+    if (!data) return;
+
+    const idsAtuais = new Set(data.map(t => t.id));
+    const novosTickets = data.filter(t => !ticketsIdsConhecidos.has(t.id));
+
+    if (novosTickets.length > 0) {
+      ticketsIdsConhecidos = idsAtuais;
+      ticketsAtuais = data;
+      renderizarTickets();
+      atualizarEstatisticas();
+      
+      novosTickets.forEach(ticket => {
+        notificacaoVexo(`📋 Novo ticket: ${ticket.titulo.substring(0, 50)}`, 'info', '🆕 Novo Chamado!');
+      });
+    } else {
+      ticketsAtuais = data;
+      atualizarEstatisticas();
+    }
+  } catch (err) {
+    console.error('Erro verificação:', err);
+  }
 }
 
 // Função para tocar som (opcional)
