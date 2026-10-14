@@ -1860,34 +1860,40 @@
 </div>
 
 <script>
-  // ═══════════════════════════════════════════════════════════
-// 🔥 STUB: Simula o google.script.run para não quebrar o código
-// enquanto terminamos a migração para o Supabase
+// ═══════════════════════════════════════════════════════════
+// 🔥 STUB corrigido: Simula o google.script.run sem recursão
 // ═══════════════════════════════════════════════════════════
 if (typeof window.google === 'undefined') {
-  window.google = {
-    script: {
-      run: new Proxy({}, {
-        get: function(target, prop) {
-          // Handlers fluentes
-          if (prop === 'withSuccessHandler') {
-            return function(fn) { this._success = fn; return this; };
-          }
-          if (prop === 'withFailureHandler') {
-            return function(fn) { this._failure = fn; return this; };
-          }
-          // Qualquer outro método: loga e chama o failure handler
-          return function() {
-            console.warn('[VEXO] Função legada chamada:', prop, '— não migrada para Supabase ainda');
-            if (this._failure) {
-              this._failure(new Error('Função legada "' + prop + '" ainda não foi migrada para o Supabase.'));
-            }
-            return this;
-          };
+  (function() {
+    var _success = null;
+    var _failure = null;
+
+    var _self = {
+      withSuccessHandler: function(fn) { _success = fn; return _self; },
+      withFailureHandler: function(fn) { _failure = fn; return _self; }
+    };
+
+    // Funções legadas que ainda podem existir em algum canto do código
+    var _legacyNames = [
+      'p_listarTickets', 'p_criarTicket', 'p_uploadAnexoTicket',
+      'p_responderTicket', 'p_resolverTicket', 'p_reabrirTicket',
+      'p_avaliarAtendimento', 'p_listarBaseConhecimento',
+      'p_registrarVisualizacaoArtigo', 'p_estatisticasSatisfacao',
+      'p_carregarRelatorioPerformance'
+    ];
+
+    _legacyNames.forEach(function(name) {
+      _self[name] = function() {
+        console.warn('[VEXO] Chamada legada interceptada:', name, '→ ignorada (migração pendente)');
+        if (_failure) {
+          try { _failure(new Error('Função "' + name + '" ainda não migrada para o Supabase.')); } catch (e) {}
         }
-      })
-    }
-  };
+        return _self;
+      };
+    });
+
+    window.google = { script: { run: _self } };
+  })();
 }
   // ============================================
   // VARIÁVEIS GLOBAIS
@@ -4405,46 +4411,6 @@ function initAutoRefresh() {
     }
   });
 }
-
-// Modificar a função carregarTickets para também alimentar o Set de IDs
-const carregarTicketsOriginal = carregarTickets;
-window.carregarTickets = function() {
-  const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const usuarioId = user.matricula || user.username || user.email;
-  const cargoUsuario = user.role || user.cargo || 'PARCEIRO';
-  
-  google.script.run
-    .withSuccessHandler(function(tickets) {
-      ticketsAtuais = tickets || [];
-      
-      // Atualizar o Set de IDs conhecidos
-      if (ticketsAtuais.length > 0) {
-        ticketsIdsConhecidos = new Set(ticketsAtuais.map(t => t.id));
-      }
-      
-      // Ordenar
-      ticketsAtuais.sort((a, b) => {
-        const isResolvidoA = (a.status === 'resolvido' || a.status === 'fechado');
-        const isResolvidoB = (b.status === 'resolvido' || b.status === 'fechado');
-        if (isResolvidoA !== isResolvidoB) return isResolvidoA ? 1 : -1;
-        if (!isResolvidoA && !isResolvidoB) {
-          const dataA = parseDataParaOrdenacao(a.data_criacao);
-          const dataB = parseDataParaOrdenacao(b.data_criacao);
-          return dataA - dataB;
-        }
-        const dataResolucaoA = a.data_resolucao ? parseDataParaOrdenacao(a.data_resolucao) : 0;
-        const dataResolucaoB = b.data_resolucao ? parseDataParaOrdenacao(b.data_resolucao) : 0;
-        return dataResolucaoB - dataResolucaoA;
-      });
-      
-      renderizarTickets();
-      atualizarEstatisticas();
-    })
-    .withFailureHandler(function(err) {
-      console.error('Erro ao carregar tickets:', err);
-    })
-    .p_listarTickets(usuarioId, cargoUsuario);
-};
 
 // Sobrescrever a função de renderizar para adicionar efeito nos novos tickets
 const renderizarTicketsOriginalGlobal = renderizarTickets;
