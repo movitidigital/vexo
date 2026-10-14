@@ -1281,10 +1281,6 @@ function parseDataSemTimezone(valor) {
 
     // ═══════════════════════════════════════════════════════════
     // 🎯 ORDENAÇÃO INTELIGENTE DE COBRANÇA
-    //   1) Clientes com fatura ATRASADA no topo,
-    //      ordenados do MAIS atrasado para o MENOS atrasado.
-    //   2) Em seguida, clientes que vão VENCER,
-    //      ordenados do mais próximo para o mais distante.
     // ═══════════════════════════════════════════════════════════
     var prioridades = {};
     for (var pi = 0; pi < clientes.length; pi++) {
@@ -1398,7 +1394,17 @@ function parseDataSemTimezone(valor) {
             }
           }
 
-          // Atualiza a fatura mais crítica (para exibir no resumo)
+          // ═══════════════════════════════════════════════════════════
+          // 🔥 SELEÇÃO DA FATURA MAIS CRÍTICA (CORRIGIDA)
+          // 
+          // Sistema de pontuação (score):
+          //   ATRASADO = 3 (maior prioridade)
+          //   PENDENTE = 2
+          //   PAGO     = 1 (só se foi pago hoje, para mostrar botão estorno)
+          //
+          // Em caso de empate no score, escolhe SEMPRE a data mais antiga
+          // (mais atrasada ou mais próxima do vencimento).
+          // ═══════════════════════════════════════════════════════════
           var considerarParaResumo = (status !== 'PAGO') ||
             (status === 'PAGO' && dataPagamento &&
              dataPagamento.getFullYear() === hoje.getFullYear() &&
@@ -1406,29 +1412,26 @@ function parseDataSemTimezone(valor) {
              dataPagamento.getDate() === hoje.getDate());
 
           if (considerarParaResumo) {
+            var scoreStatus = status === 'ATRASADO' ? 3 : (status === 'PENDENTE' ? 2 : 1);
+
+            var substituir = false;
             if (!faturaMaisCritica) {
+              substituir = true;
+            } else if (scoreStatus > faturaMaisCritica.score) {
+              substituir = true;
+            } else if (scoreStatus === faturaMaisCritica.score && dataVenc < faturaMaisCritica.dataVencObj) {
+              substituir = true;
+            }
+
+            if (substituir) {
               faturaMaisCritica = {
                 mes: fatura.mes,
                 vencimento: fatura.vencimento,
                 statusCalc: status,
                 dataVencObj: dataVenc,
-                numLinha: linhaTel.numero
-              };
-            } else if (status === 'ATRASADO' && faturaMaisCritica.statusCalc !== 'ATRASADO') {
-              faturaMaisCritica = {
-                mes: fatura.mes,
-                vencimento: fatura.vencimento,
-                statusCalc: status,
-                dataVencObj: dataVenc,
-                numLinha: linhaTel.numero
-              };
-            } else if (status !== 'PAGO' && faturaMaisCritica.statusCalc === 'PAGO') {
-              faturaMaisCritica = {
-                mes: fatura.mes,
-                vencimento: fatura.vencimento,
-                statusCalc: status,
-                dataVencObj: dataVenc,
-                numLinha: linhaTel.numero
+                numLinha: linhaTel.numero,
+                score: scoreStatus,
+                dataPagamento: dataPagamento
               };
             }
           }
@@ -1492,15 +1495,16 @@ function parseDataSemTimezone(valor) {
         if (st === 'PAGO') {
           badgeClass = 'badge-pago';
           statusTexto = '✅ Pago';
-          acao = { texto: 'Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
+          // 🔥 Passa dataPagamento para saber se é "Processando baixa" ou "Sem Ações"
+          acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st, faturaMaisCritica.dataPagamento);
         } else if (st === 'ATRASADO') {
           badgeClass = 'badge-atrasado';
           statusTexto = '🔴 Atrasado';
-          acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
+          acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st, faturaMaisCritica.dataPagamento);
         } else {
           badgeClass = 'badge-pendente';
           statusTexto = '⏳ Pendente';
-          acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st);
+          acao = obterAcaoCobranca(faturaMaisCritica.dataVencObj, st, faturaMaisCritica.dataPagamento);
         }
       }
 
@@ -1763,8 +1767,17 @@ function parseDataSemTimezone(valor) {
   // =========================================================
   // ALGORITMO DE COBRANÇA (auxiliar)
   // =========================================================
-  function obterAcaoCobranca(dataVencObj, status) {
-    if (status === 'PAGO') return { texto: '✅ Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
+  function obterAcaoCobranca(dataVencObj, status, dataPagamento) {
+    // 🔥 Se já estiver pago, verifica se foi recente (hoje)
+    if (status === 'PAGO') {
+      var hojeStr = new Date().toISOString().split('T')[0];
+      var pagStr = dataPagamento ? new Date(dataPagamento).toISOString().split('T')[0] : null;
+      
+      if (pagStr === hojeStr) {
+        return { texto: '⏳ Processando baixa', classe: 'btn-disabled', icone: 'clock', exibirWarning: false };
+      }
+      return { texto: '✅ Sem Ações', classe: 'btn-disabled', icone: 'check', exibirWarning: false };
+    }
 
     var hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
@@ -1772,15 +1785,23 @@ function parseDataSemTimezone(valor) {
     venc.setHours(0, 0, 0, 0);
     var diffDias = Math.floor((hoje.getTime() - venc.getTime()) / (1000 * 3600 * 24));
 
-    if (diffDias < -5) return { texto: '⏳ Processando baixa pagamento', classe: 'btn-disabled', icone: 'clock', exibirWarning: false };
+    // 🔥 Faturas muito no futuro (mais de 5 dias) -> Apenas informativo
+    if (diffDias < -5) return { texto: '📅 A Vencer', classe: 'btn-disabled', icone: 'calendar', exibirWarning: false };
+    
+    // Lembrete (1 a 5 dias antes)
     if (diffDias >= -5 && diffDias <= -1) return { texto: '💬 Lembrete 5 Dias', classe: 'btn-info', icone: 'message-circle', exibirWarning: false };
+    
+    // Vence Hoje
     if (diffDias === 0) return { texto: '🔔 Msg Vencimento', classe: 'btn-warning-action', icone: 'bell', exibirWarning: false };
+    
+    // Atrasos
     if (diffDias >= 1 && diffDias < 3) return { texto: '👀 Acompanhar Pagamento', classe: 'btn-warning-action', icone: 'eye', exibirWarning: false };
     if (diffDias >= 3 && diffDias < 5) return { texto: '📨 Cobrança (3 Dias)', classe: 'btn-danger-action', icone: 'send', exibirWarning: false };
     if (diffDias >= 5 && diffDias < 10) return { texto: '🎙️ Enviar Áudio Wpp', classe: 'btn-danger-action', icone: 'mic', exibirWarning: false };
     if (diffDias >= 10 && diffDias < 20) return { texto: '📞 Ligar p/ Cliente', classe: 'btn-danger-action', icone: 'phone-call', exibirWarning: false };
     if (diffDias >= 20 && diffDias < 30) return { texto: '⚠️ Risco Quebra Contrato', classe: 'btn-critical', icone: 'alert-triangle', exibirWarning: false };
     if (diffDias >= 30) return { texto: '🚨 Inadimplência Crítica', classe: 'btn-critical', icone: 'x-octagon', exibirWarning: true };
+    
     return { texto: '❓ Verificar', classe: 'btn-disabled', icone: 'help-circle', exibirWarning: false };
   }
 
