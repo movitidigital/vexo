@@ -1285,9 +1285,9 @@ function parseDataSemTimezone(valor) {
   // RENDERIZAR TABELA E KPIs
   // =========================================================
   function renderizarTabela(clientes) {
-    var kpiAtrasadas = 0;
-    var kpiVenceBreve = 0;
-    var kpiRecebidas = 0;
+    var kpiAtrasadasSet = new Set();
+    var kpiVenceBreveSet = new Set();
+    var kpiRecebidasSet = new Set();
     var hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
     var limite7Dias = new Date(hoje);
@@ -1378,11 +1378,13 @@ function parseDataSemTimezone(valor) {
           if (dataPagamento) dataPagamento.setHours(0, 0, 0, 0);
 
           // KPIs
-          if (status === 'ATRASADO') kpiAtrasadas++;
-          if (status === 'PENDENTE' && dataVenc >= hoje && dataVenc <= limite7Dias) kpiVenceBreve++;
+          var idUnicoCliente = cliente.codigoCliente || cliente.cpfCnpj || cliente.nomeCliente;
+
+          if (status === 'ATRASADO') kpiAtrasadasSet.add(idUnicoCliente);
+          if (status === 'PENDENTE' && dataVenc >= hoje && dataVenc <= limite7Dias) kpiVenceBreveSet.add(idUnicoCliente);
           if (status === 'PAGO' &&
               dataVenc.getMonth() === hoje.getMonth() &&
-              dataVenc.getFullYear() === hoje.getFullYear()) kpiRecebidas++;
+              dataVenc.getFullYear() === hoje.getFullYear()) kpiRecebidasSet.add(idUnicoCliente);
 
           todasFaturas.push({
             mes: fatura.mes,
@@ -1731,9 +1733,9 @@ function parseDataSemTimezone(valor) {
       tbody.innerHTML = html;
     }
 
-    document.getElementById('kpi-atrasadas').innerText = kpiAtrasadas;
-    document.getElementById('kpi-vence-breve').innerText = kpiVenceBreve;
-    document.getElementById('kpi-recebidas').innerText = kpiRecebidas;
+    document.getElementById('kpi-atrasadas').innerText = kpiAtrasadasSet.size;
+    document.getElementById('kpi-vence-breve').innerText = kpiVenceBreveSet.size;
+    document.getElementById('kpi-recebidas').innerText = kpiRecebidasSet.size;
     document.getElementById('loading').style.display = 'none';
 
     // ═══════════════════════════════════════════════════════════
