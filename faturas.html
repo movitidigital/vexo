@@ -173,21 +173,22 @@
     overflow: hidden;
     box-shadow: var(--shadow-sm);
   }
- .table-container table {
+  .table-container table {
     width: 100%;
     border-collapse: collapse;
     font-size: 0.78rem;
-    table-layout: fixed; /*
+    table-layout: fixed; /* 🔥 Garante que a tabela respeite a largura da tela */
   }
 
-  .table-container th:nth-child(1) { width: 60px; } /* Prioridade */
-  .table-container th:nth-child(2) { width: 30px; } /* Expandir */
-  .table-container th:nth-child(3) { width: 10%; }  /* Código do Cliente */
-  .table-container th:nth-child(4) { width: 24%; }  /* Cliente */
-  .table-container th:nth-child(5) { width: 26%; }  /* Linhas & Planos */
-  .table-container th:nth-child(6) { width: 12%; }  /* Próximo Vencimento */
-  .table-container th:nth-child(7) { width: 10%; }  /* Status */
-  .table-container th:nth-child(8) { width: 13%; }  /* Ação Sugerida */
+  /* Definindo a largura proporcional de cada coluna */
+  .table-container th:nth-child(1) { width: 70px; }  /* Prioridade */
+  .table-container th:nth-child(2) { width: 40px; }  /* Expandir */
+  .table-container th:nth-child(3) { width: 10%; }   /* Código do Cliente */
+  .table-container th:nth-child(4) { width: 24%; }   /* Cliente */
+  .table-container th:nth-child(5) { width: 26%; }   /* Linhas & Planos */
+  .table-container th:nth-child(6) { width: 13%; }   /* Próximo Vencimento */
+  .table-container th:nth-child(7) { width: 10%; }   /* Status */
+  .table-container th:nth-child(8) { width: 17%; }   /* Ação Sugerida */
    
   .table-container th {
     background: #f8fafc;
