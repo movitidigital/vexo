@@ -654,9 +654,6 @@
 (function () {
   'use strict';
 
-  if (window._vexoHomeParceiroLoaded) return;
-  window._vexoHomeParceiroLoaded = true;
-
   const $ = (id) => document.getElementById(id);
 
   function fmtBRL(v) {
@@ -669,10 +666,8 @@
     catch { return {}; }
   }
 
-  // ─────────────────────────────────────────────
-  // INIT
-  // ─────────────────────────────────────────────
-  function init() {
+  // 🔥 NOVA FUNÇÃO: Responsável por atualizar os dados do topo (Nome, Badge, Data, Matrícula)
+  function atualizarDadosTopo() {
     const user = getSessao();
 
     const nome = (user.nome || user.username || 'Parceiro').split(' ')[0];
@@ -697,6 +692,21 @@
 
     const matEl = $('partner-matricula');
     if (matEl) matEl.innerText = user.username || user.matricula || '—';
+  }
+
+  // ── TRAVA DE SEGURANÇA ATUALIZADA ──
+  if (window._vexoHomeParceiroLoaded) {
+    console.log('🔄 [VEXO] Dashboard reinjetado — restaurando dados do usuário');
+    atualizarDadosTopo(); // 🔥 Restaura os dados que sumiram
+    return; // Sai do script para não duplicar os eventos e KPIs
+  }
+  window._vexoHomeParceiroLoaded = true;
+
+  // ─────────────────────────────────────────────
+  // INIT (Executado apenas na primeira carga)
+  // ─────────────────────────────────────────────
+  function init() {
+    atualizarDadosTopo(); // 🔥 Chama a função que criamos
 
     const hoje = new Date();
     const anoAtual = hoje.getFullYear();
