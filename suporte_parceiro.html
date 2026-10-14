@@ -1860,6 +1860,35 @@
 </div>
 
 <script>
+  // ═══════════════════════════════════════════════════════════
+// 🔥 STUB: Simula o google.script.run para não quebrar o código
+// enquanto terminamos a migração para o Supabase
+// ═══════════════════════════════════════════════════════════
+if (typeof window.google === 'undefined') {
+  window.google = {
+    script: {
+      run: new Proxy({}, {
+        get: function(target, prop) {
+          // Handlers fluentes
+          if (prop === 'withSuccessHandler') {
+            return function(fn) { this._success = fn; return this; };
+          }
+          if (prop === 'withFailureHandler') {
+            return function(fn) { this._failure = fn; return this; };
+          }
+          // Qualquer outro método: loga e chama o failure handler
+          return function() {
+            console.warn('[VEXO] Função legada chamada:', prop, '— não migrada para Supabase ainda');
+            if (this._failure) {
+              this._failure(new Error('Função legada "' + prop + '" ainda não foi migrada para o Supabase.'));
+            }
+            return this;
+          };
+        }
+      })
+    }
+  };
+}
   // ============================================
   // VARIÁVEIS GLOBAIS
   // ============================================
@@ -2239,7 +2268,6 @@ async function criarTicket() {
   
   const user = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
   
-  // 🔥 Pega o tenant_id do profile do usuário
   let tenantId = null;
   try {
     const { data: prof } = await window.sb.from('profiles').select('tenant_id').eq('id', user.id).single();
