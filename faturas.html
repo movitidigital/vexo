@@ -173,12 +173,22 @@
     overflow: hidden;
     box-shadow: var(--shadow-sm);
   }
-  .table-container table {
+ .table-container table {
     width: 100%;
     border-collapse: collapse;
-    font-size: 0.8rem;
+    font-size: 0.78rem;
+    table-layout: fixed; /*
   }
 
+  .table-container th:nth-child(1) { width: 60px; } /* Prioridade */
+  .table-container th:nth-child(2) { width: 30px; } /* Expandir */
+  .table-container th:nth-child(3) { width: 10%; }  /* Código do Cliente */
+  .table-container th:nth-child(4) { width: 24%; }  /* Cliente */
+  .table-container th:nth-child(5) { width: 26%; }  /* Linhas & Planos */
+  .table-container th:nth-child(6) { width: 12%; }  /* Próximo Vencimento */
+  .table-container th:nth-child(7) { width: 10%; }  /* Status */
+  .table-container th:nth-child(8) { width: 13%; }  /* Ação Sugerida */
+   
   .table-container th {
     background: #f8fafc;
     color: var(--text-secondary);
@@ -220,6 +230,7 @@
     color: var(--text-muted);
     font-size: 0.7rem;
     line-height: 1.3;
+    word-break: break-word; /* 🔥 Impede que textos longos estiquem a célula */
   }
   .client-line.mono {
     font-family: ui-monospace, 'SF Mono', monospace;
@@ -236,9 +247,18 @@
     line-height: 1.4;
   }
   .linhas-cell .linha-item {
-    margin-bottom: 0.15rem;
-    white-space: nowrap;
+    margin-bottom: 0.25rem;
+    white-space: normal; /*
+    word-break: break-word;
   }
+      .table-container td:last-child .btn-action {
+    white-space: normal; /* 🔥 Permite quebrar o texto do botão */
+    text-align: left;
+    max-width: 100%;
+    padding: 0.3rem 0.5rem;
+    line-height: 1.2;
+  }
+   
   .linhas-cell .linha-item:last-child { margin-bottom: 0; }
   .linhas-cell .numero {
     font-weight: 700;
