@@ -849,8 +849,9 @@ window._ativarAutocompletePlano = _ativarAutocompletePlano;
       document.getElementById('v_uf').value = d.uf || '';
       document.getElementById('v_numero').value = d.numero || '';
       window._toast('✅ Dados carregados!', 'success');
-    } catch {
-      window._toast('⚠️ Não foi possível consultar o CNPJ', 'warning');
+    } catch (error) {
+      console.error("Erro na API CNPJ:", error);
+      window._toast('⚠️ CNPJ não encontrado. Preencha os dados manualmente.', 'warning');
     }
   };
 
