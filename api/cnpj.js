@@ -2,7 +2,6 @@
 module.exports = async function handler(req, res) {
   const { cnpj } = req.query;
 
-  // 1. Validação inicial
   if (!cnpj) {
     return res.status(400).json({ error: 'CNPJ é obrigatório' });
   }
@@ -14,47 +13,31 @@ module.exports = async function handler(req, res) {
   }
 
   // Função auxiliar para tentar uma API e tratar erros/respostas vazias
-  async function tentarAPI(url, headers = {}) {
+  async function tentarAPI(url, headers = {}, mapearDados = (d) => d) {
     try {
       const response = await fetch(url, { headers });
-      
-      // Se a resposta não for OK (ex: 404, 500), retorna null
       if (!response.ok) {
         console.warn(`API ${url} retornou status ${response.status}`);
         return null;
       }
-
-      const responseText = await response.text();
-      
-      // Se o corpo da resposta estiver vazio, retorna null
-      if (!responseText || responseText.trim() === '') {
-        console.warn(`API ${url} retornou corpo vazio`);
-        return null;
-      }
-
-      const data = JSON.parse(responseText);
-      
-      // Se o objeto JSON estiver vazio, retorna null
+      const data = await response.json();
       if (!data || Object.keys(data).length === 0) {
         console.warn(`API ${url} retornou JSON vazio`);
         return null;
       }
-
-      return data;
+      return mapearDados(data);
     } catch (e) {
-      console.warn(`Falha na requisição para ${url}:`, e.message);
+      console.warn(`Falha na API ${url}:`, e.message);
       return null;
     }
   }
 
   // ==========================================
-  // TENTATIVA 1: BrasilAPI (Com User-Agent para evitar bloqueio 403)
+  // TENTATIVA 1: BrasilAPI (Com User-Agent)
   // ==========================================
   const brasilApiData = await tentarAPI(
     `https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`,
-    { 
-      'User-Agent': 'VEXO-Sistema/1.0 (https://vexo-umber.vercel.app)' 
-    }
+    { 'User-Agent': 'VEXO-Sistema/1.0 (https://vexo-umber.vercel.app)' }
   );
 
   if (brasilApiData) {
@@ -63,27 +46,46 @@ module.exports = async function handler(req, res) {
   }
 
   // ==========================================
-  // TENTATIVA 2: Fallback (cnpj.pw)
+  // TENTATIVA 2: publica.cnpj.ws (Fallback Principal)
   // ==========================================
-  console.log(`⚠️ [CNPJ] BrasilAPI falhou. Tentando cnpj.pw para ${cnpjLimpo}...`);
+  console.log(`⚠️ [CNPJ] BrasilAPI falhou. Tentando publica.cnpj.ws...`);
   
+  const cnpjWsData = await tentarAPI(
+    `https://publica.cnpj.ws/cnpj/${cnpjLimpo}`,
+    {},
+    (d) => ({
+      razao_social: d.razao_social || '',
+      cep: d.estabelecimento?.cep || '',
+      logradouro: d.estabelecimento?.logradouro || '',
+      numero: d.estabelecimento?.numero || '',
+      bairro: d.estabelecimento?.bairro || '',
+      municipio: d.estabelecimento?.cidade?.nome || '', // Converte o código IBGE para o Nome da Cidade
+      uf: d.estabelecimento?.estado?.sigla || ''
+    })
+  );
+
+  if (cnpjWsData) {
+    console.log(`✅ [CNPJ] Dados obtidos via publica.cnpj.ws para ${cnpjLimpo}`);
+    return res.status(200).json(cnpjWsData);
+  }
+
+  // ==========================================
+  // TENTATIVA 3: cnpj.pw (Último recurso)
+  // ==========================================
+  console.log(`⚠️ [CNPJ] publica.cnpj.ws falhou. Tentando cnpj.pw...`);
   const cnpjPwData = await tentarAPI(`https://api.cnpj.pw/cnpj/${cnpjLimpo}`);
 
   if (cnpjPwData) {
     console.log(`✅ [CNPJ] Dados obtidos via cnpj.pw para ${cnpjLimpo}`);
-    
-    // Mapeia os campos da cnpj.pw para o formato esperado pelo frontend do VEXO
-    const dadosNormalizados = {
+    return res.status(200).json({
       razao_social: cnpjPwData.razao_social || cnpjPwData.nome || '',
       cep: cnpjPwData.cep || '',
       logradouro: cnpjPwData.logradouro || '',
+      numero: cnpjPwData.numero || '',
       bairro: cnpjPwData.bairro || '',
-      municipio: cnpjPwData.municipio || '',
-      uf: cnpjPwData.uf || '',
-      numero: cnpjPwData.numero || ''
-    };
-
-    return res.status(200).json(dadosNormalizados);
+      municipio: cnpjPwData.municipio || '', 
+      uf: cnpjPwData.uf || ''
+    });
   }
 
   // ==========================================
