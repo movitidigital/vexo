@@ -12,18 +12,14 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'CNPJ inválido' });
   }
 
-  // 🔥 NOVO: Função com Timeout de 2 segundos (2000ms)
-  async function tentarAPI(url, headers = {}, mapearDados = (d) => d, timeoutMs = 2000) {
+  // Função auxiliar para tentar uma API, tratar erros e validar o conteúdo
+  async function tentarAPI(url, headers = {}, mapearDados = (d) => d, timeoutMs = 2500) {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
     try {
-      const response = await fetch(url, { 
-        headers,
-        signal: controller.signal // Passa o sinal de cancelamento para o fetch
-      });
-      
-      clearTimeout(timeoutId); // Se respondeu a tempo, limpa o timeout
+      const response = await fetch(url, { headers, signal: controller.signal });
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         console.warn(`[API] ${url} retornou status ${response.status}`);
@@ -52,10 +48,9 @@ module.exports = async function handler(req, res) {
 
       return dadosMapeados;
     } catch (e) {
-      clearTimeout(timeoutId); // Limpa o timeout em caso de erro
-      
+      clearTimeout(timeoutId);
       if (e.name === 'AbortError') {
-        console.warn(`[API] ${url} excedeu o tempo limite de ${timeoutMs}ms. Abortando e tentando a próxima...`);
+        console.warn(`[API] ${url} excedeu o tempo limite. Abortando...`);
       } else {
         console.warn(`[API] Falha na requisição para ${url}:`, e.message);
       }
@@ -76,7 +71,10 @@ module.exports = async function handler(req, res) {
       numero: d.numero || '',
       bairro: d.bairro || '',
       municipio: d.municipio || '',
-      uf: d.uf || ''
+      uf: d.uf || '',
+      data_inicio_atividade: d.data_inicio_atividade || '',
+      natureza_juridica: d.natureza_juridica || '',
+      ddd_telefone_1: d.ddd_telefone_1 || d.telefone_1 || ''
     })
   );
 
@@ -100,7 +98,10 @@ module.exports = async function handler(req, res) {
       numero: d.numero || '',
       bairro: d.bairro || '',
       municipio: d.municipio || '',
-      uf: d.uf || ''
+      uf: d.uf || '',
+      data_inicio_atividade: d.data_abertura || d.data_inicio_atividade || '',
+      natureza_juridica: d.natureza_juridica || '',
+      ddd_telefone_1: d.telefone || d.ddd_telefone_1 || ''
     })
   );
 
@@ -124,7 +125,12 @@ module.exports = async function handler(req, res) {
       numero: d.estabelecimento?.numero || '',
       bairro: d.estabelecimento?.bairro || '',
       municipio: d.estabelecimento?.cidade?.nome || '', 
-      uf: d.estabelecimento?.estado?.sigla || ''
+      uf: d.estabelecimento?.estado?.sigla || '',
+      data_inicio_atividade: d.estabelecimento?.data_inicio_atividade || '',
+      natureza_juridica: d.natureza_juridica?.descricao || '',
+      ddd_telefone_1: (d.estabelecimento?.ddd1 && d.estabelecimento?.telefone1) 
+                      ? `${d.estabelecimento.ddd1}${d.estabelecimento.telefone1}` 
+                      : (d.estabelecimento?.telefone1 || '')
     })
   );
 
@@ -147,7 +153,10 @@ module.exports = async function handler(req, res) {
       numero: d.numero || '',
       bairro: d.bairro || '',
       municipio: d.municipio || '', 
-      uf: d.uf || ''
+      uf: d.uf || '',
+      data_inicio_atividade: d.data_abertura || d.data_inicio_atividade || '',
+      natureza_juridica: d.natureza_juridica || '',
+      ddd_telefone_1: d.telefone || d.ddd_telefone_1 || ''
     })
   );
 
@@ -159,7 +168,7 @@ module.exports = async function handler(req, res) {
   // ==========================================
   // FALHA TOTAL
   // ==========================================
-  console.error(`❌ [CNPJ] Todas as APIs falharam ou excederam o tempo limite para ${cnpjLimpo}`);
+  console.error(`❌ [CNPJ] Todas as APIs falharam ou retornaram dados incompletos para ${cnpjLimpo}`);
   return res.status(404).json({ 
     error: 'Não foi possível consultar os dados públicos deste CNPJ nas fontes disponíveis. Preencha os dados manualmente.' 
   });
