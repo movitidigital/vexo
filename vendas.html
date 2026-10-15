@@ -837,56 +837,31 @@ window._ativarAutocompletePlano = _ativarAutocompletePlano;
     
     window._toast('🔍 Consultando CNPJ...', 'info');
 
-    const preencherCampos = (d) => {
-      document.getElementById('v_razao').value = d.razao_social || d.nome || '';
+    try {
+      // Chama a SUA API interna no Vercel, sem CORS
+      const response = await fetch(`/api/cnpj?cnpj=${cnpj}`);
+      
+      if (!response.ok) {
+        const errData = await response.json().catch(() => ({}));
+        throw new Error(errData.error || `Erro HTTP ${response.status}`);
+      }
+
+      const d = await response.json();
+
+      // Preenche os campos com os dados retornados
+      document.getElementById('v_razao').value = d.razao_social || '';
       document.getElementById('v_cep').value = (d.cep || '').replace(/\D/g, '');
       document.getElementById('v_endereco').value = d.logradouro || '';
       document.getElementById('v_bairro').value = d.bairro || '';
-      document.getElementById('v_cidade').value = d.municipio || d.localidade || '';
-      document.getElementById('v_uf').value = d.uf || d.estado || '';
+      document.getElementById('v_cidade').value = d.municipio || '';
+      document.getElementById('v_uf').value = d.uf || '';
       document.getElementById('v_numero').value = d.numero || '';
-    };
 
-    // Função auxiliar para montar a URL com o Proxy CORS
-    const fetchComProxy = (urlOriginal) => {
-      // Usando corsproxy.io para contornar o bloqueio de CORS
-      return fetch('https://corsproxy.io/?' + encodeURIComponent(urlOriginal));
-    };
+      window._toast('✅ Dados carregados com sucesso!', 'success');
 
-    try {
-      // 1ª Tentativa: BrasilAPI via Proxy CORS
-      const r = await fetchComProxy(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
-      if (!r.ok) throw new Error(`BrasilAPI HTTP ${r.status}`);
-      const d = await r.json();
-      preencherCampos(d);
-      window._toast('✅ Dados carregados via BrasilAPI!', 'success');
-      return;
-    } catch (err1) {
-      console.warn('⚠️ BrasilAPI falhou. Tentando ReceitaWS...', err1.message);
-      
-      try {
-        // 2ª Tentativa: ReceitaWS via Proxy CORS
-        const r2 = await fetchComProxy(`https://receitaws.com.br/v1/cnpj/${cnpj}`);
-        if (!r2.ok) throw new Error(`ReceitaWS HTTP ${r2.status}`);
-        const d2 = await r2.json();
-        
-        if (d2.status === 'ERROR') throw new Error('CNPJ não encontrado na base de dados');
-        
-        preencherCampos({
-          razao_social: d2.nome,
-          cep: d2.cep,
-          logradouro: d2.logradouro,
-          bairro: d2.bairro,
-          municipio: d2.municipio,
-          uf: d2.uf,
-          numero: d2.numero
-        });
-        window._toast('✅ Dados carregados via ReceitaWS!', 'success');
-        return;
-      } catch (err2) {
-        console.warn('⚠️ ReceitaWS também falhou:', err2.message);
-        window._toast('⚠️ APIs de CNPJ indisponíveis. Por favor, preencha manualmente.', 'warning');
-      }
+    } catch (err) {
+      console.warn('⚠️ Falha na consulta do CNPJ:', err.message);
+      window._toast('⚠️ Não foi possível consultar o CNPJ. Preencha os dados manualmente.', 'warning');
     }
   };
 
