@@ -12,11 +12,19 @@ module.exports = async function handler(req, res) {
     return res.status(400).json({ error: 'CNPJ inválido' });
   }
 
-  // Função auxiliar para tentar uma API, tratar erros e validar o conteúdo
-  async function tentarAPI(url, headers = {}, mapearDados = (d) => d) {
+  // 🔥 NOVO: Função com Timeout de 2 segundos (2000ms)
+  async function tentarAPI(url, headers = {}, mapearDados = (d) => d, timeoutMs = 2000) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
     try {
-      const response = await fetch(url, { headers });
+      const response = await fetch(url, { 
+        headers,
+        signal: controller.signal // Passa o sinal de cancelamento para o fetch
+      });
       
+      clearTimeout(timeoutId); // Se respondeu a tempo, limpa o timeout
+
       if (!response.ok) {
         console.warn(`[API] ${url} retornou status ${response.status}`);
         return null;
@@ -34,10 +42,9 @@ module.exports = async function handler(req, res) {
         return null;
       }
 
-      // Mapeia os dados para o formato do VEXO
       const dadosMapeados = mapearDados(data);
 
-      // 🔥 VALIDAÇÃO CRUCIAL: Se a Razão Social estiver vazia, consideramos falha e passamos para a próxima API
+      // Validação: Se a Razão Social estiver vazia, considera falha e vai para a próxima
       if (!dadosMapeados.razao_social || dadosMapeados.razao_social.trim() === '') {
         console.warn(`[API] ${url} retornou Razão Social vazia. Tentando próxima...`);
         return null;
@@ -45,13 +52,19 @@ module.exports = async function handler(req, res) {
 
       return dadosMapeados;
     } catch (e) {
-      console.warn(`[API] Falha na requisição para ${url}:`, e.message);
+      clearTimeout(timeoutId); // Limpa o timeout em caso de erro
+      
+      if (e.name === 'AbortError') {
+        console.warn(`[API] ${url} excedeu o tempo limite de ${timeoutMs}ms. Abortando e tentando a próxima...`);
+      } else {
+        console.warn(`[API] Falha na requisição para ${url}:`, e.message);
+      }
       return null;
     }
   }
 
   // ==========================================
-  // TENTATIVA 1: BrasilAPI (Com User-Agent)
+  // TENTATIVA 1: BrasilAPI
   // ==========================================
   const brasilApiData = await tentarAPI(
     `https://brasilapi.com.br/api/cnpj/v1/${cnpjLimpo}`,
@@ -73,7 +86,7 @@ module.exports = async function handler(req, res) {
   }
 
   // ==========================================
-  // TENTATIVA 2: OpenCNPJ (Nova API de fallback)
+  // TENTATIVA 2: OpenCNPJ
   // ==========================================
   console.log(`⚠️ [CNPJ] BrasilAPI falhou. Tentando OpenCNPJ...`);
   
@@ -86,7 +99,7 @@ module.exports = async function handler(req, res) {
       logradouro: d.logradouro || '',
       numero: d.numero || '',
       bairro: d.bairro || '',
-      municipio: d.municipio || '', // OpenCNPJ geralmente já traz o nome da cidade
+      municipio: d.municipio || '',
       uf: d.uf || ''
     })
   );
@@ -97,7 +110,7 @@ module.exports = async function handler(req, res) {
   }
 
   // ==========================================
-  // TENTATIVA 3: publica.cnpj.ws (Fallback com mapeamento de cidade)
+  // TENTATIVA 3: publica.cnpj.ws
   // ==========================================
   console.log(`⚠️ [CNPJ] OpenCNPJ falhou. Tentando publica.cnpj.ws...`);
   
@@ -110,7 +123,6 @@ module.exports = async function handler(req, res) {
       logradouro: d.estabelecimento?.logradouro || '',
       numero: d.estabelecimento?.numero || '',
       bairro: d.estabelecimento?.bairro || '',
-      // 🔥 Aqui está a correção do código IBGE: extrai o nome da cidade
       municipio: d.estabelecimento?.cidade?.nome || '', 
       uf: d.estabelecimento?.estado?.sigla || ''
     })
@@ -122,7 +134,7 @@ module.exports = async function handler(req, res) {
   }
 
   // ==========================================
-  // TENTATIVA 4: cnpj.pw (Último recurso)
+  // TENTATIVA 4: cnpj.pw
   // ==========================================
   console.log(`⚠️ [CNPJ] publica.cnpj.ws falhou. Tentando cnpj.pw...`);
   const cnpjPwData = await tentarAPI(
@@ -147,7 +159,7 @@ module.exports = async function handler(req, res) {
   // ==========================================
   // FALHA TOTAL
   // ==========================================
-  console.error(`❌ [CNPJ] Todas as APIs falharam ou retornaram dados incompletos para ${cnpjLimpo}`);
+  console.error(`❌ [CNPJ] Todas as APIs falharam ou excederam o tempo limite para ${cnpjLimpo}`);
   return res.status(404).json({ 
     error: 'Não foi possível consultar os dados públicos deste CNPJ nas fontes disponíveis. Preencha os dados manualmente.' 
   });
