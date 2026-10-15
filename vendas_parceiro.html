@@ -1056,30 +1056,66 @@ window.escolherSegmento = function(tipo, elemento) {
 };
 
   // ============================================
-  // BUSCAR EMPRESA POR CNPJ
+  // BUSCAR EMPRESA POR CNPJ (Agora usa a API interna do Vercel)
   // ============================================
   window.buscarEmpresa = async function(v) {
     const limpo = v.replace(/\D/g, "");
     if (limpo.length !== 14) return;
+
     const rz = document.getElementById("razaoSocial");
-    rz.value = "Consultando base VEXO...";
-    rz.style.color = "#3b82f6";
+    if (rz) {
+      rz.value = "Consultando base VEXO...";
+      rz.style.color = "#3b82f6";
+    }
+
     try {
-      const response = await fetch("https://brasilapi.com.br/api/cnpj/v1/" + limpo);
-      const data = await response.json();
-      if (data.razao_social) {
-        document.getElementById("razaoSocial").value = data.razao_social;
-        document.getElementById("cep").value = data.cep ? fmk.cep(data.cep) : "";
-        document.getElementById("endereco").value = data.logradouro || "";
-        document.getElementById("numero").value = data.numero || "";
-        document.getElementById("bairro").value = data.bairro || "";
-        document.getElementById("cidade").value = data.municipio || "";
-        document.getElementById("uf").value = data.uf || "";
-        document.getElementById("email").value = data.email || "";
-        rz.style.color = "#1e293b";
+      // 🔥 Chama a SUA API interna no Vercel (Serverless Function)
+      const response = await fetch(`/api/cnpj?cnpj=${limpo}`);
+      
+      if (!response.ok) {
+        throw new Error(`Erro na API: ${response.status}`);
       }
-    } catch (e) { 
-      rz.value = ""; rz.placeholder = "Não localizado. Preencha manualmente."; 
+
+      const data = await response.json();
+
+      // A API interna já nos devolve os dados padronizados
+      if (data && data.razao_social) {
+        if (document.getElementById("razaoSocial")) document.getElementById("razaoSocial").value = data.razao_social || '';
+        if (document.getElementById("cep")) document.getElementById("cep").value = data.cep ? fmk.cep(data.cep) : "";
+        if (document.getElementById("endereco")) document.getElementById("endereco").value = data.logradouro || "";
+        if (document.getElementById("numero")) document.getElementById("numero").value = data.numero || "";
+        if (document.getElementById("bairro")) document.getElementById("bairro").value = data.bairro || "";
+        if (document.getElementById("cidade")) document.getElementById("cidade").value = data.municipio || "";
+        if (document.getElementById("uf")) document.getElementById("uf").value = data.uf || "";
+        
+        // Opcional: Se a API um dia retornar email, preenche
+        if (data.email && document.getElementById("email")) {
+           document.getElementById("email").value = data.email;
+        }
+        
+        if (rz) rz.style.color = "#1e293b";
+        
+        // Feedback visual (Usa a função de toast que você já tem no arquivo)
+        if (typeof window.showToast === 'function') {
+            window.showToast('✅ Dados do CNPJ carregados com sucesso!', 'success');
+        } else if (typeof mostrarToastPequno === 'function') {
+            mostrarToastPequno('✅ Dados do CNPJ carregados com sucesso!', 'success');
+        }
+      } else {
+         throw new Error('Dados incompletos retornados pela API');
+      }
+    } catch (e) {
+      console.warn('⚠️ Falha na consulta do CNPJ:', e.message);
+      if (rz) {
+          rz.value = ""; 
+          rz.placeholder = "Não localizado. Preencha manualmente.";
+          rz.style.color = "#ef4444";
+      }
+      if (typeof window.showToast === 'function') {
+           window.showToast('⚠️ Não foi possível consultar o CNPJ. Preencha manualmente.', 'warning');
+      } else if (typeof mostrarToastPequno === 'function') {
+           mostrarToastPequno('⚠️ Não foi possível consultar o CNPJ. Preencha manualmente.', 'warning');
+      }
     }
   };
 
