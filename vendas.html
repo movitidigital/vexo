@@ -837,7 +837,6 @@ window._ativarAutocompletePlano = _ativarAutocompletePlano;
     
     window._toast('🔍 Consultando CNPJ...', 'info');
 
-    // Função auxiliar para preencher os campos do formulário
     const preencherCampos = (d) => {
       document.getElementById('v_razao').value = d.razao_social || d.nome || '';
       document.getElementById('v_cep').value = (d.cep || '').replace(/\D/g, '');
@@ -849,14 +848,15 @@ window._ativarAutocompletePlano = _ativarAutocompletePlano;
     };
 
     try {
-      // 1ª Tentativa: BrasilAPI (Mais rápida e completa)
+      // 1ª Tentativa: BrasilAPI
       const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
       if (!r.ok) throw new Error(`BrasilAPI HTTP ${r.status}`);
       const d = await r.json();
       preencherCampos(d);
       window._toast('✅ Dados carregados via BrasilAPI!', 'success');
+      return; // Sucesso, encerra a função
     } catch (err1) {
-      console.warn('⚠️ BrasilAPI falhou (pode estar fora do ar). Tentando ReceitaWS...', err1.message);
+      console.warn('⚠️ BrasilAPI falhou. Tentando ReceitaWS...', err1.message);
       
       try {
         // 2ª Tentativa: ReceitaWS (Fallback)
@@ -866,7 +866,6 @@ window._ativarAutocompletePlano = _ativarAutocompletePlano;
         
         if (d2.status === 'ERROR') throw new Error('CNPJ não encontrado na base de dados');
         
-        // Mapeia os campos da ReceitaWS para o formato do VEXO
         preencherCampos({
           razao_social: d2.nome,
           cep: d2.cep,
@@ -876,10 +875,31 @@ window._ativarAutocompletePlano = _ativarAutocompletePlano;
           uf: d2.uf,
           numero: d2.numero
         });
-        window._toast('✅ Dados carregados via ReceitaWS (Fallback)!', 'success');
+        window._toast('✅ Dados carregados via ReceitaWS!', 'success');
+        return;
       } catch (err2) {
-        console.warn('⚠️ ReceitaWS também falhou:', err2.message);
-        window._toast('⚠️ APIs de CNPJ indisponíveis. Por favor, preencha manualmente.', 'warning');
+        console.warn('⚠️ ReceitaWS também falhou. Tentando CNPJá...', err2.message);
+
+        try {
+          // 3ª Tentativa: CNPJá (Fallback final)
+          const r3 = await fetch(`https://publica.cnpja.com.br/office/${cnpj}`);
+          if (!r3.ok) throw new Error(`CNPJá HTTP ${r3.status}`);
+          const d3 = await r3.json();
+
+          preencherCampos({
+            razao_social: d3.company?.name,
+            cep: d3.address?.zip,
+            logradouro: d3.address?.street,
+            bairro: d3.address?.district,
+            municipio: d3.address?.city,
+            uf: d3.address?.state,
+            numero: d3.address?.number
+          });
+          window._toast('✅ Dados carregados via CNPJá!', 'success');
+        } catch (err3) {
+          console.warn('⚠️ Todas as APIs de CNPJ falharam:', err3.message);
+          window._toast('⚠️ APIs de CNPJ indisponíveis. Por favor, preencha manualmente.', 'warning');
+        }
       }
     }
   };
