@@ -847,20 +847,26 @@ window._ativarAutocompletePlano = _ativarAutocompletePlano;
       document.getElementById('v_numero').value = d.numero || '';
     };
 
+    // Função auxiliar para montar a URL com o Proxy CORS
+    const fetchComProxy = (urlOriginal) => {
+      // Usando corsproxy.io para contornar o bloqueio de CORS
+      return fetch('https://corsproxy.io/?' + encodeURIComponent(urlOriginal));
+    };
+
     try {
-      // 1ª Tentativa: BrasilAPI
-      const r = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
+      // 1ª Tentativa: BrasilAPI via Proxy CORS
+      const r = await fetchComProxy(`https://brasilapi.com.br/api/cnpj/v1/${cnpj}`);
       if (!r.ok) throw new Error(`BrasilAPI HTTP ${r.status}`);
       const d = await r.json();
       preencherCampos(d);
       window._toast('✅ Dados carregados via BrasilAPI!', 'success');
-      return; // Sucesso, encerra a função
+      return;
     } catch (err1) {
       console.warn('⚠️ BrasilAPI falhou. Tentando ReceitaWS...', err1.message);
       
       try {
-        // 2ª Tentativa: ReceitaWS (Fallback)
-        const r2 = await fetch(`https://receitaws.com.br/v1/cnpj/${cnpj}`);
+        // 2ª Tentativa: ReceitaWS via Proxy CORS
+        const r2 = await fetchComProxy(`https://receitaws.com.br/v1/cnpj/${cnpj}`);
         if (!r2.ok) throw new Error(`ReceitaWS HTTP ${r2.status}`);
         const d2 = await r2.json();
         
@@ -878,28 +884,8 @@ window._ativarAutocompletePlano = _ativarAutocompletePlano;
         window._toast('✅ Dados carregados via ReceitaWS!', 'success');
         return;
       } catch (err2) {
-        console.warn('⚠️ ReceitaWS também falhou. Tentando CNPJá...', err2.message);
-
-        try {
-          // 3ª Tentativa: CNPJá (Fallback final)
-          const r3 = await fetch(`https://publica.cnpja.com.br/office/${cnpj}`);
-          if (!r3.ok) throw new Error(`CNPJá HTTP ${r3.status}`);
-          const d3 = await r3.json();
-
-          preencherCampos({
-            razao_social: d3.company?.name,
-            cep: d3.address?.zip,
-            logradouro: d3.address?.street,
-            bairro: d3.address?.district,
-            municipio: d3.address?.city,
-            uf: d3.address?.state,
-            numero: d3.address?.number
-          });
-          window._toast('✅ Dados carregados via CNPJá!', 'success');
-        } catch (err3) {
-          console.warn('⚠️ Todas as APIs de CNPJ falharam:', err3.message);
-          window._toast('⚠️ APIs de CNPJ indisponíveis. Por favor, preencha manualmente.', 'warning');
-        }
+        console.warn('⚠️ ReceitaWS também falhou:', err2.message);
+        window._toast('⚠️ APIs de CNPJ indisponíveis. Por favor, preencha manualmente.', 'warning');
       }
     }
   };
