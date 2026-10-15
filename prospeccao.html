@@ -2805,15 +2805,15 @@ function salvarAgendamentoDoLead() {
 }
 
 // ==========================================
-// FUNÇÕES DE CONSULTA CNPJ
+// FUNÇÕES DE CONSULTA CNPJ (Agora usa a API interna do Vercel)
 // ==========================================
-
-function consultarCNPJ(valor) {
-  const cnpjLimpo = valor.replace(/[^\d]/g, '');
+async function consultarCNPJ(valor) {
+  const cnpjLimpo = valor.replace(/\D/g, '');
   if (cnpjLimpo.length !== 14) return;
 
   const campos = ['p_razao', 'p_cep', 'p_endereco', 'p_numero', 'p_bairro', 'p_cidade', 'p_uf', 'p_contato', 'p_data_abertura', 'p_natureza_juridica'];
   
+  // 1. Estado de Loading
   campos.forEach(id => {
     const el = document.getElementById(id);
     if(el) {
@@ -2823,60 +2823,90 @@ function consultarCNPJ(valor) {
     }
   });
 
-  // 1ª Tentativa: BrasilAPI
-  fetch("https://brasilapi.com.br/api/cnpj/v1/" + cnpjLimpo)
-    .then(response => {
-      if (!response.ok) throw new Error("BrasilAPI falhou");
-      return response.json();
-    })
-    .then(res => {
-      if (!res.razao_social && !res.nome_fantasia) throw new Error("Dados incompletos");
-      preencherCamposCNPJ(res, campos, "BrasilAPI");
-    })
-    .catch(() => {
-      console.log("BrasilAPI falhou, tentando MinhaReceita...");
-      
-      // 2ª Tentativa: MinhaReceita (Fallback)
-      fetch("https://minhareceita.org/" + cnpjLimpo)
-        .then(response => {
-          if (!response.ok) throw new Error("MinhaReceita falhou");
-          return response.json();
-        })
-        .then(res => {
-          if (!res.razao_social && !res.nome_fantasia) throw new Error("Dados incompletos");
-          
-          // Adapta os nomes dos campos da MinhaReceita para o padrão que o preencherCamposCNPJ espera
-          const resAdaptado = {
-            razao_social: res.razao_social,
-            nome_fantasia: res.nome_fantasia,
-            cep: res.cep,
-            tipo_logradouro: res.descricao_tipo_de_logradouro,
-            logradouro: res.logradouro,
-            numero: res.numero,
-            bairro: res.bairro,
-            municipio: res.municipio,
-            uf: res.uf,
-            data_inicio_atividade: res.data_inicio_atividade,
-            natureza_juridica: res.natureza_juridica,
-            ddd_telefone_1: res.ddd_telefone_1
-          };
-          
-          preencherCamposCNPJ(resAdaptado, campos, "MinhaReceita");
-        })
-        .catch((erro) => {
-          console.error("Todas as APIs de CNPJ falharam:", erro);
-          
-          // Falha Total - Pede para preencher manualmente
-          finalizarConsulta(campos, "⚠️ Nenhuma API de consulta respondeu. Por favor, preencha os dados MANUALMENTE.", "erro");
-          
-          const campoRazao = document.getElementById('p_razao');
-          if (campoRazao) {
-            campoRazao.focus();
-            campoRazao.style.borderColor = "#ef4444";
-            campoRazao.style.backgroundColor = "#fee2e2";
-          }
-        });
-    });
+  try {
+    // 🔥 Chama a SUA API interna no Vercel (Serverless Function)
+    const response = await fetch(`/api/cnpj?cnpj=${cnpjLimpo}`);
+    
+    if (!response.ok) {
+      throw new Error(`Erro na API: ${response.status}`);
+    }
+    
+    const res = await response.json();
+    
+    // Validação básica
+    if (!res.razao_social && !res.nome_fantasia) {
+       throw new Error("Dados incompletos retornados pela API");
+    }
+    
+    // Adapta os nomes dos campos para o padrão que o preencherCamposCNPJ espera
+    const resAdaptado = {
+      razao_social: res.razao_social || res.nome_fantasia,
+      cep: res.cep,
+      logradouro: res.logradouro,
+      numero: res.numero,
+      bairro: res.bairro,
+      municipio: res.municipio || res.cidade, // Garante compatibilidade
+      uf: res.uf,
+      data_inicio_atividade: res.data_inicio_atividade || '',
+      natureza_juridica: res.natureza_juridica || '',
+      ddd_telefone_1: res.ddd_telefone_1 || ''
+    };
+    
+    preencherCamposCNPJ(resAdaptado, campos, "VEXO API");
+    
+  } catch (erro) {
+    console.error("❌ Erro na consulta de CNPJ:", erro);
+    
+    // Falha - Pede para preencher manualmente
+    finalizarConsulta(campos, "⚠️ Não foi possível consultar o CNPJ. Por favor, preencha os dados MANUALMENTE.", "erro");
+    
+    const campoRazao = document.getElementById('p_razao');
+    if (campoRazao) {
+      campoRazao.focus();
+      campoRazao.style.borderColor = "#ef4444";
+      campoRazao.style.backgroundColor = "#fee2e2";
+    }
+  }
+}
+
+// Função auxiliar para preencher os campos do formulário
+function preencherCamposCNPJ(res, campos, origem) {
+  document.getElementById('p_razao').value = res.razao_social || res.nome_fantasia || "";
+  document.getElementById('p_cep').value = res.cep || "";
+  document.getElementById('p_endereco').value = (res.tipo_logradouro ? res.tipo_logradouro + " " : "") + (res.logradouro || "");
+  document.getElementById('p_numero').value = res.numero || "";
+  document.getElementById('p_bairro').value = res.bairro || "";
+  document.getElementById('p_cidade').value = res.municipio || "";
+  document.getElementById('p_uf').value = res.uf || "";
+  
+  if (res.data_inicio_atividade) {
+    const dataParts = res.data_inicio_atividade.split('-');
+    if (dataParts.length === 3) {
+      document.getElementById('p_data_abertura').value = `${dataParts[2]}/${dataParts[1]}/${dataParts[0]}`;
+    }
+  }
+  
+  if (res.natureza_juridica) {
+    document.getElementById('p_natureza_juridica').value = res.natureza_juridica;
+  }
+  
+  if (res.ddd_telefone_1) {
+    document.getElementById('p_contato').value = res.ddd_telefone_1.replace(/[^\d]/g, '');
+  }
+  
+  finalizarConsulta(campos, `✅ Dados importados com sucesso via ${origem}!`);
+}
+
+function finalizarConsulta(campos, mensagem, tipo = "sucesso") {
+  campos.forEach(id => {
+    const el = document.getElementById(id);
+    if(el) {
+      el.placeholder = "";
+      el.style.backgroundColor = "white";
+      el.style.borderColor = "#e2e8f0"; // Reset border color
+    }
+  });
+  if(typeof notificar === "function") notificar(mensagem, tipo);
 }
 
 // Função auxiliar para não repetir o código de preenchimento
