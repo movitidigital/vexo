@@ -1803,7 +1803,11 @@ async function inicializarModulo() {
   userCargo       = role;
   userNome        = (nome + ' ' + sobrenome).trim().toUpperCase();
   userPodeEditar  = (userCargo === "ADMINISTRADOR" || userCargo === "BACKOFFICE");
-
+  
+  // 🔥 NOVO: Define quem tem permissão para ver pedidos de parceiros
+  const perfisGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
+  window.podeVerTodosPedidos = perfisGestao.includes(userCargo);
+	
   window.userCargo      = userCargo;
   window.userNome       = userNome;
   window.userPodeEditar = userPodeEditar;
@@ -1827,7 +1831,7 @@ async function inicializarModulo() {
     badge.style.color      = userPodeEditar ? '#166534' : '#b45309';
   }
 
-  if (userCargo !== "ADMINISTRADOR" && userCargo !== "BACKOFFICE") {
+  if (!window.podeVerTodosPedidos) {
     const filtroParceiro = document.getElementById('filtro-parceiro-group');
     if (filtroParceiro) filtroParceiro.style.display = 'none';
   }
@@ -1888,6 +1892,12 @@ function carregarPedidos() {
   google.script.run
     .withSuccessHandler(function(pedidosArray) {
   if (Array.isArray(pedidosArray)) {
+    
+    // 🔥 FILTRO DE SEGURANÇA: Se não for gestão, mostra SÓ origem INTERNO
+    if (!window.podeVerTodosPedidos) {
+      pedidosArray = pedidosArray.filter(p => String(p.origem || '').toUpperCase().trim() === 'INTERNO');
+    }
+
     window.todosPedidos = pedidosArray;
     todosPedidos = window.todosPedidos;
 
@@ -1925,7 +1935,7 @@ function limparModulo() {
   document.querySelectorAll('.vexo-modal.active').forEach(modal => modal.classList.remove('active'));
 }
   function atualizarSelectParceiros() {
-    if (userCargo === "ADMINISTRADOR" || userCargo === "BACKOFFICE") {
+    if (window.podeVerTodosPedidos) {
       const parceiros = [...new Set(todosPedidos.map(p => p.parceiro_nome).filter(n => n && n !== "BACKOFFICE"))];
       const select = document.getElementById('filtro-parceiro');
       if (select) {
@@ -3074,7 +3084,14 @@ function carregarPedidosSilenciosamente() {
   google.script.run
     .withSuccessHandler(function(pedidosArray) {
   if (Array.isArray(pedidosArray)) {
-    const novosPedidos = pedidosArray;
+    
+    // 🔥 FILTRO DE SEGURANÇA SILENCIOSO
+    let arrayFiltrado = pedidosArray;
+    if (!window.podeVerTodosPedidos) {
+      arrayFiltrado = pedidosArray.filter(p => String(p.origem || '').toUpperCase().trim() === 'INTERNO');
+    }
+    
+    const novosPedidos = arrayFiltrado;
         
         if (!mostrarConcluidos) {
           todosPedidos = novosPedidos.filter(p => p.status_etapa < 6);
