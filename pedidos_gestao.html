@@ -1838,17 +1838,23 @@ async function inicializarModulo() {
 
   destacarMenuItem();
 
-  // 🔥 NOVO: Busca a lista de usuários no banco para descobrir quem é PARCEIRO
+  // 🔥 NOVO: Busca a lista de usuários no banco para descobrir quem é externo (Parceiro, Freelancer, etc.)
   try {
     const { data: profiles } = await window.sb.from('profiles').select('nome, sobrenome, role');
     if (profiles) {
+      const cargosExternos = ['PARCEIRO', 'FREELANCER', 'EXTERNO']; 
+      
       window.listaNomesParceiros = profiles
-        .filter(p => String(p.role || '').toUpperCase().includes('PARCEIRO'))
+        .filter(p => {
+          const roleUser = String(p.role || '').toUpperCase();
+          return cargosExternos.some(cargo => roleUser.includes(cargo));
+        })
         .map(p => `${p.nome || ''} ${p.sobrenome || ''}`.trim().toUpperCase());
-      console.log('✅ Lista de nomes de parceiros carregada:', window.listaNomesParceiros);
+        
+      console.log('✅ Lista de nomes externos carregada:', window.listaNomesParceiros);
     }
   } catch (e) { 
-    console.warn('⚠️ Erro ao buscar lista de parceiros:', e); 
+    console.warn('⚠️ Erro ao buscar lista de parceiros/freelancers:', e); 
   }
 
   setTimeout(() => { carregarPedidos(); }, 150);
