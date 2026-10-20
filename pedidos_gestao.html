@@ -1838,6 +1838,19 @@ async function inicializarModulo() {
 
   destacarMenuItem();
 
+  // 🔥 NOVO: Busca a lista de usuários no banco para descobrir quem é PARCEIRO
+  try {
+    const { data: profiles } = await window.sb.from('profiles').select('nome, sobrenome, role');
+    if (profiles) {
+      window.listaNomesParceiros = profiles
+        .filter(p => String(p.role || '').toUpperCase().includes('PARCEIRO'))
+        .map(p => `${p.nome || ''} ${p.sobrenome || ''}`.trim().toUpperCase());
+      console.log('✅ Lista de nomes de parceiros carregada:', window.listaNomesParceiros);
+    }
+  } catch (e) { 
+    console.warn('⚠️ Erro ao buscar lista de parceiros:', e); 
+  }
+
   setTimeout(() => { carregarPedidos(); }, 150);
 
   // 🔥 Move modais para o <body> — evita que o "position: fixed"
@@ -1891,33 +1904,41 @@ function carregarPedidos() {
   
   google.script.run
     .withSuccessHandler(function(pedidosArray) {
-  if (Array.isArray(pedidosArray)) {
-    
-    // 🔥 FILTRO DE SEGURANÇA: Se não for gestão, esconde os pedidos de PARCEIROS
-    if (!window.podeVerTodosPedidos) {
-      pedidosArray = pedidosArray.filter(p => {
-        const origem = String(p.origem || '').toUpperCase().trim();
-        // Se for PARCEIRO, esconde. Se for qualquer outra coisa, mostra.
-        return origem !== 'PARCEIRO';
-      });
-    }
+      if (Array.isArray(pedidosArray)) {
+        
+        // 🔥 FILTRO DE SEGURANÇA BLINDADO: Esconde por origem OU por nome do responsável
+        if (!window.podeVerTodosPedidos) {
+          pedidosArray = pedidosArray.filter(p => {
+            // 1ª checagem: A origem está marcada explicitamente como parceiro?
+            const origem = String(p.origem || '').toUpperCase().trim();
+            if (origem === 'PARCEIRO') return false; 
 
-    window.todosPedidos = pedidosArray;
-    todosPedidos = window.todosPedidos;
+            // 2ª checagem: O nome do responsável bate com a lista de parceiros carregada?
+            const nomeResp = String(p.responsavel_nome || p.parceiro_nome || p.vendedor || '').trim().toUpperCase();
+            if (window.listaNomesParceiros && window.listaNomesParceiros.some(nome => nome && nomeResp.includes(nome))) {
+              return false; // Se o nome estiver na lista de parceiros, esconde!
+            }
 
-    if (!window.mostrarConcluidos) {
-      todosPedidos = todosPedidos.filter(p => p.status_etapa < 6);
-      window.todosPedidos = todosPedidos;
-    }
+            return true; // Se passou pelas duas checagens, é interno, então mostra.
+          });
+        }
 
-    atualizarSelectParceiros();
-    aplicarFiltros();
-    atualizarKPIs();
-  } else {
-    tbody.innerHTML = '<tr><td colspan="7" class="loading-state"><i class="fas fa-exclamation-triangle"></i> Falha ao carregar</td></tr>';
-    showToast('Falha ao carregar pedidos', 'error');
-  }
-})
+        window.todosPedidos = pedidosArray;
+        todosPedidos = window.todosPedidos;
+
+        if (!window.mostrarConcluidos) {
+          todosPedidos = todosPedidos.filter(p => p.status_etapa < 6);
+          window.todosPedidos = todosPedidos;
+        }
+
+        atualizarSelectParceiros();
+        aplicarFiltros();
+        atualizarKPIs();
+      } else {
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-state"><i class="fas fa-exclamation-triangle"></i> Falha ao carregar</td></tr>';
+        showToast('Falha ao carregar pedidos', 'error');
+      }
+    })
     .withFailureHandler(function(erro) {
       console.error("❌ Erro:", erro);
       tbody.innerHTML = `<tr><td colspan="7" class="loading-state"><i class="fas fa-wifi"></i> Erro de comunicação: ${erro.message || erro}</td></tr>`;
@@ -3087,19 +3108,28 @@ function carregarPedidosSilenciosamente() {
   
   google.script.run
     .withSuccessHandler(function(pedidosArray) {
-  if (Array.isArray(pedidosArray)) {
-    
-    // 🔥 FILTRO DE SEGURANÇA SILENCIOSO
-    let arrayFiltrado = pedidosArray;
-    if (!window.podeVerTodosPedidos) {
-      arrayFiltrado = pedidosArray.filter(p => {
-        const origem = String(p.origem || '').toUpperCase().trim();
-        return origem !== 'PARCEIRO';
-      });
-    }
-    
-    const novosPedidos = arrayFiltrado;
+      if (Array.isArray(pedidosArray)) {
         
+        // 🔥 FILTRO DE SEGURANÇA SILENCIOSO BLINDADO
+        let arrayFiltrado = pedidosArray;
+        if (!window.podeVerTodosPedidos) {
+          arrayFiltrado = pedidosArray.filter(p => {
+            // 1ª checagem: A origem está marcada explicitamente como parceiro?
+            const origem = String(p.origem || '').toUpperCase().trim();
+            if (origem === 'PARCEIRO') return false;
+            
+            // 2ª checagem: O nome do responsável bate com a lista de parceiros carregada?
+            const nomeResp = String(p.responsavel_nome || p.parceiro_nome || p.vendedor || '').trim().toUpperCase();
+            if (window.listaNomesParceiros && window.listaNomesParceiros.some(nome => nome && nomeResp.includes(nome))) {
+              return false; // Se o nome estiver na lista de parceiros, esconde!
+            }
+            
+            return true; // Se passou pelas duas checagens, é interno, então mostra.
+          });
+        }
+        
+        const novosPedidos = arrayFiltrado;
+            
         if (!mostrarConcluidos) {
           todosPedidos = novosPedidos.filter(p => p.status_etapa < 6);
         } else {
