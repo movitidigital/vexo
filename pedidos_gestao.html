@@ -1893,9 +1893,13 @@ function carregarPedidos() {
     .withSuccessHandler(function(pedidosArray) {
   if (Array.isArray(pedidosArray)) {
     
-    // 🔥 FILTRO DE SEGURANÇA: Se não for gestão, mostra SÓ origem INTERNO
+    // 🔥 FILTRO DE SEGURANÇA: Se não for gestão, esconde os pedidos de PARCEIROS
     if (!window.podeVerTodosPedidos) {
-      pedidosArray = pedidosArray.filter(p => String(p.origem || '').toUpperCase().trim() === 'INTERNO');
+      pedidosArray = pedidosArray.filter(p => {
+        const origem = String(p.origem || '').toUpperCase().trim();
+        // Se for PARCEIRO, esconde. Se for qualquer outra coisa, mostra.
+        return origem !== 'PARCEIRO';
+      });
     }
 
     window.todosPedidos = pedidosArray;
@@ -3088,7 +3092,10 @@ function carregarPedidosSilenciosamente() {
     // 🔥 FILTRO DE SEGURANÇA SILENCIOSO
     let arrayFiltrado = pedidosArray;
     if (!window.podeVerTodosPedidos) {
-      arrayFiltrado = pedidosArray.filter(p => String(p.origem || '').toUpperCase().trim() === 'INTERNO');
+      arrayFiltrado = pedidosArray.filter(p => {
+        const origem = String(p.origem || '').toUpperCase().trim();
+        return origem !== 'PARCEIRO';
+      });
     }
     
     const novosPedidos = arrayFiltrado;
