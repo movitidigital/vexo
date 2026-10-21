@@ -3122,12 +3122,12 @@ async function carregarMetasIndividuaisTime() {
 
     if (errMetas) throw errMetas;
 
-    // Normaliza os dados para o formato que o Dashboard já usa
+    // Normaliza os dados
     const timeVendedores = (metasTime || []).map(r => {
       const nomeCompleto = [r.profiles?.nome, r.profiles?.sobrenome].filter(Boolean).join(' ') || 'Sem nome';
       return {
         id: r.consultor_id,
-        matricula: r.profiles?.matricula || '',
+        matricula: String(r.profiles?.matricula || '').trim().toUpperCase(),
         nome: nomeCompleto,
         cargo: r.profiles?.role || 'Consultor',
         meta_target_fat: r.fat_target,
@@ -3144,7 +3144,6 @@ async function carregarMetasIndividuaisTime() {
         <div style="text-align:center; padding:40px; background:rgba(0,0,0,0.2); border-radius:20px; color:#94a3b8; border: 1px dashed rgba(255,255,255,0.1);">
           <div style="font-size:30px; margin-bottom:10px;">📭</div>
           <p style="margin:0; font-weight:600; font-size:14px;">Nenhuma meta individual cadastrada para <b>${mesSelecionado}/${anoSelecionado}</b>.</p>
-          <p style="margin:5px 0 0 0; font-size:11px;">Verifique na aba "Metas & KPIs" se as metas deste mês foram salvas.</p>
         </div>`;
       return;
     }
@@ -3159,13 +3158,29 @@ async function carregarMetasIndividuaisTime() {
       if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
       return parseFloat(s.replace(/[^\d.-]/g, '')) || 0;
     };
+
+    // 🛠️ AQUI ESTAVA O ERRO: Usando a função robusta original do dashboard
     const parseDataBR = (str) => {
       if (!str) return null;
-      const p = String(str).trim().split(' ')[0].split('/');
-      if (p.length !== 3) return null;
-      let ano = parseInt(p[2]); if (ano < 100) ano += 2000;
-      const d = new Date(ano, parseInt(p[1]) - 1, parseInt(p[0]));
-      return isNaN(d.getTime()) ? null : d;
+      str = String(str).trim();
+      if (str === '' || str === '-') return null;
+
+      if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
+        const d = new Date(str);
+        return isNaN(d.getTime()) ? null : d;
+      }
+
+      const apenasData = str.split(' ')[0];
+      const p = apenasData.split(/[\/\-]/);
+      if (p.length === 3) {
+        let ano = parseInt(p[2]);
+        if (ano < 100) ano += 2000;
+        const mes = parseInt(p[1]) - 1;
+        const dia = parseInt(p[0]);
+        const d = new Date(ano, mes, dia);
+        return isNaN(d.getTime()) ? null : d;
+      }
+      return null;
     };
 
     const vendasPorVendedor = {};
@@ -3185,13 +3200,14 @@ async function carregarMetasIndividuaisTime() {
       const valor = parseValor(v.valor_contratado);
       const modalidade = String(v.modalidade || '').toUpperCase();
 
-      if (/PRIMEIRA|NOVA|PORT|ADITIVO|MIGRA/i.test(modalidade)) {
+      // Mesma regra de faturamento do painel principal
+      if (modalidade.includes('PRIMEIRA') || modalidade.includes('NOVA') || modalidade.includes('PORT') || modalidade.includes('ADITIVO') || modalidade.includes('MIGRA')) {
         vendasPorVendedor[matricula].fat += valor;
       }
-      if (/PORT/i.test(modalidade)) {
+      if (modalidade.includes('PORT')) {
         vendasPorVendedor[matricula].port += valor;
       }
-      if (/MID|RENEG/i.test(modalidade)) {
+      if (modalidade.includes('MID') || modalidade.includes('RENEG')) {
         vendasPorVendedor[matricula].midQtd++;
       }
     });
@@ -3199,7 +3215,7 @@ async function carregarMetasIndividuaisTime() {
     // ---- 3. Renderiza cards ----
     let html = '';
     for (const vendedor of timeVendedores) {
-      const matricula = String(vendedor.matricula || '').trim().toUpperCase();
+      const matricula = vendedor.matricula;
       const nome = vendedor.nome || 'Vendedor';
       const cargo = vendedor.cargo || 'Consultor';
 
