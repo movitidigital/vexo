@@ -3107,38 +3107,45 @@ async function carregarMetasIndividuaisTime() {
     const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || new Date().getFullYear();
     const mesNum = mapaMesesNum[mesSelecionado] || new Date().getMonth() + 1;
 
-    // ---- 1. Busca TODAS as metas ----
+    // ---- 1. Busca metas na tabela CORRETA (metas_consultor) ----
     const { data: metasTime, error: errMetas } = await sb
-      .from('metas_time_mes')
-      .select('*');
+      .from('metas_consultor')
+      .select(`
+        id, consultor_id, mes_referencia, ano_referencia,
+        fat_min, fat_target, fat_sup,
+        port_min, port_target, port_sup,
+        reneg_min, reneg_target, reneg_sup,
+        profiles:consultor_id ( nome, sobrenome, role, matricula )
+      `)
+      .eq('mes_referencia', mesNum)
+      .eq('ano_referencia', anoSelecionado);
 
     if (errMetas) throw errMetas;
 
-    // LOG DE DEBUG: Mostra quais meses/anos existem no banco
-    if (metasTime && metasTime.length > 0) {
-        const mesesNoBanco = [...new Set(metasTime.map(m => `${m.mes}/${m.ano}`))];
-        console.log(`📅 [DEBUG] Meses com metas no banco:`, mesesNoBanco.join(', '));
-    }
-    
-    const timeVendedores = (metasTime || []).filter(mt => {
-      let rawMes = String(mt.mes || '').toUpperCase().trim();
-      let mNum = mapaMesesNum[rawMes];
-      let aNum = parseInt(mt.ano) || 0;
-
-      return mNum === mesNum && aNum === anoSelecionado;
+    // Normaliza os dados para o formato que o Dashboard já usa
+    const timeVendedores = (metasTime || []).map(r => {
+      const nomeCompleto = [r.profiles?.nome, r.profiles?.sobrenome].filter(Boolean).join(' ') || 'Sem nome';
+      return {
+        id: r.consultor_id,
+        matricula: r.profiles?.matricula || '',
+        nome: nomeCompleto,
+        cargo: r.profiles?.role || 'Consultor',
+        meta_target_fat: r.fat_target,
+        meta_target_port: r.port_target,
+        meta_target_reneg: r.reneg_target
+      };
     });
 
     document.getElementById('time-qtd-vendedores').innerText = `${timeVendedores.length} vendedor(es)`;
 
     if (timeVendedores.length === 0) {
-      bloco.style.display = 'block'; // Mantém o bloco visível para mostrar o aviso
+      bloco.style.display = 'block';
       container.innerHTML = `
         <div style="text-align:center; padding:40px; background:rgba(0,0,0,0.2); border-radius:20px; color:#94a3b8; border: 1px dashed rgba(255,255,255,0.1);">
           <div style="font-size:30px; margin-bottom:10px;">📭</div>
           <p style="margin:0; font-weight:600; font-size:14px;">Nenhuma meta individual cadastrada para <b>${mesSelecionado}/${anoSelecionado}</b>.</p>
           <p style="margin:5px 0 0 0; font-size:11px;">Verifique na aba "Metas & KPIs" se as metas deste mês foram salvas.</p>
         </div>`;
-      console.log(`ℹ️ Nenhuma meta de time encontrada para ${mesSelecionado}/${anoSelecionado}`);
       return;
     }
     bloco.style.display = 'block';
@@ -3196,7 +3203,6 @@ async function carregarMetasIndividuaisTime() {
       const nome = vendedor.nome || 'Vendedor';
       const cargo = vendedor.cargo || 'Consultor';
 
-      // Match por matrícula
       let realizado = vendasPorVendedor[matricula] || { fat: 0, port: 0, midQtd: 0 };
 
       const metaFat  = Number(vendedor.meta_target_fat) || 0;
@@ -3279,7 +3285,6 @@ async function carregarMetasIndividuaisTime() {
     container.innerHTML = `<p style="text-align:center; color:#ef4444; padding:20px;">Erro ao carregar metas: ${e.message}</p>`;
   }
 }
-
   
 // Função para expandir/recolher um card específico
 function toggleCardVendedor(vendedorId) {
