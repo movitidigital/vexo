@@ -3107,7 +3107,7 @@ async function carregarMetasIndividuaisTime() {
     const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || new Date().getFullYear();
     const mesNum = mapaMesesNum[mesSelecionado] || new Date().getMonth() + 1;
 
-    // ---- 1. Busca TODAS as metas e filtra no JS (evita erro de tipo string/number no banco) ----
+    // ---- 1. Busca TODAS as metas ----
     const { data: metasTime, error: errMetas } = await sb
       .from('metas_time_mes')
       .select('*');
@@ -3117,16 +3117,29 @@ async function carregarMetasIndividuaisTime() {
       throw errMetas;
     }
 
-    console.log(`🔍 [DEBUG] Total de metas no banco: ${metasTime?.length || 0}`);
+    // 👇 LOG DE DEBUG CRUCIAL: Vai mostrar no console como os dados estão no banco
+    if (metasTime && metasTime.length > 0) {
+        console.log('🔍 [DEBUG] Estrutura do 1º registro do banco:', metasTime[0]);
+    }
     
     const timeVendedores = (metasTime || []).filter(mt => {
-      // Transforma o que vier do banco em número para comparar com segurança
-      const mNum = mapaMesesNum[String(mt.mes).toUpperCase().trim()] || parseInt(mt.mes);
-      const aNum = parseInt(mt.ano);
+      // 1. Tenta achar o Mês (pode ser 'OUTUBRO', '10', '10/2026', etc.)
+      let rawMes = String(mt.mes || mt.mes_referencia || mt.mes_ref || '').toUpperCase().trim();
+      let mNum = mapaMesesNum[rawMes];
+      if (!mNum) {
+        // Se não achou a palavra, tenta extrair o número (ex: "10" vira 10)
+        const match = rawMes.match(/\d+/);
+        mNum = match ? parseInt(match[0]) : 0;
+      }
+
+      // 2. Tenta achar o Ano (pode ser 'ano', 'ano_referencia', '2026', etc.)
+      let rawAno = String(mt.ano || mt.ano_referencia || mt.ano_ref || mt.year || '').trim();
+      let aNum = parseInt(rawAno.replace(/\D/g, '')) || 0;
+
       return mNum === mesNum && aNum === anoSelecionado;
     });
 
-    console.log(`🔍 [DEBUG] Metas encontradas para ${mesSelecionado}/${anoSelecionado}:`, timeVendedores);
+    console.log(`🔍 [DEBUG] Filtro: Procurando ${mesSelecionado} (${mesNum}) / ${anoSelecionado} | Encontrados: ${timeVendedores.length}`);
 
     document.getElementById('time-qtd-vendedores').innerText = `${timeVendedores.length} vendedor(es)`;
 
@@ -3192,10 +3205,8 @@ async function carregarMetasIndividuaisTime() {
       const nome = vendedor.nome || 'Vendedor';
       const cargo = vendedor.cargo || 'Consultor';
 
-      // Match por matrícula
       let realizado = vendasPorVendedor[matricula] || { fat: 0, port: 0, midQtd: 0 };
 
-      // Os nomes das colunas abaixo (meta_target_fat, etc) devem ser EXATAMENTE como estão no seu banco
       const metaFat  = Number(vendedor.meta_target_fat) || 0;
       const metaPort = Number(vendedor.meta_target_port) || 0;
       const metaMid  = Number(vendedor.meta_target_reneg) || 0;
