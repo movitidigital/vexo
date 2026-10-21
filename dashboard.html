@@ -2533,6 +2533,7 @@ async function inicializarDados() {
 
       const origem = String(v.origem || '').toUpperCase().trim();
       const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
+      const dataVenda = parseDataBR(v.data_da_venda);
 
       let modalidade = String(v.modalidade || '').toUpperCase().trim();
       let modalidadeParaPainel = modalidade;
@@ -2566,18 +2567,22 @@ async function inicializarDados() {
       let statusFinalPainel = 'PENDENTE';
       let dataParaDashboard = null;
 
-      if (dataAtivacao) {
-        if ((dataAtivacao.getMonth() + 1) === mesNumericoSelecionado &&
-             dataAtivacao.getFullYear() === anoSelecionado) {
+      // 🛠️ LÓGICA DE DATA UNIFICADA COM O "VOLUME TOTAL"
+      const estaAtivado = Number(v.status_etapa) === 6;
+
+      if (estaAtivado) {
+        // Se está ativado (etapa 6), verifica a data de ativação no mês
+        if (dataAtivacao && (dataAtivacao.getMonth() + 1) === mesNumericoSelecionado && dataAtivacao.getFullYear() === anoSelecionado) {
           incluir = true;
           statusFinalPainel = 'ATIVADO';
           dataParaDashboard = dataAtivacao;
         }
       } else {
-        if (mesNumericoSelecionado === mesAtual && anoSelecionado === anoAtual) {
+        // Se é pendente, verifica a data da venda no mês
+        if (dataVenda && (dataVenda.getMonth() + 1) === mesNumericoSelecionado && dataVenda.getFullYear() === anoSelecionado) {
           incluir = true;
           statusFinalPainel = 'PENDENTE';
-          dataParaDashboard = hoje;
+          dataParaDashboard = dataVenda;
         }
       }
 
@@ -2628,7 +2633,6 @@ async function inicializarDados() {
       let gAtivFat = 0, gAtivQtd = 0, gAtivInt = 0, gAtivParc = 0;
 
       (dataVendas || []).forEach(v => {
-        // Ignora cancelados
         const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
         if (statusBruto.includes('CANCELADO')) return;
 
@@ -2682,7 +2686,6 @@ async function inicializarDados() {
 
       console.log(`🌍 [DASH] Visão Global calculada: Entrantes ${gEntrQtd} (${fmtBRLGlobal(gEntrFat)}) | Ativos ${gAtivQtd} (${fmtBRLGlobal(gAtivFat)}) | TOTAL GERAL: ${gTotalQtd} pedidos (${fmtBRLGlobal(gTotalFat)})`);
     } else if (blocoGlobal) {
-      // Esconde o bloco para consultores comuns
       blocoGlobal.style.display = 'none';
     }
     
