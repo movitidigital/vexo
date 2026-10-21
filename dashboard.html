@@ -3112,41 +3112,33 @@ async function carregarMetasIndividuaisTime() {
       .from('metas_time_mes')
       .select('*');
 
-    if (errMetas) {
-      console.error('Erro ao buscar metas_time_mes:', errMetas);
-      throw errMetas;
-    }
+    if (errMetas) throw errMetas;
 
-    // 👇 LOG DE DEBUG CRUCIAL: Vai mostrar no console como os dados estão no banco
+    // LOG DE DEBUG: Mostra quais meses/anos existem no banco
     if (metasTime && metasTime.length > 0) {
-        console.log('🔍 [DEBUG] Estrutura do 1º registro do banco:', metasTime[0]);
+        const mesesNoBanco = [...new Set(metasTime.map(m => `${m.mes}/${m.ano}`))];
+        console.log(`📅 [DEBUG] Meses com metas no banco:`, mesesNoBanco.join(', '));
     }
     
     const timeVendedores = (metasTime || []).filter(mt => {
-      // 1. Tenta achar o Mês (pode ser 'OUTUBRO', '10', '10/2026', etc.)
-      let rawMes = String(mt.mes || mt.mes_referencia || mt.mes_ref || '').toUpperCase().trim();
+      let rawMes = String(mt.mes || '').toUpperCase().trim();
       let mNum = mapaMesesNum[rawMes];
-      if (!mNum) {
-        // Se não achou a palavra, tenta extrair o número (ex: "10" vira 10)
-        const match = rawMes.match(/\d+/);
-        mNum = match ? parseInt(match[0]) : 0;
-      }
-
-      // 2. Tenta achar o Ano (pode ser 'ano', 'ano_referencia', '2026', etc.)
-      let rawAno = String(mt.ano || mt.ano_referencia || mt.ano_ref || mt.year || '').trim();
-      let aNum = parseInt(rawAno.replace(/\D/g, '')) || 0;
+      let aNum = parseInt(mt.ano) || 0;
 
       return mNum === mesNum && aNum === anoSelecionado;
     });
 
-    console.log(`🔍 [DEBUG] Filtro: Procurando ${mesSelecionado} (${mesNum}) / ${anoSelecionado} | Encontrados: ${timeVendedores.length}`);
-
     document.getElementById('time-qtd-vendedores').innerText = `${timeVendedores.length} vendedor(es)`;
 
     if (timeVendedores.length === 0) {
-      bloco.style.display = 'none';
-      container.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Nenhuma meta individual cadastrada para ${mesSelecionado}/${anoSelecionado}.</div>`;
-      console.log(`ℹ️ Nenhuma meta de time para ${mesSelecionado}/${anoSelecionado}`);
+      bloco.style.display = 'block'; // Mantém o bloco visível para mostrar o aviso
+      container.innerHTML = `
+        <div style="text-align:center; padding:40px; background:rgba(0,0,0,0.2); border-radius:20px; color:#94a3b8; border: 1px dashed rgba(255,255,255,0.1);">
+          <div style="font-size:30px; margin-bottom:10px;">📭</div>
+          <p style="margin:0; font-weight:600; font-size:14px;">Nenhuma meta individual cadastrada para <b>${mesSelecionado}/${anoSelecionado}</b>.</p>
+          <p style="margin:5px 0 0 0; font-size:11px;">Verifique na aba "Metas & KPIs" se as metas deste mês foram salvas.</p>
+        </div>`;
+      console.log(`ℹ️ Nenhuma meta de time encontrada para ${mesSelecionado}/${anoSelecionado}`);
       return;
     }
     bloco.style.display = 'block';
@@ -3169,7 +3161,6 @@ async function carregarMetasIndividuaisTime() {
       return isNaN(d.getTime()) ? null : d;
     };
 
-    // Agrupa por consultor (só ATIVADAS no mês)
     const vendasPorVendedor = {};
     (dataVendas || []).forEach(v => {
       const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
@@ -3205,6 +3196,7 @@ async function carregarMetasIndividuaisTime() {
       const nome = vendedor.nome || 'Vendedor';
       const cargo = vendedor.cargo || 'Consultor';
 
+      // Match por matrícula
       let realizado = vendasPorVendedor[matricula] || { fat: 0, port: 0, midQtd: 0 };
 
       const metaFat  = Number(vendedor.meta_target_fat) || 0;
