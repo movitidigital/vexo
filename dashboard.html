@@ -2428,7 +2428,7 @@ async function inicializarDados() {
       console.log(`🔵 [DASH] ${listaConsultores.length} consultores mapeados`);
     } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
 
-    // ---- 3. Busca METAS_LOJA (TABELA CORRETA DO GESTOR DE METAS) ----
+    // ---- 3. Busca METAS_LOJA ----
     let metaFaturamento = 0, metaFaturamentoSup = 0;
     let metaPortabilidade = 0, metaPortabilidadeSup = 0;
     let metaRenegociacao = 0, metaRenegociacaoSup = 0;
@@ -2446,7 +2446,6 @@ async function inicializarDados() {
         console.log(`🔵 [DASH] metas_loja: ${metaDB?.length || 0} registros para ${anoSelecionado}`, metaDB);
         
         if (metaDB && metaDB.length > 0) {
-          // 👇 CORREÇÃO: mes_referencia é um número (integer), então a busca é direta
           const metaDoMes = metaDB.find(m => Number(m.mes_referencia) === mesNumericoSelecionado);
 
           if (metaDoMes) {
@@ -2513,27 +2512,26 @@ async function inicializarDados() {
       return null;
     };
 
-    // ---- 6. Processa vendas (COM FILTRO DE ORIGEM) ----
+    // ---- 6. Processa vendas (COM FILTRO DE ORIGEM E CARGO) ----
     const ranking = {};
     const listaVendasDashboard = [];
     let ignoradasCancel = 0;
     let ignoradasModalidade = 0;
-    let ignoradasParceiro = 0; // 👈 CONTADOR DE VENDAS DE PARCEIROS
+    let ignoradasParceiro = 0;
+
+    // 👇 IDENTIFICA SE O USUÁRIO É DA GESTÃO
+    const roleLogado = String(perfilLogado?.role || '').toUpperCase().trim();
+    const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE', 'DIRETORIA'].includes(roleLogado);
 
     (dataVendas || []).forEach(v => {
-      // 👇 FILTRA VENDAS DE PARCEIROS AQUI
-      const origem = String(v.origem || '').toUpperCase().trim();
-      if (origem !== 'INTERNO') {
-        ignoradasParceiro++;
-        return; // Pula a venda se não for da E&E
-      }
-
+      // Cancelados são sempre ignorados por todos
       const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
       if (statusBruto.includes('CANCELADO')) {
         ignoradasCancel++;
         return;
       }
 
+      const origem = String(v.origem || '').toUpperCase().trim();
       const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
 
       let modalidade = String(v.modalidade || '').toUpperCase().trim();
@@ -2548,9 +2546,16 @@ async function inicializarDados() {
         modalidadeParaPainel === 'ADITIVO' ||
         modalidade.includes('PORTABIL');
 
-      if (!isReceita) {
-        ignoradasModalidade++;
-        return;
+      // 👇 SE NÃO FOR GESTÃO, APLICA OS FILTROS. SE FOR GESTÃO, NÃO FILTRA NADA.
+      if (!isGestao) {
+        if (origem !== 'INTERNO') {
+          ignoradasParceiro++;
+          return; 
+        }
+        if (!isReceita) {
+          ignoradasModalidade++;
+          return;
+        }
       }
 
       const valor = parseValor(v.valor_contratado);
@@ -2613,11 +2618,10 @@ async function inicializarDados() {
     };
 
     // ---- 7.1 VISÃO GLOBAL (INTERNOS + PARCEIROS) - APENAS PARA GESTÃO ----
-    const role = String(perfilLogado?.role || '').toUpperCase().trim();
     const perfisPermitidos = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
     const blocoGlobal = document.getElementById('bloco-visao-global');
 
-    if (perfisPermitidos.includes(role) && blocoGlobal) {
+    if (perfisPermitidos.includes(roleLogado) && blocoGlobal) {
       blocoGlobal.style.display = 'block';
 
       let gEntrFat = 0, gEntrQtd = 0, gEntrInt = 0, gEntrParc = 0;
@@ -2666,7 +2670,7 @@ async function inicializarDados() {
       document.getElementById('global-ativos-int').innerText = gAtivInt;
       document.getElementById('global-ativos-parc').innerText = gAtivParc;
 
-      // 👇 NOVO CÁLCULO DO TOTAL GERAL (Entrantes + Ativos)
+      // NOVO CÁLCULO DO TOTAL GERAL (Entrantes + Ativos)
       const gTotalFat = gEntrFat + gAtivFat;
       const gTotalQtd = gEntrQtd + gAtivQtd;
       
