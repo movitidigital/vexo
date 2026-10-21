@@ -3103,9 +3103,13 @@ async function carregarMetasIndividuaisTime() {
       'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12
     };
     
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth() + 1;
+    const anoAtual = hoje.getFullYear();
+
     const mesSelecionado = (document.getElementById('dashboard_mes')?.value || '').toUpperCase();
-    const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || new Date().getFullYear();
-    const mesNum = mapaMesesNum[mesSelecionado] || new Date().getMonth() + 1;
+    const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || anoAtual;
+    const mesNum = mapaMesesNum[mesSelecionado] || mesAtual;
 
     // ---- 1. Busca metas na tabela CORRETA (metas_consultor) ----
     const { data: metasTime, error: errMetas } = await sb
@@ -3122,7 +3126,6 @@ async function carregarMetasIndividuaisTime() {
 
     if (errMetas) throw errMetas;
 
-    // Normaliza os dados
     const timeVendedores = (metasTime || []).map(r => {
       const nomeCompleto = [r.profiles?.nome, r.profiles?.sobrenome].filter(Boolean).join(' ') || 'Sem nome';
       return {
@@ -3149,7 +3152,7 @@ async function carregarMetasIndividuaisTime() {
     }
     bloco.style.display = 'block';
 
-    // ---- 2. Busca VENDAS para cruzar ----
+    // ---- 2. Busca VENDAS ----
     const { data: dataVendas } = await sb.from('VENDAS').select('*');
 
     const parseValor = (v) => {
@@ -3159,17 +3162,14 @@ async function carregarMetasIndividuaisTime() {
       return parseFloat(s.replace(/[^\d.-]/g, '')) || 0;
     };
 
-    // 🛠️ AQUI ESTAVA O ERRO: Usando a função robusta original do dashboard
     const parseDataBR = (str) => {
       if (!str) return null;
       str = String(str).trim();
       if (str === '' || str === '-') return null;
-
       if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
         const d = new Date(str);
         return isNaN(d.getTime()) ? null : d;
       }
-
       const apenasData = str.split(' ')[0];
       const p = apenasData.split(/[\/\-]/);
       if (p.length === 3) {
@@ -3184,11 +3184,39 @@ async function carregarMetasIndividuaisTime() {
     };
 
     const vendasPorVendedor = {};
+    
     (dataVendas || []).forEach(v => {
+      const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
+      if (statusBruto.includes('CANCELADO')) return; // Ignora cancelados
+
       const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
-      if (!dataAtivacao) return;
-      if ((dataAtivacao.getMonth() + 1) !== mesNum) return;
-      if (dataAtivacao.getFullYear() !== anoSelecionado) return;
+      const dataVenda = parseDataBR(v.data_da_venda);
+
+      let modalidade = String(v.modalidade || '').toUpperCase().trim();
+      let modalidadeParaPainel = modalidade;
+      if (modalidade.includes('MIGRA'))        modalidadeParaPainel = 'MIGRAÇÃO TT';
+      else if (modalidade.includes('ATIVA'))   modalidadeParaPainel = 'PRIMEIRA ATIVAÇÃO';
+      else if (modalidade.includes('ADITIVO')) modalidadeParaPainel = 'ADITIVO';
+
+      const isReceita =
+        modalidadeParaPainel === 'MIGRAÇÃO TT' ||
+        modalidadeParaPainel === 'PRIMEIRA ATIVAÇÃO' ||
+        modalidadeParaPainel === 'ADITIVO' ||
+        modalidade.includes('PORTABIL');
+
+      // 🛠️ REGRA DE DATA IGUAL AO PAINEL PRINCIPAL
+      let incluir = false;
+      if (Number(v.status_etapa) === 6) { // Ativados
+        if (dataAtivacao && (dataAtivacao.getMonth() + 1) === mesNum && dataAtivacao.getFullYear() === anoSelecionado) {
+          incluir = true;
+        }
+      } else { // Pendentes
+        if (dataVenda && (dataVenda.getMonth() + 1) === mesNum && dataVenda.getFullYear() === anoSelecionado) {
+          incluir = true;
+        }
+      }
+
+      if (!incluir) return; // Se não bateu a data, pula
 
       const matricula = String(v.consultor_que_vendeu || '').trim().toUpperCase();
       if (!matricula) return;
@@ -3198,10 +3226,8 @@ async function carregarMetasIndividuaisTime() {
       }
 
       const valor = parseValor(v.valor_contratado);
-      const modalidade = String(v.modalidade || '').toUpperCase();
 
-      // Mesma regra de faturamento do painel principal
-      if (modalidade.includes('PRIMEIRA') || modalidade.includes('NOVA') || modalidade.includes('PORT') || modalidade.includes('ADITIVO') || modalidade.includes('MIGRA')) {
+      if (isReceita) {
         vendasPorVendedor[matricula].fat += valor;
       }
       if (modalidade.includes('PORT')) {
@@ -3211,6 +3237,8 @@ async function carregarMetasIndividuaisTime() {
         vendasPorVendedor[matricula].midQtd++;
       }
     });
+
+    console.log('🔍 [DEBUG] Vendas agrupadas por vendedor:', vendasPorVendedor);
 
     // ---- 3. Renderiza cards ----
     let html = '';
