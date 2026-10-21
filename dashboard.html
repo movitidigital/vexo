@@ -3102,27 +3102,37 @@ async function carregarMetasIndividuaisTime() {
       'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,
       'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12
     };
+    
     const mesSelecionado = (document.getElementById('dashboard_mes')?.value || '').toUpperCase();
     const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || new Date().getFullYear();
     const mesNum = mapaMesesNum[mesSelecionado] || new Date().getMonth() + 1;
 
-    // ---- 1. Busca METAS_TIME_MES ----
-    const { data: metasTime } = await sb
+    // ---- 1. Busca TODAS as metas e filtra no JS (evita erro de tipo string/number no banco) ----
+    const { data: metasTime, error: errMetas } = await sb
       .from('metas_time_mes')
-      .select('*')
-      .eq('ano', anoSelecionado);
+      .select('*');
 
-    // Filtra pelo mês (aceita número ou nome)
+    if (errMetas) {
+      console.error('Erro ao buscar metas_time_mes:', errMetas);
+      throw errMetas;
+    }
+
+    console.log(`🔍 [DEBUG] Total de metas no banco: ${metasTime?.length || 0}`);
+    
     const timeVendedores = (metasTime || []).filter(mt => {
+      // Transforma o que vier do banco em número para comparar com segurança
       const mNum = mapaMesesNum[String(mt.mes).toUpperCase().trim()] || parseInt(mt.mes);
-      return mNum === mesNum;
+      const aNum = parseInt(mt.ano);
+      return mNum === mesNum && aNum === anoSelecionado;
     });
+
+    console.log(`🔍 [DEBUG] Metas encontradas para ${mesSelecionado}/${anoSelecionado}:`, timeVendedores);
 
     document.getElementById('time-qtd-vendedores').innerText = `${timeVendedores.length} vendedor(es)`;
 
     if (timeVendedores.length === 0) {
       bloco.style.display = 'none';
-      container.innerHTML = '';
+      container.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Nenhuma meta individual cadastrada para ${mesSelecionado}/${anoSelecionado}.</div>`;
       console.log(`ℹ️ Nenhuma meta de time para ${mesSelecionado}/${anoSelecionado}`);
       return;
     }
@@ -3185,6 +3195,7 @@ async function carregarMetasIndividuaisTime() {
       // Match por matrícula
       let realizado = vendasPorVendedor[matricula] || { fat: 0, port: 0, midQtd: 0 };
 
+      // Os nomes das colunas abaixo (meta_target_fat, etc) devem ser EXATAMENTE como estão no seu banco
       const metaFat  = Number(vendedor.meta_target_fat) || 0;
       const metaPort = Number(vendedor.meta_target_port) || 0;
       const metaMid  = Number(vendedor.meta_target_reneg) || 0;
@@ -3202,7 +3213,7 @@ async function carregarMetasIndividuaisTime() {
       const fmt = (v) => Number(v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
       html += `
-        <div class="card-vendedor" data-vendedor-id="${matricula}" style="background:#0f172a; border-radius:20px; border:1px solid rgba(59,130,246,0.3); overflow:hidden;">
+        <div class="card-vendedor" data-vendedor-id="${matricula}" style="background:#0f172a; border-radius:20px; border:1px solid rgba(59,130,246,0.3); overflow:hidden; margin-bottom: 15px;">
           <div style="padding:16px 20px; background:#1e293b; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
             <div style="display:flex; align-items:center; gap:14px;">
               <div style="width:46px; height:46px; background:${avatarColor}; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">👤</div>
@@ -3262,7 +3273,7 @@ async function carregarMetasIndividuaisTime() {
 
   } catch (e) {
     console.error('❌ [DASH] Erro metas time:', e);
-    container.innerHTML = `<p style="text-align:center; color:#ef4444; padding:20px;">Erro: ${e.message}</p>`;
+    container.innerHTML = `<p style="text-align:center; color:#ef4444; padding:20px;">Erro ao carregar metas: ${e.message}</p>`;
   }
 }
 
