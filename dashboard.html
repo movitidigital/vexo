@@ -3131,7 +3131,7 @@ async function carregarMetasIndividuaisTime() {
       return {
         id: r.consultor_id,
         matricula: String(r.profiles?.matricula || '').trim().toUpperCase(),
-        nome: nomeCompleto,
+        nome: nomeCompleto.toUpperCase().trim(),
         cargo: r.profiles?.role || 'Consultor',
         meta_target_fat: r.fat_target,
         meta_target_port: r.port_target,
@@ -3187,7 +3187,7 @@ async function carregarMetasIndividuaisTime() {
     
     (dataVendas || []).forEach(v => {
       const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
-      if (statusBruto.includes('CANCELADO')) return; // Ignora cancelados
+      if (statusBruto.includes('CANCELADO')) return;
 
       const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
       const dataVenda = parseDataBR(v.data_da_venda);
@@ -3204,50 +3204,42 @@ async function carregarMetasIndividuaisTime() {
         modalidadeParaPainel === 'ADITIVO' ||
         modalidade.includes('PORTABIL');
 
-      // 🛠️ REGRA DE DATA IGUAL AO PAINEL PRINCIPAL
       let incluir = false;
-      if (Number(v.status_etapa) === 6) { // Ativados
+      if (Number(v.status_etapa) === 6) {
         if (dataAtivacao && (dataAtivacao.getMonth() + 1) === mesNum && dataAtivacao.getFullYear() === anoSelecionado) {
           incluir = true;
         }
-      } else { // Pendentes
+      } else {
         if (dataVenda && (dataVenda.getMonth() + 1) === mesNum && dataVenda.getFullYear() === anoSelecionado) {
           incluir = true;
         }
       }
 
-      if (!incluir) return; // Se não bateu a data, pula
+      if (!incluir) return;
 
-      const matricula = String(v.consultor_que_vendeu || '').trim().toUpperCase();
-      if (!matricula) return;
+      // 🛠️ SALVA A CHAVE COMO NOME (pois é assim que vem da tabela VENDAS) E TAMBÉM TENTA A MATRÍCULA
+      const nomeVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
+      if (!nomeVenda) return;
 
-      if (!vendasPorVendedor[matricula]) {
-        vendasPorVendedor[matricula] = { fat: 0, port: 0, midQtd: 0, nome: matricula };
+      if (!vendasPorVendedor[nomeVenda]) {
+        vendasPorVendedor[nomeVenda] = { fat: 0, port: 0, midQtd: 0 };
       }
 
       const valor = parseValor(v.valor_contratado);
 
-      if (isReceita) {
-        vendasPorVendedor[matricula].fat += valor;
-      }
-      if (modalidade.includes('PORT')) {
-        vendasPorVendedor[matricula].port += valor;
-      }
-      if (modalidade.includes('MID') || modalidade.includes('RENEG')) {
-        vendasPorVendedor[matricula].midQtd++;
-      }
+      if (isReceita) vendasPorVendedor[nomeVenda].fat += valor;
+      if (modalidade.includes('PORT')) vendasPorVendedor[nomeVenda].port += valor;
+      if (modalidade.includes('MID') || modalidade.includes('RENEG')) vendasPorVendedor[nomeVenda].midQtd++;
     });
-
-    console.log('🔍 [DEBUG] Vendas agrupadas por vendedor:', vendasPorVendedor);
 
     // ---- 3. Renderiza cards ----
     let html = '';
     for (const vendedor of timeVendedores) {
       const matricula = vendedor.matricula;
-      const nome = vendedor.nome || 'Vendedor';
-      const cargo = vendedor.cargo || 'Consultor';
+      const nome = vendedor.nome;
 
-      let realizado = vendasPorVendedor[matricula] || { fat: 0, port: 0, midQtd: 0 };
+      // 🛠️ TENTA BUSCAR PELA MATRÍCULA PRIMEIRO, SE NÃO ACHAR, BUSCA PELO NOME
+      let realizado = vendasPorVendedor[matricula] || vendasPorVendedor[nome] || { fat: 0, port: 0, midQtd: 0 };
 
       const metaFat  = Number(vendedor.meta_target_fat) || 0;
       const metaPort = Number(vendedor.meta_target_port) || 0;
@@ -3272,7 +3264,7 @@ async function carregarMetasIndividuaisTime() {
               <div style="width:46px; height:46px; background:${avatarColor}; border-radius:14px; display:flex; align-items:center; justify-content:center; font-size:22px;">👤</div>
               <div>
                 <div style="font-weight:800; color:white; font-size:16px;">${nome}</div>
-                <div style="font-size:10px; color:#94a3b8;">${cargo} • ${matricula}</div>
+                <div style="font-size:10px; color:#94a3b8;">${vendedor.cargo} • ${matricula}</div>
               </div>
             </div>
             <div style="display:flex; align-items:center; gap:15px;">
