@@ -3312,11 +3312,9 @@ function toggleCardVendedor(vendedorId) {
   if (body.style.display === 'none' || body.style.display === '') {
     body.style.display = 'block';
     icon.innerHTML = '▲';
-    cardsExpandidos.add(vendedorId);
   } else {
     body.style.display = 'none';
     icon.innerHTML = '▼';
-    cardsExpandidos.delete(vendedorId);
   }
 }
 
