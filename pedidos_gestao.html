@@ -1433,6 +1433,28 @@ function showToast(message, type = 'info') {
 }
   
 
+	// Função para formatar o telefone visualmente
+function formatarTelefone(tel) {
+  if (!tel) return '';
+  const num = String(tel).replace(/\D/g, ''); 
+  if (num.length === 11) {
+    return `(${num.substring(0, 2)}) ${num.substring(2, 7)}-${num.substring(7, 11)}`;
+  } else if (num.length === 10) {
+    return `(${num.substring(0, 2)}) ${num.substring(2, 6)}-${num.substring(6, 10)}`;
+  }
+  return tel; 
+}
+
+// Função para copiar o número limpo
+function copiarTelefone(tel) {
+  if (!tel) return;
+  const num = String(tel).replace(/\D/g, '');
+  navigator.clipboard.writeText(num).then(() => {
+    showToast(`Número <b>${num}</b> copiado!`, 'success');
+  }).catch(err => {
+    showToast('Erro ao copiar o número.', 'error');
+  });
+}
   
 function fecharConfirmModal() {
   const modal = document.getElementById('vexo-confirm-modal');
@@ -3568,7 +3590,7 @@ function salvarCodigoCliente() {
                         const isPortabilidade = String(objNum.modalidade).toUpperCase().includes('PORTABILIDADE');
                         return `
                           <span class="linha-numero" style="background: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;">
-                            <span style="color: #475569; font-weight: 600;"><i class="fas fa-phone" style="font-size: 10px;"></i> ${escapeHtml(objNum.numero)}</span>
+                            <span onclick="copiarTelefone('${objNum.numero}')" style="color: #475569; font-weight: 600; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px;" title="Clique para copiar o número"> <i class="fas fa-phone" style="font-size: 10px;"></i> ${formatarTelefone(objNum.numero)} </span>
                             ${isPortabilidade && objNum.operadora ? `
                               <span style="background: #fff7ed; color: #c2410c; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; border: 1px solid #ffedd5; display: inline-flex; align-items: center; gap: 4px;" title="Portabilidade da operadora ${escapeHtml(objNum.operadora)}">
                                 <i class="fas fa-exchange-alt"></i> ${escapeHtml(objNum.operadora)}
@@ -3985,7 +4007,7 @@ function salvarCodigoCliente() {
           </div>
           <div class="info-item">
             <span class="info-label">Telefone / WhatsApp</span>
-            <span class="info-value">${pedido.contato_financeiro ? `<a href="https://wa.me/55${String(pedido.contato_financeiro).replace(/\D/g, '')}" target="_blank">${escapeHtml(pedido.contato_financeiro)}</a>` : '—'}</span>
+            <span class="info-value">${pedido.contato_financeiro ? `<a href="https://wa.me/55${String(pedido.contato_financeiro).replace(/\D/g, '')}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px;"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px;"></i> ${formatarTelefone(pedido.contato_financeiro)}</a>` : '—'}</span>
           </div>
         </div>
       </div>
