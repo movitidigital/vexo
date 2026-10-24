@@ -1842,7 +1842,8 @@ async function inicializarModulo() {
 
   userCargo       = role;
   userNome        = (nome + ' ' + sobrenome).trim().toUpperCase();
-  userPodeEditar  = (userCargo === "ADMINISTRADOR" || userCargo === "BACKOFFICE");
+  const cargosComEdicao = ['ADMINISTRADOR', 'ADMIN', 'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR'];
+userPodeEditar = cargosComEdicao.includes(userCargo);
   
   // 🔥 NOVO: Define quem tem permissão para ver pedidos de parceiros
   const perfisGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
@@ -2090,7 +2091,7 @@ function renderizarTabela() {
   const formatMoeda = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   const podeEditar = (typeof window.userPodeEditar !== 'undefined') ? window.userPodeEditar : userPodeEditar;
   const cargo = (typeof window.userCargo !== 'undefined') ? window.userCargo : userCargo;
-  const podeExcluir = (cargo === 'BACKOFFICE' || cargo === 'ADMINISTRADOR');
+  const podeExcluir = ['ADMINISTRADOR', 'ADMIN', 'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR'].includes(cargo);
   
   tbody.innerHTML = paginados.map(pedido => {
     // 🔥 NORMALIZA O STATUS PARA GARANTIR QUE "INPUT REALIZADO" SEJA RECONHECIDO
@@ -3621,7 +3622,9 @@ function salvarCodigoCliente() {
     return iconMap[icone] || 'fa-circle-info';
   };
 
-  const podeEditarDataRadar = window.userCargo === 'BACKOFFICE' || window.userCargo === 'ADMINISTRADOR';
+  const cargosEdicaoDetalhes = ['ADMINISTRADOR', 'ADMIN', 'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR'];
+const podeEditarDataRadar = cargosEdicaoDetalhes.includes(window.userCargo);
+const podeEditarCodigo = cargosEdicaoDetalhes.includes(window.userCargo);
   const podeEditarCodigo = window.userCargo === 'BACKOFFICE' || window.userCargo === 'ADMINISTRADOR';
 
   const hasData = pedido.data_radar && pedido.data_radar !== '';
