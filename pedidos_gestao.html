@@ -1210,7 +1210,7 @@
             else if (prop === 'p_atualizarStatusPedidoGestao') args = { p_linha: params[0], p_origem: params[1], p_novo_status: params[2], p_data_ativacao: params[3], p_data_boc: params[4], p_usuario: params[5], p_id_unico: params[6], p_banco_id: params[7], p_modalidade: params[8] };
             else if (prop === 'p_detalhesPedidoGestao') args = { p_linha: params[0], p_origem: params[1], p_cnpj: params[2], p_data_key: params[3], p_banco_id: params[4], p_modalidade: params[5] };
             else if (prop === 'listarLinhasDoPedido') args = { p_id_unico: params[0], p_origem: params[1] };
-            else if (prop === 'excluirPedidoPlanilha') args = { p_ids: params[0], p_origem: params[1], p_id_unico: params[2], p_modalidade: params[3] };
+            else if (prop === 'excluirPedidoPlanilha') args = { p_ids: params[0] || [], p_origem: params[1] || '', p_id_unico: params[2] || '', p_modalidade: params[3] || '' };
             else if (prop === 'salvarDataRadarBackend') args = { p_id_unico: params[0], p_origem: params[1], p_data_radar: params[2], p_banco_id: params[3] };
             else if (prop === 'salvarCodigoClienteBackend') args = { p_id_unico: params[0], p_origem: params[1], p_codigo: params[2], p_banco_id: params[3] };
             else {
@@ -2269,7 +2269,7 @@ function excluirPedido(btn) {
         `Deseja excluir o pedido <strong>${pedido.cliente || pedido.id}</strong>?`,
         () => {
           console.log('   ✅ Usuário confirmou exclusão');
-          executarExclusao([], origem, idUnico);
+          executarExclusao([], origem, idUnico, '');
         },
         () => {
           console.log('   ⏹️ Usuário cancelou');
