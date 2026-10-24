@@ -2422,48 +2422,31 @@ function excluirPedido(btn) {
     await executarExclusaoPedido(ids, idUnico, origem);
   };
 }
-	async function executarExclusaoPedido(ids, idUnico, origem) {
-  if (!window.sb) {
-    showToast('Supabase não disponível', 'error');
-    return;
-  }
-
+function executarExclusaoPedido(ids, idUnico, origem) {
   showLoading(`Excluindo ${ids.length} linha(s)...`);
+  
+  console.log('🗑️ Executando exclusão via RPC segura. IDs:', ids);
 
-  try {
-    console.log('🗑️ DELETE ids:', ids);
-
-    const { data, error } = await window.sb
-      .from('VENDAS')
-      .delete()
-      .in('id', ids)
-      .select('id');
-
-    hideLoading();
-
-    if (error) {
-      console.error('❌ Erro no delete:', error);
-      showToast('Erro ao excluir: ' + (error.message || JSON.stringify(error)), 'error');
-      return;
-    }
-
-    const count = (data || []).length;
-    console.log(`✅ ${count} linha(s) excluída(s) no banco`);
-
-    if (count === 0) {
-      showToast('Nenhuma linha foi excluída (verifique permissões).', 'warning');
-    } else {
-      showToast(`✅ ${count} linha(s) excluída(s).`, 'success');
-    }
-
-    // Recarrega o Kanban
-    setTimeout(() => carregarPedidos(), 300);
-
-  } catch(e) {
-    hideLoading();
-    console.error('❌ Exceção:', e);
-    showToast('Erro: ' + e.message, 'error');
-  }
+  // Usa a ponte do google.script.run que chama a RPC excluir_pedido_planilha no Supabase
+  google.script.run
+    .withSuccessHandler(function(res) {
+      hideLoading();
+      
+      if (res && res.success) {
+        showToast(res.message || `✅ ${ids.length} linha(s) excluída(s).`, 'success');
+        // Recarrega a lista após a exclusão
+        setTimeout(() => carregarPedidos(), 300);
+      } else {
+        showToast(res?.message || 'Falha ao excluir as linhas.', 'error');
+      }
+    })
+    .withFailureHandler(function(err) {
+      hideLoading();
+      console.error('❌ Erro ao excluir via RPC:', err);
+      showToast('Erro de comunicação com o servidor: ' + err, 'error');
+    })
+    // Chama a função mapeada que executa a RPC no banco
+    .excluirPedidoPlanilha(ids, origem, idUnico, ''); 
 }
 function mostrarModalSelecaoLinhas(linhas, origem, idUnico) {
   console.log('🎨 [mostrarModalSelecaoLinhas] iniciado com', linhas.length, 'linha(s)');
