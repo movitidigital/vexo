@@ -965,7 +965,9 @@
       <div class="loading-state"><div class="loading-spinner"></div>Carregando detalhes...</div>
     </div>
     <div class="modal-footer">
-      <button class="btn-secondary" onclick="fecharModal()">Fechar</button>
+      <button class="btn-secondary" onclick="fecharModal()" style="background: #1e293b; color: white; border: none; padding: 10px 24px; border-radius: 10px; font-weight: 600; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 0.2s;" onmouseover="this.style.background='#0f172a'; this.style.transform='translateY(-1px)';" onmouseout="this.style.background='#1e293b'; this.style.transform='translateY(0)';">
+        <i class="fas fa-times"></i> Fechar Janela
+      </button>
     </div>
   </div>
 </div>
@@ -3533,8 +3535,14 @@ function salvarCodigoCliente() {
         };
       }
       linhasPorPlano[key].quantidade++;
-      linhasPorPlano[key].valorTotal += linha.valor;
-      if (linha.numero) linhasPorPlano[key].numeros.push(linha.numero);
+      linhasPorPlano[key].valorTotal += Number(linha.valor) || 0;
+      if (linha.numero) {
+        linhasPorPlano[key].numeros.push({
+          numero: linha.numero,
+          operadora: linha.operadora_doadora || linha.operadora || linha.operadoraDoadora || '',
+          modalidade: linha.modalidade || pedido.modalidade || ''
+        });
+      }
       if (linha.modalidade) linhasPorPlano[key].modalidades.add(linha.modalidade);
     });
 
@@ -3555,8 +3563,20 @@ function salvarCodigoCliente() {
                     <span class="linha-data" style="font-size: 10px; color: #64748b;"><i class="fas fa-calendar-alt"></i> ${item.data || pedido.data_criacao}</span>
                   </div>
                   ${item.numeros.length > 0 ? `
-                    <div style="margin-bottom: 6px;">
-                      ${item.numeros.map(num => `<span class="linha-numero" style="background: #f1f5f9; padding: 4px 10px; border-radius: 16px; font-size: 11px; margin-right: 6px; display: inline-block;"><i class="fas fa-phone"></i> ${escapeHtml(num)}</span>`).join('')}
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                      ${item.numeros.map(objNum => {
+                        const isPortabilidade = String(objNum.modalidade).toUpperCase().includes('PORTABILIDADE');
+                        return `
+                          <span class="linha-numero" style="background: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;">
+                            <span style="color: #475569; font-weight: 600;"><i class="fas fa-phone" style="font-size: 10px;"></i> ${escapeHtml(objNum.numero)}</span>
+                            ${isPortabilidade && objNum.operadora ? `
+                              <span style="background: #fff7ed; color: #c2410c; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; border: 1px solid #ffedd5; display: inline-flex; align-items: center; gap: 4px;" title="Portabilidade da operadora ${escapeHtml(objNum.operadora)}">
+                                <i class="fas fa-exchange-alt"></i> ${escapeHtml(objNum.operadora)}
+                              </span>
+                            ` : ''}
+                          </span>
+                        `;
+                      }).join('')}
                     </div>
                   ` : ''}
                   ${item.modalidades.size > 0 ? `
