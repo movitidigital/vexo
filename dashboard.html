@@ -1238,7 +1238,7 @@
     <div style="z-index: 1;">
       <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #93c5fd; margin-bottom: 5px;">Meta para Hoje</div>
       <div style="font-size: 36px; font-weight: 900; line-height: 1;" id="meta-diaria-valor">R$ 0,00</div>
-      <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">Baseado em <b id="dias-uteis-txt">22</b> dias úteis</div>
+      <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">Faltam <b id="dias-uteis-txt">22</b> dias úteis</div>
     </div>
     
     <div style="z-index: 1; flex: 1; min-width: 250px;">
@@ -1591,6 +1591,9 @@ async function inicializarDados() {
   }
 }
 function renderizarDashboard(dados) {
+  // 🐛 DEBUG: Vendo se os dados chegaram
+  console.log("🐛 [DEBUG] Calendário recebido:", dados.diasTrabalhados);
+
   const modsFaturamento = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO", "MIGRAÇÃO TT"];
   const modsGross = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO"]; 
   
@@ -1631,31 +1634,29 @@ function renderizarDashboard(dados) {
   hj.setHours(0,0,0,0);
   let diasRestantes = 0;
 
-  // Se o gestor salvou o calendário exato, usamos ele
   if (dados.diasTrabalhados && dados.diasTrabalhados.length > 0) {
     dados.diasTrabalhados.forEach(dataStr => {
-      const dataObj = new Date(dataStr + 'T12:00:00'); // Força meio-dia para evitar problema de fuso
-      if (dataObj >= hj) diasRestantes++;
+      const dataObj = new Date(dataStr + 'T12:00:00'); 
+      if (dataObj >= hj) {
+        diasRestantes++;
+      }
     });
+    console.log(`🐛 [DEBUG] Dias restantes calculados: ${diasRestantes}`);
   } else {
-    // Fallback: Se não tiver calendário, usa a lógica antiga de dias úteis totais
     diasRestantes = dados.diasUteis || 22; 
+    console.log(`🐛 [DEBUG] Usando fallback de dias úteis: ${diasRestantes}`);
   }
 
-  // Evita divisão por zero se o mês já acabou
   if (diasRestantes === 0) diasRestantes = 1; 
 
-  // O que falta para bater a meta?
   const faltaParaMeta = dados.metaValor - fatAtivo;
-  
-  // A meta diária é o que falta dividido pelos dias que restam
   const metaDiaria = faltaParaMeta > 0 ? (faltaParaMeta / diasRestantes) : 0;
   const percMetaDiaria = metaDiaria > 0 ? Math.min(((dados.ativoHoje / metaDiaria) * 100), 100).toFixed(0) : (dados.ativoHoje > 0 ? 100 : 0);
 
-  // Atualiza a tela (Painel escuro)
+  // Atualiza a tela
   const elDias = document.getElementById('dias-uteis-txt');
   if (elDias) {
-    elDias.innerText = diasRestantes; // Mostra os dias que FALTAM
+    elDias.innerText = diasRestantes; 
     document.getElementById('meta-diaria-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     document.getElementById('meta-diaria-perc').innerText = percMetaDiaria + '%';
     document.getElementById('meta-diaria-bar').style.width = percMetaDiaria + '%';
