@@ -1447,6 +1447,8 @@ async function inicializarDados() {
     } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
 
     let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0, diasUteis = 22;
+    let diasTrabalhados = []; // 🔥 NOVO: Array de datas exatas
+
     try {
       const { data: metaDB } = await sb.from('metas_loja').select('*').eq('ano_referencia', anoSelecionado);
       if (metaDB && metaDB.length > 0) {
@@ -1456,6 +1458,8 @@ async function inicializarDados() {
           metaPortabilidade = Number(metaDoMes.port_target) || 0;
           metaRenegociacao  = Number(metaDoMes.reneg_target) || 0;
           diasUteis         = Number(metaDoMes.dias_uteis) || 22;
+          // 🔥 Busca o calendário salvo em JSONB (se existir)
+          diasTrabalhados   = metaDoMes.dias_trabalhados || []; 
         }
       }
     } catch (e) { console.warn('⚠️ metas_loja:', e.message); }
@@ -1536,6 +1540,7 @@ async function inicializarDados() {
       portMeta: metaPortabilidade,
       renegMeta: metaRenegociacao,
       diasUteis: diasUteis,
+      diasTrabalhados: diasTrabalhados, // 🔥 Enviando o calendário
       ativoHoje: ativoHoje,
       ranking: ranking,
       fotos: mapaFotos, 
@@ -1545,7 +1550,6 @@ async function inicializarDados() {
     renderizarDashboard(dados);
     console.log('🟢 [DASH] Renderizado com sucesso!');
 
-    // 🔥 CORREÇÃO: Revela a tela
     const areaPrincipal = document.getElementById('main-content-area');
     const menuPrincipal = document.getElementById('menu-principal');
     setTimeout(() => {
@@ -1620,13 +1624,38 @@ function renderizarDashboard(dados) {
   const percFaturamento = dados.metaValor > 0 ? Math.min(((fatAtivo / dados.metaValor) * 100), 100).toFixed(1) : 0;
   const percPort = dados.portMeta > 0 ? Math.min(((portAtivo / dados.portMeta) * 100), 100).toFixed(1) : 0;
 
-  const metaDiaria = dados.metaValor / dados.diasUteis;
-  const percMetaDiaria = metaDiaria > 0 ? Math.min(((dados.ativoHoje / metaDiaria) * 100), 100).toFixed(0) : 0;
+  // =====================================================================
+  // 🔥 NOVO CÁLCULO DE META DIÁRIA (PACING DINÂMICO)
+  // =====================================================================
+  const hj = new Date();
+  hj.setHours(0,0,0,0);
+  let diasRestantes = 0;
+
+  // Se o gestor salvou o calendário exato, usamos ele
+  if (dados.diasTrabalhados && dados.diasTrabalhados.length > 0) {
+    dados.diasTrabalhados.forEach(dataStr => {
+      const dataObj = new Date(dataStr + 'T12:00:00'); // Força meio-dia para evitar problema de fuso
+      if (dataObj >= hj) diasRestantes++;
+    });
+  } else {
+    // Fallback: Se não tiver calendário, usa a lógica antiga de dias úteis totais
+    diasRestantes = dados.diasUteis || 22; 
+  }
+
+  // Evita divisão por zero se o mês já acabou
+  if (diasRestantes === 0) diasRestantes = 1; 
+
+  // O que falta para bater a meta?
+  const faltaParaMeta = dados.metaValor - fatAtivo;
   
-  // PROTEÇÃO: Só atualiza se os elementos existirem no HTML
+  // A meta diária é o que falta dividido pelos dias que restam
+  const metaDiaria = faltaParaMeta > 0 ? (faltaParaMeta / diasRestantes) : 0;
+  const percMetaDiaria = metaDiaria > 0 ? Math.min(((dados.ativoHoje / metaDiaria) * 100), 100).toFixed(0) : (dados.ativoHoje > 0 ? 100 : 0);
+
+  // Atualiza a tela (Painel escuro)
   const elDias = document.getElementById('dias-uteis-txt');
   if (elDias) {
-    elDias.innerText = dados.diasUteis;
+    elDias.innerText = diasRestantes; // Mostra os dias que FALTAM
     document.getElementById('meta-diaria-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     document.getElementById('meta-diaria-perc').innerText = percMetaDiaria + '%';
     document.getElementById('meta-diaria-bar').style.width = percMetaDiaria + '%';
