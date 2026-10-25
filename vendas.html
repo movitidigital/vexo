@@ -495,6 +495,18 @@ window.gerarFormularioVenda = function() {
       return;
     }
 
+    // 🔥 NOVO — Detecta modo edição
+    let modoEdicao = false;
+    try {
+      const raw = sessionStorage.getItem('pedidoParaInput');
+      if (raw) {
+        const p = JSON.parse(raw);
+        modoEdicao = p.modoEdicao === true;
+      }
+    } catch (e) {
+      console.warn('⚠️ [gerarFormularioVenda] erro ao detectar modoEdicao:', e);
+    }
+
     areaVenda.style.display = 'block';
     const titulo = selecionadas.join(' | ');
     const eConsultor = (PERFIL_USUARIO?.role === 'CONSULTOR DE VENDAS');
@@ -504,9 +516,41 @@ window.gerarFormularioVenda = function() {
       (PERFIL_USUARIO?.role || '').toUpperCase()
     );
 
+    // 🔥 Rótulo dinâmico do botão
+    let labelBotao = '🚀 Finalizar e Gravar Venda';
+    if (modoEdicao) labelBotao = '💾 Salvar Alterações';
+    else if (mostrarAtribuicaoInput) labelBotao = '🚀 Finalizar Pedido';
+
+    // 🔥 Campos travados em edição (fazem parte do id_unico — CNPJ|Data)
+    const readonlyAttr  = modoEdicao ? 'readonly' : '';
+    const readonlyStyle = modoEdicao ? 'background:#f1f5f9; cursor:not-allowed; color:#64748b;' : '';
+    const lockIcon      = modoEdicao ? ' <span style="color:#dc2626;" title="Bloqueado (faz parte da identidade do pedido)">🔒</span>' : '';
+    const onblurCNPJ    = modoEdicao ? '' : 'onblur="window._buscarCNPJ(this.value)"';
+
+    // 🔥 Banner de edição
+    const bannerEdicao = modoEdicao ? `
+      <div style="background:#fff7ed; border:2px solid #f59e0b; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:flex-start; gap:12px;">
+        <span style="font-size:24px; line-height:1;">✏️</span>
+        <div>
+          <div style="font-weight:800; color:#b45309; font-size:14px;">Editando Pedido Existente</div>
+          <div style="font-size:12px; color:#92400e; margin-top:4px; line-height:1.5;">
+            <strong>CNPJ</strong> e <strong>Data da Venda</strong> estão bloqueados (compõem a identidade do pedido).
+            Altere o que precisar e clique em <strong>💾 Salvar Alterações</strong>.
+            O pedido continuará como <strong>Pendente de Input</strong> até o backoffice iniciar o fluxo.
+          </div>
+        </div>
+      </div>
+    ` : '';
+
+    const corBorda = modoEdicao ? '#f59e0b' : '#1e3c72';
+    const corTitulo = modoEdicao ? '#b45309' : '#1e3c72';
+
     let html = `
-      <div style="background:#fff; border:2px solid #1e3c72; border-radius:15px; padding:25px;">
-        <h3 style="color:#1e3c72; margin-top:0; font-weight:800;">📋 Dados do Contrato: ${titulo}</h3>
+      <div style="background:#fff; border:2px solid ${corBorda}; border-radius:15px; padding:25px;">
+        ${bannerEdicao}
+        <h3 style="color:${corTitulo}; margin-top:0; font-weight:800;">
+          ${modoEdicao ? '✏️ Editando Contrato' : '📋 Dados do Contrato'}: ${titulo}
+        </h3>
 
         <datalist id="lista-planos-vexo">
           ${PLANOS_MEMORIA.map(p => `<option value="${p.nome}"></option>`).join('')}
@@ -521,8 +565,8 @@ window.gerarFormularioVenda = function() {
             </select>
           </div>
           <div>
-            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">DATA DA VENDA</label>
-            <input type="date" id="v_data" value="${new Date().toISOString().split('T')[0]}" class="v-input">
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">DATA DA VENDA ${lockIcon}</label>
+            <input type="date" id="v_data" value="${new Date().toISOString().split('T')[0]}" class="v-input" ${readonlyAttr} style="${readonlyStyle}">
           </div>
           <div>
             <label style="font-size:11px; font-weight:700; color:#2563eb; display:block; margin-bottom:5px;">📦 PEDIDO P2B</label>
@@ -536,8 +580,8 @@ window.gerarFormularioVenda = function() {
 
         <div style="display:grid; grid-template-columns:1.2fr 1.2fr 2fr; gap:15px; margin-bottom:20px;">
           <div>
-            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">CNPJ / CPF</label>
-            <input type="text" id="v_cnpj" onblur="window._buscarCNPJ(this.value)" class="v-input">
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">CNPJ / CPF ${lockIcon}</label>
+            <input type="text" id="v_cnpj" ${onblurCNPJ} class="v-input" ${readonlyAttr} style="${readonlyStyle}">
           </div>
           <div>
             <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">INSCRIÇÃO ESTADUAL</label>
@@ -606,8 +650,8 @@ window.gerarFormularioVenda = function() {
         ` : ''}
 
         <button type="button" id="btn_finalizar"
-                style="margin-top:10px; width:100%; padding:18px; background:#1e3c72; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; font-size:16px;">
-          ${mostrarAtribuicaoInput ? '🚀 Finalizar Pedido' : '🚀 Finalizar e Gravar Venda'}
+                style="margin-top:10px; width:100%; padding:18px; background:${modoEdicao ? '#f59e0b' : '#1e3c72'}; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; font-size:16px;">
+          ${labelBotao}
         </button>
       </div>
     `;
@@ -929,8 +973,10 @@ window._salvarVenda = async function() {
     console.warn('⚠️ Erro ao ler pedidoParaInput:', e);
   }
 
-  btn.disabled = true;
-  btn.innerText = pedidoPendente ? '💾 Finalizando pedido...' : '💾 Gravando venda...';
+btn.disabled = true;
+btn.innerText = pedidoPendente
+  ? (modoEdicao ? '💾 Salvando alterações...' : '💾 Finalizando pedido...')
+  : '💾 Gravando venda...';
 
   try {
     if (pedidoPendente) {
@@ -943,9 +989,9 @@ window._salvarVenda = async function() {
     alert('❌ Erro: ' + (e.message || e));
   } finally {
     btn.disabled = false;
-    btn.innerText = pedidoPendente
-      ? '🚀 Finalizar Pedido'
-      : '🚀 Finalizar e Gravar Venda';
+btn.innerText = pedidoPendente
+  ? (modoEdicao ? '💾 Salvar Alterações' : '🚀 Finalizar Pedido')
+  : '🚀 Finalizar e Gravar Venda';
   }
 };
 
@@ -1063,6 +1109,10 @@ async function _finalizarPedidoExistente(pedido) {
   }
   window._finalizandoPedido = true;
 
+  // 🔥 NOVO — Detecta modo edição (consultor editando pedido próprio)
+  const modoEdicao = pedido.modoEdicao === true;
+  console.log(`🎯 [FINALIZAR PEDIDO EXISTENTE] modoEdicao=${modoEdicao}`);
+
   try {
     const linhas = _coletarLinhasDoFormulario();
     if (linhas.length === 0) {
@@ -1071,14 +1121,30 @@ async function _finalizarPedidoExistente(pedido) {
       return;
     }
 
-    // 🔥 NOVA REGRA: TODOS os campos devem estar preenchidos
-    const faltando = _validarInputBackofficeCompleto(linhas);
+    // ═══════════════════════════════════════════════════════
+    // VALIDAÇÃO — leve para consultor, completa para backoffice
+    // ═══════════════════════════════════════════════════════
+    let faltando = [];
+
+    if (modoEdicao) {
+      // 🔹 Consultor só precisa garantir o essencial para salvar a edição
+      const semPlano = linhas.filter(l => !l.plano);
+      if (semPlano.length > 0) faltando.push('Todas as linhas precisam ter plano');
+
+      const MODALIDADES_EXIGEM_NUMERO = ['MIGRAÇÃO', 'PORTABILIDADE', 'RENEG.'];
+      const semNumero = linhas.filter(l => MODALIDADES_EXIGEM_NUMERO.includes(l.modalidade) && !l.numero);
+      if (semNumero.length > 0) {
+        faltando.push('Número obrigatório em MIGRAÇÃO / PORTABILIDADE / RENEG.');
+      }
+    } else {
+      // 🔹 Backoffice continua com a validação rigorosa
+      faltando = _validarInputBackofficeCompleto(linhas);
+    }
+
     if (faltando.length > 0) {
-      // Mostra os 3 primeiros pra não estourar o toast
       const resumo = faltando.slice(0, 3).join(' • ') + (faltando.length > 3 ? ` • +${faltando.length - 3}` : '');
       window._toast(`⚠️ Preencha todos os campos. Faltam: ${resumo}`, 'warning');
 
-      // Rola até o primeiro campo vazio
       const primeiroVazio = document.querySelector(
         'input[style*="ef4444"], select[style*="ef4444"], textarea[style*="ef4444"]'
       );
@@ -1095,7 +1161,7 @@ async function _finalizarPedidoExistente(pedido) {
     const TENANT = 'f9cca67a-41f8-4ad7-a119-74bc58018dee';
 
     // ... resto igual (data original, modalidades, loop de DELETE+INSERT)
-    
+
     let dataOriginal = '';
     if (pedido.id_unico && pedido.id_unico.includes('|')) {
       dataOriginal = pedido.id_unico.split('|')[1] || '';
@@ -1132,9 +1198,43 @@ async function _finalizarPedidoExistente(pedido) {
       throw new Error('Não foi possível determinar a data original do pedido. Recarregue a tela.');
     }
 
-        // 🔥 FIX: preservar o consultor ORIGINAL que lançou a venda.
-    // O backoffice só altera o campo consultor_do_input_no_easy_vendas,
-    // NUNCA o consultor_que_vendeu.
+    // ═══════════════════════════════════════════════════════
+    // 🔥 DEFESA EM PROFUNDIDADE — em modo edição, revalida no banco
+    // se o backoffice já capturou o pedido enquanto o consultor editava
+    // em outra aba/janela. Evita corromper dados.
+    // ═══════════════════════════════════════════════════════
+    if (modoEdicao) {
+      try {
+        const { data: linhasAtuais, error: errCheck } = await sb
+          .from('VENDAS')
+          .select('status_do_pedido')
+          .eq('tenant_id', TENANT)
+          .eq('cnpj', cnpj)
+          .eq('data_da_venda', dataOriginal);
+
+        if (errCheck) throw errCheck;
+
+        const temLinhaAvancada = (linhasAtuais || []).some(
+          l => l.status_do_pedido && l.status_do_pedido !== 'PENDENTE DE INPUT'
+        );
+
+        if (temLinhaAvancada) {
+          console.warn('🚫 Bloqueado: pedido já foi capturado pelo backoffice');
+          throw new Error(
+            '⚠️ Este pedido já foi iniciado pelo backoffice em outra sessão e não pode mais ser editado. ' +
+            'Recarregue a lista de pedidos.'
+          );
+        }
+        console.log('✅ Check de edição OK — pedido ainda em PENDENTE DE INPUT');
+      } catch (e) {
+        if (e.message && e.message.startsWith('⚠️')) throw e;
+        console.warn('⚠️ Não foi possível validar status no banco (seguindo mesmo assim):', e);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // Preservar o consultor ORIGINAL que lançou a venda
+    // ═══════════════════════════════════════════════════════
     let consultorOriginal = null;
     try {
       const { data: linhasOriginais, error: errBusca } = await sb
@@ -1163,6 +1263,14 @@ async function _finalizarPedidoExistente(pedido) {
 
     console.log(`👤 Consultor que vendeu (PRESERVADO): ${nomeConsultor}`);
     console.log(`📋 Consultor do input (selecionado no dropdown): ${campos.consultor_do_input_no_easy_vendas || 'NULL'}`);
+
+    // ═══════════════════════════════════════════════════════
+    // 🔥 STATUS DE GRAVAÇÃO — muda conforme o modo
+    // ═══════════════════════════════════════════════════════
+    // Consultor (edição) → mantém PENDENTE DE INPUT
+    // Backoffice (captura) → avança para 1. INPUT REALIZADO
+    const novoStatusGravado = modoEdicao ? 'PENDENTE DE INPUT' : '1. INPUT REALIZADO';
+    console.log(`📌 Status que será gravado: "${novoStatusGravado}"`);
 
     let totalLinhasGravadas = 0;
 
@@ -1193,7 +1301,7 @@ async function _finalizarPedidoExistente(pedido) {
         valor_contratado:          formatarValorBR(l.valor),
         operadora_doadora:         l.operadora || null,
         consultor_que_vendeu:      nomeConsultor,
-        status_do_pedido:          '1. INPUT REALIZADO',
+        status_do_pedido:          novoStatusGravado,   // 🔥 dinâmico
         ativacao_em_sistema_tim:   null,
         tenant_id:                 TENANT
       }));
@@ -1207,9 +1315,19 @@ async function _finalizarPedidoExistente(pedido) {
 
     _limparPedidoPendente();
 
-    window._toast(`✅ Pedido finalizado! ${totalLinhasGravadas} linha(s) atualizada(s).`, 'success');
+    // 🔥 Toast final adaptado ao modo
+    if (modoEdicao) {
+      window._toast(`✅ Alterações salvas! ${totalLinhasGravadas} linha(s) atualizada(s).`, 'success');
+    } else {
+      window._toast(`✅ Pedido finalizado! ${totalLinhasGravadas} linha(s) atualizada(s).`, 'success');
+    }
     document.getElementById('v-modal-sucesso').style.display = 'flex';
 
+  } catch (e) {
+    // 🔥 Repassa erros de validação para o usuário ver a mensagem certa
+    console.error('❌ [FINALIZAR PEDIDO EXISTENTE] erro:', e);
+    window._toast(e.message || 'Erro ao salvar pedido.', 'error');
+    throw e;   // mantém comportamento atual (o _salvarVenda também captura)
   } finally {
     window._finalizandoPedido = false;
   }
