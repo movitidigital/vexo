@@ -1195,130 +1195,74 @@
 
     <div id="main-content-area">
       <div id="menu-principal">
-    <div id="bloco-arte-meta" class="painel-metas-diarias">
-  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px;">
+<div id="bloco-arte-meta" style="padding: 24px; font-family: 'Poppins', sans-serif;">
+  
+  <!-- Header -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 15px; margin-bottom: 25px;">
     <div>
-      <span style="font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; opacity: 0.6;">Performance Overview</span>
-      <h1 style="margin: 0; font-size: 26px; font-weight: 800;">Desafio do Mês</h1>
+      <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; color: #64748b;">Performance Overview</span>
+      <h1 style="margin: 0; font-size: 28px; font-weight: 800; color: #0f172a;">Desafio do Mês</h1>
     </div>
-    <div style="display: flex; gap: 12px; align-items: center;">
-      <!-- SELETORES DE MÊS/ANO -->
-      <div style="display: flex; gap: 8px; background: rgba(0,0,0,0.3); padding: 6px 12px; border-radius: 12px;">
-        <select id="dashboard_mes" onchange="carregarMetasIndividuaisTime()" style="background: #0f172a; color: white; border: 1px solid #3b82f6; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600;">
-          <option value="JANEIRO">JANEIRO</option>
-          <option value="FEVEREIRO">FEVEREIRO</option>
-          <option value="MARÇO">MARÇO</option>
-          <option value="ABRIL">ABRIL</option>
-          <option value="MAIO">MAIO</option>
-          <option value="JUNHO" selected>JUNHO</option>
-          <option value="JULHO">JULHO</option>
-          <option value="AGOSTO">AGOSTO</option>
-          <option value="SETEMBRO">SETEMBRO</option>
-          <option value="OUTUBRO">OUTUBRO</option>
-          <option value="NOVEMBRO">NOVEMBRO</option>
-          <option value="DEZEMBRO">DEZEMBRO</option>
-        </select>
-        <select id="dashboard_ano" onchange="carregarMetasIndividuaisTime()" style="background: #0f172a; color: white; border: 1px solid #3b82f6; border-radius: 8px; padding: 6px 10px; font-size: 12px; font-weight: 600;">
-          <option value="2025">2025</option>
-          <option value="2026" selected>2026</option>
-          <option value="2027">2027</option>
-        </select>
-      </div>
-      <button data-html2canvas-ignore="true" onclick="gerarArteStatus()" style="background: #25D366; color: white; border: none; padding: 8px 18px; border-radius: 12px; font-weight: 800; cursor: pointer; font-size: 11px; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);">📸 EXPORTAR</button>
+    
+    <div style="display: flex; gap: 10px; align-items: center; background: white; padding: 6px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+      <select id="dashboard_mes" onchange="inicializarDados()" style="background: #f8fafc; color: #0f172a; border: none; border-radius: 10px; padding: 8px 12px; font-size: 12px; font-weight: 700; outline: none; cursor: pointer;">
+        <!-- Opções de meses -->
+      </select>
+      <select id="dashboard_ano" onchange="inicializarDados()" style="background: #f8fafc; color: #0f172a; border: none; border-radius: 10px; padding: 8px 12px; font-size: 12px; font-weight: 700; outline: none; cursor: pointer;">
+        <!-- Opções de anos -->
+      </select>
+      <button onclick="gerarArteStatus()" style="background: #1e3c72; color: white; border: none; padding: 9px 18px; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: 11px; display: flex; align-items: center; gap: 6px; transition: 0.2s;">
+        <i class="fas fa-camera"></i> EXPORTAR
+      </button>
     </div>
   </div>
 
-  <!-- 📊 META DA LOJA (cards existentes) -->
-  <div class="grid-metas" id="container-grid-metas" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 20px;"></div>
+  <!-- 🌟 DESTAQUE: META DIÁRIA -->
+  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%); border-radius: 20px; padding: 24px; color: white; margin-bottom: 25px; box-shadow: 0 15px 35px -10px rgba(30,60,114,0.4); position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+    <div style="position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.05; pointer-events: none;">🎯</div>
+    
+    <div style="z-index: 1;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #93c5fd; margin-bottom: 5px;">Meta para Hoje</div>
+      <div style="font-size: 36px; font-weight: 900; line-height: 1;" id="meta-diaria-valor">R$ 0,00</div>
+      <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">Baseado em <b id="dias-uteis-txt">22</b> dias úteis</div>
+    </div>
+    
+    <div style="z-index: 1; flex: 1; min-width: 250px;">
+      <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+        <span>Produção de Hoje (Ativos)</span>
+        <span id="meta-diaria-perc">0%</span>
+      </div>
+      <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
+        <div id="meta-diaria-bar" style="width: 0%; height: 100%; background: #10b981; border-radius: 10px; transition: width 1s ease;"></div>
+      </div>
+      <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px; display: flex; justify-content: space-between;">
+        <span>Realizado hoje: <b id="meta-diaria-realizado">R$ 0,00</b></span>
+        <span>Falta: <b id="meta-diaria-falta">R$ 0,00</b></span>
+      </div>
+    </div>
+  </div>
 
-  <!-- 👇 NOVO BLOCO: VISÃO GLOBAL (INTERNOS + PARCEIROS) -->
+  <!-- 🎯 GRID DE CARDS -->
+  <div class="grid-metas" id="container-grid-metas" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px;"></div>
+
+  <!-- 🌍 VISÃO GLOBAL -->
   <div id="bloco-visao-global" style="display: none; margin-top: 30px;">
     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-      <h3 style="color: #e2e8f0; font-size: 16px; font-weight: 700; margin: 0; display: flex; align-items: center; gap: 10px;">
+      <h3 style="color: #0f172a; font-size: 16px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px;">
         <span style="font-size: 18px;">🌍</span> Visão Global (Internos + Parceiros)
       </h3>
-      <span style="font-size: 10px; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 4px 12px; border-radius: 20px; font-weight: 700; border: 1px solid rgba(59, 130, 246, 0.3);">
-        ACESSO RESTRITO À GESTÃO
-      </span>
     </div>
     
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-      <!-- Bloco Entrantes -->
-      <div style="background: #1e293b; border: 1px solid rgba(245, 158, 11, 0.2); border-radius: 16px; padding: 20px; border-top: 4px solid #f59e0b; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-          <span style="font-size: 24px;">⏳</span>
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.5px;">Pedidos Entrantes (Mês)</div>
-            <div style="font-size: 10px; color: #64748b;">Aguardando ativação na TIM</div>
-          </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-          <div>
-            <div style="font-size: 28px; font-weight: 900; color: white;" id="global-entrantes-fat">R$ 0,00</div>
-            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;" id="global-entrantes-qtd">0 pedidos</div>
-          </div>
-          <div style="text-align: right; font-size: 11px; color: #94a3b8; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 10px;">
-            <div style="margin-bottom: 2px;">🔵 Internos: <b id="global-entrantes-int" style="color:#cbd5e1;">0</b></div>
-            <div>🟣 Parceiros: <b id="global-entrantes-parc" style="color:#cbd5e1;">0</b></div>
-          </div>
-        </div>
+      <div style="background: white; border: 1px solid #fef08a; border-radius: 16px; padding: 20px; border-top: 4px solid #f59e0b;">
+        <div style="font-size: 12px; font-weight: 800; color: #b45309; text-transform: uppercase;">⏳ Pedidos Entrantes (Na Esteira)</div>
+        <div style="font-size: 28px; font-weight: 900; color: #0f172a; margin-top: 10px;" id="global-entrantes-fat">R$ 0,00</div>
+        <div style="font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600;" id="global-entrantes-qtd">0 pedidos</div>
       </div>
-
-      <!-- Bloco Ativos -->
-      <div style="background: #1e293b; border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 16px; padding: 20px; border-top: 4px solid #10b981; box-shadow: 0 4px 15px rgba(0,0,0,0.1);">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 15px;">
-          <span style="font-size: 24px;">✅</span>
-          <div>
-            <div style="font-size: 11px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px;">Pedidos Ativos (Mês)</div>
-            <div style="font-size: 10px; color: #64748b;">Ativações confirmadas</div>
-          </div>
-        </div>
-        <div style="display: flex; justify-content: space-between; align-items: flex-end;">
-          <div>
-            <div style="font-size: 28px; font-weight: 900; color: white;" id="global-ativos-fat">R$ 0,00</div>
-            <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;" id="global-ativos-qtd">0 pedidos</div>
-          </div>
-          <div style="text-align: right; font-size: 11px; color: #94a3b8; background: rgba(0,0,0,0.2); padding: 8px 12px; border-radius: 10px;">
-            <div style="margin-bottom: 2px;">🔵 Internos: <b id="global-ativos-int" style="color:#cbd5e1;">0</b></div>
-            <div>🟣 Parceiros: <b id="global-ativos-parc" style="color:#cbd5e1;">0</b></div>
-          </div>
-        </div>
-      </div>
-    </div>
-    
-<div style="margin-top: 15px; background: linear-gradient(90deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 16px; padding: 16px 24px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.1);">
-  <div style="display: flex; align-items: center; gap: 12px;">
-    <span style="font-size: 24px;">📈</span>
-    <div>
-      <div style="font-size: 12px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px;">Volume Total do Mês</div>
-      <div style="font-size: 10px; color: #64748b;">Soma de Pedidos Entrantes + Ativos (Internos e Parceiros)</div>
-    </div>
-  </div>
-  <div style="font-size: 26px; font-weight: 900; color: white;" id="global-total-fat">R$ 0,00</div>
-</div>
-    
-  </div>
-  <!-- 👆 FIM DO NOVO BLOCO -->
-      
-  <!-- 👥 METAS INDIVIDUAIS DO TIME -->
-  <div id="bloco-desempenho-time" style="margin-top: 35px;">
-    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 18px;">👥</span>
-        <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #e2e8f0;">Acompanhamento por consultor(a)</h3>
-        <span style="font-size: 11px; background: rgba(255,255,255,0.1); padding: 4px 12px; border-radius: 20px;" id="time-qtd-vendedores">0 consultor(es)</span>
-      </div>
-      <div style="display: flex; gap: 8px;">
-        <button onclick="expandirTodosCards()" style="background: rgba(59,130,246,0.2); border: 1px solid #3b82f6; color: #60a5fa; padding: 5px 12px; border-radius: 8px; font-size: 10px; cursor: pointer;">📂 Expandir Todos</button>
-        <button onclick="recolherTodosCards()" style="background: rgba(100,116,139,0.2); border: 1px solid #475569; color: #94a3b8; padding: 5px 12px; border-radius: 8px; font-size: 10px; cursor: pointer;">📁 Recolher Todos</button>
-      </div>
-    </div>
-
-    <!-- Container dos cards individuais -->
-    <div id="container-metas-individuais" style="display: flex; flex-direction: column; gap: 16px;">
-      <div style="text-align: center; padding: 40px; background: rgba(0,0,0,0.2); border-radius: 20px; color: #94a3b8;">
-        <div style="width: 40px; height: 40px; border: 2px solid #3b82f6; border-top-color: transparent; border-radius: 50%; margin: 0 auto 15px auto; animation: spin 0.8s linear infinite;"></div>
-        Carregando desempenho do time...
+      <div style="background: white; border: 1px solid #bbf7d0; border-radius: 16px; padding: 20px; border-top: 4px solid #10b981;">
+        <div style="font-size: 12px; font-weight: 800; color: #047857; text-transform: uppercase;">✅ Pedidos Ativos (Faturados)</div>
+        <div style="font-size: 28px; font-weight: 900; color: #0f172a; margin-top: 10px;" id="global-ativos-fat">R$ 0,00</div>
+        <div style="font-size: 12px; color: #64748b; margin-top: 4px; font-weight: 600;" id="global-ativos-qtd">0 pedidos</div>
       </div>
     </div>
   </div>
@@ -1421,19 +1365,167 @@
     location.replace('/');
   }
 })();
-// --- FUNÇÃO PRINCIPAL DE RENDERIZAÇÃO (BLINDADA) ---
-function renderizarDashboard(dados) {
-  if (dados.erro) {
-    console.error("Erro nos dados:", dados.msgErro);
-  }
 
-  // =========================================================================
-  // 🛡️ CÁLCULO DOS TOTAIS A PARTIR DO ARRAY DE VENDAS (JÁ FILTRADO)
-  // Agora com a regra: 
-  //   - PENDENTE = sem data em AK (arrasta mês a mês)
-  //   - ATIVADO = data em AK no mês atual
-  //   - Ativações de meses anteriores são excluídas
-  // =========================================================================
+async function inicializarDados() {
+  console.log('🔵 [DASH] ============ INÍCIO ============');
+  const statusMeta = document.getElementById('status-meta');
+  if (statusMeta) statusMeta.innerText = 'Carregando indicadores...';
+
+  try {
+    const hoje = new Date();
+    const mesAtual = hoje.getMonth() + 1;
+    const anoAtual = hoje.getFullYear();
+
+    const mapaMesesNum = { 'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12 };
+    const mesSelecionado = (document.getElementById('dashboard_mes')?.value || '').toUpperCase().trim();
+    const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || anoAtual;
+    const mesNumericoSelecionado = mapaMesesNum[mesSelecionado] || mesAtual;
+
+    // 1. Perfil
+    let perfilLogado = null;
+    try {
+      const { data: { user } } = await sb.auth.getUser();
+      if (user) {
+        const { data: p } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
+        perfilLogado = p;
+      }
+    } catch (e) { console.warn('⚠️ profiles:', e.message); }
+
+    // 2. Busca METAS_LOJA (agora com dias_uteis)
+    let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0, diasUteis = 22;
+    try {
+      const { data: metaDB } = await sb.from('metas_loja').select('*').eq('ano_referencia', anoSelecionado);
+      if (metaDB && metaDB.length > 0) {
+        const metaDoMes = metaDB.find(m => Number(m.mes_referencia) === mesNumericoSelecionado);
+        if (metaDoMes) {
+          metaFaturamento  = Number(metaDoMes.fat_target) || 0;
+          metaPortabilidade = Number(metaDoMes.port_target) || 0;
+          metaRenegociacao  = Number(metaDoMes.reneg_target) || 0;
+          diasUteis         = Number(metaDoMes.dias_uteis) || 22; // AQUI PEGAMOS OS DIAS ÚTEIS
+        }
+      }
+    } catch (e) { console.warn('⚠️ metas_loja:', e.message); }
+
+    // 3. Busca VENDAS
+    const { data: dataVendas, error } = await sb.from('VENDAS').select('*');
+    if (error) throw new Error(`Erro ao ler VENDAS: ${error.message}`);
+
+    const parseValor = (v) => { if (!v) return 0; let s = String(v).replace('R$', '').trim(); if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.'); return parseFloat(s.replace(/[^\d.-]/g, '')) || 0; };
+    const parseDataBR = (str) => { if (!str) return null; str = String(str).trim(); if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) { const d = new Date(str); return isNaN(d.getTime()) ? null : d; } const p = str.split(' ')[0].split(/[\/\-]/); if (p.length === 3) { let ano = parseInt(p[2]); if (ano < 100) ano += 2000; return new Date(ano, parseInt(p[1]) - 1, parseInt(p[0])); } return null; };
+
+    const ranking = {};
+    const listaVendasDashboard = [];
+    const roleLogado = String(perfilLogado?.role || '').toUpperCase().trim();
+    const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE', 'DIRETORIA'].includes(roleLogado);
+
+    let ativoHoje = 0; // Para calcular a Meta Diária
+
+    (dataVendas || []).forEach(v => {
+      const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
+      if (statusBruto.includes('CANCELADO')) return;
+
+      const origem = String(v.origem || '').toUpperCase().trim();
+      const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
+      const dataVenda = parseDataBR(v.data_da_venda);
+
+      let modalidade = String(v.modalidade || '').toUpperCase().trim();
+      let modalidadeParaPainel = modalidade;
+      if (modalidade.includes('MIGRA')) modalidadeParaPainel = 'MIGRAÇÃO TT';
+      else if (modalidade.includes('ATIVA')) modalidadeParaPainel = 'PRIMEIRA ATIVAÇÃO';
+      else if (modalidade.includes('ADITIVO')) modalidadeParaPainel = 'ADITIVO';
+
+      const isReceita = ['MIGRAÇÃO TT', 'PRIMEIRA ATIVAÇÃO', 'ADITIVO'].includes(modalidadeParaPainel) || modalidade.includes('PORTABIL');
+
+      if (!isGestao) {
+        if (origem !== 'INTERNO') return; 
+        if (!isReceita) return;
+      }
+
+      const valor = parseValor(v.valor_contratado);
+      const matriculaVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
+      const nomeParaExibir = mapaUsuarios[matriculaVenda] || matriculaVenda || 'DESCONHECIDO';
+
+      let incluir = false;
+      let statusFinalPainel = 'ENTRANTE'; // Padrão
+      let dataParaDashboard = null;
+      const estaAtivado = Number(v.status_etapa) === 6;
+
+      if (estaAtivado) {
+        if (dataAtivacao && (dataAtivacao.getMonth() + 1) === mesNumericoSelecionado && dataAtivacao.getFullYear() === anoSelecionado) {
+          incluir = true;
+          statusFinalPainel = 'ATIVADO';
+          dataParaDashboard = dataAtivacao;
+          
+          // Verifica se foi ativado HOJE para a meta diária
+          if (dataAtivacao.getDate() === hoje.getDate() && dataAtivacao.getMonth() === hoje.getMonth() && dataAtivacao.getFullYear() === hoje.getFullYear()) {
+            ativoHoje += valor;
+          }
+        }
+      } else {
+        if (dataVenda && (dataVenda.getMonth() + 1) === mesNumericoSelecionado && dataVenda.getFullYear() === anoSelecionado) {
+          incluir = true;
+          statusFinalPainel = 'ENTRANTE';
+          dataParaDashboard = dataVenda;
+        }
+      }
+
+      if (incluir) {
+        ranking[nomeParaExibir] = (ranking[nomeParaExibir] || 0) + valor;
+        listaVendasDashboard.push({
+          cliente: v.razao_social,
+          valor: valor,
+          modalidade: modalidadeParaPainel,
+          status: statusFinalPainel,
+          data: dataParaDashboard
+        });
+      }
+    });
+
+    const dados = {
+      metaValor: metaFaturamento,
+      portMeta: metaPortabilidade,
+      renegMeta: metaRenegociacao,
+      diasUteis: diasUteis,
+      ativoHoje: ativoHoje,
+      ranking: ranking,
+      vendas: listaVendasDashboard
+    };
+
+    renderizarDashboard(dados);
+
+    // Visão Global
+    const perfisPermitidos = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
+    const blocoGlobal = document.getElementById('bloco-visao-global');
+    if (perfisPermitidos.includes(roleLogado) && blocoGlobal) {
+      blocoGlobal.style.display = 'block';
+      let gEntrFat = 0, gEntrQtd = 0, gAtivFat = 0, gAtivQtd = 0;
+
+      (dataVendas || []).forEach(v => {
+        if (String(v.status_do_pedido || '').toUpperCase().includes('CANCELADO')) return;
+        const valor = parseValor(v.valor_contratado);
+        const dVenda = parseDataBR(v.data_da_venda);
+        const dAtiv = parseDataBR(v.data_de_ativacao_no_radar);
+        
+        if (!v.status_etapa || Number(v.status_etapa) < 6) {
+          if (dVenda && (dVenda.getMonth() + 1) === mesNumericoSelecionado && dVenda.getFullYear() === anoSelecionado) { gEntrFat += valor; gEntrQtd++; }
+        } else {
+          if (dAtiv && (dAtiv.getMonth() + 1) === mesNumericoSelecionado && dAtiv.getFullYear() === anoSelecionado) { gAtivFat += valor; gAtivQtd++; }
+        }
+      });
+
+      const fmtBRL = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+      document.getElementById('global-entrantes-fat').innerText = fmtBRL(gEntrFat);
+      document.getElementById('global-entrantes-qtd').innerText = `${gEntrQtd} pedidos na esteira`;
+      document.getElementById('global-ativos-fat').innerText = fmtBRL(gAtivFat);
+      document.getElementById('global-ativos-qtd').innerText = `${gAtivQtd} pedidos faturados`;
+    }
+
+  } catch (e) {
+    console.error('🔴 [DASH] ERRO:', e);
+  }
+}
+
+function renderizarDashboard(dados) {
   const modsFaturamento = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO", "MIGRAÇÃO TT"];
   const modsGross = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO"]; 
   
@@ -1445,18 +1537,15 @@ function renderizarDashboard(dados) {
   if (dados.vendas && Array.isArray(dados.vendas)) {
     dados.vendas.forEach(v => {
       const mod = v.modalidade ? v.modalidade.toUpperCase() : "";
-      const status = v.status ? v.status.toUpperCase().trim() : "";
-      const valor = parseFloat(v.valor) || 0;
+      const isAtivo = v.status === "ATIVADO";
+      const valor = v.valor || 0;
 
-      // Se for renegociação
       if (mod.includes("RENEG")) {
-        renegInput++; // toda renegociação lançada conta como input
-        if (status === "ATIVADO") renegAtivo++;
-      } 
-      // Se for faturamento (receita)
-      else if (modsFaturamento.some(termo => mod.includes(termo))) {
-        fatInput += valor; // todo valor entra (pendente ou ativado)
-        if (status === "ATIVADO") {
+        renegInput++;
+        if (isAtivo) renegAtivo++;
+      } else if (modsFaturamento.some(termo => mod.includes(termo))) {
+        fatInput += valor;
+        if (isAtivo) {
           fatAtivo += valor;
           if (mod.includes("PORTABILIDADE")) portAtivo += valor;
           if (modsGross.some(termo => mod.includes(termo))) grossAtivo++;
@@ -1467,300 +1556,109 @@ function renderizarDashboard(dados) {
     });
   }
 
-  const fatEsteira = fatInput - fatAtivo;
-  const portEsteira = portInput - portAtivo;
-  const grossEsteira = grossInput - grossAtivo;
-  const renegEsteira = renegInput - renegAtivo;
-
-  // =========================================================================
-  // ATUALIZAÇÃO DA INTERFACE BASE (HEADER)
-  // =========================================================================
   const percFaturamento = dados.metaValor > 0 ? Math.min(((fatAtivo / dados.metaValor) * 100), 100).toFixed(1) : 0;
   const percPort = dados.portMeta > 0 ? Math.min(((portAtivo / dados.portMeta) * 100), 100).toFixed(1) : 0;
 
+  // Cálculo Meta Diária
+  const metaDiaria = dados.metaValor / dados.diasUteis;
+  const percMetaDiaria = metaDiaria > 0 ? Math.min(((dados.ativoHoje / metaDiaria) * 100), 100).toFixed(0) : 0;
+  
+  document.getElementById('dias-uteis-txt').innerText = dados.diasUteis;
+  document.getElementById('meta-diaria-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  document.getElementById('meta-diaria-perc').innerText = percMetaDiaria + '%';
+  document.getElementById('meta-diaria-bar').style.width = percMetaDiaria + '%';
+  document.getElementById('meta-diaria-realizado').innerText = dados.ativoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  document.getElementById('meta-diaria-falta').innerText = (metaDiaria - dados.ativoHoje > 0 ? metaDiaria - dados.ativoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
   const statusMeta = document.getElementById('status-meta');
   if (statusMeta) {
-    const agora = new Date().toLocaleTimeString('pt-BR', {hour: '2-digit', minute:'2-digit'});
-    statusMeta.innerHTML = `<span style="font-size:10px; color:#64748b; font-weight:normal; margin-right:8px;">Sincronizado às ${agora} |</span> REALIZADO MÊS: <b style="color:#10b981">${fatAtivo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b> (${percFaturamento}%)`;
-  }
-  
-  const barFat = document.getElementById('bar-faturamento');
-  if(barFat) barFat.style.width = percFaturamento + "%";
-  const txtFatPerc = document.getElementById('txt-faturamento-perc');
-  if (txtFatPerc) txtFatPerc.innerText = percFaturamento + "%";
-  
-  const barPort = document.getElementById('bar-portabilidade');
-  if(barPort) barPort.style.width = percPort + "%";
-  const txtPortPerc = document.getElementById('txt-port-perc');
-  if (txtPortPerc) txtPortPerc.innerText = percPort + "%";
-
-  // =========================================================================
-  // 🎯 CARDS DE INTELIGÊNCIA: DESAFIO DO MÊS
-  // =========================================================================
-  const painelMetas = document.getElementById('bloco-arte-meta');
-  if (painelMetas) {
-    painelMetas.style.padding = "20px";
-    painelMetas.style.marginBottom = "20px";
-    painelMetas.style.overflow = "hidden";
+    statusMeta.innerHTML = `REALIZADO MÊS: <b style="color:#10b981">${fatAtivo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b> (${percFaturamento}%)`;
   }
 
+  // Renderiza os Cards Brancos (Design Clean)
   const gridMetas = document.getElementById('container-grid-metas');
   if (gridMetas) {
-    gridMetas.style.display = "grid";
-    gridMetas.style.gridTemplateColumns = "repeat(auto-fit, minmax(240px, 1fr))";
-    gridMetas.style.gap = "20px";
-    gridMetas.style.alignItems = "stretch";
-
-    let htmlCards = "";
-
     const formatMoeda = (v) => v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-    const badgeEstilo = (cor, texto) => `<span style="font-size: 10px; font-weight: 800; color: ${cor}; background: ${cor}15; padding: 3px 8px; border-radius: 6px; border: 1px solid ${cor}33;">${texto}</span>`;
+    
+    // Cálculo do percentual de Entrantes para a Barra Dupla
+    const percEntranteFat = dados.metaValor > 0 ? Math.min(((fatInput - fatAtivo) / dados.metaValor) * 100, 100 - percFaturamento) : 0;
 
-    const cardStyleBase = `background: #1e293b; border: 1px solid rgba(255,255,255,0.05); padding: 20px; border-radius: 16px; display: flex; flex-direction: column; justify-content: space-between; box-sizing: border-box; box-shadow: 0 4px 15px rgba(0,0,0,0.1); transition: 0.3s; min-height: 190px;`;
-
-    // --- CARD 1: RECEITA GLOBAL ---
-    const faltaFat = dados.metaValor - fatAtivo;
-    const isBatidaFat = faltaFat <= 0 && dados.metaValor > 0;
-
-    htmlCards += `
-      <div class="card-meta-box" style="${cardStyleBase} border-top: 4px solid #3b82f6;">
-        <div>
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size: 14px;">💰</span>
-              <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Faturamento (Ativos)</span>
-            </div>
-            ${badgeEstilo('#60a5fa', percFaturamento + '%')}
-          </div>
-          <div style="font-size: 24px; font-weight: 900; color: #f8fafc; margin: 10px 0 0 0;">
-            ${formatMoeda(fatAtivo)}
-          </div>
+    gridMetas.innerHTML = `
+      <!-- CARD FATURAMENTO (Barra Dupla) -->
+      <div class="card-meta-box" style="background: white; padding: 22px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">💰 Faturamento (Ativos)</span>
+          <span style="font-size: 10px; font-weight: 800; color: #3b82f6; background: #eff6ff; padding: 3px 8px; border-radius: 6px;">${percFaturamento}%</span>
+        </div>
+        <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 12px 0 16px 0;">${formatMoeda(fatAtivo)}</div>
+        
+        <!-- Barra Dupla -->
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">
+          <span>Meta: ${formatMoeda(dados.metaValor)}</span>
+        </div>
+        <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px; display: flex; overflow: hidden; margin-bottom: 8px;">
+          <div style="width: ${percFaturamento}%; background: #3b82f6;"></div>
+          <div style="width: ${percEntranteFat}%; background: #93c5fd; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.4) 5px, rgba(255,255,255,0.4) 10px);"></div>
         </div>
         
-        <div style="margin-top: 15px;">
-          <div style="display:flex; justify-content:space-between; align-items: flex-end; margin-bottom: 6px;">
-            <span style="font-size: 9px; font-weight: 600; color: #64748b; text-transform: uppercase;">Meta: ${formatMoeda(dados.metaValor)}</span>
-            ${isBatidaFat 
-              ? `<span style="font-size: 10px; font-weight: 800; color: #10b981;">🏆 BATIDA!</span>` 
-              : `<span style="font-size: 10px; font-weight: 800; color: #fca5a5;">Falta ${formatMoeda(faltaFat)}</span>`}
-          </div>
-          <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden;">
-            <div style="width: ${percFaturamento}%; height: 100%; background: #3b82f6; box-shadow: 0 0 10px rgba(59,130,246,0.5);"></div>
-          </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
+          <span style="color: #64748b;">⏳ Na esteira:</span>
+          <span style="color: #b45309; font-weight: 800;">${formatMoeda(fatInput - fatAtivo)}</span>
         </div>
+      </div>
 
-        <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase;">⏳ Em andamento</span>
-          <span style="font-size: 11px; font-weight: 800; color: #fbbf24;">${formatMoeda(fatEsteira)}</span>
+      <!-- CARD PORTABILIDADE -->
+      <div class="card-meta-box" style="background: white; padding: 22px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">🔄 Portabilidade</span>
+          <span style="font-size: 10px; font-weight: 800; color: #a855f7; background: #f3e8ff; padding: 3px 8px; border-radius: 6px;">${percPort}%</span>
+        </div>
+        <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 12px 0 16px 0;">${formatMoeda(portAtivo)}</div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">
+          <span>Meta: ${formatMoeda(dados.portMeta)}</span>
+        </div>
+        <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-bottom: 8px;">
+          <div style="width: ${percPort}%; background: #a855f7;"></div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
+          <span style="color: #64748b;">⏳ Na esteira:</span>
+          <span style="color: #b45309; font-weight: 800;">${formatMoeda(portInput - portAtivo)}</span>
+        </div>
+      </div>
+
+      <!-- CARD GROSS -->
+      <div class="card-meta-box" style="background: white; padding: 22px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">📱 Gross (Ativos)</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 6px; margin: 12px 0 16px 0;">
+          <div style="font-size: 26px; font-weight: 900; color: #0f172a;">${grossAtivo}</div>
+          <span style="font-size: 11px; font-weight: 800; color: #64748b;">LINHAS</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
+          <span style="color: #64748b;">⏳ Na esteira:</span>
+          <span style="color: #b45309; font-weight: 800;">${grossInput - grossAtivo} linhas</span>
+        </div>
+      </div>
+
+      <!-- CARD RENEGOCIAÇÃO -->
+      <div class="card-meta-box" style="background: white; padding: 22px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+          <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">🤝 Renegociações</span>
+        </div>
+        <div style="display: flex; align-items: baseline; gap: 6px; margin: 12px 0 16px 0;">
+          <div style="font-size: 26px; font-weight: 900; color: #0f172a;">${renegAtivo}</div>
+          <span style="font-size: 11px; font-weight: 800; color: #64748b;">ATIVAS</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
+          <span style="color: #64748b;">⏳ Na esteira:</span>
+          <span style="color: #b45309; font-weight: 800;">${renegInput - renegAtivo} un.</span>
         </div>
       </div>
     `;
-
-    // --- CARD 2: PORTABILIDADE ---
-    const faltaPort = dados.portMeta - portAtivo;
-    const isBatidaPort = faltaPort <= 0 && dados.portMeta > 0;
-
-    htmlCards += `
-      <div class="card-meta-box" style="${cardStyleBase} border-top: 4px solid #a855f7;">
-        <div>
-          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-            <div style="display:flex; align-items:center; gap:6px;">
-              <span style="font-size: 14px;">🔄</span>
-              <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Portabilidade</span>
-            </div>
-            ${badgeEstilo('#c084fc', percPort + '%')}
-          </div>
-          <div style="font-size: 24px; font-weight: 800; color: #f8fafc; margin: 10px 0 0 0;">
-            ${formatMoeda(portAtivo)}
-          </div>
-        </div>
-        
-        <div style="margin-top: 15px;">
-          <div style="display:flex; justify-content:space-between; align-items: flex-end; margin-bottom: 6px;">
-            <span style="font-size: 9px; font-weight: 600; color: #64748b; text-transform: uppercase;">Meta: ${formatMoeda(dados.portMeta)}</span>
-            ${isBatidaPort 
-              ? `<span style="font-size: 10px; font-weight: 800; color: #10b981;">🏆 BATIDA!</span>` 
-              : `<span style="font-size: 10px; font-weight: 800; color: #fca5a5;">Falta ${formatMoeda(faltaPort)}</span>`}
-          </div>
-          <div style="width: 100%; height: 6px; background: rgba(0,0,0,0.2); border-radius: 10px; overflow: hidden;">
-            <div style="width: ${percPort}%; height: 100%; background: #a855f7;"></div>
-          </div>
-        </div>
-
-        <div style="margin-top: 15px; padding-top: 12px; border-top: 1px dashed rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase;">⏳ Em andamento</span>
-          <span style="font-size: 11px; font-weight: 800; color: #fbbf24;">${formatMoeda(portEsteira)}</span>
-        </div>
-      </div>
-    `;
-
-    // --- CARD 3: PRODUÇÃO GROSS ---
-    htmlCards += `
-      <div class="card-meta-box" style="${cardStyleBase} border-top: 4px solid #10b981;">
-        <div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size: 14px;">📱</span>
-            <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Gross (Ativos)</span>
-          </div>
-          <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 15px;">
-            <div style="font-size: 32px; font-weight: 900; color: #f8fafc;">${grossAtivo}</div>
-            <span style="font-size: 11px; font-weight: 800; color: #64748b;">LINHAS ATIVAS</span>
-          </div>
-        </div>
-        
-        <div style="margin-top: auto; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-           <span style="font-size: 9px; font-weight: 600; color: #64748b; text-transform: uppercase;">Total lançado: <b style="color:#cbd5e1;">${grossInput}</b></span>
-           <span style="font-size: 11px; font-weight: 800; color: #fbbf24;">⏳ Pendente: ${grossEsteira}</span>
-        </div>
-      </div>
-    `;
-
-    // --- CARD 4: RENEGOCIAÇÃO E TRAVA ---
-    const grossNecessario = Math.ceil(renegAtivo * 0.9);
-    const atendeRegra = grossAtivo >= grossNecessario;
-    let alertaRegra90 = "";
-
-    if (renegAtivo > 0) {
-      if (!atendeRegra) {
-        const faltaGross = grossNecessario - grossAtivo;
-        alertaRegra90 = `
-          <div style="margin-top:15px; padding: 8px 10px; background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.2); border-radius: 8px; display: flex; align-items: center; justify-content: space-between;">
-            <div style="display: flex; align-items: center; gap: 6px;">
-               <span style="font-size: 12px;">⚠️</span>
-               <span style="font-size: 9px; font-weight: 800; color: #fca5a5; text-transform: uppercase;">Trava:</span>
-            </div>
-            <span style="font-size: 10px; font-weight: 700; color: #fca5a5;">Ative +<b style="color: #ef4444; font-size: 13px;">${faltaGross}</b> Gross</span>
-          </div>`;
-      } else {
-        alertaRegra90 = `
-          <div style="margin-top:15px; padding: 8px 10px; background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 8px; display: flex; align-items: center; gap: 6px;">
-             <span style="font-size: 12px;">✅</span>
-             <span style="font-size: 9px; color:#34d399; font-weight:700; text-transform: uppercase;">Trava Atendida</span>
-          </div>`;
-      }
-    } else {
-        alertaRegra90 = `<div style="margin-top:15px; padding: 8px; font-size: 9px; color: #64748b; text-align: center; border: 1px dashed rgba(255,255,255,0.05); border-radius: 8px;">Sem retenção ativa no momento</div>`;
-    }
-
-    const bgReneg = (!atendeRegra && renegAtivo > 0) ? "background: linear-gradient(180deg, #1e293b 0%, #2d1b1b 100%);" : "";
-
-    htmlCards += `
-      <div class="card-meta-box" style="${cardStyleBase} border-top: 4px solid #f59e0b; ${bgReneg}">
-        <div>
-          <div style="display:flex; align-items:center; gap:6px;">
-            <span style="font-size: 14px;">🤝</span>
-            <span style="font-size: 10px; font-weight: 800; color: #94a3b8; text-transform: uppercase;">Renegociações</span>
-          </div>
-          <div style="display: flex; align-items: baseline; gap: 6px; margin-top: 15px;">
-              <div style="font-size: 32px; font-weight: 900; color: #f8fafc;">${renegAtivo}</div>
-              <span style="font-size: 11px; font-weight: 800; color: #64748b;">ATIVAS</span>
-          </div>
-        </div>
-        
-        ${alertaRegra90}
-        
-        <div style="margin-top: auto; padding-top: 15px; border-top: 1px dashed rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 9px; font-weight: 700; color: #64748b; text-transform: uppercase;">⏳ Pendente</span>
-          <span style="font-size: 11px; font-weight: 800; color: #fbbf24;">${renegEsteira} un.</span>
-        </div>
-      </div>
-    `;
-
-    gridMetas.innerHTML = htmlCards;
   }
-
-  // =========================================================================
-  // 📊 KANBAN E CRM – AGORA USANDO OS VALORES DO PIPELINE
-  // =========================================================================
-  const colSaude = document.querySelector('.kanban-col:first-child');
-  if (colSaude) {
-    const categoriasSaude = [
-      { label: "Meta Faturamento (Pipeline)", real: fatInput, meta: dados.metaValor, unit: "R$", cor: "linear-gradient(90deg, #3b82f6, #8b5cf6)" },
-      { label: "Meta Portabilidade (Pipeline)", real: portInput, meta: dados.portMeta, unit: "R$", cor: "linear-gradient(90deg, #10b981, #3b82f6)" },
-      { label: "Meta Renegociação (Pipeline)", real: renegInput, meta: dados.renegMeta, unit: "Qtd", cor: "linear-gradient(90deg, #f59e0b, #ef4444)" }
-    ];
-
-    let htmlSaude = `<div class="col-title">📊 Saúde Financeira (Pipeline)</div>`;
-    categoriasSaude.forEach(cat => {
-      const perc = cat.meta > 0 ? Math.min((cat.real / cat.meta) * 100, 100).toFixed(1) : 0;
-      const vReal = cat.unit === "R$" ? cat.real.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : cat.real + " unid.";
-      const faltaValor = cat.meta - cat.real;
-      const textoFalta = faltaValor <= 0 ? "🎯 BATIDA" : (cat.unit === "R$" ? "Falta: " + faltaValor.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'}) : "Falta: " + faltaValor);
-
-      htmlSaude += `
-        <div class="progress-container" style="margin-bottom: 20px; background: #fff; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9;">
-          <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:8px;">
-            <div>
-              <span style="font-size:9px; font-weight:700; color:#64748b; text-transform:uppercase; display:block; letter-spacing:0.5px;">${cat.label}</span>
-              <b style="font-size:13px; color:#1e293b;">${vReal}</b>
-            </div>
-            <div style="text-align:right;">
-              <span style="font-size:9px; color:${faltaValor <= 0 ? '#10b981' : '#ef4444'}; display:block; font-weight:800;">${textoFalta}</span>
-              <b style="font-size:12px; color:#3b82f6;">${perc}%</b>
-            </div>
-          </div>
-          <div class="progress-bg" style="height:6px; background:#f1f5f9; border-radius:10px; overflow:hidden;">
-            <div class="progress-fill" style="width: ${perc}%; background: ${cat.cor} !important; height:100%; transition: width 1s ease-in-out;"></div>
-          </div>
-        </div>`;
-    });
-    colSaude.innerHTML = htmlSaude;
-  }
-
-  // =========================================================================
-  // ✅ VENDAS CONFIRMADAS (KANBAN)
-  // =========================================================================
-  const containerVendas = document.getElementById('crm-vendas');
-  if (containerVendas && dados.vendas) {
-    containerVendas.innerHTML = "";
-    const countVendas = document.getElementById('count-vendas');
-    if (countVendas) countVendas.innerText = dados.vendas.length; 
-    [...dados.vendas].reverse().slice(0, 5).forEach(v => {
-      let valorVenda = parseFloat(v.valor) || 0;
-      let statusSpan = v.status === "ATIVADO" || v.status === "ATIVADA" || v.status.includes("ATIVADO")
-        ? `<span style="font-size:8px; background:#dcfce7; color:#166534; padding:2px 4px; border-radius:4px; font-weight:800;">ATIVO</span>` 
-        : `<span style="font-size:8px; background:#fef3c7; color:#b45309; padding:2px 4px; border-radius:4px; font-weight:800;">PENDENTE</span>`;
-
-      containerVendas.innerHTML += `
-        <div style="background:white; padding:12px; border-radius:12px; margin-bottom:10px; border-left:4px solid #1e3c72; box-shadow: 0 2px 5px rgba(0,0,0,0.02);">
-          <strong style="font-size:12px; color:#1e293b; display:block;">${v.cliente || "Cliente"} ${statusSpan}</strong>
-          <div style="display:flex; justify-content:space-between; margin-top:5px; align-items:center;">
-            <span style="font-size:9px; color:#1e3c72; background:#e0e7ff; padding:2px 6px; border-radius:4px; font-weight:700;">${v.plano || "-"}</span>
-            <span style="font-weight:800; color:#1e3c72; font-size:12px;">${valorVenda.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-          </div>
-        </div>`;
-    });
-  }
-
-  // =========================================================================
-  // 🏆 TOP PERFORMANCE (RANKING)
-  // =========================================================================
-  const containerRanking = document.getElementById('crm-ranking');
-  if (containerRanking && dados.ranking) {
-    containerRanking.innerHTML = "";
-    Object.entries(dados.ranking).sort((a,b) => b[1]-a[1]).forEach((c, i) => {
-      const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + 'º';
-      containerRanking.innerHTML += `
-        <div style="background:white; padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border: 1px solid #f1f5f9;">
-          <div style="display:flex; align-items:center; gap:10px;">
-             <span style="font-weight:800; color:#64748b;">${medalha}</span>
-             <span style="font-size:11px; font-weight:800; color:#1e293b;">${c[0]}</span>
-          </div>
-          <span style="font-weight:800; color:#2e7d32; background:#f0fdf4; padding:4px 10px; border-radius:10px;">${c[1].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-        </div>`;
-    });
-  }
-
-  // =========================================================================
-  // EFEITOS DE TRANSIÇÃO
-  // =========================================================================
-  const areaPrincipal = document.getElementById('main-content-area');
-  const menuPrincipal = document.getElementById('menu-principal');
-  setTimeout(() => {
-    if(areaPrincipal) areaPrincipal.classList.add('revelar-dash');
-    if(menuPrincipal) menuPrincipal.classList.add('revelar-dash');
-  }, 50);
 }
+  
 // ============================================================
 // 🚀 MOTOR DE CARREGAMENTO DE MÓDULOS (SEM IFRAME)
 // ============================================================
@@ -2368,351 +2266,7 @@ function limparNotificacoes() {
 }
 
 
-// ============================================================
-// 📊 INICIALIZAR DADOS (Supabase · VENDAS + metas_config)
-// Réplica fiel da lógica GAS + parse de data robusto
-// ============================================================
-async function inicializarDados() {
-  console.log('🔵 [DASH] ============ INÍCIO ============');
-  const statusMeta = document.getElementById('status-meta');
-  if (statusMeta) statusMeta.innerText = 'Carregando indicadores...';
 
-  try {
-    const hoje = new Date();
-    const mesAtual = hoje.getMonth() + 1;
-    const anoAtual = hoje.getFullYear();
-
-    // ---- 0. Mês/Ano selecionados ----
-    const mapaMesesNum = {
-      'JANEIRO':1,'FEVEREIRO':2,'MARÇO':3,'MARCO':3,'ABRIL':4,
-      'MAIO':5,'JUNHO':6,'JULHO':7,'AGOSTO':8,'SETEMBRO':9,
-      'OUTUBRO':10,'NOVEMBRO':11,'DEZEMBRO':12
-    };
-    const mesSelecionado = (document.getElementById('dashboard_mes')?.value || '').toUpperCase().trim();
-    const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || anoAtual;
-    const mesNumericoSelecionado = mapaMesesNum[mesSelecionado] || mesAtual;
-
-    console.log(`🔵 [DASH] Período selecionado: ${mesSelecionado}/${anoSelecionado} (mês num: ${mesNumericoSelecionado})`);
-
-    // ---- 1. Perfil do usuário logado ----
-    let perfilLogado = null;
-    try {
-      const { data: { user } } = await sb.auth.getUser();
-      if (user) {
-        const { data: p } = await sb.from('profiles').select('*').eq('id', user.id).maybeSingle();
-        perfilLogado = p;
-        console.log(`🔵 [DASH] Perfil: ${p?.nome} (${p?.role}) | tenant: ${p?.tenant_id}`);
-      } else {
-        console.warn('⚠️ [DASH] Nenhum usuário logado!');
-      }
-    } catch (e) { console.warn('⚠️ profiles:', e.message); }
-
-    // ---- 2. Mapeia USERS (matrícula → nome, nome → foto) ----
-    const mapaUsuarios = {};
-    const mapaFotos = {};
-    const listaConsultores = [];
-    try {
-      const { data: users } = await sb.from('profiles').select('*');
-      (users || []).forEach(u => {
-        const matricula = String(u.matricula || '').trim().toUpperCase();
-        const nome = String(u.nome || '').trim();
-        const sobrenome = String(u.sobrenome || '').trim();
-        const foto = u.photo_url || '';
-        if (!nome && !sobrenome) return;
-        const nomeCompleto = `${nome} ${sobrenome}`.trim().toUpperCase();
-        if (matricula) mapaUsuarios[matricula] = nomeCompleto;
-        mapaFotos[nomeCompleto] = foto;
-        if (!listaConsultores.includes(nomeCompleto)) listaConsultores.push(nomeCompleto);
-      });
-      listaConsultores.sort();
-      console.log(`🔵 [DASH] ${listaConsultores.length} consultores mapeados`);
-    } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
-
-    // ---- 3. Busca METAS_LOJA ----
-    let metaFaturamento = 0, metaFaturamentoSup = 0;
-    let metaPortabilidade = 0, metaPortabilidadeSup = 0;
-    let metaRenegociacao = 0, metaRenegociacaoSup = 0;
-    let metaEncontrada = false;
-
-    try {
-      const { data: metaDB, error: errMeta } = await sb
-        .from('metas_loja')
-        .select('*')
-        .eq('ano_referencia', anoSelecionado);
-
-      if (errMeta) {
-        console.warn('⚠️ [DASH] metas_loja erro:', errMeta.message);
-      } else {
-        console.log(`🔵 [DASH] metas_loja: ${metaDB?.length || 0} registros para ${anoSelecionado}`, metaDB);
-        
-        if (metaDB && metaDB.length > 0) {
-          const metaDoMes = metaDB.find(m => Number(m.mes_referencia) === mesNumericoSelecionado);
-
-          if (metaDoMes) {
-            metaFaturamento      = Number(metaDoMes.fat_target) || 0;
-            metaFaturamentoSup   = Number(metaDoMes.fat_sup) || 0;
-            metaPortabilidade    = Number(metaDoMes.port_target) || 0;
-            metaPortabilidadeSup = Number(metaDoMes.port_sup) || 0;
-            metaRenegociacao     = Number(metaDoMes.reneg_target) || 0;
-            metaRenegociacaoSup  = Number(metaDoMes.reneg_sup) || 0;
-            metaEncontrada = true;
-            console.log(`✅ [DASH] Meta do mês encontrada em metas_loja: FAT R$ ${metaFaturamento} | PORT R$ ${metaPortabilidade}`);
-          } else {
-            console.warn(`⚠️ [DASH] Nenhuma meta cadastrada em metas_loja para o mês ${mesNumericoSelecionado}/${anoSelecionado}.`);
-            console.log('🔍 Meses disponíveis no banco:', metaDB.map(m => m.mes_referencia));
-          }
-        }
-      }
-    } catch (e) { console.warn('⚠️ metas_loja indisponível:', e.message); }
-
-    // ---- 4. Busca VENDAS ----
-    console.log('🔵 [DASH] Buscando VENDAS...');
-    const { data: dataVendas, error } = await sb.from('VENDAS').select('*');
-    if (error) {
-      console.error('🔴 [DASH] Erro ao buscar VENDAS:', error);
-      throw new Error(`Erro ao ler tabela VENDAS: ${error.message}`);
-    }
-
-    console.log(`🔵 [DASH] Total de linhas em VENDAS: ${dataVendas?.length || 0}`);
-
-    if (!dataVendas || dataVendas.length === 0) {
-      console.warn('⚠️ [DASH] Tabela VENDAS está VAZIA');
-      mostrarDashboardVazio('Nenhuma venda cadastrada na base ainda.');
-      return;
-    }
-
-    // ---- 5. Helpers ----
-    const parseValor = (v) => {
-      if (!v) return 0;
-      let s = String(v).replace('R$', '').trim();
-      if (s.includes(',')) s = s.replace(/\./g, '').replace(',', '.');
-      return parseFloat(s.replace(/[^\d.-]/g, '')) || 0;
-    };
-
-    const parseDataBR = (str) => {
-      if (!str) return null;
-      str = String(str).trim();
-      if (str === '' || str === '-') return null;
-
-      if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
-        const d = new Date(str);
-        return isNaN(d.getTime()) ? null : d;
-      }
-
-      const apenasData = str.split(' ')[0];
-      const p = apenasData.split(/[\/\-]/);
-      if (p.length === 3) {
-        let ano = parseInt(p[2]);
-        if (ano < 100) ano += 2000;
-        const mes = parseInt(p[1]) - 1;
-        const dia = parseInt(p[0]);
-        const d = new Date(ano, mes, dia);
-        return isNaN(d.getTime()) ? null : d;
-      }
-      return null;
-    };
-
-    // ---- 6. Processa vendas (COM FILTRO DE ORIGEM E CARGO) ----
-    const ranking = {};
-    const listaVendasDashboard = [];
-    let ignoradasCancel = 0;
-    let ignoradasModalidade = 0;
-    let ignoradasParceiro = 0;
-
-    // 👇 IDENTIFICA SE O USUÁRIO É DA GESTÃO
-    const roleLogado = String(perfilLogado?.role || '').toUpperCase().trim();
-    const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE', 'DIRETORIA'].includes(roleLogado);
-
-    (dataVendas || []).forEach(v => {
-      // Cancelados são sempre ignorados por todos
-      const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
-      if (statusBruto.includes('CANCELADO')) {
-        ignoradasCancel++;
-        return;
-      }
-
-      const origem = String(v.origem || '').toUpperCase().trim();
-      const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
-      const dataVenda = parseDataBR(v.data_da_venda);
-
-      let modalidade = String(v.modalidade || '').toUpperCase().trim();
-      let modalidadeParaPainel = modalidade;
-      if (modalidade.includes('MIGRA'))        modalidadeParaPainel = 'MIGRAÇÃO TT';
-      else if (modalidade.includes('ATIVA'))   modalidadeParaPainel = 'PRIMEIRA ATIVAÇÃO';
-      else if (modalidade.includes('ADITIVO')) modalidadeParaPainel = 'ADITIVO';
-
-      const isReceita =
-        modalidadeParaPainel === 'MIGRAÇÃO TT' ||
-        modalidadeParaPainel === 'PRIMEIRA ATIVAÇÃO' ||
-        modalidadeParaPainel === 'ADITIVO' ||
-        modalidade.includes('PORTABIL');
-
-      // 👇 SE NÃO FOR GESTÃO, APLICA OS FILTROS. SE FOR GESTÃO, NÃO FILTRA NADA.
-      if (!isGestao) {
-        if (origem !== 'INTERNO') {
-          ignoradasParceiro++;
-          return; 
-        }
-        if (!isReceita) {
-          ignoradasModalidade++;
-          return;
-        }
-      }
-
-      const valor = parseValor(v.valor_contratado);
-      const matriculaVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
-      const nomeParaExibir = mapaUsuarios[matriculaVenda] || matriculaVenda || 'DESCONHECIDO';
-
-      let incluir = false;
-      let statusFinalPainel = 'PENDENTE';
-      let dataParaDashboard = null;
-
-      // 🛠️ LÓGICA DE DATA UNIFICADA COM O "VOLUME TOTAL"
-      const estaAtivado = Number(v.status_etapa) === 6;
-
-      if (estaAtivado) {
-        // Se está ativado (etapa 6), verifica a data de ativação no mês
-        if (dataAtivacao && (dataAtivacao.getMonth() + 1) === mesNumericoSelecionado && dataAtivacao.getFullYear() === anoSelecionado) {
-          incluir = true;
-          statusFinalPainel = 'ATIVADO';
-          dataParaDashboard = dataAtivacao;
-        }
-      } else {
-        // Se é pendente, verifica a data da venda no mês
-        if (dataVenda && (dataVenda.getMonth() + 1) === mesNumericoSelecionado && dataVenda.getFullYear() === anoSelecionado) {
-          incluir = true;
-          statusFinalPainel = 'PENDENTE';
-          dataParaDashboard = dataVenda;
-        }
-      }
-
-      if (incluir) {
-        ranking[nomeParaExibir] = (ranking[nomeParaExibir] || 0) + valor;
-        const dia = String(dataParaDashboard.getDate()).padStart(2,'0');
-        const mes = String(dataParaDashboard.getMonth() + 1).padStart(2,'0');
-        const ano = dataParaDashboard.getFullYear();
-        listaVendasDashboard.push({
-          cliente: v.razao_social,
-          plano: v.plano || modalidade,
-          valor: valor,
-          modalidade: modalidadeParaPainel,
-          status: statusFinalPainel,
-          data: `${dia}/${mes}/${ano}`
-        });
-      }
-    });
-
-    console.log(`🔵 [DASH] Processamento: ${listaVendasDashboard.length} vendas incluídas | ${ignoradasCancel} canceladas | ${ignoradasModalidade} fora de receita | ${ignoradasParceiro} de parceiros (ignoradas)`);
-
-    // ---- 7. Monta dados e renderiza ----
-    const dados = {
-      metaValor: metaFaturamento,
-      metaSup: metaFaturamentoSup,
-      portMeta: metaPortabilidade,
-      portSup: metaPortabilidadeSup,
-      renegMeta: metaRenegociacao,
-      renegSup: metaRenegociacaoSup,
-      ranking: ranking,
-      fotos: mapaFotos,
-      consultores: listaConsultores,
-      vendas: listaVendasDashboard,
-      erro: !metaEncontrada,
-      msgErro: !metaEncontrada
-        ? `Meta de ${mesSelecionado}/${anoSelecionado} não cadastrada.`
-        : ''
-    };
-
-    // ---- 7.1 VISÃO GLOBAL (INTERNOS + PARCEIROS) - APENAS PARA GESTÃO ----
-    const perfisPermitidos = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
-    const blocoGlobal = document.getElementById('bloco-visao-global');
-
-    if (perfisPermitidos.includes(roleLogado) && blocoGlobal) {
-      blocoGlobal.style.display = 'block';
-
-      let gEntrFat = 0, gEntrQtd = 0, gEntrInt = 0, gEntrParc = 0;
-      let gAtivFat = 0, gAtivQtd = 0, gAtivInt = 0, gAtivParc = 0;
-
-      (dataVendas || []).forEach(v => {
-        const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
-        if (statusBruto.includes('CANCELADO')) return;
-
-        const origem = String(v.origem || '').toUpperCase().trim();
-        const isParceiro = origem === 'PARCEIRO' || (v.parceiro_id && String(v.parceiro_id).trim() !== 'null');
-        const valorVenda = parseValor(v.valor_contratado);
-
-        // --- ENTRANTES (Pendentes no mês selecionado) ---
-        if (!v.status_etapa || Number(v.status_etapa) < 6) {
-          const dVenda = parseDataBR(v.data_da_venda);
-          if (dVenda && (dVenda.getMonth() + 1) === mesNumericoSelecionado && dVenda.getFullYear() === anoSelecionado) {
-            gEntrFat += valorVenda;
-            gEntrQtd++;
-            if (isParceiro) gEntrParc++; else gEntrInt++;
-          }
-        }
-
-        // --- ATIVOS (Ativados no mês selecionado) ---
-        if (Number(v.status_etapa) === 6) {
-          const dAtiv = parseDataBR(v.data_de_ativacao_no_radar);
-          if (dAtiv && (dAtiv.getMonth() + 1) === mesNumericoSelecionado && dAtiv.getFullYear() === anoSelecionado) {
-            gAtivFat += valorVenda;
-            gAtivQtd++;
-            if (isParceiro) gAtivParc++; else gAtivInt++;
-          }
-        }
-      });
-
-      // Atualiza a tela
-      const fmtBRLGlobal = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      
-      document.getElementById('global-entrantes-fat').innerText = fmtBRLGlobal(gEntrFat);
-      document.getElementById('global-entrantes-qtd').innerText = `${gEntrQtd} pedido${gEntrQtd !== 1 ? 's' : ''}`;
-      document.getElementById('global-entrantes-int').innerText = gEntrInt;
-      document.getElementById('global-entrantes-parc').innerText = gEntrParc;
-
-      document.getElementById('global-ativos-fat').innerText = fmtBRLGlobal(gAtivFat);
-      document.getElementById('global-ativos-qtd').innerText = `${gAtivQtd} pedido${gAtivQtd !== 1 ? 's' : ''}`;
-      document.getElementById('global-ativos-int').innerText = gAtivInt;
-      document.getElementById('global-ativos-parc').innerText = gAtivParc;
-
-      // NOVO CÁLCULO DO TOTAL GERAL (Entrantes + Ativos)
-      const gTotalFat = gEntrFat + gAtivFat;
-      const gTotalQtd = gEntrQtd + gAtivQtd;
-      
-      const elTotalFat = document.getElementById('global-total-fat');
-      const elTotalQtd = document.getElementById('global-total-qtd'); 
-      
-      if (elTotalFat) elTotalFat.innerText = fmtBRLGlobal(gTotalFat);
-      if (elTotalQtd) elTotalQtd.innerText = `${gTotalQtd} pedido${gTotalQtd !== 1 ? 's' : ''}`;
-
-      console.log(`🌍 [DASH] Visão Global calculada: Entrantes ${gEntrQtd} (${fmtBRLGlobal(gEntrFat)}) | Ativos ${gAtivQtd} (${fmtBRLGlobal(gAtivFat)}) | TOTAL GERAL: ${gTotalQtd} pedidos (${fmtBRLGlobal(gTotalFat)})`);
-    } else if (blocoGlobal) {
-      blocoGlobal.style.display = 'none';
-    }
-    
-    console.log('🔵 [DASH] Chamando renderizarDashboard...');
-    renderizarDashboard(dados);
-    console.log('🟢 [DASH] Renderizado com sucesso!');
-
-    setTimeout(() => {
-      try {
-        carregarMetasIndividuaisTime();
-      } catch (e) {
-        console.error('🔴 [DASH] Erro no bloco do time:', e);
-        const bloco = document.getElementById('bloco-desempenho-time');
-        if (bloco) bloco.style.display = 'none';
-      }
-    }, 400);
-
-  } catch (e) {
-    console.error('🔴 [DASH] ERRO CRÍTICO:', e);
-    if (statusMeta) {
-      statusMeta.innerHTML = `<span style="color:#ef4444;">❌ Erro: ${e.message}</span>`;
-    }
-    mostrarDashboardVazio(`Erro ao carregar dashboard: ${e.message}`);
-  } finally {
-    console.log('🔵 [DASH] ============ FIM ============');
-  }
-}
 
 // ============================================================
 // 🚫 ESTADO VAZIO (quando não há dados)
