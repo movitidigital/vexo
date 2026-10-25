@@ -1049,12 +1049,23 @@
         .eq('mes_referencia', mesNum)
         .eq('ano_referencia', ano)
         .maybeSingle();
+        
       if (error) throw error;
+
+      // 🐛 LOGS DE DEBUG AQUI
+      console.log(`🐛 [METAS] Buscando do banco para ${mesNome}/${ano}:`, data);
+      
+      if (data && data.dias_trabalhados) {
+        console.log(`🐛 [METAS] Calendário encontrado no banco:`, data.dias_trabalhados.length, 'dias.');
+      } else {
+        console.log(`🐛 [METAS] Nenhum calendário salvo no banco para este mês (ou coluna vazia).`);
+      }
 
       if (data) preencherFormLoja(data);
       else resetarFormLoja();
+      
     } catch (e) {
-      console.error('[METAS] meta loja:', e);
+      console.error('❌ [METAS] Erro ao carregar meta da loja:', e);
       resetarFormLoja();
     } finally {
       if (form) form.style.opacity = '1';
