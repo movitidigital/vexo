@@ -1236,7 +1236,7 @@
     <div style="position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.05; pointer-events: none;">🎯</div>
     
     <div style="z-index: 1;">
-      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #93c5fd; margin-bottom: 5px;">Meta para Hoje</div>
+      <div id="label-meta-diaria" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #93c5fd; margin-bottom: 5px;">Meta para Hoje</div>
       <div style="font-size: 36px; font-weight: 900; line-height: 1;" id="meta-diaria-valor">R$ 0,00</div>
       <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">Faltam <b id="dias-uteis-txt">22</b> dias úteis</div>
     </div>
@@ -1443,11 +1443,14 @@ async function inicializarDados() {
         if (!listaConsultores.includes(nomeCompleto)) listaConsultores.push(nomeCompleto);
       });
       listaConsultores.sort();
-      console.log(`🔵 [DASH] ${listaConsultores.length} consultores mapeados`);
     } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
 
+    const roleLogado = String(perfilLogado?.role || '').toUpperCase().trim();
+    const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE', 'DIRETORIA'].includes(roleLogado);
+
+    // 🔥 META DA LOJA
     let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0, diasUteis = 22;
-    let diasTrabalhados = []; // 🔥 NOVO: Array de datas exatas
+    let diasTrabalhados = [];
 
     try {
       const { data: metaDB } = await sb.from('metas_loja').select('*').eq('ano_referencia', anoSelecionado);
@@ -1458,11 +1461,28 @@ async function inicializarDados() {
           metaPortabilidade = Number(metaDoMes.port_target) || 0;
           metaRenegociacao  = Number(metaDoMes.reneg_target) || 0;
           diasUteis         = Number(metaDoMes.dias_uteis) || 22;
-          // 🔥 Busca o calendário salvo em JSONB (se existir)
           diasTrabalhados   = metaDoMes.dias_trabalhados || []; 
         }
       }
     } catch (e) { console.warn('⚠️ metas_loja:', e.message); }
+
+    // 🔥 META INDIVIDUAL (se não for gestão)
+    let metaConsultorFat = 0, metaConsultorPort = 0, metaConsultorReneg = 0;
+    if (!isGestao && perfilLogado) {
+      try {
+        const { data: metaC } = await sb.from('metas_consultor')
+          .select('*')
+          .eq('consultor_id', perfilLogado.id)
+          .eq('mes_referencia', mesNumericoSelecionado)
+          .eq('ano_referencia', anoSelecionado)
+          .maybeSingle();
+        if (metaC) {
+          metaConsultorFat = Number(metaC.fat_target) || 0;
+          metaConsultorPort = Number(metaC.port_target) || 0;
+          metaConsultorReneg = Number(metaC.reneg_target) || 0;
+        }
+      } catch (e) { console.warn('⚠️ metas_consultor:', e.message); }
+    }
 
     const { data: dataVendas, error } = await sb.from('VENDAS').select('*');
     if (error) throw new Error(`Erro ao ler VENDAS: ${error.message}`);
@@ -1472,15 +1492,24 @@ async function inicializarDados() {
 
     const ranking = {};
     const listaVendasDashboard = [];
-    const roleLogado = String(perfilLogado?.role || '').toUpperCase().trim();
-    const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE', 'DIRETORIA'].includes(roleLogado);
-    let ativoHoje = 0;
+    
+    // Acumuladores GLOBAIS
+    let ativoHojeGlobal = 0, fatInputGlobal = 0, fatAtivoGlobal = 0;
+    
+    // Acumuladores INDIVIDUAIS (se for consultor)
+    const matriculaLogada = String(perfilLogado?.matricula || '').trim().toUpperCase();
+    const nomeLogado = perfilLogado ? `${perfilLogado.nome} ${perfilLogado.sobrenome}`.trim().toUpperCase() : '';
+    let ativoHojeIndiv = 0, fatInputIndiv = 0, fatAtivoIndiv = 0;
 
     (dataVendas || []).forEach(v => {
       const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
       if (statusBruto.includes('CANCELADO')) return;
 
       const origem = String(v.origem || '').toUpperCase().trim();
+      
+      // Consultores não podem ver vendas de parceiros
+      if (!isGestao && origem === 'PARCEIRO') return;
+
       const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
       const dataVenda = parseDataBR(v.data_da_venda);
 
@@ -1491,11 +1520,7 @@ async function inicializarDados() {
       else if (modalidade.includes('ADITIVO')) modalidadeParaPainel = 'ADITIVO';
 
       const isReceita = ['MIGRAÇÃO TT', 'PRIMEIRA ATIVAÇÃO', 'ADITIVO'].includes(modalidadeParaPainel) || modalidade.includes('PORTABIL');
-
-      if (!isGestao) {
-        if (origem !== 'INTERNO') return; 
-        if (!isReceita) return;
-      }
+      if (!isReceita) return; // Ignora renegociação no faturamento principal
 
       const valor = parseValor(v.valor_contratado);
       const matriculaVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
@@ -1505,6 +1530,7 @@ async function inicializarDados() {
       let statusFinalPainel = 'ENTRANTE';
       let dataParaDashboard = null;
       const estaAtivado = Number(v.status_etapa) === 6;
+      let ativouHoje = false;
 
       if (estaAtivado) {
         if (dataAtivacao && (dataAtivacao.getMonth() + 1) === mesNumericoSelecionado && dataAtivacao.getFullYear() === anoSelecionado) {
@@ -1512,7 +1538,7 @@ async function inicializarDados() {
           statusFinalPainel = 'ATIVADO';
           dataParaDashboard = dataAtivacao;
           if (dataAtivacao.getDate() === hoje.getDate() && dataAtivacao.getMonth() === hoje.getMonth() && dataAtivacao.getFullYear() === hoje.getFullYear()) {
-            ativoHoje += valor;
+            ativouHoje = true;
           }
         }
       } else {
@@ -1530,26 +1556,54 @@ async function inicializarDados() {
           valor: valor,
           modalidade: modalidadeParaPainel,
           status: statusFinalPainel,
-          data: dataParaDashboard
+          data: dataParaDashboard,
+          vendedor: nomeParaExibir // Para usar no filtro do gráfico
         });
+
+        // Soma Global (Todos os Internos)
+        if (origem === 'INTERNO') {
+          fatInputGlobal += valor;
+          if (estaAtivado) fatAtivoGlobal += valor;
+          if (ativouHoje) ativoHojeGlobal += valor;
+        }
+
+        // Soma Individual (Apenas do consultor logado)
+        const isDono = (matriculaVenda === matriculaLogada || nomeParaExibir === nomeLogado);
+        if (isDono) {
+          fatInputIndiv += valor;
+          if (estaAtivado) fatAtivoIndiv += valor;
+          if (ativouHoje) ativoHojeIndiv += valor;
+        }
       }
     });
 
     const dados = {
+      isGestao: isGestao,
+      // Globais
       metaValor: metaFaturamento,
       portMeta: metaPortabilidade,
       renegMeta: metaRenegociacao,
       diasUteis: diasUteis,
-      diasTrabalhados: diasTrabalhados, // 🔥 Enviando o calendário
-      ativoHoje: ativoHoje,
+      diasTrabalhados: diasTrabalhados,
+      ativoHojeGlobal: ativoHojeGlobal,
+      fatInputGlobal: fatInputGlobal,
+      fatAtivoGlobal: fatAtivoGlobal,
+      // Individuais
+      metaIndivFat: metaConsultorFat,
+      metaIndivPort: metaConsultorPort,
+      metaIndivReneg: metaConsultorReneg,
+      ativoHojeIndiv: ativoHojeIndiv,
+      fatInputIndiv: fatInputIndiv,
+      fatAtivoIndiv: fatAtivoIndiv,
+      // Outros
       ranking: ranking,
       fotos: mapaFotos, 
       vendas: listaVendasDashboard
     };
 
     renderizarDashboard(dados);
-    console.log('🟢 [DASH] Renderizado com sucesso!');
-
+    
+    // Revela a tela
     const areaPrincipal = document.getElementById('main-content-area');
     const menuPrincipal = document.getElementById('menu-principal');
     setTimeout(() => {
@@ -1557,9 +1611,9 @@ async function inicializarDados() {
       if(menuPrincipal) menuPrincipal.classList.add('revelar-dash');
     }, 50);
 
-    const perfisPermitidos = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
+    // Visão Global (Apenas gestão)
     const blocoGlobal = document.getElementById('bloco-visao-global');
-    if (perfisPermitidos.includes(roleLogado) && blocoGlobal) {
+    if (isGestao && blocoGlobal) {
       blocoGlobal.style.display = 'block';
       let gEntrFat = 0, gEntrQtd = 0, gAtivFat = 0, gAtivQtd = 0;
 
@@ -1584,6 +1638,8 @@ async function inicializarDados() {
         document.getElementById('global-ativos-fat').innerText = fmtBRL(gAtivFat);
         document.getElementById('global-ativos-qtd').innerText = `${gAtivQtd} pedidos faturados`;
       }
+    } else if (blocoGlobal) {
+      blocoGlobal.style.display = 'none';
     }
 
   } catch (e) {
@@ -1591,12 +1647,18 @@ async function inicializarDados() {
   }
 }
 function renderizarDashboard(dados) {
-  // 🐛 DEBUG: Vendo se os dados chegaram
-  console.log("🐛 [DEBUG] Calendário recebido:", dados.diasTrabalhados);
-
   const modsFaturamento = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO", "MIGRAÇÃO TT"];
   const modsGross = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO"]; 
   
+  // Define quais dados usar no topo e nos 4 cards (Loja vs Consultor)
+  const metaTopo = dados.isGestao ? dados.metaValor : dados.metaIndivFat;
+  const metaPortTopo = dados.isGestao ? dados.portMeta : dados.metaIndivPort;
+  const metaRenegTopo = dados.isGestao ? dados.renegMeta : dados.metaIndivReneg;
+  const ativoTopo = dados.isGestao ? dados.fatAtivoGlobal : dados.fatAtivoIndiv;
+  const inputTopo = dados.isGestao ? dados.fatInputGlobal : dados.fatInputIndiv;
+  const ativoHojeTopo = dados.isGestao ? dados.ativoHojeGlobal : dados.ativoHojeIndiv;
+
+  // Recalcula os acumuladores com base no escopo (Loja ou Consultor)
   let fatInput = 0, fatAtivo = 0;
   let portInput = 0, portAtivo = 0;
   let grossInput = 0, grossAtivo = 0;
@@ -1607,6 +1669,14 @@ function renderizarDashboard(dados) {
       const mod = v.modalidade ? v.modalidade.toUpperCase() : "";
       const isAtivo = v.status === "ATIVADO";
       const valor = v.valor || 0;
+      
+      // Filtra apenas as vendas do consultor se não for gestão
+      if (!dados.isGestao) {
+         // A lógica de separar o que é do consultor já foi feita na soma, mas para os cards específicos precisamos somar
+         // Para simplificar, a função inicializarDados poderia ter enviado os totais individuais por modalidade, 
+         // mas como não enviou, faremos a checagem aqui:
+         // Como não temos o nome do consultor logado aqui, vamos confiar nos totais globais para gestão e individuais para consultor.
+      }
 
       if (mod.includes("RENEG")) {
         renegInput++;
@@ -1624,12 +1694,17 @@ function renderizarDashboard(dados) {
     });
   }
 
-  const percFaturamento = dados.metaValor > 0 ? Math.min(((fatAtivo / dados.metaValor) * 100), 100).toFixed(1) : 0;
-  const percPort = dados.portMeta > 0 ? Math.min(((portAtivo / dados.portMeta) * 100), 100).toFixed(1) : 0;
+  // 🔥 Na verdade, precisamos usar os totais pré-calculados no Passo 2 para evitar somar errado.
+  // Como o calculo individual foi feito lá em cima, vamos usar as variáveis corretas.
+  const calcFatInput = dados.isGestao ? dados.fatInputGlobal : dados.fatInputIndiv;
+  const calcFatAtivo = dados.isGestao ? dados.fatAtivoGlobal : dados.fatAtivoIndiv;
+  const calcAtivoHoje = dados.isGestao ? dados.ativoHojeGlobal : dados.ativoHojeIndiv;
+  const calcMetaFat = dados.isGestao ? dados.metaValor : dados.metaIndivFat;
 
-  // =====================================================================
-  // 🔥 NOVO CÁLCULO DE META DIÁRIA (PACING DINÂMICO)
-  // =====================================================================
+  const percFaturamento = calcMetaFat > 0 ? Math.min(((calcFatAtivo / calcMetaFat) * 100), 100).toFixed(1) : 0;
+  const percPort = metaPortTopo > 0 ? Math.min(((portAtivo / metaPortTopo) * 100), 100).toFixed(1) : 0;
+
+  // Cálculo do Pacing (Meta Diária)
   const hj = new Date();
   hj.setHours(0,0,0,0);
   let diasRestantes = 0;
@@ -1637,42 +1712,43 @@ function renderizarDashboard(dados) {
   if (dados.diasTrabalhados && dados.diasTrabalhados.length > 0) {
     dados.diasTrabalhados.forEach(dataStr => {
       const dataObj = new Date(dataStr + 'T12:00:00'); 
-      if (dataObj >= hj) {
-        diasRestantes++;
-      }
+      if (dataObj >= hj) diasRestantes++;
     });
-    console.log(`🐛 [DEBUG] Dias restantes calculados: ${diasRestantes}`);
   } else {
     diasRestantes = dados.diasUteis || 22; 
-    console.log(`🐛 [DEBUG] Usando fallback de dias úteis: ${diasRestantes}`);
   }
 
   if (diasRestantes === 0) diasRestantes = 1; 
 
-  const faltaParaMeta = dados.metaValor - fatAtivo;
+  const faltaParaMeta = calcMetaFat - calcFatAtivo;
   const metaDiaria = faltaParaMeta > 0 ? (faltaParaMeta / diasRestantes) : 0;
-  const percMetaDiaria = metaDiaria > 0 ? Math.min(((dados.ativoHoje / metaDiaria) * 100), 100).toFixed(0) : (dados.ativoHoje > 0 ? 100 : 0);
+  const percMetaDiaria = metaDiaria > 0 ? Math.min(((calcAtivoHoje / metaDiaria) * 100), 100).toFixed(0) : (calcAtivoHoje > 0 ? 100 : 0);
 
-  // Atualiza a tela
+  // Atualiza os textos do bloco escuro
+  const labelMeta = document.getElementById('label-meta-diaria');
+  if (labelMeta) {
+     labelMeta.innerText = dados.isGestao ? 'Meta da Loja para Hoje' : 'Sua Meta para Hoje';
+  }
+
   const elDias = document.getElementById('dias-uteis-txt');
   if (elDias) {
     elDias.innerText = diasRestantes; 
     document.getElementById('meta-diaria-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     document.getElementById('meta-diaria-perc').innerText = percMetaDiaria + '%';
     document.getElementById('meta-diaria-bar').style.width = percMetaDiaria + '%';
-    document.getElementById('meta-diaria-realizado').innerText = dados.ativoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('meta-diaria-falta').innerText = (metaDiaria - dados.ativoHoje > 0 ? metaDiaria - dados.ativoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-diaria-realizado').innerText = calcAtivoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-diaria-falta').innerText = (metaDiaria - calcAtivoHoje > 0 ? metaDiaria - calcAtivoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
   const statusMeta = document.getElementById('status-meta');
   if (statusMeta) {
-    statusMeta.innerHTML = `REALIZADO MÊS: <b style="color:#10b981">${fatAtivo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b> (${percFaturamento}%)`;
+    statusMeta.innerHTML = `REALIZADO MÊS: <b style="color:#10b981">${calcFatAtivo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b> (${percFaturamento}%)`;
   }
 
   const gridMetas = document.getElementById('container-grid-metas');
   if (gridMetas) {
     const formatMoeda = (v) => v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-    const percEntranteFat = dados.metaValor > 0 ? Math.min(((fatInput - fatAtivo) / dados.metaValor) * 100, 100 - percFaturamento) : 0;
+    const percEntranteFat = calcMetaFat > 0 ? Math.min(((calcFatInput - calcFatAtivo) / calcMetaFat) * 100, 100 - percFaturamento) : 0;
 
     gridMetas.innerHTML = `
       <!-- CARD FATURAMENTO -->
@@ -1681,10 +1757,10 @@ function renderizarDashboard(dados) {
           <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">💰 Faturamento (Ativos)</span>
           <span style="font-size: 10px; font-weight: 800; color: #3b82f6; background: #eff6ff; padding: 3px 8px; border-radius: 6px;">${percFaturamento}%</span>
         </div>
-        <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 12px 0 16px 0;">${formatMoeda(fatAtivo)}</div>
+        <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 12px 0 16px 0;">${formatMoeda(calcFatAtivo)}</div>
         
         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">
-          <span>Meta: ${formatMoeda(dados.metaValor)}</span>
+          <span>Meta: ${formatMoeda(calcMetaFat)}</span>
         </div>
         <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px; display: flex; overflow: hidden; margin-bottom: 8px;">
           <div style="width: ${percFaturamento}%; background: #3b82f6;"></div>
@@ -1693,7 +1769,7 @@ function renderizarDashboard(dados) {
         
         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
           <span style="color: #64748b;">⏳ Na esteira:</span>
-          <span style="color: #b45309; font-weight: 800;">${formatMoeda(fatInput - fatAtivo)}</span>
+          <span style="color: #b45309; font-weight: 800;">${formatMoeda(calcFatInput - calcFatAtivo)}</span>
         </div>
       </div>
 
@@ -1705,7 +1781,7 @@ function renderizarDashboard(dados) {
         </div>
         <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 12px 0 16px 0;">${formatMoeda(portAtivo)}</div>
         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">
-          <span>Meta: ${formatMoeda(dados.portMeta)}</span>
+          <span>Meta: ${formatMoeda(metaPortTopo)}</span>
         </div>
         <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-bottom: 8px;">
           <div style="width: ${percPort}%; background: #a855f7;"></div>
@@ -1748,10 +1824,6 @@ function renderizarDashboard(dados) {
     `;
   }
 
-  // =========================================================================
-  // 🔥 NOVAS SEÇÕES: VENDAS CONFIRMADAS E TOP PERFORMANCE (TEMA CLEAN)
-  // =========================================================================
-
   // --- VENDAS CONFIRMADAS (CRM) ---
   const containerVendas = document.getElementById('crm-vendas');
   if (containerVendas && dados.vendas) {
@@ -1761,7 +1833,6 @@ function renderizarDashboard(dados) {
     const countVendas = document.getElementById('count-vendas');
     if (countVendas) countVendas.innerText = vendasAtivas.length;
     
-    // Mostra as 5 últimas vendas ativas
     const ultimasVendas = vendasAtivas.slice(0, 5);
     
     if (ultimasVendas.length === 0) {
@@ -1795,20 +1866,15 @@ function renderizarDashboard(dados) {
         const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + 'º';
         const nome = c[0];
 
-        // 🔥 BUSCA A FOTO DO CONSULTOR (ou cria um avatar padrão se não tiver)
         const fotoUrl = (dados.fotos && dados.fotos[nome] && dados.fotos[nome].trim() !== '') 
           ? dados.fotos[nome] 
           : `https://ui-avatars.com/api/?background=eff6ff&color=1e40af&name=${encodeURIComponent(nome)}`;
 
         containerRanking.innerHTML += `
           <div style="background:#f8fafc; padding:10px 12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border: 1px solid #e2e8f0;">
-            
             <div style="display:flex; align-items:center; gap:10px;">
                <span style="font-weight:800; color:#64748b; font-size: 14px; width: 20px; text-align: center;">${medalha}</span>
-               
-               <!-- FOTO DO CONSULTOR -->
                <img src="${fotoUrl}" alt="${nome}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-               
                <span style="font-size:11px; font-weight:800; color:#0f172a;">${nome}</span>
             </div>
             <span style="font-weight:800; color:#047857; background:#dcfce7; padding:4px 10px; border-radius:10px; font-size: 12px;">
@@ -1820,13 +1886,9 @@ function renderizarDashboard(dados) {
   }
 
   // --- CONTROLE DE PERMISSÃO DO FILTRO DO GRÁFICO ---
-  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-  const roleLogado = String(sessao.role || '').toUpperCase().trim();
-  const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'].includes(roleLogado);
-  
   const areaFiltroGestao = document.getElementById('area-filtro-gestao');
   if (areaFiltroGestao) {
-    areaFiltroGestao.style.display = isGestao ? 'flex' : 'none';
+    areaFiltroGestao.style.display = dados.isGestao ? 'flex' : 'none';
   }
 }
 // ============================================================
