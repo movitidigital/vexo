@@ -926,103 +926,6 @@
 
   
 <script>
-  // ═══════════════════════════════════════════════════════════
-  // 📅 LÓGICA DO CALENDÁRIO (COLE AQUI)
-  // ═══════════════════════════════════════════════════════════
-  
-  function abrirCalendario() {
-    const mesNome = $('m_referencia_mes').value;
-    const ano = parseInt($('m_referencia_ano').value);
-    const mesNum = MESES_NUM[mesNome];
-    
-    if (!mesNum) return toast('Selecione um mês válido.', 'warn');
-
-    $('calendario-titulo-mes').innerText = `${mesNome} ${ano}`;
-    
-    if (!Array.isArray(state.diasSelecionados)) state.diasSelecionados = [];
-
-    renderizarGridCalendario(mesNum, ano);
-    $('mt-modal-calendario').classList.add('active');
-  }
-
-  function fecharCalendario() {
-    $('mt-modal-calendario').classList.remove('active');
-  }
-
-  function renderizarGridCalendario(mes, ano) {
-    const grid = $('calendario-grid');
-    grid.innerHTML = '';
-    
-    const primeiroDiaSemana = new Date(ano, mes - 1, 1).getDay();
-    const diasNoMes = new Date(ano, mes, 0).getDate();
-
-    for (let i = 0; i < primeiroDiaSemana; i++) {
-      grid.innerHTML += `<div class="cal-day empty"></div>`;
-    }
-
-    for (let dia = 1; dia <= diasNoMes; dia++) {
-      const dataStr = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-      const isSelected = state.diasSelecionados.includes(dataStr);
-      const classe = isSelected ? 'on' : 'off';
-
-      grid.innerHTML += `<div class="cal-day ${classe}" data-data="${dataStr}" onclick="MT.toggleDia(this)">${dia}</div>`;
-    }
-  }
-
-  window.MT.toggleDia = function(el) {
-    const dataStr = el.getAttribute('data-data');
-    const index = state.diasSelecionados.indexOf(dataStr);
-
-    if (index > -1) {
-      state.diasSelecionados.splice(index, 1);
-      el.classList.remove('on');
-      el.classList.add('off');
-    } else {
-      state.diasSelecionados.push(dataStr);
-      el.classList.remove('off');
-      el.classList.add('on');
-    }
-  };
-
-  function marcarDiasUteis() {
-    const mesNome = $('m_referencia_mes').value;
-    const ano = parseInt($('m_referencia_ano').value);
-    const mesNum = MESES_NUM[mesNome];
-    const diasNoMes = new Date(ano, mesNum, 0).getDate();
-
-    state.diasSelecionados = [];
-
-    for (let dia = 1; dia <= diasNoMes; dia++) {
-      const d = new Date(ano, mesNum - 1, dia);
-      const diaSemana = d.getDay();
-      
-      if (diaSemana >= 1 && diaSemana <= 5) {
-        const dataStr = `${ano}-${String(mesNum).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
-        state.diasSelecionados.push(dataStr);
-      }
-    }
-    
-    renderizarGridCalendario(mesNum, ano);
-  }
-
-  function salvarCalendario() {
-    const qtd = state.diasSelecionados.length;
-    $('btn-txt-dias').innerText = `${qtd} dias selecionados`;
-    
-    if (qtd === 0) {
-      toast('Atenção: Nenhum dia de trabalho selecionado.', 'warn');
-    } else {
-      toast(`Calendário salvo: ${qtd} dias.`, 'success');
-    }
-    
-    fecharCalendario();
-  }
-
-  function atualizarTextoBtnDias() {
-    const qtd = Array.isArray(state.diasSelecionados) ? state.diasSelecionados.length : 0;
-    $('btn-txt-dias').innerText = qtd > 0 ? `${qtd} dias selecionados` : 'Selecionar Dias';
-  }
-  
 (function () {
   'use strict';
 
@@ -1054,7 +957,7 @@
     timeAtual: [],
     logoTim: null,
     tenantId: null,
-    diasSelecionados: []
+    diasSelecionados: [] // Variável do calendário
   };
 
   // ═══════════════════════════════════════════════════════════
@@ -1170,15 +1073,116 @@
     $('m_reneg_min').value   = m.reneg_min ?? 0;
     $('m_reneg_target').value= m.reneg_target ?? 0;
     $('m_reneg_sup').value   = m.reneg_sup ?? 0;
-    $('m_dias_uteis').value = m.dias_uteis || 22;
+    
+    // 🔥 Carrega o calendário salvo
     state.diasSelecionados = m.dias_trabalhados || [];
     atualizarTextoBtnDias();
   }
 
   function resetarFormLoja() {
     document.querySelectorAll('#form-metas input').forEach(c => c.value = '');
+    state.diasSelecionados = [];
+    atualizarTextoBtnDias();
     atualizarCanvasLoja();
   }
+
+  // ═══════════════════════════════════════════════════════════
+  // 📅 LÓGICA DO CALENDÁRIO
+  // ═══════════════════════════════════════════════════════════
+  function abrirCalendario() {
+    const mesNome = $('m_referencia_mes').value;
+    const ano = parseInt($('m_referencia_ano').value);
+    const mesNum = MESES_NUM[mesNome];
+    
+    if (!mesNum) return toast('Selecione um mês válido.', 'warn');
+
+    $('calendario-titulo-mes').innerText = `${mesNome} ${ano}`;
+    
+    if (!Array.isArray(state.diasSelecionados)) state.diasSelecionados = [];
+
+    renderizarGridCalendario(mesNum, ano);
+    $('mt-modal-calendario').classList.add('active');
+  }
+
+  function fecharCalendario() {
+    $('mt-modal-calendario').classList.remove('active');
+  }
+
+  function renderizarGridCalendario(mes, ano) {
+    const grid = $('calendario-grid');
+    if (!grid) return;
+    grid.innerHTML = '';
+    
+    const primeiroDiaSemana = new Date(ano, mes - 1, 1).getDay();
+    const diasNoMes = new Date(ano, mes, 0).getDate();
+
+    for (let i = 0; i < primeiroDiaSemana; i++) {
+      grid.innerHTML += `<div class="cal-day empty"></div>`;
+    }
+
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+      const dataStr = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const isSelected = state.diasSelecionados.includes(dataStr);
+      const classe = isSelected ? 'on' : 'off';
+
+      grid.innerHTML += `<div class="cal-day ${classe}" data-data="${dataStr}" onclick="MT.toggleDia(this)">${dia}</div>`;
+    }
+  }
+
+  function toggleDia(el) {
+    const dataStr = el.getAttribute('data-data');
+    const index = state.diasSelecionados.indexOf(dataStr);
+
+    if (index > -1) {
+      state.diasSelecionados.splice(index, 1);
+      el.classList.remove('on');
+      el.classList.add('off');
+    } else {
+      state.diasSelecionados.push(dataStr);
+      el.classList.remove('off');
+      el.classList.add('on');
+    }
+  }
+
+  function marcarDiasUteis() {
+    const mesNome = $('m_referencia_mes').value;
+    const ano = parseInt($('m_referencia_ano').value);
+    const mesNum = MESES_NUM[mesNome];
+    const diasNoMes = new Date(ano, mesNum, 0).getDate();
+
+    state.diasSelecionados = [];
+
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+      const d = new Date(ano, mesNum - 1, dia);
+      const diaSemana = d.getDay();
+      
+      if (diaSemana >= 1 && diaSemana <= 5) {
+        const dataStr = `${ano}-${String(mesNum).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        state.diasSelecionados.push(dataStr);
+      }
+    }
+    
+    renderizarGridCalendario(mesNum, ano);
+  }
+
+  function salvarCalendario() {
+    const qtd = state.diasSelecionados.length;
+    $('btn-txt-dias').innerText = `${qtd} dias selecionados`;
+    
+    if (qtd === 0) {
+      toast('Atenção: Nenhum dia de trabalho selecionado.', 'warn');
+    } else {
+      toast(`Calendário salvo: ${qtd} dias.`, 'success');
+    }
+    
+    fecharCalendario();
+  }
+
+  function atualizarTextoBtnDias() {
+    const qtd = Array.isArray(state.diasSelecionados) ? state.diasSelecionados.length : 0;
+    $('btn-txt-dias').innerText = qtd > 0 ? `${qtd} dias selecionados` : 'Selecionar Dias';
+  }
+
 
   // ═══════════════════════════════════════════════════════════
   // LOAD · TIME
@@ -1455,12 +1459,10 @@
     const tenantId = await getTenantId();
     if (!tenantId) return toast('Tenant não identificado', 'error');
 
-    // 🔥 Verifica se o gestor selecionou os dias no calendário
     const diasSelecionados = Array.isArray(state.diasSelecionados) ? state.diasSelecionados : [];
     
     if (diasSelecionados.length === 0) {
       toast('Atenção: Selecione os dias de trabalho no Calendário.', 'warn');
-      // Não bloqueia o salvamento, mas avisa.
     }
 
     const payload = {
@@ -1476,11 +1478,8 @@
       reneg_min: parseInt($('m_reneg_min').value) || 0,
       reneg_target: parseInt($('m_reneg_target').value) || 0,
       reneg_sup: parseInt($('m_reneg_sup').value) || 0,
-      
-      // 🔥 NOVOS CAMPOS DO CALENDÁRIO
-      dias_trabalhados: diasSelecionados, // Salva o array de datas exatas
-      dias_uteis: diasSelecionados.length > 0 ? diasSelecionados.length : 22, // Mantém compatibilidade
-      
+      dias_trabalhados: diasSelecionados,
+      dias_uteis: diasSelecionados.length > 0 ? diasSelecionados.length : 22,
       updated_at: new Date().toISOString()
     };
 
@@ -1686,13 +1685,11 @@
     const W = canvas.width;
     const H = canvas.height;
 
-    // Helper seguro pra ler inputs (nunca dá null)
     const val = (id) => Number($(id)?.value || 0);
 
     const mes = $('m_referencia_mes')?.value || '';
     const ano = $('m_referencia_ano')?.value || '';
 
-    // FUNDO
     const grad = ctx.createLinearGradient(0, 0, W, H);
     grad.addColorStop(0, '#0f172a');
     grad.addColorStop(0.5, '#1e3c72');
@@ -1700,18 +1697,15 @@
     ctx.fillStyle = grad;
     ctx.fillRect(0, 0, W, H);
 
-    // GLOWS
     drawGlow(ctx, W * 0.15, H * 0.15, W * 0.5, '59, 130, 246', 0.28);
     drawGlow(ctx, W * 0.9, H * 0.85, W * 0.55, '139, 92, 246', 0.22);
     drawGlow(ctx, W * 0.5, H * 0.5, W * 0.4, '16, 185, 129', 0.08);
 
-    // GRADE
     ctx.strokeStyle = 'rgba(255,255,255,0.025)';
     ctx.lineWidth = 1;
     for (let i = 0; i < W; i += 60) { ctx.beginPath(); ctx.moveTo(i, 0); ctx.lineTo(i, H); ctx.stroke(); }
     for (let j = 0; j < H; j += 60) { ctx.beginPath(); ctx.moveTo(0, j); ctx.lineTo(W, j); ctx.stroke(); }
 
-    // LOGO
     const logoW = 260, logoH = 120;
     const logoX = W - logoW - 60;
     const logoY = 50;
@@ -1733,7 +1727,6 @@
       ctx.textAlign = 'left';
     }
 
-    // HEADER
     ctx.fillStyle = 'white';
     ctx.font = 'bold 64px Poppins, sans-serif';
     ctx.textAlign = 'left';
@@ -1743,7 +1736,6 @@
     ctx.fillStyle = '#93c5fd';
     ctx.fillText(`${mes} · ${ano}`, 60, 180);
 
-    // BADGE
     ctx.font = 'bold 20px Poppins, sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.15)';
     ctx.strokeStyle = 'rgba(255,255,255,0.25)';
@@ -1756,7 +1748,6 @@
     ctx.textAlign = 'center';
     ctx.fillText('⚡ TIM EMPRESAS', 60 + badgeW / 2, 215 + 30);
 
-    // CARD BRANCO
     const cardX = 60;
     const cardY = 300;
     const cardW = W - 120;
@@ -1772,7 +1763,6 @@
     ctx.shadowBlur = 0;
     ctx.shadowOffsetY = 0;
 
-    // TÍTULO
     ctx.fillStyle = '#0f172a';
     ctx.font = 'bold 36px Poppins, sans-serif';
     ctx.textAlign = 'center';
@@ -1785,7 +1775,6 @@
     ctx.lineTo(cardX + cardW - 60, cardY + 100);
     ctx.stroke();
 
-    // BLOCOS
     const blocoMarginY = 40;
     const blocoStartY = cardY + 130;
     const blocoW = cardW - 80;
@@ -1806,7 +1795,6 @@
       val('m_reneg_min'), val('m_reneg_target'), val('m_reneg_sup'),
       ['#f59e0b', '#d97706']);
 
-    // RODAPÉ
     ctx.fillStyle = 'rgba(255,255,255,0.5)';
     ctx.font = '500 18px Poppins, sans-serif';
     ctx.textAlign = 'left';
@@ -1815,9 +1803,8 @@
     ctx.textAlign = 'right';
     ctx.fillText(`Gerado em ${new Date().toLocaleString('pt-BR')}`, W - 60, H - 60);
   }
-  function desenharBloco(ctx, x, y, w, h, titulo, emoji, prefixo, min, target, sup, cores) {
-    // ✅ os valores já vêm numéricos por conta do `val()` na chamada
 
+  function desenharBloco(ctx, x, y, w, h, titulo, emoji, prefixo, min, target, sup, cores) {
     const grad = ctx.createLinearGradient(x, y, x + w, y + h);
     grad.addColorStop(0, cores[0] + '15');
     grad.addColorStop(1, cores[1] + '08');
@@ -1859,21 +1846,18 @@
     const valY = colY + 28 + 60;
     ctx.font = 'bold 34px Poppins, sans-serif';
 
-    // Mínimo
     ctx.fillStyle = '#0f172a';
     const vMin = prefixo === 'R$'
       ? `R$ ${Number(min || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
       : Number(min || 0).toString();
     ctx.fillText(vMin, colStartX + colsW / 2, valY);
 
-    // Target (destacado)
     ctx.fillStyle = cores[0];
     const vTarget = prefixo === 'R$'
       ? `R$ ${Number(target || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
       : Number(target || 0).toString();
     ctx.fillText(vTarget, colStartX + colsW + colsW / 2, valY);
 
-    // Superado
     ctx.fillStyle = '#0f172a';
     const vSup = prefixo === 'R$'
       ? `R$ ${Number(sup || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`
@@ -1909,7 +1893,7 @@
   }
 
   // ═══════════════════════════════════════════════════════════
-  // CANVAS · TIME (mantido do original, com logo)
+  // CANVAS · TIME
   // ═══════════════════════════════════════════════════════════
   function preview() {
     const canvas = $('canvasTimePreview');
@@ -2146,7 +2130,8 @@
     abrirCalendario,
     fecharCalendario,
     marcarDiasUteis,
-    salvarCalendario
+    salvarCalendario,
+    toggleDia // 🔥 Adicionado aqui para o HTML conseguir chamar
   };
 
   // Fecha modal com ESC
