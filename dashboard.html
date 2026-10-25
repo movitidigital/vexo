@@ -1268,25 +1268,47 @@
   </div>
 </div>
 
-        <div class="kanban-container">
-          <div class="kanban-col">
-            <div class="col-title">📊 Resultado do mês</div>
-            <div class="progress-container">
-              <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:600; margin-bottom:8px;"><span>Meta Global</span> <b id="txt-faturamento-perc">0%</b></div>
-              <div class="progress-bg"><div id="bar-faturamento" class="progress-fill"></div></div>
+        <!-- KANBAN CLEAN -->
+        <div class="kanban-container" style="padding: 0 25px 25px 25px; gap: 20px;">
+          <div class="kanban-col" style="background: white; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+            <div class="col-title" style="color: #1e293b; font-weight: 800; font-size: 12px;">📊 Resultado do mês</div>
+            <div class="progress-container" style="background: transparent; padding: 0;">
+              <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:8px; color: #475569;"><span>Meta Global</span> <b id="txt-faturamento-perc">0%</b></div>
+              <div class="progress-bg" style="background: #f1f5f9;"><div id="bar-faturamento" class="progress-fill" style="background: #3b82f6 !important;"></div></div>
             </div>
-            <div class="progress-container">
-              <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:600; margin-bottom:8px;"><span>Adesões</span> <b id="txt-port-perc">0%</b></div>
-              <div class="progress-bg"><div id="bar-portabilidade" class="progress-fill" style="opacity: 0.8;"></div></div>
+            <div class="progress-container" style="background: transparent; padding: 0; margin-top: 15px;">
+              <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; margin-bottom:8px; color: #475569;"><span>Adesões</span> <b id="txt-port-perc">0%</b></div>
+              <div class="progress-bg" style="background: #f1f5f9;"><div id="bar-portabilidade" class="progress-fill" style="background: #a855f7 !important;"></div></div>
             </div>
           </div>
-          <div class="kanban-col">
-            <div class="col-title">✅ Vendas Confirmadas <span id="count-vendas" style="background:#fff; padding:2px 10px; border-radius:8px; margin-left:10px; border: 1px solid #e2e8f0;">0</span></div>
+          <div class="kanban-col" style="background: white; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+            <div class="col-title" style="color: #1e293b; font-weight: 800; font-size: 12px;">✅ Vendas Confirmadas <span id="count-vendas" style="background:#eff6ff; color:#1e40af; padding:2px 10px; border-radius:8px; margin-left:10px; font-weight:800;">0</span></div>
             <div id="crm-vendas"></div>
           </div>
-          <div class="kanban-col">
-            <div class="col-title">🏆 Top Performance</div>
+          <div class="kanban-col" style="background: white; border: 1px solid #e2e8f0; border-radius: 20px; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
+            <div class="col-title" style="color: #1e293b; font-weight: 800; font-size: 12px;">🏆 Top Performance</div>
             <div id="crm-ranking"></div>
+          </div>
+        </div>
+
+        <!-- GRÁFICO CLEAN -->
+        <div id="container-evolucao-mensal" style="background: white; margin: 0 25px 30px 25px; border-radius: 20px; padding: 24px; box-shadow: 0 4px 15px rgba(0,0,0,0.02); border: 1px solid #e2e8f0; display: none; opacity: 0; transition: opacity 0.5s ease-in-out;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+            <div>
+              <h3 style="color: #0f172a; font-size: 16px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 18px;">📈</span> Evolução de Faturamento
+                <span id="badge-crescimento" style="display:none; font-size: 10px; padding: 4px 8px; border-radius: 6px; font-weight: 800; border: 1px solid transparent;"></span>
+              </h3>
+              <p style="color: #64748b; font-size: 12px; margin: 5px 0 0 0; font-weight: 500;">Comparativo de vendas ativadas (Mês a Mês)</p>
+            </div>
+            <div id="area-filtro-gestao" style="display: none; align-items: center; gap: 10px;">
+              <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Visão do Consultor:</span>
+              <select id="select-consultor-grafico" style="background: #f8fafc; color: #0f172a; border: 1px solid #e2e8f0; border-radius: 8px; padding: 8px 12px; font-size: 13px; font-weight: 600; outline: none; cursor: pointer;">
+              </select>
+            </div>
+          </div>
+          <div style="position: relative; height: 300px; width: 100%;">
+            <canvas id="graficoEvolucao"></canvas>
           </div>
         </div>
 
@@ -1679,6 +1701,76 @@ function renderizarDashboard(dados) {
         </div>
       </div>
     `;
+  }
+
+  // =========================================================================
+  // 🔥 NOVAS SEÇÕES: VENDAS CONFIRMADAS E TOP PERFORMANCE (TEMA CLEAN)
+  // =========================================================================
+
+  // --- VENDAS CONFIRMADAS (CRM) ---
+  const containerVendas = document.getElementById('crm-vendas');
+  if (containerVendas && dados.vendas) {
+    containerVendas.innerHTML = "";
+    const vendasAtivas = dados.vendas.filter(v => v.status === 'ATIVADO');
+    
+    const countVendas = document.getElementById('count-vendas');
+    if (countVendas) countVendas.innerText = vendasAtivas.length;
+    
+    // Mostra as 5 últimas vendas ativas
+    const ultimasVendas = vendasAtivas.slice(0, 5);
+    
+    if (ultimasVendas.length === 0) {
+      containerVendas.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Nenhuma venda ativa recente.</div>`;
+    } else {
+      ultimasVendas.forEach(v => {
+        containerVendas.innerHTML += `
+          <div style="background:#f8fafc; padding:12px; border-radius:12px; margin-bottom:10px; border: 1px solid #e2e8f0; border-left: 4px solid #10b981;">
+            <strong style="font-size:12px; color:#0f172a; display:block;">${v.cliente || "Cliente"} 
+              <span style="font-size:9px; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; margin-left:6px;">ATIVO</span>
+            </strong>
+            <div style="display:flex; justify-content:space-between; margin-top:6px; align-items:center;">
+              <span style="font-size:10px; color:#64748b; font-weight: 600;">${v.modalidade || '—'}</span>
+              <span style="font-weight:800; color:#0f172a; font-size:13px;">${v.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+            </div>
+          </div>`;
+      });
+    }
+  }
+
+  // --- TOP PERFORMANCE (RANKING) ---
+  const containerRanking = document.getElementById('crm-ranking');
+  if (containerRanking && dados.ranking) {
+    containerRanking.innerHTML = "";
+    const rankingOrdenado = Object.entries(dados.ranking).sort((a,b) => b[1]-a[1]);
+    
+    if (rankingOrdenado.length === 0) {
+       containerRanking.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Sem dados de ranking para este mês.</div>`;
+    } else {
+      rankingOrdenado.slice(0, 5).forEach((c, i) => {
+        const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + 'º';
+        containerRanking.innerHTML += `
+          <div style="background:#f8fafc; padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border: 1px solid #e2e8f0;">
+            <div style="display:flex; align-items:center; gap:10px;">
+               <span style="font-weight:800; color:#64748b; font-size: 14px;">${medalha}</span>
+               <span style="font-size:11px; font-weight:800; color:#0f172a;">${c[0]}</span>
+            </div>
+            <span style="font-weight:800; color:#047857; background:#dcfce7; padding:4px 10px; border-radius:10px; font-size: 12px;">
+              ${c[1].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+            </span>
+          </div>`;
+      });
+    }
+  }
+
+  // --- CONTROLE DE PERMISSÃO DO FILTRO DO GRÁFICO ---
+  // Apenas gestores podem ver o dropdown para escolher o consultor no gráfico
+  const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+  const roleLogado = String(sessao.role || '').toUpperCase().trim();
+  const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'].includes(roleLogado);
+  
+  const areaFiltroGestao = document.getElementById('area-filtro-gestao');
+  if (areaFiltroGestao) {
+    areaFiltroGestao.style.display = isGestao ? 'flex' : 'none';
   }
 }
   
@@ -2464,8 +2556,9 @@ function desenharGrafico(nomeConsultor) {
      chartEvolucaoVexo.destroy();
    }
 
+   // Degradê mais suave para não pesar no fundo branco
    let gradiente = ctx.createLinearGradient(0, 0, 0, 300);
-   gradiente.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); 
+   gradiente.addColorStop(0, 'rgba(59, 130, 246, 0.2)'); 
    gradiente.addColorStop(1, 'rgba(59, 130, 246, 0.0)'); 
 
    chartEvolucaoVexo = new Chart(ctx, {
@@ -2480,8 +2573,8 @@ function desenharGrafico(nomeConsultor) {
          backgroundColor: gradiente,
          fill: true,
          tension: 0.4, 
-         pointBackgroundColor: '#1e293b',
-         pointBorderColor: '#3b82f6',
+         pointBackgroundColor: '#ffffff', // Ponto branco no meio
+         pointBorderColor: '#3b82f6',     // Borda azul
          pointBorderWidth: 2,
          pointRadius: 4,
          pointHoverRadius: 7
@@ -2493,10 +2586,10 @@ function desenharGrafico(nomeConsultor) {
        plugins: {
          legend: { display: false },
          tooltip: {
-           backgroundColor: 'rgba(15, 23, 42, 0.9)',
-           titleColor: '#f8fafc',
-           bodyColor: '#cbd5e1',
-           borderColor: 'rgba(255,255,255,0.05)',
+           backgroundColor: '#ffffff', // Tooltip fundo branco
+           titleColor: '#0f172a',      // Título escuro
+           bodyColor: '#475569',       // Texto cinza
+           borderColor: '#e2e8f0',     // Borda cinza clara
            borderWidth: 1,
            padding: 12,
            displayColors: false,
@@ -2510,16 +2603,16 @@ function desenharGrafico(nomeConsultor) {
        scales: {
          y: {
            beginAtZero: true,
-           grid: { color: 'rgba(255,255,255,0.03)', drawBorder: false },
+           grid: { color: '#f1f5f9', drawBorder: false }, // Grid bem clarinha
            ticks: {
-             color: '#64748b',
+             color: '#94a3b8', // Cor dos números do eixo Y
              font: { size: 11 },
              callback: function(value) { return 'R$ ' + value.toLocaleString('pt-BR'); }
            }
          },
          x: {
            grid: { display: false, drawBorder: false },
-           ticks: { color: '#94a3b8', font: { weight: '600', size: 11 } }
+           ticks: { color: '#64748b', font: { weight: '600', size: 11 } } // Cor dos meses no eixo X
          }
        }
      }
