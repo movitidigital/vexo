@@ -1317,6 +1317,64 @@ function parseDataBR(str) {
   return null;
 }
 // ═══════════════════════════════════════════════════════════
+// 🔥 PERMISSÃO DE EDIÇÃO LIMITADA PARA CONSULTOR DE VENDAS
+// (só edita pedidos que ELE MESMO criou, enquanto o backoffice
+//  ainda não iniciou o fluxo — ou seja, etapa 0 / PENDENTE DE INPUT)
+// ═══════════════════════════════════════════════════════════
+function usuarioEhDonoDoPedido(pedido) {
+  if (!pedido) return false;
+
+  const nomeUsuario = String(window.userNome || '').trim().toUpperCase();
+  if (!nomeUsuario) return false;
+
+  const respPedido = String(
+    pedido.consultor_que_vendeu ||
+    pedido.responsavel_nome     ||
+    pedido.parceiro_nome        ||
+    pedido.vendedor             ||
+    ''
+  ).trim().toUpperCase();
+
+  if (!respPedido) return false;
+
+  // Match exato ou por contenção
+  if (respPedido === nomeUsuario) return true;
+  if (respPedido.includes(nomeUsuario) || nomeUsuario.includes(respPedido)) return true;
+
+  // Match por primeiro + último nome (ignora nomes do meio)
+  const pu = nomeUsuario.split(/\s+/).filter(Boolean);
+  const pp = respPedido.split(/\s+/).filter(Boolean);
+  if (pu.length >= 2 && pp.length >= 2) {
+    if (pu[0] === pp[0] && pu[pu.length - 1] === pp[pp.length - 1]) return true;
+  }
+
+  return false;
+}
+
+function podeEditarPedidoComoConsultor(pedido) {
+  if (!pedido) return false;
+
+  const cargo = String(window.userCargo || '').toUpperCase();
+
+  // Somente Consultor de Vendas (não afeta admin/backoffice/gerente)
+  if (cargo !== 'CONSULTOR DE VENDAS' && cargo !== 'CONSULTOR') return false;
+
+  // Só pedidos ainda NÃO capturados pelo backoffice (etapa 0)
+  if (Number(pedido.status_etapa) !== 0) return false;
+
+  // Só os próprios pedidos
+  return usuarioEhDonoDoPedido(pedido);
+}
+
+function handleEditConsultorClick(event) {
+  const btn = event.currentTarget;
+  const idUnico = btn.dataset.idUnico;
+  const origem  = btn.dataset.origem;
+  console.log('✏️ [Editar Pedido Consultor] idUnico:', idUnico, '| origem:', origem);
+  avancarPedidoParaInput(idUnico, origem, 'edit');
+}
+	
+// ═══════════════════════════════════════════════════════════
 // 🔧 SALVAR DATA DO RADAR (versão única e global)
 // ═══════════════════════════════════════════════════════════
 function salvarDataRadar(idUnico, origem, dataRadar, btnElement) {
@@ -2147,6 +2205,21 @@ function renderizarTabela() {
       ? `<button class="btn-action btn-back" data-linha="${pedido.linha}" data-id-unico="${pedido.id_unico || ''}" data-origem="${pedido.origem}" data-direcao="voltar"><i class="fas fa-arrow-left"></i> Voltar</button>` 
       : '';
 
+    // 🔥 NOVO — Botão "Editar" exclusivo do Consultor de Vendas dono do pedido
+    //    (só aparece se etapa = 0 / PENDENTE DE INPUT e o consultor logado é o dono)
+    const podeEditarConsultor = (typeof podeEditarPedidoComoConsultor === 'function')
+      ? podeEditarPedidoComoConsultor(pedido)
+      : false;
+
+    const btnEditarConsultorRender = podeEditarConsultor
+      ? `<button class="btn-action btn-edit-consultor"
+           data-id-unico="${pedido.id_unico || pedido.linha}"
+           data-origem="${pedido.origem}"
+           style="background:#f59e0b; color:#fff; border:none; padding:6px 12px; border-radius:8px; font-weight:600; font-size:11px; cursor:pointer; display:inline-flex; align-items:center; gap:6px;">
+           <i class="fas fa-edit"></i> Editar
+         </button>`
+      : '';
+
     return `
       <tr>
         <td style="font-family: monospace; font-weight: 600;">
@@ -2177,7 +2250,7 @@ function renderizarTabela() {
             ${podeEditar ? `
               ${btnVoltarRender}
               ${podeAvancar ? btnAvancarRender : ''}
-            ` : `<span class="view-only-badge"><i class="fas fa-lock"></i> Apenas visualização</span>`}
+            ` : (btnEditarConsultorRender || `<span class="view-only-badge"><i class="fas fa-lock"></i> Apenas visualização</span>`)}
             <button class="btn-action btn-detail" data-linha="${pedido.linha}" data-id-unico="${pedido.id_unico || ''}" data-origem="${pedido.origem}"><i class="fas fa-eye"></i> Detalhes</button>
             ${podeExcluir ? ` <button class="btn-action btn-delete" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-id-unico="${pedido.id_unico || ''}"> <i class="fas fa-trash-alt"></i> Excluir </button>` : ''}
           </div>
@@ -2201,6 +2274,12 @@ function renderizarTabela() {
   document.querySelectorAll('.btn-delete').forEach(btn => {
     btn.removeEventListener('click', handleDeleteClick);
     btn.addEventListener('click', handleDeleteClick);
+  });
+
+  // 🔥 NOVO — listener do botão Editar (consultor dono do pedido pendente)
+  document.querySelectorAll('.btn-edit-consultor').forEach(btn => {
+    btn.removeEventListener('click', handleEditConsultorClick);
+    btn.addEventListener('click', handleEditConsultorClick);
   });
   
   // Paginação
@@ -4234,8 +4313,10 @@ function forcarCarregamentoLista() {
 // =========================================================================
 // UX AVANÇADA: TRANSIÇÃO DE "PENDENTE DE INPUT" PARA LANÇAMENTO DE VENDAS
 // =========================================================================
-function avancarPedidoParaInput(idUnico, origem) {
-  console.log("🚀 1. Iniciando teletransporte para idUnico:", idUnico, "origem:", origem);
+function avancarPedidoParaInput(idUnico, origem, modo) {
+  const modoEdicao = (modo === 'edit');
+
+  console.log(`🚀 1. Iniciando ${modoEdicao ? 'EDIÇÃO' : 'teletransporte'} para idUnico:`, idUnico, "origem:", origem);
 
   const linha = idUnico; // compatibilidade
 
@@ -4248,6 +4329,32 @@ function avancarPedidoParaInput(idUnico, origem) {
   }
   console.log("✅ 2. Pedido encontrado:", pedido.cliente);
   console.log("📌 Modalidade do pedido (primeira):", pedido.modalidade || 'NÃO INFORMADA');
+
+  // ============================================
+  // 🔒 VALIDAÇÃO EXTRA: consultor só edita pedido pendente e dele mesmo
+  // ============================================
+  if (modoEdicao) {
+    const cargo = String(window.userCargo || '').toUpperCase();
+    const ehConsultor = (cargo === 'CONSULTOR DE VENDAS' || cargo === 'CONSULTOR');
+    const etapaAtual = Number(pedido.status_etapa);
+
+    if (!ehConsultor) {
+      console.warn('🚫 Modo edição bloqueado: usuário não é Consultor de Vendas');
+      showToast('Ação não permitida para o seu perfil.', 'error');
+      return;
+    }
+    if (etapaAtual !== 0) {
+      console.warn('🚫 Modo edição bloqueado: etapa =', etapaAtual);
+      showToast('⚠️ Este pedido já foi iniciado pelo backoffice e não pode mais ser editado.', 'warning');
+      return;
+    }
+    if (typeof usuarioEhDonoDoPedido === 'function' && !usuarioEhDonoDoPedido(pedido)) {
+      console.warn('🚫 Modo edição bloqueado: consultor não é dono do pedido');
+      showToast('Você só pode editar pedidos criados por você.', 'error');
+      return;
+    }
+    console.log('✅ Validações de edição OK — seguindo para o formulário');
+  }
 
   // ============================================
   // 🔥 VERIFICAR SE O PEDIDO TEM MÚLTIPLAS MODALIDADES
@@ -4276,9 +4383,9 @@ function avancarPedidoParaInput(idUnico, origem) {
   console.log("📋 Modalidades encontradas:", modalidadesList);
   console.log("📊 Linhas por modalidade:", JSON.stringify(linhasPorModalidade, null, 2));
 
-  // --- 2. Validar modalidade (se houver apenas uma) ---
+  // --- 2. Validar modalidade (bloqueio NÃO se aplica em modo edição) ---
   const modalidadeNormalizada = pedido.modalidade ? pedido.modalidade.trim().toUpperCase() : "";
-  if (modalidadeNormalizada === "TROCA DE TECNOLOGIA E-SIM") {
+  if (!modoEdicao && modalidadeNormalizada === "TROCA DE TECNOLOGIA E-SIM") {
     showToast('⚠️ Esta modalidade não permite transferência automática.', 'warning');
     return;
   }
@@ -4299,7 +4406,6 @@ function avancarPedidoParaInput(idUnico, origem) {
   // ============================================
 
   // 4.1 Garantir id_unico (apenas CNPJ + DATA, SEM MODALIDADE)
-  // 🔥 ALTERADO: usa idUnicoFinal para não conflitar com o parâmetro `idUnico`
   let idUnicoFinal = idUnico || pedido.id_unico || '';
   if (!idUnicoFinal && pedido.cnpj && pedido.data_key) {
     idUnicoFinal = `${pedido.cnpj}|${pedido.data_key}`;
@@ -4364,7 +4470,7 @@ function avancarPedidoParaInput(idUnico, origem) {
     // Dados de identificação
     linha: pedido.linha,
     origem: pedido.origem,
-    id_unico: idUnicoFinal,           // 🔥 ALTERADO: usa idUnicoFinal
+    id_unico: idUnicoFinal,
     bancoDeDadosId: bancoDeDadosId,
 
     // Dados da empresa (comuns a todo o pedido)
@@ -4400,11 +4506,16 @@ function avancarPedidoParaInput(idUnico, origem) {
     modalidadeIndex: 0,
     linhasPorModalidade: linhasPorModalidade,
 
+    // 🔥 Flag de modo edição — o vendas.html usa isso para:
+    //    - trocar o rótulo do botão para "💾 Salvar Alterações"
+    //    - NÃO avançar o status ao salvar (mantém PENDENTE DE INPUT)
+    modoEdicao: modoEdicao,
+
     // 🔥 Campos de debug
     _origemDebug: origem,
     _linhaDebug: linha,
     _bancoDebug: bancoDeDadosId,
-    _idUnicoDebug: idUnicoFinal,      // 🔥 ALTERADO: usa idUnicoFinal
+    _idUnicoDebug: idUnicoFinal,
     _timestamp: new Date().toISOString()
   };
 
@@ -4414,10 +4525,11 @@ function avancarPedidoParaInput(idUnico, origem) {
   console.log(`   - origem: ${pedidoData.origem}`);
   console.log(`   - modalidades: ${modalidadesList.join(', ')}`);
   console.log(`   - total de linhas: ${linhas.length}`);
+  console.log(`   - modoEdicao: ${modoEdicao}`);
 
   // --- 6. Salvar no sessionStorage ---
   try {
-	sessionStorage.removeItem('pedidoParaInputConsumido');   
+    sessionStorage.removeItem('pedidoParaInputConsumido');
     sessionStorage.setItem('pedidoParaInput', JSON.stringify(pedidoData));
     console.log("✅ Dados salvos no sessionStorage");
 
@@ -4446,17 +4558,19 @@ function avancarPedidoParaInput(idUnico, origem) {
     console.log(`   - id_unico: ${verificar.id_unico}`);
     console.log(`   - bancoDeDadosId: ${verificar.bancoDeDadosId || 'NULL'}`);
     console.log(`   - modalidades: ${verificar.modalidadesList?.join(', ')}`);
+    console.log(`   - modoEdicao: ${verificar.modoEdicao}`);
   } catch(e) {
     console.warn("⚠️ Não foi possível verificar os dados salvos");
   }
 
   // --- 8. Redirecionar para o formulário de vendas ---
-  showLoading('Preparando lançamento...');
+  showLoading(modoEdicao ? 'Abrindo pedido para edição...' : 'Preparando lançamento...');
 
   setTimeout(function() {
     hideLoading();
     console.log("🔁 Abrindo módulo de vendas dinamicamente...");
     console.log(`📌 Com ${modalidadesList.length} modalidade(s)`);
+    console.log(`📌 Modo: ${modoEdicao ? 'EDIÇÃO' : 'NOVO'}`);
 
     let urlDestino = '?page=vendas';
     if (bancoDeDadosId) {
