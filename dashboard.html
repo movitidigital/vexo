@@ -1391,7 +1391,28 @@ async function inicializarDados() {
       }
     } catch (e) { console.warn('⚠️ profiles:', e.message); }
 
-    // 2. Busca METAS_LOJA (agora com dias_uteis)
+    // 2. Mapeia USERS (matrícula → nome, nome → foto) - CORRIGIDO AQUI
+    const mapaUsuarios = {};
+    const mapaFotos = {};
+    const listaConsultores = [];
+    try {
+      const { data: users } = await sb.from('profiles').select('*');
+      (users || []).forEach(u => {
+        const matricula = String(u.matricula || '').trim().toUpperCase();
+        const nome = String(u.nome || '').trim();
+        const sobrenome = String(u.sobrenome || '').trim();
+        const foto = u.photo_url || '';
+        if (!nome && !sobrenome) return;
+        const nomeCompleto = `${nome} ${sobrenome}`.trim().toUpperCase();
+        if (matricula) mapaUsuarios[matricula] = nomeCompleto;
+        mapaFotos[nomeCompleto] = foto;
+        if (!listaConsultores.includes(nomeCompleto)) listaConsultores.push(nomeCompleto);
+      });
+      listaConsultores.sort();
+      console.log(`🔵 [DASH] ${listaConsultores.length} consultores mapeados`);
+    } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
+
+    // 3. Busca METAS_LOJA (agora com dias_uteis)
     let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0, diasUteis = 22;
     try {
       const { data: metaDB } = await sb.from('metas_loja').select('*').eq('ano_referencia', anoSelecionado);
@@ -1406,7 +1427,7 @@ async function inicializarDados() {
       }
     } catch (e) { console.warn('⚠️ metas_loja:', e.message); }
 
-    // 3. Busca VENDAS
+    // 4. Busca VENDAS
     const { data: dataVendas, error } = await sb.from('VENDAS').select('*');
     if (error) throw new Error(`Erro ao ler VENDAS: ${error.message}`);
 
