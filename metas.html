@@ -1483,17 +1483,23 @@
       updated_at: new Date().toISOString()
     };
 
+    // 🐛 LOG DE DEBUG
+    console.log("🐛 [METAS] Enviando para o banco:", payload);
+
     try {
-      const { error } = await sb
+      const { data, error } = await sb
         .from('metas_loja')
-        .upsert(payload, { onConflict: 'tenant_id,mes_referencia,ano_referencia' });
+        .upsert(payload, { onConflict: 'tenant_id,mes_referencia,ano_referencia' })
+        .select(); // Adicionado select() para ver o que o banco retorna
+
       if (error) throw error;
       
+      console.log("🐛 [METAS] Resposta do banco:", data);
       toast(`Meta de ${mesNome}/${ano} salva com sucesso!`, 'success');
       carregarHistorico();
       
     } catch (e) {
-      console.error('❌ Erro ao salvar meta da loja:', e);
+      console.error('❌ [METAS] Erro ao salvar:', e);
       toast(e.message || 'Erro ao salvar', 'error');
     }
   }
