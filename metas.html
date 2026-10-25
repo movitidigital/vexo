@@ -1183,10 +1183,10 @@
     if (qtd === 0) {
       toast('Atenção: Nenhum dia de trabalho selecionado.', 'warn');
     } else {
-      toast(`Calendário salvo: ${qtd} dias.`, 'success');
+      toast(`Calendário configurado: ${qtd} dias. Salvando no banco...`, 'success');
     }
-    
     fecharCalendario();
+    salvarLoja(); 
   }
 
   function atualizarTextoBtnDias() {
