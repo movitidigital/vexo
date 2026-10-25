@@ -1411,7 +1411,6 @@ async function inicializarDados() {
     } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
 
     let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0, diasUteis = 22;
-    console.log('🔵 [DASH] Buscando metas...');
     try {
       const { data: metaDB } = await sb.from('metas_loja').select('*').eq('ano_referencia', anoSelecionado);
       if (metaDB && metaDB.length > 0) {
@@ -1425,7 +1424,6 @@ async function inicializarDados() {
       }
     } catch (e) { console.warn('⚠️ metas_loja:', e.message); }
 
-    console.log('🔵 [DASH] Buscando vendas...');
     const { data: dataVendas, error } = await sb.from('VENDAS').select('*');
     if (error) throw new Error(`Erro ao ler VENDAS: ${error.message}`);
 
@@ -1438,7 +1436,6 @@ async function inicializarDados() {
     const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE', 'DIRETORIA'].includes(roleLogado);
     let ativoHoje = 0;
 
-    console.log('🔵 [DASH] Processando dados...');
     (dataVendas || []).forEach(v => {
       const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
       if (statusBruto.includes('CANCELADO')) return;
@@ -1508,9 +1505,16 @@ async function inicializarDados() {
       vendas: listaVendasDashboard
     };
 
-    console.log('🔵 [DASH] Chamando renderizarDashboard...');
     renderizarDashboard(dados);
     console.log('🟢 [DASH] Renderizado com sucesso!');
+
+    // 🔥 CORREÇÃO: Revela a tela
+    const areaPrincipal = document.getElementById('main-content-area');
+    const menuPrincipal = document.getElementById('menu-principal');
+    setTimeout(() => {
+      if(areaPrincipal) areaPrincipal.classList.add('revelar-dash');
+      if(menuPrincipal) menuPrincipal.classList.add('revelar-dash');
+    }, 50);
 
     const perfisPermitidos = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
     const blocoGlobal = document.getElementById('bloco-visao-global');
