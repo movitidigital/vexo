@@ -626,10 +626,12 @@
           </select>
         </div>
         <!-- NOVO CAMPO AQUI -->
-        <div class="mt-field">
-          <label>Dias Úteis no Mês</label>
-          <input type="number" id="m_dias_uteis" value="22" min="1" max="31" style="padding: 11px 14px; border-radius: 10px; border: 1.5px solid #cbd5e1; font-family: inherit; font-size: 13px; font-weight: 600; color: #0f172a; background: white; outline: none; width: 100%;">
-        </div>
+<div class="mt-field">
+  <label>Calendário de Trabalho</label>
+  <button type="button" class="mt-btn mt-btn-soft" onclick="MT.abrirCalendario()" style="width: 100%; height: 42px; display: flex; justify-content: center; align-items: center; gap: 8px;">
+    <i class="fas fa-calendar-alt"></i> <span id="btn-txt-dias">Selecionar Dias</span>
+  </button>
+</div>
       </div>
 
       <form id="form-metas" onsubmit="event.preventDefault(); MT.salvarLoja();">
