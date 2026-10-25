@@ -554,6 +554,42 @@
     .mt-periodo { grid-template-columns: 1fr; }
     .mt-vendedor-body { grid-template-columns: 1fr; }
   }
+
+  /* ═══ CALENDÁRIO ═══ */
+  .cal-day {
+    aspect-ratio: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .cal-day.off {
+    background: #f1f5f9;
+    color: #94a3b8;
+    border: 1px solid #e2e8f0;
+  }
+  .cal-day.off:hover {
+    background: #e2e8f0;
+  }
+  .cal-day.on {
+    background: #10b981;
+    color: white;
+    border: 1px solid #059669;
+    box-shadow: 0 2px 5px rgba(16, 185, 129, 0.2);
+  }
+  .cal-day.on:hover {
+    background: #059669;
+  }
+  .cal-day.empty {
+    background: transparent;
+    cursor: default;
+  }
+  
 </style>
 </head>
 <body>
@@ -617,6 +653,7 @@
             <option value="DEZEMBRO">Dezembro</option>
           </select>
         </div>
+        
         <div class="mt-field">
           <label>Ano</label>
           <select id="m_referencia_ano" onchange="MT.periodo()">
@@ -625,13 +662,15 @@
             <option value="2027">2027</option>
           </select>
         </div>
-        <!-- NOVO CAMPO AQUI -->
-<div class="mt-field">
-  <label>Calendário de Trabalho</label>
-  <button type="button" class="mt-btn mt-btn-soft" onclick="MT.abrirCalendario()" style="width: 100%; height: 42px; display: flex; justify-content: center; align-items: center; gap: 8px;">
-    <i class="fas fa-calendar-alt"></i> <span id="btn-txt-dias">Selecionar Dias</span>
-  </button>
-</div>
+        
+        <!-- CALENDÁRIO DE TRABALHO -->
+        <div class="mt-field">
+          <label>Calendário de Trabalho</label>
+          <button type="button" class="mt-btn mt-btn-soft" onclick="MT.abrirCalendario()" style="width: 100%; height: 42px; display: flex; justify-content: center; align-items: center; gap: 8px; background: white; border: 1.5px solid #cbd5e1; color: #0f172a; font-size: 13px;">
+            <i class="fas fa-calendar-alt" style="color: #3b82f6;"></i> 
+            <span id="btn-txt-dias">Selecionar Dias</span>
+          </button>
+        </div>
       </div>
 
       <form id="form-metas" onsubmit="event.preventDefault(); MT.salvarLoja();">
@@ -839,10 +878,151 @@
   </div>
 </div>
 
+
+<!-- ═══ MODAL DO CALENDÁRIO ═══ -->
+<div class="mt-modal" id="mt-modal-calendario">
+  <div class="mt-modal-box" style="max-width: 500px;">
+    <div class="mt-modal-head">
+      <h3><i class="fas fa-calendar-alt"></i> Dias Trabalhados</h3>
+      <button class="mt-modal-close" onclick="MT.fecharCalendario()">
+        <i class="fas fa-times"></i>
+      </button>
+    </div>
+    <div class="mt-modal-body">
+      <p style="font-size: 13px; color: #64748b; margin-bottom: 15px;">Clique nos dias para marcar como <b>trabalhado</b> (verde). Clique novamente para marcar como <b>folga</b> (cinza).</p>
+      
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+        <h4 id="calendario-titulo-mes" style="margin: 0; color: #1e293b; font-size: 16px;">Outubro 2026</h4>
+        <button type="button" class="mt-btn mt-btn-soft" onclick="MT.marcarDiasUteis()" style="padding: 6px 12px; font-size: 11px;">
+          Marcar Seg-Sex
+        </button>
+      </div>
+
+      <!-- Grid do Calendário -->
+      <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; margin-bottom: 10px;">
+        <div style="font-size: 10px; font-weight: 800; color: #94a3b8;">DOM</div>
+        <div style="font-size: 10px; font-weight: 800; color: #94a3b8;">SEG</div>
+        <div style="font-size: 10px; font-weight: 800; color: #94a3b8;">TER</div>
+        <div style="font-size: 10px; font-weight: 800; color: #94a3b8;">QUA</div>
+        <div style="font-size: 10px; font-weight: 800; color: #94a3b8;">QUI</div>
+        <div style="font-size: 10px; font-weight: 800; color: #94a3b8;">SEX</div>
+        <div style="font-size: 10px; font-weight: 800; color: #94a3b8;">SÁB</div>
+      </div>
+      <div id="calendario-grid" style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;"></div>
+      
+    </div>
+    <div class="mt-modal-foot">
+      <button class="mt-btn mt-btn-soft" onclick="MT.fecharCalendario()">Cancelar</button>
+      <button class="mt-btn mt-btn-primary" onclick="MT.salvarCalendario()">
+        <i class="fas fa-check"></i> Confirmar Dias
+      </button>
+    </div>
+  </div>
+</div>
+  
 <!-- ═══ TOASTS ═══ -->
 <div class="mt-toast-container" id="mt-toasts"></div>
 
+
+  
 <script>
+  // ═══════════════════════════════════════════════════════════
+  // 📅 LÓGICA DO CALENDÁRIO (COLE AQUI)
+  // ═══════════════════════════════════════════════════════════
+  
+  function abrirCalendario() {
+    const mesNome = $('m_referencia_mes').value;
+    const ano = parseInt($('m_referencia_ano').value);
+    const mesNum = MESES_NUM[mesNome];
+    
+    if (!mesNum) return toast('Selecione um mês válido.', 'warn');
+
+    $('calendario-titulo-mes').innerText = `${mesNome} ${ano}`;
+    
+    if (!Array.isArray(state.diasSelecionados)) state.diasSelecionados = [];
+
+    renderizarGridCalendario(mesNum, ano);
+    $('mt-modal-calendario').classList.add('active');
+  }
+
+  function fecharCalendario() {
+    $('mt-modal-calendario').classList.remove('active');
+  }
+
+  function renderizarGridCalendario(mes, ano) {
+    const grid = $('calendario-grid');
+    grid.innerHTML = '';
+    
+    const primeiroDiaSemana = new Date(ano, mes - 1, 1).getDay();
+    const diasNoMes = new Date(ano, mes, 0).getDate();
+
+    for (let i = 0; i < primeiroDiaSemana; i++) {
+      grid.innerHTML += `<div class="cal-day empty"></div>`;
+    }
+
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+      const dataStr = `${ano}-${String(mes).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+      const isSelected = state.diasSelecionados.includes(dataStr);
+      const classe = isSelected ? 'on' : 'off';
+
+      grid.innerHTML += `<div class="cal-day ${classe}" data-data="${dataStr}" onclick="MT.toggleDia(this)">${dia}</div>`;
+    }
+  }
+
+  window.MT.toggleDia = function(el) {
+    const dataStr = el.getAttribute('data-data');
+    const index = state.diasSelecionados.indexOf(dataStr);
+
+    if (index > -1) {
+      state.diasSelecionados.splice(index, 1);
+      el.classList.remove('on');
+      el.classList.add('off');
+    } else {
+      state.diasSelecionados.push(dataStr);
+      el.classList.remove('off');
+      el.classList.add('on');
+    }
+  };
+
+  function marcarDiasUteis() {
+    const mesNome = $('m_referencia_mes').value;
+    const ano = parseInt($('m_referencia_ano').value);
+    const mesNum = MESES_NUM[mesNome];
+    const diasNoMes = new Date(ano, mesNum, 0).getDate();
+
+    state.diasSelecionados = [];
+
+    for (let dia = 1; dia <= diasNoMes; dia++) {
+      const d = new Date(ano, mesNum - 1, dia);
+      const diaSemana = d.getDay();
+      
+      if (diaSemana >= 1 && diaSemana <= 5) {
+        const dataStr = `${ano}-${String(mesNum).padStart(2, '0')}-${String(dia).padStart(2, '0')}`;
+        state.diasSelecionados.push(dataStr);
+      }
+    }
+    
+    renderizarGridCalendario(mesNum, ano);
+  }
+
+  function salvarCalendario() {
+    const qtd = state.diasSelecionados.length;
+    $('btn-txt-dias').innerText = `${qtd} dias selecionados`;
+    
+    if (qtd === 0) {
+      toast('Atenção: Nenhum dia de trabalho selecionado.', 'warn');
+    } else {
+      toast(`Calendário salvo: ${qtd} dias.`, 'success');
+    }
+    
+    fecharCalendario();
+  }
+
+  function atualizarTextoBtnDias() {
+    const qtd = Array.isArray(state.diasSelecionados) ? state.diasSelecionados.length : 0;
+    $('btn-txt-dias').innerText = qtd > 0 ? `${qtd} dias selecionados` : 'Selecionar Dias';
+  }
+  
 (function () {
   'use strict';
 
@@ -873,7 +1053,8 @@
     todosVendedores: [],
     timeAtual: [],
     logoTim: null,
-    tenantId: null
+    tenantId: null,
+    diasSelecionados: []
   };
 
   // ═══════════════════════════════════════════════════════════
@@ -990,6 +1171,8 @@
     $('m_reneg_target').value= m.reneg_target ?? 0;
     $('m_reneg_sup').value   = m.reneg_sup ?? 0;
     $('m_dias_uteis').value = m.dias_uteis || 22;
+    state.diasSelecionados = m.dias_trabalhados || [];
+    atualizarTextoBtnDias();
   }
 
   function resetarFormLoja() {
@@ -1272,6 +1455,14 @@
     const tenantId = await getTenantId();
     if (!tenantId) return toast('Tenant não identificado', 'error');
 
+    // 🔥 Verifica se o gestor selecionou os dias no calendário
+    const diasSelecionados = Array.isArray(state.diasSelecionados) ? state.diasSelecionados : [];
+    
+    if (diasSelecionados.length === 0) {
+      toast('Atenção: Selecione os dias de trabalho no Calendário.', 'warn');
+      // Não bloqueia o salvamento, mas avisa.
+    }
+
     const payload = {
       tenant_id: tenantId,
       mes_referencia: mesNum,
@@ -1285,7 +1476,11 @@
       reneg_min: parseInt($('m_reneg_min').value) || 0,
       reneg_target: parseInt($('m_reneg_target').value) || 0,
       reneg_sup: parseInt($('m_reneg_sup').value) || 0,
-      dias_uteis: parseInt($('m_dias_uteis').value) || 22, // 👈 NOVO CAMPO AQUI
+      
+      // 🔥 NOVOS CAMPOS DO CALENDÁRIO
+      dias_trabalhados: diasSelecionados, // Salva o array de datas exatas
+      dias_uteis: diasSelecionados.length > 0 ? diasSelecionados.length : 22, // Mantém compatibilidade
+      
       updated_at: new Date().toISOString()
     };
 
@@ -1294,10 +1489,12 @@
         .from('metas_loja')
         .upsert(payload, { onConflict: 'tenant_id,mes_referencia,ano_referencia' });
       if (error) throw error;
-      toast(`Meta de ${mesNome}/${ano} salva!`, 'success');
+      
+      toast(`Meta de ${mesNome}/${ano} salva com sucesso!`, 'success');
       carregarHistorico();
+      
     } catch (e) {
-      console.error(e);
+      console.error('❌ Erro ao salvar meta da loja:', e);
       toast(e.message || 'Erro ao salvar', 'error');
     }
   }
@@ -1945,7 +2142,11 @@
     imgTime,
     carregarEstaMeta,
     abrirPreviewLoja,
-    fecharPreviewLoja
+    fecharPreviewLoja,
+    abrirCalendario,
+    fecharCalendario,
+    marcarDiasUteis,
+    salvarCalendario
   };
 
   // Fecha modal com ESC
