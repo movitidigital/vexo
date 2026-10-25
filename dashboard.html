@@ -1524,6 +1524,7 @@ async function inicializarDados() {
       diasUteis: diasUteis,
       ativoHoje: ativoHoje,
       ranking: ranking,
+      fotos: mapaFotos, 
       vendas: listaVendasDashboard
     };
 
@@ -1748,11 +1749,23 @@ function renderizarDashboard(dados) {
     } else {
       rankingOrdenado.slice(0, 5).forEach((c, i) => {
         const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + 'º';
+        const nome = c[0];
+
+        // 🔥 BUSCA A FOTO DO CONSULTOR (ou cria um avatar padrão se não tiver)
+        const fotoUrl = (dados.fotos && dados.fotos[nome] && dados.fotos[nome].trim() !== '') 
+          ? dados.fotos[nome] 
+          : `https://ui-avatars.com/api/?background=eff6ff&color=1e40af&name=${encodeURIComponent(nome)}`;
+
         containerRanking.innerHTML += `
-          <div style="background:#f8fafc; padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border: 1px solid #e2e8f0;">
+          <div style="background:#f8fafc; padding:10px 12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border: 1px solid #e2e8f0;">
+            
             <div style="display:flex; align-items:center; gap:10px;">
-               <span style="font-weight:800; color:#64748b; font-size: 14px;">${medalha}</span>
-               <span style="font-size:11px; font-weight:800; color:#0f172a;">${c[0]}</span>
+               <span style="font-weight:800; color:#64748b; font-size: 14px; width: 20px; text-align: center;">${medalha}</span>
+               
+               <!-- FOTO DO CONSULTOR -->
+               <img src="${fotoUrl}" alt="${nome}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
+               
+               <span style="font-size:11px; font-weight:800; color:#0f172a;">${nome}</span>
             </div>
             <span style="font-weight:800; color:#047857; background:#dcfce7; padding:4px 10px; border-radius:10px; font-size: 12px;">
               ${c[1].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
@@ -1763,7 +1776,6 @@ function renderizarDashboard(dados) {
   }
 
   // --- CONTROLE DE PERMISSÃO DO FILTRO DO GRÁFICO ---
-  // Apenas gestores podem ver o dropdown para escolher o consultor no gráfico
   const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
   const roleLogado = String(sessao.role || '').toUpperCase().trim();
   const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'].includes(roleLogado);
@@ -1773,7 +1785,6 @@ function renderizarDashboard(dados) {
     areaFiltroGestao.style.display = isGestao ? 'flex' : 'none';
   }
 }
-  
 // ============================================================
 // 🚀 MOTOR DE CARREGAMENTO DE MÓDULOS (SEM IFRAME)
 // ============================================================
