@@ -1381,7 +1381,6 @@ async function inicializarDados() {
     const anoSelecionado = parseInt(document.getElementById('dashboard_ano')?.value) || anoAtual;
     const mesNumericoSelecionado = mapaMesesNum[mesSelecionado] || mesAtual;
 
-    // 1. Perfil
     let perfilLogado = null;
     try {
       const { data: { user } } = await sb.auth.getUser();
@@ -1391,7 +1390,6 @@ async function inicializarDados() {
       }
     } catch (e) { console.warn('⚠️ profiles:', e.message); }
 
-    // 2. Mapeia USERS (matrícula → nome, nome → foto) - CORRIGIDO AQUI
     const mapaUsuarios = {};
     const mapaFotos = {};
     const listaConsultores = [];
@@ -1412,8 +1410,8 @@ async function inicializarDados() {
       console.log(`🔵 [DASH] ${listaConsultores.length} consultores mapeados`);
     } catch (e) { console.warn('⚠️ profiles indisponível:', e.message); }
 
-    // 3. Busca METAS_LOJA (agora com dias_uteis)
     let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0, diasUteis = 22;
+    console.log('🔵 [DASH] Buscando metas...');
     try {
       const { data: metaDB } = await sb.from('metas_loja').select('*').eq('ano_referencia', anoSelecionado);
       if (metaDB && metaDB.length > 0) {
@@ -1422,12 +1420,12 @@ async function inicializarDados() {
           metaFaturamento  = Number(metaDoMes.fat_target) || 0;
           metaPortabilidade = Number(metaDoMes.port_target) || 0;
           metaRenegociacao  = Number(metaDoMes.reneg_target) || 0;
-          diasUteis         = Number(metaDoMes.dias_uteis) || 22; // AQUI PEGAMOS OS DIAS ÚTEIS
+          diasUteis         = Number(metaDoMes.dias_uteis) || 22;
         }
       }
     } catch (e) { console.warn('⚠️ metas_loja:', e.message); }
 
-    // 4. Busca VENDAS
+    console.log('🔵 [DASH] Buscando vendas...');
     const { data: dataVendas, error } = await sb.from('VENDAS').select('*');
     if (error) throw new Error(`Erro ao ler VENDAS: ${error.message}`);
 
@@ -1438,9 +1436,9 @@ async function inicializarDados() {
     const listaVendasDashboard = [];
     const roleLogado = String(perfilLogado?.role || '').toUpperCase().trim();
     const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE', 'DIRETORIA'].includes(roleLogado);
+    let ativoHoje = 0;
 
-    let ativoHoje = 0; // Para calcular a Meta Diária
-
+    console.log('🔵 [DASH] Processando dados...');
     (dataVendas || []).forEach(v => {
       const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
       if (statusBruto.includes('CANCELADO')) return;
@@ -1467,7 +1465,7 @@ async function inicializarDados() {
       const nomeParaExibir = mapaUsuarios[matriculaVenda] || matriculaVenda || 'DESCONHECIDO';
 
       let incluir = false;
-      let statusFinalPainel = 'ENTRANTE'; // Padrão
+      let statusFinalPainel = 'ENTRANTE';
       let dataParaDashboard = null;
       const estaAtivado = Number(v.status_etapa) === 6;
 
@@ -1476,8 +1474,6 @@ async function inicializarDados() {
           incluir = true;
           statusFinalPainel = 'ATIVADO';
           dataParaDashboard = dataAtivacao;
-          
-          // Verifica se foi ativado HOJE para a meta diária
           if (dataAtivacao.getDate() === hoje.getDate() && dataAtivacao.getMonth() === hoje.getMonth() && dataAtivacao.getFullYear() === hoje.getFullYear()) {
             ativoHoje += valor;
           }
@@ -1512,9 +1508,10 @@ async function inicializarDados() {
       vendas: listaVendasDashboard
     };
 
+    console.log('🔵 [DASH] Chamando renderizarDashboard...');
     renderizarDashboard(dados);
+    console.log('🟢 [DASH] Renderizado com sucesso!');
 
-    // Visão Global
     const perfisPermitidos = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
     const blocoGlobal = document.getElementById('bloco-visao-global');
     if (perfisPermitidos.includes(roleLogado) && blocoGlobal) {
@@ -1535,17 +1532,19 @@ async function inicializarDados() {
       });
 
       const fmtBRL = (v) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-      document.getElementById('global-entrantes-fat').innerText = fmtBRL(gEntrFat);
-      document.getElementById('global-entrantes-qtd').innerText = `${gEntrQtd} pedidos na esteira`;
-      document.getElementById('global-ativos-fat').innerText = fmtBRL(gAtivFat);
-      document.getElementById('global-ativos-qtd').innerText = `${gAtivQtd} pedidos faturados`;
+      const el1 = document.getElementById('global-entrantes-fat');
+      if (el1) {
+        el1.innerText = fmtBRL(gEntrFat);
+        document.getElementById('global-entrantes-qtd').innerText = `${gEntrQtd} pedidos na esteira`;
+        document.getElementById('global-ativos-fat').innerText = fmtBRL(gAtivFat);
+        document.getElementById('global-ativos-qtd').innerText = `${gAtivQtd} pedidos faturados`;
+      }
     }
 
   } catch (e) {
-    console.error('🔴 [DASH] ERRO:', e);
+    console.error('🔴 [DASH] ERRO CRÍTICO:', e);
   }
 }
-
 function renderizarDashboard(dados) {
   const modsFaturamento = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO", "MIGRAÇÃO TT"];
   const modsGross = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO"]; 
@@ -1580,32 +1579,32 @@ function renderizarDashboard(dados) {
   const percFaturamento = dados.metaValor > 0 ? Math.min(((fatAtivo / dados.metaValor) * 100), 100).toFixed(1) : 0;
   const percPort = dados.portMeta > 0 ? Math.min(((portAtivo / dados.portMeta) * 100), 100).toFixed(1) : 0;
 
-  // Cálculo Meta Diária
   const metaDiaria = dados.metaValor / dados.diasUteis;
   const percMetaDiaria = metaDiaria > 0 ? Math.min(((dados.ativoHoje / metaDiaria) * 100), 100).toFixed(0) : 0;
   
-  document.getElementById('dias-uteis-txt').innerText = dados.diasUteis;
-  document.getElementById('meta-diaria-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  document.getElementById('meta-diaria-perc').innerText = percMetaDiaria + '%';
-  document.getElementById('meta-diaria-bar').style.width = percMetaDiaria + '%';
-  document.getElementById('meta-diaria-realizado').innerText = dados.ativoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  document.getElementById('meta-diaria-falta').innerText = (metaDiaria - dados.ativoHoje > 0 ? metaDiaria - dados.ativoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  // PROTEÇÃO: Só atualiza se os elementos existirem no HTML
+  const elDias = document.getElementById('dias-uteis-txt');
+  if (elDias) {
+    elDias.innerText = dados.diasUteis;
+    document.getElementById('meta-diaria-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-diaria-perc').innerText = percMetaDiaria + '%';
+    document.getElementById('meta-diaria-bar').style.width = percMetaDiaria + '%';
+    document.getElementById('meta-diaria-realizado').innerText = dados.ativoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-diaria-falta').innerText = (metaDiaria - dados.ativoHoje > 0 ? metaDiaria - dados.ativoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
 
   const statusMeta = document.getElementById('status-meta');
   if (statusMeta) {
     statusMeta.innerHTML = `REALIZADO MÊS: <b style="color:#10b981">${fatAtivo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b> (${percFaturamento}%)`;
   }
 
-  // Renderiza os Cards Brancos (Design Clean)
   const gridMetas = document.getElementById('container-grid-metas');
   if (gridMetas) {
     const formatMoeda = (v) => v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-    
-    // Cálculo do percentual de Entrantes para a Barra Dupla
     const percEntranteFat = dados.metaValor > 0 ? Math.min(((fatInput - fatAtivo) / dados.metaValor) * 100, 100 - percFaturamento) : 0;
 
     gridMetas.innerHTML = `
-      <!-- CARD FATURAMENTO (Barra Dupla) -->
+      <!-- CARD FATURAMENTO -->
       <div class="card-meta-box" style="background: white; padding: 22px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
         <div style="display: flex; justify-content: space-between; align-items: flex-start;">
           <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">💰 Faturamento (Ativos)</span>
@@ -1613,7 +1612,6 @@ function renderizarDashboard(dados) {
         </div>
         <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 12px 0 16px 0;">${formatMoeda(fatAtivo)}</div>
         
-        <!-- Barra Dupla -->
         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">
           <span>Meta: ${formatMoeda(dados.metaValor)}</span>
         </div>
