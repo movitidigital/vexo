@@ -1231,27 +1231,51 @@
     </div>
   </div>
 
-  <!-- 🌟 DESTAQUE: META DIÁRIA -->
+  <!-- 🌟 DESTAQUE: META DIÁRIA (DUPLA VISÃO) -->
   <div style="background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%); border-radius: 20px; padding: 24px; color: white; margin-bottom: 25px; box-shadow: 0 15px 35px -10px rgba(30,60,114,0.4); position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
     <div style="position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.05; pointer-events: none;">🎯</div>
     
-    <div style="z-index: 1;">
+    <!-- LADO ESQUERDO: SUA META (OU META DA LOJA PARA GESTÃO) -->
+    <div style="z-index: 1; flex: 1; min-width: 250px;">
       <div id="label-meta-diaria" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #93c5fd; margin-bottom: 5px;">Meta para Hoje</div>
       <div style="font-size: 36px; font-weight: 900; line-height: 1;" id="meta-diaria-valor">R$ 0,00</div>
       <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">Faltam <b id="dias-uteis-txt">22</b> dias úteis</div>
+      
+      <div style="margin-top: 15px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+          <span>Produção de Hoje (Ativos)</span>
+          <span id="meta-diaria-perc">0%</span>
+        </div>
+        <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
+          <div id="meta-diaria-bar" style="width: 0%; height: 100%; background: #10b981; border-radius: 10px; transition: width 1s ease;"></div>
+        </div>
+        <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px; display: flex; justify-content: space-between;">
+          <span>Realizado hoje: <b id="meta-diaria-realizado">R$ 0,00</b></span>
+          <span>Falta: <b id="meta-diaria-falta">R$ 0,00</b></span>
+        </div>
+      </div>
     </div>
-    
-    <div style="z-index: 1; flex: 1; min-width: 250px;">
-      <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
-        <span>Produção de Hoje (Ativos)</span>
-        <span id="meta-diaria-perc">0%</span>
-      </div>
-      <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
-        <div id="meta-diaria-bar" style="width: 0%; height: 100%; background: #10b981; border-radius: 10px; transition: width 1s ease;"></div>
-      </div>
-      <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px; display: flex; justify-content: space-between;">
-        <span>Realizado hoje: <b id="meta-diaria-realizado">R$ 0,00</b></span>
-        <span>Falta: <b id="meta-diaria-falta">R$ 0,00</b></span>
+
+    <!-- DIVISOR (Só aparece para consultores) -->
+    <div id="divisor-visao-loja" style="width: 1px; height: 100px; background: rgba(255,255,255,0.15); display: none; margin: 0 10px;"></div>
+
+    <!-- LADO DIREITO: TERMÔMETRO DA LOJA (Só aparece para consultores) -->
+    <div id="bloco-meta-loja-consultor" style="z-index: 1; flex: 1; min-width: 250px; display: none;">
+      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #fcd34d; margin-bottom: 5px;">🏢 Meta da Loja (Time)</div>
+      <div style="font-size: 24px; font-weight: 800; line-height: 1; color: #f8fafc;" id="meta-loja-total">R$ 0,00</div>
+      <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px;">Meta diária do time: <b id="meta-loja-diaria">R$ 0,00</b></div>
+      
+      <div style="margin-top: 15px;">
+        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+          <span>Progresso da Loja</span>
+          <span id="meta-loja-perc">0%</span>
+        </div>
+        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
+          <div id="meta-loja-bar" style="width: 0%; height: 100%; background: #f59e0b; border-radius: 10px; transition: width 1s ease;"></div>
+        </div>
+        <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px;">
+          Faturado no mês: <b id="meta-loja-realizado">R$ 0,00</b>
+        </div>
       </div>
     </div>
   </div>
@@ -1646,65 +1670,9 @@ async function inicializarDados() {
     console.error('🔴 [DASH] ERRO CRÍTICO:', e);
   }
 }
-function renderizarDashboard(dados) {
-  const modsFaturamento = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO", "MIGRAÇÃO TT"];
-  const modsGross = ["PRIMEIRA ATIVAÇÃO", "PORTABILIDADE", "ADITIVO"]; 
-  
-  // Define quais dados usar no topo e nos 4 cards (Loja vs Consultor)
-  const metaTopo = dados.isGestao ? dados.metaValor : dados.metaIndivFat;
-  const metaPortTopo = dados.isGestao ? dados.portMeta : dados.metaIndivPort;
-  const metaRenegTopo = dados.isGestao ? dados.renegMeta : dados.metaIndivReneg;
-  const ativoTopo = dados.isGestao ? dados.fatAtivoGlobal : dados.fatAtivoIndiv;
-  const inputTopo = dados.isGestao ? dados.fatInputGlobal : dados.fatInputIndiv;
-  const ativoHojeTopo = dados.isGestao ? dados.ativoHojeGlobal : dados.ativoHojeIndiv;
-
-  // Recalcula os acumuladores com base no escopo (Loja ou Consultor)
-  let fatInput = 0, fatAtivo = 0;
-  let portInput = 0, portAtivo = 0;
-  let grossInput = 0, grossAtivo = 0;
-  let renegInput = 0, renegAtivo = 0;
-
-  if (dados.vendas && Array.isArray(dados.vendas)) {
-    dados.vendas.forEach(v => {
-      const mod = v.modalidade ? v.modalidade.toUpperCase() : "";
-      const isAtivo = v.status === "ATIVADO";
-      const valor = v.valor || 0;
-      
-      // Filtra apenas as vendas do consultor se não for gestão
-      if (!dados.isGestao) {
-         // A lógica de separar o que é do consultor já foi feita na soma, mas para os cards específicos precisamos somar
-         // Para simplificar, a função inicializarDados poderia ter enviado os totais individuais por modalidade, 
-         // mas como não enviou, faremos a checagem aqui:
-         // Como não temos o nome do consultor logado aqui, vamos confiar nos totais globais para gestão e individuais para consultor.
-      }
-
-      if (mod.includes("RENEG")) {
-        renegInput++;
-        if (isAtivo) renegAtivo++;
-      } else if (modsFaturamento.some(termo => mod.includes(termo))) {
-        fatInput += valor;
-        if (isAtivo) {
-          fatAtivo += valor;
-          if (mod.includes("PORTABILIDADE")) portAtivo += valor;
-          if (modsGross.some(termo => mod.includes(termo))) grossAtivo++;
-        }
-        if (mod.includes("PORTABILIDADE")) portInput += valor;
-        if (modsGross.some(termo => mod.includes(termo))) grossInput++;
-      }
-    });
-  }
-
-  // 🔥 Na verdade, precisamos usar os totais pré-calculados no Passo 2 para evitar somar errado.
-  // Como o calculo individual foi feito lá em cima, vamos usar as variáveis corretas.
-  const calcFatInput = dados.isGestao ? dados.fatInputGlobal : dados.fatInputIndiv;
-  const calcFatAtivo = dados.isGestao ? dados.fatAtivoGlobal : dados.fatAtivoIndiv;
-  const calcAtivoHoje = dados.isGestao ? dados.ativoHojeGlobal : dados.ativoHojeIndiv;
-  const calcMetaFat = dados.isGestao ? dados.metaValor : dados.metaIndivFat;
-
-  const percFaturamento = calcMetaFat > 0 ? Math.min(((calcFatAtivo / calcMetaFat) * 100), 100).toFixed(1) : 0;
-  const percPort = metaPortTopo > 0 ? Math.min(((portAtivo / metaPortTopo) * 100), 100).toFixed(1) : 0;
-
-  // Cálculo do Pacing (Meta Diária)
+  // =====================================================================
+  // 🔥 CÁLCULO DE META DIÁRIA (DUPLA VISÃO)
+  // =====================================================================
   const hj = new Date();
   hj.setHours(0,0,0,0);
   let diasRestantes = 0;
@@ -1720,11 +1688,12 @@ function renderizarDashboard(dados) {
 
   if (diasRestantes === 0) diasRestantes = 1; 
 
+  // Cálculos Individuais ou Gestão (Lado Esquerdo)
   const faltaParaMeta = calcMetaFat - calcFatAtivo;
   const metaDiaria = faltaParaMeta > 0 ? (faltaParaMeta / diasRestantes) : 0;
   const percMetaDiaria = metaDiaria > 0 ? Math.min(((calcAtivoHoje / metaDiaria) * 100), 100).toFixed(0) : (calcAtivoHoje > 0 ? 100 : 0);
 
-  // Atualiza os textos do bloco escuro
+  // Atualiza os textos do lado esquerdo
   const labelMeta = document.getElementById('label-meta-diaria');
   if (labelMeta) {
      labelMeta.innerText = dados.isGestao ? 'Meta da Loja para Hoje' : 'Sua Meta para Hoje';
@@ -1740,157 +1709,32 @@ function renderizarDashboard(dados) {
     document.getElementById('meta-diaria-falta').innerText = (metaDiaria - calcAtivoHoje > 0 ? metaDiaria - calcAtivoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  const statusMeta = document.getElementById('status-meta');
-  if (statusMeta) {
-    statusMeta.innerHTML = `REALIZADO MÊS: <b style="color:#10b981">${calcFatAtivo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b> (${percFaturamento}%)`;
-  }
+  // =====================================================================
+  // 🔥 LÓGICA DO LADO DIREITO: TERMÔMETRO DA LOJA (SÓ PARA CONSULTOR)
+  // =====================================================================
+  const blocoMetaLoja = document.getElementById('bloco-meta-loja-consultor');
+  const divisor = document.getElementById('divisor-visao-loja');
+  
+  if (!dados.isGestao && blocoMetaLoja && divisor) {
+    blocoMetaLoja.style.display = 'block';
+    divisor.style.display = 'block';
 
-  const gridMetas = document.getElementById('container-grid-metas');
-  if (gridMetas) {
-    const formatMoeda = (v) => v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
-    const percEntranteFat = calcMetaFat > 0 ? Math.min(((calcFatInput - calcFatAtivo) / calcMetaFat) * 100, 100 - percFaturamento) : 0;
+    // Cálculos Globais da Loja
+    const faltaParaMetaLoja = dados.metaValor - dados.fatAtivoGlobal;
+    const metaDiariaLoja = faltaParaMetaLoja > 0 ? (faltaParaMetaLoja / diasRestantes) : 0;
+    const percLoja = dados.metaValor > 0 ? Math.min(((dados.fatAtivoGlobal / dados.metaValor) * 100), 100).toFixed(1) : 0;
 
-    gridMetas.innerHTML = `
-      <!-- CARD FATURAMENTO -->
-      <div class="card-meta-box" style="background: white; padding: 22px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-          <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">💰 Faturamento (Ativos)</span>
-          <span style="font-size: 10px; font-weight: 800; color: #3b82f6; background: #eff6ff; padding: 3px 8px; border-radius: 6px;">${percFaturamento}%</span>
-        </div>
-        <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 12px 0 16px 0;">${formatMoeda(calcFatAtivo)}</div>
-        
-        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">
-          <span>Meta: ${formatMoeda(calcMetaFat)}</span>
-        </div>
-        <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px; display: flex; overflow: hidden; margin-bottom: 8px;">
-          <div style="width: ${percFaturamento}%; background: #3b82f6;"></div>
-          <div style="width: ${percEntranteFat}%; background: #93c5fd; background-image: repeating-linear-gradient(45deg, transparent, transparent 5px, rgba(255,255,255,0.4) 5px, rgba(255,255,255,0.4) 10px);"></div>
-        </div>
-        
-        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
-          <span style="color: #64748b;">⏳ Na esteira:</span>
-          <span style="color: #b45309; font-weight: 800;">${formatMoeda(calcFatInput - calcFatAtivo)}</span>
-        </div>
-      </div>
-
-      <!-- CARD PORTABILIDADE -->
-      <div class="card-meta-box" style="background: white; padding: 22px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-          <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">🔄 Portabilidade</span>
-          <span style="font-size: 10px; font-weight: 800; color: #a855f7; background: #f3e8ff; padding: 3px 8px; border-radius: 6px;">${percPort}%</span>
-        </div>
-        <div style="font-size: 26px; font-weight: 900; color: #0f172a; margin: 12px 0 16px 0;">${formatMoeda(portAtivo)}</div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">
-          <span>Meta: ${formatMoeda(metaPortTopo)}</span>
-        </div>
-        <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-bottom: 8px;">
-          <div style="width: ${percPort}%; background: #a855f7;"></div>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
-          <span style="color: #64748b;">⏳ Na esteira:</span>
-          <span style="color: #b45309; font-weight: 800;">${formatMoeda(portInput - portAtivo)}</span>
-        </div>
-      </div>
-
-      <!-- CARD GROSS -->
-      <div class="card-meta-box" style="background: white; padding: 22px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-          <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">📱 Gross (Ativos)</span>
-        </div>
-        <div style="display: flex; align-items: baseline; gap: 6px; margin: 12px 0 16px 0;">
-          <div style="font-size: 26px; font-weight: 900; color: #0f172a;">${grossAtivo}</div>
-          <span style="font-size: 11px; font-weight: 800; color: #64748b;">LINHAS</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
-          <span style="color: #64748b;">⏳ Na esteira:</span>
-          <span style="color: #b45309; font-weight: 800;">${grossInput - grossAtivo} linhas</span>
-        </div>
-      </div>
-
-      <!-- CARD RENEGOCIAÇÃO -->
-      <div class="card-meta-box" style="background: white; padding: 22px; border-radius: 16px; border: 1px solid #e2e8f0; box-shadow: 0 4px 15px rgba(0,0,0,0.02);">
-        <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-          <span style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase;">🤝 Renegociações</span>
-        </div>
-        <div style="display: flex; align-items: baseline; gap: 6px; margin: 12px 0 16px 0;">
-          <div style="font-size: 26px; font-weight: 900; color: #0f172a;">${renegAtivo}</div>
-          <span style="font-size: 11px; font-weight: 800; color: #64748b;">ATIVAS</span>
-        </div>
-        <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
-          <span style="color: #64748b;">⏳ Na esteira:</span>
-          <span style="color: #b45309; font-weight: 800;">${renegInput - renegAtivo} un.</span>
-        </div>
-      </div>
-    `;
-  }
-
-  // --- VENDAS CONFIRMADAS (CRM) ---
-  const containerVendas = document.getElementById('crm-vendas');
-  if (containerVendas && dados.vendas) {
-    containerVendas.innerHTML = "";
-    const vendasAtivas = dados.vendas.filter(v => v.status === 'ATIVADO');
+    document.getElementById('meta-loja-total').innerText = dados.metaValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-loja-diaria').innerText = metaDiariaLoja.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-loja-perc').innerText = percLoja + '%';
+    document.getElementById('meta-loja-bar').style.width = percLoja + '%';
+    document.getElementById('meta-loja-realizado').innerText = dados.fatAtivoGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     
-    const countVendas = document.getElementById('count-vendas');
-    if (countVendas) countVendas.innerText = vendasAtivas.length;
-    
-    const ultimasVendas = vendasAtivas.slice(0, 5);
-    
-    if (ultimasVendas.length === 0) {
-      containerVendas.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Nenhuma venda ativa recente.</div>`;
-    } else {
-      ultimasVendas.forEach(v => {
-        containerVendas.innerHTML += `
-          <div style="background:#f8fafc; padding:12px; border-radius:12px; margin-bottom:10px; border: 1px solid #e2e8f0; border-left: 4px solid #10b981;">
-            <strong style="font-size:12px; color:#0f172a; display:block;">${v.cliente || "Cliente"} 
-              <span style="font-size:9px; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; margin-left:6px;">ATIVO</span>
-            </strong>
-            <div style="display:flex; justify-content:space-between; margin-top:6px; align-items:center;">
-              <span style="font-size:10px; color:#64748b; font-weight: 600;">${v.modalidade || '—'}</span>
-              <span style="font-weight:800; color:#0f172a; font-size:13px;">${v.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
-            </div>
-          </div>`;
-      });
-    }
+  } else if (blocoMetaLoja && divisor) {
+    // Se for gestão, esconde o lado direito para não duplicar a informação
+    blocoMetaLoja.style.display = 'none';
+    divisor.style.display = 'none';
   }
-
-  // --- TOP PERFORMANCE (RANKING) ---
-  const containerRanking = document.getElementById('crm-ranking');
-  if (containerRanking && dados.ranking) {
-    containerRanking.innerHTML = "";
-    const rankingOrdenado = Object.entries(dados.ranking).sort((a,b) => b[1]-a[1]);
-    
-    if (rankingOrdenado.length === 0) {
-       containerRanking.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Sem dados de ranking para este mês.</div>`;
-    } else {
-      rankingOrdenado.slice(0, 5).forEach((c, i) => {
-        const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + 'º';
-        const nome = c[0];
-
-        const fotoUrl = (dados.fotos && dados.fotos[nome] && dados.fotos[nome].trim() !== '') 
-          ? dados.fotos[nome] 
-          : `https://ui-avatars.com/api/?background=eff6ff&color=1e40af&name=${encodeURIComponent(nome)}`;
-
-        containerRanking.innerHTML += `
-          <div style="background:#f8fafc; padding:10px 12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; border: 1px solid #e2e8f0;">
-            <div style="display:flex; align-items:center; gap:10px;">
-               <span style="font-weight:800; color:#64748b; font-size: 14px; width: 20px; text-align: center;">${medalha}</span>
-               <img src="${fotoUrl}" alt="${nome}" style="width: 34px; height: 34px; border-radius: 50%; object-fit: cover; border: 2px solid #ffffff; box-shadow: 0 2px 5px rgba(0,0,0,0.1);">
-               <span style="font-size:11px; font-weight:800; color:#0f172a;">${nome}</span>
-            </div>
-            <span style="font-weight:800; color:#047857; background:#dcfce7; padding:4px 10px; border-radius:10px; font-size: 12px;">
-              ${c[1].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-            </span>
-          </div>`;
-      });
-    }
-  }
-
-  // --- CONTROLE DE PERMISSÃO DO FILTRO DO GRÁFICO ---
-  const areaFiltroGestao = document.getElementById('area-filtro-gestao');
-  if (areaFiltroGestao) {
-    areaFiltroGestao.style.display = dados.isGestao ? 'flex' : 'none';
-  }
-}
 // ============================================================
 // 🚀 MOTOR DE CARREGAMENTO DE MÓDULOS (SEM IFRAME)
 // ============================================================
