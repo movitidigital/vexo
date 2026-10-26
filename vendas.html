@@ -1081,10 +1081,13 @@ window._salvarVenda = async function() {
     console.warn('⚠️ Erro ao ler pedidoParaInput:', e);
   }
 
-btn.disabled = true;
-btn.innerText = pedidoPendente
-  ? (modoEdicao ? '💾 Salvando alterações...' : '💾 Finalizando pedido...')
-  : '💾 Gravando venda...';
+  // 🔥 CORREÇÃO: Define modoEdicao localmente para o texto do botão
+  const modoEdicao = pedidoPendente && pedidoPendente.modoEdicao === true;
+
+  btn.disabled = true;
+  btn.innerText = pedidoPendente
+    ? (modoEdicao ? '💾 Salvando alterações...' : '💾 Finalizando pedido...')
+    : '💾 Gravando venda...';
 
   try {
     if (pedidoPendente) {
@@ -1097,9 +1100,9 @@ btn.innerText = pedidoPendente
     alert('❌ Erro: ' + (e.message || e));
   } finally {
     btn.disabled = false;
-btn.innerText = pedidoPendente
-  ? (modoEdicao ? '💾 Salvar Alterações' : '🚀 Finalizar Pedido')
-  : '🚀 Finalizar e Gravar Venda';
+    btn.innerText = pedidoPendente
+      ? (modoEdicao ? '💾 Salvar Alterações' : '🚀 Finalizar Pedido')
+      : '🚀 Finalizar e Gravar Venda';
   }
 };
 
