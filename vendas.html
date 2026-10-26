@@ -754,7 +754,7 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
   // ============================================================
   // ADICIONAR LINHA
   // ============================================================
-window._adicionarLinha = function(modalidade, modID) {
+  window._adicionarLinha = function(modalidade, modID) {
     const container = document.getElementById(`box-linhas-${modID}`);
     if (!container) return;
 
@@ -780,12 +780,40 @@ window._adicionarLinha = function(modalidade, modID) {
     const estiloBloqueio = numeroLiberado ? '' : 'background:#f1f5f9; cursor:not-allowed;';
     const placeholderNum = numeroLiberado ? 'Número' : 'Gerado pelo sistema TIM';
 
+    // 🔥 Lista expandida de Operadoras (MNOs e MVNOs)
     const selectOperadora = `
       <select class="input-operadora v-input">
         <option value="">Operadora...</option>
-        <option value="CLARO">CLARO</option>
-        <option value="VIVO">VIVO</option>
-        <option value="OI">OI</option>
+        
+        <optgroup label="Grandes Operadoras (MNO)">
+          <option value="VIVO">VIVO</option>
+          <option value="CLARO">CLARO</option>
+          <option value="TIM">TIM</option>
+          <option value="OI">OI</option>
+          <option value="ALGAR">ALGAR</option>
+        </optgroup>
+        
+        <optgroup label="Operadoras Virtuais (MVNO)">
+          <option value="CORREIOS CELULAR">CORREIOS CELULAR</option>
+          <option value="SURF TELECOM">SURF TELECOM</option>
+          <option value="DATORA (ARQIA)">DATORA (ARQIA)</option>
+          <option value="INTER CEL">INTER CEL</option>
+          <option value="MAGALU CEL">MAGALU CEL</option>
+          <option value="NUCEL">NUCEL</option>
+          <option value="LARI CEL">LARI CEL</option>
+          <option value="NLT TELECOM">NLT TELECOM</option>
+          <option value="VERO">VERO</option>
+          <option value="TELECALL">TELECALL</option>
+          <option value="BRISANET">BRISANET</option>
+          <option value="UNIFIQUE">UNIFIQUE</option>
+          <option value="LIGGA">LIGGA</option>
+          <option value="ESEYE">ESEYE</option>
+          <option value="LINKS FIELD">LINKS FIELD</option>
+          <option value="NUH! DIGITAL">NUH! DIGITAL</option>
+          <option value="DRY TELECOM">DRY TELECOM</option>
+          <option value="VIRTUEYES">VIRTUEYES</option>
+        </optgroup>
+
         <option value="OUTRAS">OUTRAS</option>
       </select>
     `;
@@ -805,7 +833,7 @@ window._adicionarLinha = function(modalidade, modID) {
     container.appendChild(div);
     _ativarAutocompletePlano(div.querySelector('.plano-wrapper'));
     window._atualizarContador(modID);
-};
+  };
 // ═══════════════════════════════════════════════════════════
 // AUTOCOMPLETE CUSTOM DE PLANOS (nome + valor)
 // ═══════════════════════════════════════════════════════════
