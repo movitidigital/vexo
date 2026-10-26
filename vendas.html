@@ -481,12 +481,90 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
   }
 }
 
+  // ═══════════════════════════════════════════════════════════
+  // 🔥 HELPERS DE PRESERVAÇÃO DE ESTADO DO FORMULÁRIO
+  // (evita perder dados ao adicionar/remover modalidade)
+  // ═══════════════════════════════════════════════════════════
+  function _capturarEstadoFormulario() {
+    const area = document.getElementById('area_campos_venda');
+    if (!area || !area.innerHTML.trim()) return null;
+
+    const camposComuns = {};
+    const idsComuns = [
+      'v_venc', 'v_data', 'v_p2b', 'v_radar', 'v_cnpj', 'v_ie', 'v_razao',
+      'v_cpf_admin', 'v_nome_admin', 'v_email', 'v_contato_fin',
+      'v_cep', 'v_endereco', 'v_numero', 'v_uf', 'v_cidade', 'v_bairro', 'v_compl',
+      'v_consultor_input'
+    ];
+    idsComuns.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) camposComuns[id] = el.value;
+    });
+
+    const linhasPorMod = {};
+    document.querySelectorAll('.linha-plano-item').forEach(div => {
+      const mod = div.dataset.modalidade;
+      if (!mod) return;
+      if (!linhasPorMod[mod]) linhasPorMod[mod] = [];
+      
+      linhasPorMod[mod].push({
+        plano: div.querySelector('.input-plano')?.value || '',
+        numero: div.querySelector('.input-numero')?.value || '',
+        valor: div.querySelector('.input-valor')?.value || '',
+        operadora: div.querySelector('.input-operadora')?.value || ''
+      });
+    });
+
+    return { camposComuns, linhasPorMod };
+  }
+
+  function _restaurarEstadoFormulario(estado) {
+    if (!estado) return;
+
+    // 1. Restaurar campos comuns
+    Object.entries(estado.camposComuns).forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) el.value = val;
+    });
+
+    // 2. Restaurar linhas
+    document.querySelectorAll('[id^="box-linhas-"]').forEach(box => {
+      const modalidade = box.dataset.modalidade;
+      if (!modalidade) return;
+      const modID = box.id.replace('box-linhas-', '');
+      
+      const linhasSalvas = estado.linhasPorMod[modalidade] || [];
+      box.innerHTML = ''; // limpa o que tenha
+
+      if (linhasSalvas.length > 0) {
+        linhasSalvas.forEach(info => {
+          window._adicionarLinha(modalidade, modID);
+          const ultimaLinha = box.lastElementChild;
+          if (ultimaLinha) {
+            if (ultimaLinha.querySelector('.input-plano')) ultimaLinha.querySelector('.input-plano').value = info.plano;
+            if (ultimaLinha.querySelector('.input-numero')) ultimaLinha.querySelector('.input-numero').value = info.numero;
+            if (ultimaLinha.querySelector('.input-valor')) ultimaLinha.querySelector('.input-valor').value = info.valor;
+            if (ultimaLinha.querySelector('.input-operadora')) ultimaLinha.querySelector('.input-operadora').value = info.operadora;
+          }
+        });
+      } else {
+        // Modalidade sem linhas salvas (ex: acabou de ser adicionada) → cria 1 vazia
+        window._adicionarLinha(modalidade, modID);
+      }
+      
+      window._atualizarContador(modID);
+    });
+  }
+
   // ============================================================
   // GERAR FORMULÁRIO
   // ============================================================
-window.gerarFormularioVenda = function() {
+  window.gerarFormularioVenda = function() {
     const areaVenda = document.getElementById('area_campos_venda');
     if (!areaVenda) return;
+
+    // 🔥 1. Captura o estado atual ANTES de destruir o HTML
+    const estadoAnterior = _capturarEstadoFormulario();
 
     const selecionadas = Array.from(MODALIDADES_SELECIONADAS);
     if (selecionadas.length === 0) {
@@ -495,7 +573,7 @@ window.gerarFormularioVenda = function() {
       return;
     }
 
-    // 🔥 NOVO — Detecta modo edição
+    // 🔥 Detecta modo edição (vem do pedidos_gestao.html)
     let modoEdicao = false;
     try {
       const raw = sessionStorage.getItem('pedidoParaInput');
@@ -511,33 +589,28 @@ window.gerarFormularioVenda = function() {
     const titulo = selecionadas.join(' | ');
     const eConsultor = (PERFIL_USUARIO?.role === 'CONSULTOR DE VENDAS');
 
-    // 🔥 Só mostra atribuição de input para BACKOFFICE / ADMINISTRADOR
     const mostrarAtribuicaoInput = ['BACKOFFICE', 'ADMINISTRADOR', 'ADMIN'].includes(
       (PERFIL_USUARIO?.role || '').toUpperCase()
     );
 
-    // 🔥 Rótulo dinâmico do botão
     let labelBotao = '🚀 Finalizar e Gravar Venda';
     if (modoEdicao) labelBotao = '💾 Salvar Alterações';
     else if (mostrarAtribuicaoInput) labelBotao = '🚀 Finalizar Pedido';
 
-// 🔥 Só a DATA fica travada (compõe o id_unico junto com CNPJ).
-//    CNPJ é editável — o consultor pode corrigir ou trocar.
-const readonlyAttr  = modoEdicao ? 'readonly' : '';
-const readonlyStyle = modoEdicao ? 'background:#f1f5f9; cursor:not-allowed; color:#64748b;' : '';
-const lockIconData  = modoEdicao ? ' <span style="color:#dc2626;" title="Bloqueado (faz parte da identidade do pedido)">🔒</span>' : '';
+    const readonlyAttr  = modoEdicao ? 'readonly' : '';
+    const readonlyStyle = modoEdicao ? 'background:#f1f5f9; cursor:not-allowed; color:#64748b;' : '';
+    const lockIconData  = modoEdicao ? ' <span style="color:#dc2626;" title="Bloqueado (faz parte da identidade do pedido)">🔒</span>' : '';
 
-    // 🔥 Banner de edição
     const bannerEdicao = modoEdicao ? `
       <div style="background:#fff7ed; border:2px solid #f59e0b; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:flex-start; gap:12px;">
         <span style="font-size:24px; line-height:1;">✏️</span>
         <div>
           <div style="font-weight:800; color:#b45309; font-size:14px;">Editando Pedido Existente</div>
-<div style="font-size:12px; color:#92400e; margin-top:4px; line-height:1.5;">
-  A <strong>Data da Venda</strong> está bloqueada (faz parte da identidade do pedido).
-  O <strong>CNPJ</strong> pode ser corrigido se você digitou errado — o sistema atualiza o pedido para o novo CNPJ.
-  O pedido continuará como <strong>Pendente de Input</strong> até o backoffice iniciar o fluxo.
-</div>
+          <div style="font-size:12px; color:#92400e; margin-top:4px; line-height:1.5;">
+            A <strong>Data da Venda</strong> está bloqueada (faz parte da identidade do pedido).
+            O <strong>CNPJ</strong> pode ser corrigido se você digitou errado — o sistema atualiza o pedido para o novo CNPJ.
+            O pedido continuará como <strong>Pendente de Input</strong> até o backoffice iniciar o fluxo.
+          </div>
         </div>
       </div>
     ` : '';
@@ -564,10 +637,10 @@ const lockIconData  = modoEdicao ? ' <span style="color:#dc2626;" title="Bloquea
               ${[7,10,15,20,25].map(d => `<option value="${d}">${String(d).padStart(2,'0')}</option>`).join('')}
             </select>
           </div>
-<div>
-  <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">DATA DA VENDA ${lockIconData}</label>
-  <input type="date" id="v_data" value="${new Date().toISOString().split('T')[0]}" class="v-input" ${readonlyAttr} style="${readonlyStyle}">
-</div>
+          <div>
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">DATA DA VENDA ${lockIconData}</label>
+            <input type="date" id="v_data" value="${new Date().toISOString().split('T')[0]}" class="v-input" ${readonlyAttr} style="${readonlyStyle}">
+          </div>
           <div>
             <label style="font-size:11px; font-weight:700; color:#2563eb; display:block; margin-bottom:5px;">📦 PEDIDO P2B</label>
             <input type="text" id="v_p2b" class="v-input" style="border:1px solid #2563eb;">
@@ -579,10 +652,10 @@ const lockIconData  = modoEdicao ? ' <span style="color:#dc2626;" title="Bloquea
         </div>
 
         <div style="display:grid; grid-template-columns:1.2fr 1.2fr 2fr; gap:15px; margin-bottom:20px;">
-<div>
-  <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">CNPJ / CPF</label>
-  <input type="text" id="v_cnpj" onblur="window._buscarCNPJ(this.value)" class="v-input" placeholder="Digite o CNPJ correto">
-</div>
+          <div>
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">CNPJ / CPF</label>
+            <input type="text" id="v_cnpj" onblur="window._buscarCNPJ(this.value)" class="v-input" placeholder="Digite o CNPJ correto">
+          </div>
           <div>
             <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">INSCRIÇÃO ESTADUAL</label>
             <input type="text" id="v_ie" class="v-input" placeholder="Nº ou ISENTO">
@@ -617,7 +690,8 @@ const lockIconData  = modoEdicao ? ' <span style="color:#dc2626;" title="Bloquea
               + Adicionar linha
             </button>
           </div>
-          <div id="box-linhas-${modID}" style="display:flex; flex-direction:column; gap:10px;"></div>
+          <!-- 🔥 Adicionado data-modalidade para facilitar a restauração -->
+          <div id="box-linhas-${modID}" data-modalidade="${modalidade}" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
       `;
     });
@@ -658,19 +732,25 @@ const lockIconData  = modoEdicao ? ' <span style="color:#dc2626;" title="Bloquea
 
     areaVenda.innerHTML = html;
 
-    // 🔥 Popula o select de consultores AGORA (o select acabou de ser criado)
     if (mostrarAtribuicaoInput) {
       popularSelectConsultores();
     }
 
-    selecionadas.forEach(m => {
-      const modID = m.replace(/[^a-zA-Z0-9]/g, '');
-      window._adicionarLinha(m, modID);
-    });
+    // 🔥 2. Restaura o estado anterior (se existia) ou cria linha vazia (se for novo)
+    if (estadoAnterior) {
+      _restaurarEstadoFormulario(estadoAnterior);
+    } else {
+      selecionadas.forEach(m => {
+        const modID = m.replace(/[^a-zA-Z0-9]/g, '');
+        window._adicionarLinha(m, modID);
+      });
+    }
 
     const btn = document.getElementById('btn_finalizar');
     if (btn) btn.addEventListener('click', window._salvarVenda);
   };
+  
+
   // ============================================================
   // ADICIONAR LINHA
   // ============================================================
