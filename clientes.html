@@ -1473,6 +1473,15 @@
     };
     const formatMoeda = (n) => `R$ ${Number(n).toFixed(2).replace('.', ',')}`;
 
+        const formatarCodigoCliente = (codigo) => {
+      if (!codigo) return 'N/A';
+      const str = String(codigo).trim();
+      if (/^\d{2,}$/.test(str)) {
+        return str.substring(0, 1) + '.' + str.substring(1);
+      }
+      return str;
+    };
+
     // ============ ANTI-AUTOFILL ============
     function limparAutofillBusca() {
       const v = inputBusca.value || '';
@@ -1836,7 +1845,7 @@
         </div>`;
     }
 
-    function renderHistoricoCliente(cliente, contratos) {
+       function renderHistoricoCliente(cliente, contratos) {
       let totalMensal = 0, linhasAtivas = 0, totalLinhas = 0;
       contratos.forEach(c => {
         const ativo = String(c.status || '').toUpperCase().includes('ATIVADO');
@@ -1860,7 +1869,8 @@
             </div>
             <div class="codigos">
               <span>CÓDIGO CLIENTE</span>
-              <b style="color:#1e3c72;">${esc(cliente.codigo_cliente || 'N/A')}</b>
+              <!-- 🔥 APLICADO O HELPER AQUI -->
+              <b style="color:#1e3c72;">${esc(formatarCodigoCliente(cliente.codigo_cliente))}</b>
               <span>CÓDIGO ADMINISTRADOR</span>
               <b style="color:#991b1b;">${esc(cliente.codigo_admin || 'N/A')}</b>
             </div>
@@ -1901,15 +1911,32 @@
         else if (status.includes('PENDENTE')) { corStatus = '#92400e'; bgStatus = '#fef3c7'; }
 
         let subtotal = 0;
+        
         const linhasHtml = (c.linhas || []).map(l => {
           const v = parseValorBR(l.valor);
           subtotal += v;
+          
+          // 🔥 NOVO: Busca a data de ativação (aceita variações de nome)
+          const dtAtivacaoRaw = l.data_de_ativacao || l.data_ativacao || c.data_de_ativacao || c.data_ativacao;
+          let dtAtvFormatada = '';
+          
+          if (dtAtivacaoRaw) {
+            if (/^\d{4}-\d{2}-\d{2}/.test(dtAtivacaoRaw)) {
+               const [a, m, d] = dtAtivacaoRaw.split('T')[0].split('-');
+               dtAtvFormatada = `${d}/${m}/${a}`;
+            } else {
+               dtAtvFormatada = dtAtivacaoRaw;
+            }
+          }
+
           return `
             <div class="linha-item">
               <div class="left">
                 <span class="numero">📱 ${esc(l.numero || '—')}</span>
                 <span class="plano">(${esc(l.plano || 'sem plano')})</span>
                 ${l.operadora ? `<span class="doadora">Doadora: ${esc(l.operadora)}</span>` : ''}
+                <!-- 🔥 NOVO: Badge de data de ativação -->
+                ${dtAtvFormatada ? `<span style="font-size:10px; color:#065f46; background:#ecfdf5; padding:2px 6px; border-radius:4px; font-weight:700; border: 1px solid #6ee7b7; margin-left: 6px;" title="Data de Ativação">⚡ Ativado: ${esc(dtAtvFormatada)}</span>` : ''}
               </div>
               <span class="valor">${formatMoeda(v)}</span>
             </div>`;
