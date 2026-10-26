@@ -2251,7 +2251,7 @@ function renderizarTabela() {
             ${podeEditar ? `
               ${btnVoltarRender}
               ${podeAvancar ? btnAvancarRender : ''}
-            ` : (btnEditarConsultorRender || `<span class="view-only-badge"><i class="fas fa-lock"></i> Apenas visualização</span>`)}
+            ` : (btnEditarConsultorRender || `<span class="view-only-badge"><i class="fas fa-lock"></i>o</span>`)}
             <button class="btn-action btn-detail" data-linha="${pedido.linha}" data-id-unico="${pedido.id_unico || ''}" data-origem="${pedido.origem}"><i class="fas fa-eye"></i> Detalhes</button>
             ${podeExcluir ? ` <button class="btn-action btn-delete" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-id-unico="${pedido.id_unico || ''}"> <i class="fas fa-trash-alt"></i> Excluir </button>` : ''}
           </div>
