@@ -521,11 +521,11 @@ window.gerarFormularioVenda = function() {
     if (modoEdicao) labelBotao = '💾 Salvar Alterações';
     else if (mostrarAtribuicaoInput) labelBotao = '🚀 Finalizar Pedido';
 
-    // 🔥 Campos travados em edição (fazem parte do id_unico — CNPJ|Data)
-    const readonlyAttr  = modoEdicao ? 'readonly' : '';
-    const readonlyStyle = modoEdicao ? 'background:#f1f5f9; cursor:not-allowed; color:#64748b;' : '';
-    const lockIcon      = modoEdicao ? ' <span style="color:#dc2626;" title="Bloqueado (faz parte da identidade do pedido)">🔒</span>' : '';
-    const onblurCNPJ    = modoEdicao ? '' : 'onblur="window._buscarCNPJ(this.value)"';
+// 🔥 Só a DATA fica travada (compõe o id_unico junto com CNPJ).
+//    CNPJ é editável — o consultor pode corrigir ou trocar.
+const readonlyAttr  = modoEdicao ? 'readonly' : '';
+const readonlyStyle = modoEdicao ? 'background:#f1f5f9; cursor:not-allowed; color:#64748b;' : '';
+const lockIconData  = modoEdicao ? ' <span style="color:#dc2626;" title="Bloqueado (faz parte da identidade do pedido)">🔒</span>' : '';
 
     // 🔥 Banner de edição
     const bannerEdicao = modoEdicao ? `
@@ -533,11 +533,11 @@ window.gerarFormularioVenda = function() {
         <span style="font-size:24px; line-height:1;">✏️</span>
         <div>
           <div style="font-weight:800; color:#b45309; font-size:14px;">Editando Pedido Existente</div>
-          <div style="font-size:12px; color:#92400e; margin-top:4px; line-height:1.5;">
-            <strong>CNPJ</strong> e <strong>Data da Venda</strong> estão bloqueados (compõem a identidade do pedido).
-            Altere o que precisar e clique em <strong>💾 Salvar Alterações</strong>.
-            O pedido continuará como <strong>Pendente de Input</strong> até o backoffice iniciar o fluxo.
-          </div>
+<div style="font-size:12px; color:#92400e; margin-top:4px; line-height:1.5;">
+  A <strong>Data da Venda</strong> está bloqueada (faz parte da identidade do pedido).
+  O <strong>CNPJ</strong> pode ser corrigido se você digitou errado — o sistema atualiza o pedido para o novo CNPJ.
+  O pedido continuará como <strong>Pendente de Input</strong> até o backoffice iniciar o fluxo.
+</div>
         </div>
       </div>
     ` : '';
@@ -564,10 +564,10 @@ window.gerarFormularioVenda = function() {
               ${[7,10,15,20,25].map(d => `<option value="${d}">${String(d).padStart(2,'0')}</option>`).join('')}
             </select>
           </div>
-          <div>
-            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">DATA DA VENDA ${lockIcon}</label>
-            <input type="date" id="v_data" value="${new Date().toISOString().split('T')[0]}" class="v-input" ${readonlyAttr} style="${readonlyStyle}">
-          </div>
+<div>
+  <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">DATA DA VENDA ${lockIconData}</label>
+  <input type="date" id="v_data" value="${new Date().toISOString().split('T')[0]}" class="v-input" ${readonlyAttr} style="${readonlyStyle}">
+</div>
           <div>
             <label style="font-size:11px; font-weight:700; color:#2563eb; display:block; margin-bottom:5px;">📦 PEDIDO P2B</label>
             <input type="text" id="v_p2b" class="v-input" style="border:1px solid #2563eb;">
@@ -579,10 +579,10 @@ window.gerarFormularioVenda = function() {
         </div>
 
         <div style="display:grid; grid-template-columns:1.2fr 1.2fr 2fr; gap:15px; margin-bottom:20px;">
-          <div>
-            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">CNPJ / CPF ${lockIcon}</label>
-            <input type="text" id="v_cnpj" ${onblurCNPJ} class="v-input" ${readonlyAttr} style="${readonlyStyle}">
-          </div>
+<div>
+  <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">CNPJ / CPF</label>
+  <input type="text" id="v_cnpj" onblur="window._buscarCNPJ(this.value)" class="v-input" placeholder="Digite o CNPJ correto">
+</div>
           <div>
             <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">INSCRIÇÃO ESTADUAL</label>
             <input type="text" id="v_ie" class="v-input" placeholder="Nº ou ISENTO">
@@ -1127,7 +1127,6 @@ async function _finalizarPedidoExistente(pedido) {
     let faltando = [];
 
     if (modoEdicao) {
-      // 🔹 Consultor só precisa garantir o essencial para salvar a edição
       const semPlano = linhas.filter(l => !l.plano);
       if (semPlano.length > 0) faltando.push('Todas as linhas precisam ter plano');
 
@@ -1137,7 +1136,6 @@ async function _finalizarPedidoExistente(pedido) {
         faltando.push('Número obrigatório em MIGRAÇÃO / PORTABILIDADE / RENEG.');
       }
     } else {
-      // 🔹 Backoffice continua com a validação rigorosa
       faltando = _validarInputBackofficeCompleto(linhas);
     }
 
@@ -1160,8 +1158,27 @@ async function _finalizarPedidoExistente(pedido) {
     const campos = _coletarCamposComuns();
     const TENANT = 'f9cca67a-41f8-4ad7-a119-74bc58018dee';
 
-    // ... resto igual (data original, modalidades, loop de DELETE+INSERT)
+    // ═══════════════════════════════════════════════════════
+    // 🔥 SEPARAR CNPJ ORIGINAL × CNPJ NOVO (editável em modo consultor)
+    //    - cnpjOriginal: vem do pedido/id_unico → usado em SELECT e DELETE
+    //    - cnpjNovo:     vem do formulário  → usado apenas no INSERT
+    // ═══════════════════════════════════════════════════════
+    const cnpjNovo = String(campos.cnpj || '').trim();
 
+    let cnpjOriginal = String(pedido.cnpj || '').trim();
+    if (!cnpjOriginal && pedido.id_unico && pedido.id_unico.includes('|')) {
+      cnpjOriginal = pedido.id_unico.split('|')[0] || '';
+    }
+    if (!cnpjOriginal) cnpjOriginal = cnpjNovo;
+
+    console.log(`📌 CNPJ original: "${cnpjOriginal}" | CNPJ novo (form): "${cnpjNovo}"`);
+    const cnpjMudou = (cnpjOriginal !== cnpjNovo);
+
+    if (!cnpjNovo) {
+      throw new Error('⚠️ CNPJ é obrigatório.');
+    }
+
+    // ... resto igual (data original, modalidades)
     let dataOriginal = '';
     if (pedido.id_unico && pedido.id_unico.includes('|')) {
       dataOriginal = pedido.id_unico.split('|')[1] || '';
@@ -1177,8 +1194,6 @@ async function _finalizarPedidoExistente(pedido) {
       }
     }
 
-    const cnpj = pedido.cnpj || campos.cnpj;
-
     const modsOriginais = [];
     if (pedido.linhasPorModalidade && typeof pedido.linhasPorModalidade === 'object') {
       modsOriginais.push(...Object.keys(pedido.linhasPorModalidade));
@@ -1189,9 +1204,9 @@ async function _finalizarPedidoExistente(pedido) {
     const todasModalidades = [...new Set([...modsOriginais, ...modsForm])];
 
     console.log('🎯 [FINALIZAR PEDIDO EXISTENTE]');
-    console.log('   CNPJ:', cnpj);
+    console.log('   CNPJ original:', cnpjOriginal);
+    console.log('   CNPJ novo:    ', cnpjNovo, cnpjMudou ? '(MUDOU)' : '(igual)');
     console.log('   Data original:', dataOriginal);
-    console.log('   Data nova (form):', campos.data_da_venda);
     console.log('   Modalidades:', todasModalidades);
 
     if (!dataOriginal) {
@@ -1199,9 +1214,39 @@ async function _finalizarPedidoExistente(pedido) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // 🔥 DEFESA EM PROFUNDIDADE — em modo edição, revalida no banco
-    // se o backoffice já capturou o pedido enquanto o consultor editava
-    // em outra aba/janela. Evita corromper dados.
+    // 🔥 VALIDAÇÃO EXTRA — se o CNPJ mudou, verifica se o CNPJ novo
+    //    já tem pedido para a mesma data (evita duplicar / sobrescrever)
+    // ═══════════════════════════════════════════════════════
+    if (cnpjMudou) {
+      console.log(`🔍 Verificando conflito: CNPJ ${cnpjNovo} já tem pedido em ${dataOriginal}?`);
+      try {
+        const { data: jaExiste, error: errCheck } = await sb
+          .from('VENDAS')
+          .select('id, status_do_pedido')
+          .eq('tenant_id', TENANT)
+          .eq('cnpj', cnpjNovo)
+          .eq('data_da_venda', dataOriginal)
+          .limit(1);
+
+        if (errCheck) throw errCheck;
+
+        if (jaExiste && jaExiste.length > 0) {
+          const st = jaExiste[0].status_do_pedido || 'desconhecido';
+          throw new Error(
+            `⚠️ Já existe um pedido para o CNPJ ${cnpjNovo} na data ${dataOriginal} (status: ${st}). ` +
+            `Não é possível mover o pedido para esse CNPJ. Confira se digitou corretamente.`
+          );
+        }
+        console.log('✅ Sem conflito — CNPJ novo está livre');
+      } catch (e) {
+        if (e.message && e.message.startsWith('⚠️')) throw e;
+        console.warn('⚠️ Falha ao checar conflito (seguindo):', e);
+      }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // DEFESA EM PROFUNDIDADE — em modo edição, revalida no banco
+    // se o backoffice já capturou o pedido (usa CNPJ ORIGINAL)
     // ═══════════════════════════════════════════════════════
     if (modoEdicao) {
       try {
@@ -1209,7 +1254,7 @@ async function _finalizarPedidoExistente(pedido) {
           .from('VENDAS')
           .select('status_do_pedido')
           .eq('tenant_id', TENANT)
-          .eq('cnpj', cnpj)
+          .eq('cnpj', cnpjOriginal)   // 🔥 original
           .eq('data_da_venda', dataOriginal);
 
         if (errCheck) throw errCheck;
@@ -1233,7 +1278,7 @@ async function _finalizarPedidoExistente(pedido) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // Preservar o consultor ORIGINAL que lançou a venda
+    // Preservar o consultor ORIGINAL (usa CNPJ ORIGINAL)
     // ═══════════════════════════════════════════════════════
     let consultorOriginal = null;
     try {
@@ -1241,7 +1286,7 @@ async function _finalizarPedidoExistente(pedido) {
         .from('VENDAS')
         .select('consultor_que_vendeu')
         .eq('tenant_id', TENANT)
-        .eq('cnpj', cnpj)
+        .eq('cnpj', cnpjOriginal)   // 🔥 original
         .eq('data_da_venda', dataOriginal)
         .not('consultor_que_vendeu', 'is', null)
         .limit(10);
@@ -1255,31 +1300,29 @@ async function _finalizarPedidoExistente(pedido) {
       console.warn('⚠️ Não foi possível recuperar consultor_que_vendeu original:', e);
     }
 
-    // Fallback só se o banco não devolveu nada (não deve acontecer)
     const nomeConsultor = consultorOriginal
       || [PERFIL_USUARIO.nome, PERFIL_USUARIO.sobrenome]
            .filter(Boolean).join(' ').toUpperCase()
       || PERFIL_USUARIO.email;
 
     console.log(`👤 Consultor que vendeu (PRESERVADO): ${nomeConsultor}`);
-    console.log(`📋 Consultor do input (selecionado no dropdown): ${campos.consultor_do_input_no_easy_vendas || 'NULL'}`);
+    console.log(`📋 Consultor do input: ${campos.consultor_do_input_no_easy_vendas || 'NULL'}`);
 
     // ═══════════════════════════════════════════════════════
-    // 🔥 STATUS DE GRAVAÇÃO — muda conforme o modo
+    // Status de gravação — muda conforme o modo
     // ═══════════════════════════════════════════════════════
-    // Consultor (edição) → mantém PENDENTE DE INPUT
-    // Backoffice (captura) → avança para 1. INPUT REALIZADO
     const novoStatusGravado = modoEdicao ? 'PENDENTE DE INPUT' : '1. INPUT REALIZADO';
     console.log(`📌 Status que será gravado: "${novoStatusGravado}"`);
 
     let totalLinhasGravadas = 0;
 
     for (const modalidade of todasModalidades) {
+      // 🔥 DELETE usa CNPJ ORIGINAL (é o registro antigo que precisa sair)
       const { error: errDel } = await sb
         .from('VENDAS')
         .delete()
         .eq('tenant_id', TENANT)
-        .eq('cnpj', cnpj)
+        .eq('cnpj', cnpjOriginal)   // 🔥 original
         .eq('data_da_venda', dataOriginal)
         .eq('modalidade', modalidade)
         .eq('status_do_pedido', 'PENDENTE DE INPUT');
@@ -1293,15 +1336,16 @@ async function _finalizarPedidoExistente(pedido) {
       const linhasMod = linhas.filter(l => l.modalidade === modalidade);
       if (linhasMod.length === 0) continue;
 
+      // 🔥 INSERT usa CNPJ NOVO (vem de ...campos)
       const registros = linhasMod.map(l => ({
-        ...campos,
+        ...campos,   // campos.cnpj = cnpjNovo ✓
         modalidade:                l.modalidade,
         plano:                     l.plano,
         numero_da_linha:           l.numero,
         valor_contratado:          formatarValorBR(l.valor),
         operadora_doadora:         l.operadora || null,
         consultor_que_vendeu:      nomeConsultor,
-        status_do_pedido:          novoStatusGravado,   // 🔥 dinâmico
+        status_do_pedido:          novoStatusGravado,
         ativacao_em_sistema_tim:   null,
         tenant_id:                 TENANT
       }));
@@ -1310,24 +1354,30 @@ async function _finalizarPedidoExistente(pedido) {
       if (errIns) throw errIns;
 
       totalLinhasGravadas += registros.length;
-      console.log(`   ✅ ${registros.length} linha(s) gravada(s) em "${modalidade}"`);
+      console.log(`   ✅ ${registros.length} linha(s) gravada(s) em "${modalidade}"${cnpjMudou ? ` com CNPJ novo ${cnpjNovo}` : ''}`);
     }
 
     _limparPedidoPendente();
 
-    // 🔥 Toast final adaptado ao modo
+    // ═══════════════════════════════════════════════════════
+    // Toast final adaptado ao modo (e ao CNPJ alterado)
+    // ═══════════════════════════════════════════════════════
+    let mensagem = '';
     if (modoEdicao) {
-      window._toast(`✅ Alterações salvas! ${totalLinhasGravadas} linha(s) atualizada(s).`, 'success');
+      mensagem = `✅ Alterações salvas! ${totalLinhasGravadas} linha(s) atualizada(s).`;
+      if (cnpjMudou) {
+        mensagem = `✅ Alterações salvas! ${totalLinhasGravadas} linha(s) movida(s) para o CNPJ ${cnpjNovo}.`;
+      }
     } else {
-      window._toast(`✅ Pedido finalizado! ${totalLinhasGravadas} linha(s) atualizada(s).`, 'success');
+      mensagem = `✅ Pedido finalizado! ${totalLinhasGravadas} linha(s) atualizada(s).`;
     }
+    window._toast(mensagem, 'success');
     document.getElementById('v-modal-sucesso').style.display = 'flex';
 
   } catch (e) {
-    // 🔥 Repassa erros de validação para o usuário ver a mensagem certa
     console.error('❌ [FINALIZAR PEDIDO EXISTENTE] erro:', e);
     window._toast(e.message || 'Erro ao salvar pedido.', 'error');
-    throw e;   // mantém comportamento atual (o _salvarVenda também captura)
+    throw e;
   } finally {
     window._finalizandoPedido = false;
   }
