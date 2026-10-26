@@ -2173,7 +2173,9 @@ function renderizarTabela() {
   const formatMoeda = (v) => `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   const podeEditar = (typeof window.userPodeEditar !== 'undefined') ? window.userPodeEditar : userPodeEditar;
   const cargo = (typeof window.userCargo !== 'undefined') ? window.userCargo : userCargo;
-  const podeExcluir = ['ADMINISTRADOR', 'ADMIN', 'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR'].includes(cargo);
+  
+  // 🔥 Verifica se o cargo tem permissão global de exclusão (Admin, Backoffice, Gerente)
+  const isAdminOuBackoffice = ['ADMINISTRADOR', 'ADMIN', 'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR'].includes(cargo);
   
   tbody.innerHTML = paginados.map(pedido => {
     // 🔥 NORMALIZA O STATUS PARA GARANTIR QUE "INPUT REALIZADO" SEJA RECONHECIDO
@@ -2181,7 +2183,6 @@ function renderizarTabela() {
     if (statusRaw === "INPUT REALIZADO") {
       statusRaw = "1. INPUT REALIZADO";
     }
-    // Fallback: se ainda não estiver mapeado, usa o raw
     const status = STATUS_INFO[statusRaw] || STATUS_INFO["PENDENTE DE INPUT"];
     
     const podeAvancar = podeEditar && pedido.status_etapa < 6;
@@ -2190,8 +2191,6 @@ function renderizarTabela() {
     const origemText = pedido.origem === 'PARCEIRO' ? 'Parceiro' : 'Venda Direta';
     
     const timeline = gerarTimeline(pedido.status_etapa);
-    
-    // 🔥 VERIFICA SE É PENDENTE USANDO O STATUS NORMALIZADO
     const isPendente = (statusRaw === 'PENDENTE DE INPUT' || statusRaw.includes('PENDENTE'));
     
     const btnAvancarRender = isPendente
@@ -2205,8 +2204,7 @@ function renderizarTabela() {
       ? `<button class="btn-action btn-back" data-linha="${pedido.linha}" data-id-unico="${pedido.id_unico || ''}" data-origem="${pedido.origem}" data-direcao="voltar"><i class="fas fa-arrow-left"></i> Voltar</button>` 
       : '';
 
-    // 🔥 NOVO — Botão "Editar" exclusivo do Consultor de Vendas dono do pedido
-    //    (só aparece se etapa = 0 / PENDENTE DE INPUT e o consultor logado é o dono)
+    // 🔥 Verifica se o consultor tem permissão de editar este pedido específico
     const podeEditarConsultor = (typeof podeEditarPedidoComoConsultor === 'function')
       ? podeEditarPedidoComoConsultor(pedido)
       : false;
@@ -2219,6 +2217,9 @@ function renderizarTabela() {
            <i class="fas fa-edit"></i> Editar
          </button>`
       : '';
+
+    // 🔥 NOVA REGRA DE EXCLUSÃO: Admin/Backoffice OU (Consultor + Dono + Etapa 0)
+    const podeExcluir = isAdminOuBackoffice || podeEditarConsultor;
 
     return `
       <tr>
@@ -2259,7 +2260,7 @@ function renderizarTabela() {
     `;
   }).join('');
   
-  // Re-atribuição de eventos para botões padrão
+  // Re-atribuição de eventos
   document.querySelectorAll('.btn-back, .btn-forward').forEach(btn => {
     btn.removeEventListener('click', handleStatusClick);
     btn.addEventListener('click', handleStatusClick);
@@ -2270,13 +2271,11 @@ function renderizarTabela() {
     btn.addEventListener('click', handleDetailClick);
   });
 
-  // 🔥 NOVO — listener do botão Excluir (event delegation via data-*)
   document.querySelectorAll('.btn-delete').forEach(btn => {
     btn.removeEventListener('click', handleDeleteClick);
     btn.addEventListener('click', handleDeleteClick);
   });
 
-  // 🔥 NOVO — listener do botão Editar (consultor dono do pedido pendente)
   document.querySelectorAll('.btn-edit-consultor').forEach(btn => {
     btn.removeEventListener('click', handleEditConsultorClick);
     btn.addEventListener('click', handleEditConsultorClick);
