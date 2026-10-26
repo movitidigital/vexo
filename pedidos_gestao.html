@@ -1925,7 +1925,7 @@ async function inicializarModulo() {
   userCargo       = role;
   userNome        = (nome + ' ' + sobrenome).trim().toUpperCase();
   const cargosComEdicao = ['ADMINISTRADOR', 'ADMIN', 'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR'];
-userPodeEditar = cargosComEdicao.includes(userCargo);
+  userPodeEditar = cargosComEdicao.includes(userCargo);
   
   // 🔥 NOVO: Define quem tem permissão para ver pedidos de parceiros
   const perfisGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
@@ -1942,16 +1942,33 @@ userPodeEditar = cargosComEdicao.includes(userCargo);
   pedidosFiltrados = window.pedidosFiltrados;
   paginaAtual      = window.paginaAtual;
 
-  // 🔥 Atualiza o badge
+  // 🔥 ATUALIZA O BADGE DE ACORDO COM O CARGO
   const badge = document.getElementById('cargo-badge');
   if (badge) {
-    badge.innerHTML = userPodeEditar
-      ? `✏️ ${userCargo} (Edição liberada)`
-      : `👁️ ${userCargo} (Apenas visualização)`;
-    badge.classList.remove('editor', 'viewer');
-    badge.classList.add(userPodeEditar ? 'editor' : 'viewer');
-    badge.style.background = userPodeEditar ? '#dcfce7' : '#fef3c7';
-    badge.style.color      = userPodeEditar ? '#166534' : '#b45309';
+    const isConsultor = ['CONSULTOR DE VENDAS', 'CONSULTOR'].includes(userCargo);
+
+    if (userPodeEditar) {
+      // Admin / Backoffice / Gerente
+      badge.innerHTML = `✏️ ${userCargo} (Edição liberada)`;
+      badge.classList.remove('editor', 'viewer');
+      badge.classList.add('editor');
+      badge.style.background = '#dcfce7';
+      badge.style.color = '#166534';
+    } else if (isConsultor) {
+      // 🔥 Consultor de Vendas (Acesso restrito aos próprios pedidos)
+      badge.innerHTML = `✏️ ${userCargo} (Acesso Próprio)`;
+      badge.classList.remove('editor', 'viewer');
+      badge.classList.add('viewer'); // Mantém a cor amarela para indicar restrição parcial
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#b45309';
+    } else {
+      // Outros cargos (Apenas visualização)
+      badge.innerHTML = `👁️ ${userCargo} (Apenas visualização)`;
+      badge.classList.remove('editor', 'viewer');
+      badge.classList.add('viewer');
+      badge.style.background = '#fef3c7';
+      badge.style.color = '#b45309';
+    }
   }
 
   if (!window.podeVerTodosPedidos) {
