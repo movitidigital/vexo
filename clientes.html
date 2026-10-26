@@ -1358,7 +1358,6 @@
 <script>
 (function () {
   if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
-  if (window.__vexoPonteClientesInstalada) return;
 
   const MAP = {
     buscarBaseClientes:          { rpc: 'buscar_base_clientes',           args: ()      => ({}) },
@@ -1370,7 +1369,7 @@
     cofreMudarStatus:            { rpc: 'cofre_mudar_status',             args: (id, st, nota) => ({ p_id: id, p_novo_status: st, p_nota: nota || null }) },
     cofreExcluir:                { rpc: 'cofre_excluir',                  args: (id)           => ({ p_id: id }) },
     cofreAlertasPendentes:       { rpc: 'cofre_alertas_pendentes',        args: ()             => ({}) },
-    cofreExcluirLote:            { rpc: 'cofre_excluir_lote',  args: (ids) => ({ p_ids: ids || [] }) },
+    cofreExcluirLote:            { rpc: 'cofre_excluir_lote',             args: (ids) => ({ p_ids: ids || [] }) },
   };
 
   function makeRunner() {
@@ -1398,8 +1397,9 @@
 
   window.google = window.google || {};
   window.google.script = window.google.script || {};
+  
+  // 🔥 CORREÇÃO: Sempre reinstala a ponte e remove a flag de bloqueio
   Object.defineProperty(window.google.script, 'run', { get: () => makeRunner(), configurable: true, enumerable: true });
-  window.__vexoPonteClientesInstalada = true;
   console.log('✅ Ponte Supabase ativa — clientes.html');
 })();
 </script>
