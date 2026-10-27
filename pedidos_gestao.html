@@ -2072,11 +2072,6 @@ function carregarPedidos() {
         window.todosPedidos = pedidosArray;
         todosPedidos = window.todosPedidos;
 
-        if (!window.mostrarConcluidos) {
-          todosPedidos = todosPedidos.filter(p => p.status_etapa < 6);
-          window.todosPedidos = todosPedidos;
-        }
-
         atualizarSelectParceiros();
         aplicarFiltros();
         atualizarKPIs();
@@ -2129,6 +2124,9 @@ function limparModulo() {
     const busca = document.getElementById('filtro-busca').value.toLowerCase();
     
     pedidosFiltrados = todosPedidos.filter(p => {
+      // 🔥 Se não estiver mostrando concluídos E não tiver busca ativa, esconde os concluídos
+      if (!window.mostrarConcluidos && !busca && p.status_etapa === 6) return false;
+      
       if (statusFiltro !== 'todos' && p.status_etapa != statusFiltro) return false;
       if (parceiroFiltro !== 'todos' && p.parceiro_nome !== parceiroFiltro) return false;
       if (busca && !`${p.cliente} ${p.cnpj} ${p.id}`.toLowerCase().includes(busca)) return false;
@@ -2191,7 +2189,7 @@ function renderizarTabela() {
   const podeEditar = (typeof window.userPodeEditar !== 'undefined') ? window.userPodeEditar : userPodeEditar;
   const cargo = (typeof window.userCargo !== 'undefined') ? window.userCargo : userCargo;
   
-  // 🔥 Verifica se o cargo tem permissão global de exclusão (Admin, Backoffice, Gerente)
+  // 🔥 Verifica se o cargo tem permissão global de edição/exclusão (Admin, Backoffice, Gerente)
   const isAdminOuBackoffice = ['ADMINISTRADOR', 'ADMIN', 'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR'].includes(cargo);
   
   tbody.innerHTML = paginados.map(pedido => {
@@ -2226,7 +2224,8 @@ function renderizarTabela() {
       ? podeEditarPedidoComoConsultor(pedido)
       : false;
 
-    const btnEditarConsultorRender = podeEditarConsultor
+    // 🔥 NOVO: Gestão pode editar qualquer pedido, em qualquer etapa
+    const btnEditarRender = (podeEditarConsultor || isAdminOuBackoffice)
       ? `<button class="btn-action btn-edit-consultor"
            data-id-unico="${pedido.id_unico || pedido.linha}"
            data-origem="${pedido.origem}"
@@ -2265,10 +2264,18 @@ function renderizarTabela() {
          </td>
         <td>
           <div class="action-buttons">
+            <!-- Botões de Fluxo (Avançar/Voltar) para Gestão -->
             ${podeEditar ? `
               ${btnVoltarRender}
               ${podeAvancar ? btnAvancarRender : ''}
-            ` : (btnEditarConsultorRender || `<span class="view-only-badge"><i class="fas fa-lock"></i> Apenas visualização</span>`)}
+            ` : ''}
+            
+            <!-- Botão Editar (Consultor Dono ou Gestão) -->
+            ${btnEditarRender}
+            
+            <!-- Badge de Visualização (só se não tiver nenhuma permissão de edição) -->
+            ${(!podeEditar && !btnEditarRender) ? `<span class="view-only-badge"><i class="fas fa-lock"></i> Apenas visualização</span>` : ''}
+            
             <button class="btn-action btn-detail" data-linha="${pedido.linha}" data-id-unico="${pedido.id_unico || ''}" data-origem="${pedido.origem}"><i class="fas fa-eye"></i> Detalhes</button>
             ${podeExcluir ? ` <button class="btn-action btn-delete" data-linha="${pedido.linha}" data-origem="${pedido.origem}" data-id-unico="${pedido.id_unico || ''}"> <i class="fas fa-trash-alt"></i> Excluir </button>` : ''}
           </div>
@@ -3279,11 +3286,6 @@ function carregarPedidosSilenciosamente() {
         
         const novosPedidos = arrayFiltrado;
             
-        if (!mostrarConcluidos) {
-          todosPedidos = novosPedidos.filter(p => p.status_etapa < 6);
-        } else {
-          todosPedidos = novosPedidos;
-        }
         
         // Reaplicar filtros atuais sem recarregar a tabela inteira
         const statusFiltro = document.getElementById('filtro-status').value;
@@ -4347,27 +4349,32 @@ function avancarPedidoParaInput(idUnico, origem, modo) {
   console.log("📌 Modalidade do pedido (primeira):", pedido.modalidade || 'NÃO INFORMADA');
 
   // ============================================
-  // 🔒 VALIDAÇÃO EXTRA: consultor só edita pedido pendente e dele mesmo
+  // 🔒 VALIDAÇÃO: regras para consultor vs gestão
   // ============================================
   if (modoEdicao) {
     const cargo = String(window.userCargo || '').toUpperCase();
     const ehConsultor = (cargo === 'CONSULTOR DE VENDAS' || cargo === 'CONSULTOR');
+    const isGestao = ['ADMINISTRADOR', 'ADMIN', 'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR'].includes(cargo);
     const etapaAtual = Number(pedido.status_etapa);
 
-    if (!ehConsultor) {
-      console.warn('🚫 Modo edição bloqueado: usuário não é Consultor de Vendas');
+    if (!ehConsultor && !isGestao) {
+      console.warn('🚫 Modo edição bloqueado: perfil não autorizado.');
       showToast('Ação não permitida para o seu perfil.', 'error');
       return;
     }
-    if (etapaAtual !== 0) {
-      console.warn('🚫 Modo edição bloqueado: etapa =', etapaAtual);
-      showToast('⚠️ Este pedido já foi iniciado pelo backoffice e não pode mais ser editado.', 'warning');
-      return;
-    }
-    if (typeof usuarioEhDonoDoPedido === 'function' && !usuarioEhDonoDoPedido(pedido)) {
-      console.warn('🚫 Modo edição bloqueado: consultor não é dono do pedido');
-      showToast('Você só pode editar pedidos criados por você.', 'error');
-      return;
+
+    // Se for Consultor (e não for gestão), aplica as travas de segurança
+    if (ehConsultor && !isGestao) {
+      if (etapaAtual !== 0) {
+        console.warn('🚫 Modo edição bloqueado: etapa =', etapaAtual);
+        showToast('⚠️ Este pedido já foi iniciado pelo backoffice e não pode mais ser editado.', 'warning');
+        return;
+      }
+      if (typeof usuarioEhDonoDoPedido === 'function' && !usuarioEhDonoDoPedido(pedido)) {
+        console.warn('🚫 Modo edição bloqueado: consultor não é dono do pedido');
+        showToast('Você só pode editar pedidos criados por você.', 'error');
+        return;
+      }
     }
     console.log('✅ Validações de edição OK — seguindo para o formulário');
   }
@@ -4524,8 +4531,11 @@ function avancarPedidoParaInput(idUnico, origem, modo) {
 
     // 🔥 Flag de modo edição — o vendas.html usa isso para:
     //    - trocar o rótulo do botão para "💾 Salvar Alterações"
-    //    - NÃO avançar o status ao salvar (mantém PENDENTE DE INPUT)
+    //    - NÃO avançar o status ao salvar (mantém o status atual)
     modoEdicao: modoEdicao,
+    
+    // 🔥 NOVO: Passa o status atual para o Vendas saber o que fazer
+    status_atual: pedido.status_raw || 'PENDENTE DE INPUT',
 
     // 🔥 Campos de debug
     _origemDebug: origem,
@@ -4542,6 +4552,7 @@ function avancarPedidoParaInput(idUnico, origem, modo) {
   console.log(`   - modalidades: ${modalidadesList.join(', ')}`);
   console.log(`   - total de linhas: ${linhas.length}`);
   console.log(`   - modoEdicao: ${modoEdicao}`);
+  console.log(`   - status_atual: ${pedidoData.status_atual}`);
 
   // --- 6. Salvar no sessionStorage ---
   try {
@@ -4575,6 +4586,7 @@ function avancarPedidoParaInput(idUnico, origem, modo) {
     console.log(`   - bancoDeDadosId: ${verificar.bancoDeDadosId || 'NULL'}`);
     console.log(`   - modalidades: ${verificar.modalidadesList?.join(', ')}`);
     console.log(`   - modoEdicao: ${verificar.modoEdicao}`);
+    console.log(`   - status_atual: ${verificar.status_atual}`);
   } catch(e) {
     console.warn("⚠️ Não foi possível verificar os dados salvos");
   }
