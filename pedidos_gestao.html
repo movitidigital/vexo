@@ -2042,38 +2042,36 @@ function carregarPedidos() {
     status: document.getElementById('filtro-status')?.value || 'todos',
     parceiro: document.getElementById('filtro-parceiro')?.value || 'todos',
     busca: document.getElementById('filtro-busca')?.value.toLowerCase() || '',
-    mostrarConcluidos: window.mostrarConcluidos,
+    mostrarConcluidos: true, // 🔥 Força o banco a enviar todos para termos o histórico na memória
     cargo: window.userCargo,
     nome: window.userNome,
-    tipoAcesso: window.userTipoAcesso // <-- NOVO
+    tipoAcesso: window.userTipoAcesso
   };
   
   google.script.run
     .withSuccessHandler(function(pedidosArray) {
       if (Array.isArray(pedidosArray)) {
         
-        // 🔥 FILTRO DE SEGURANÇA BLINDADO: Esconde por origem OU por nome do responsável
+        // 🔥 FILTRO DE SEGURANÇA BLINDADO (Mantido)
         if (!window.podeVerTodosPedidos) {
           pedidosArray = pedidosArray.filter(p => {
-            // 1ª checagem: A origem está marcada explicitamente como parceiro?
             const origem = String(p.origem || '').toUpperCase().trim();
             if (origem === 'PARCEIRO') return false; 
 
-            // 2ª checagem: O nome do responsável bate com a lista de parceiros carregada?
             const nomeResp = String(p.responsavel_nome || p.parceiro_nome || p.vendedor || '').trim().toUpperCase();
             if (window.listaNomesParceiros && window.listaNomesParceiros.some(nome => nome && nomeResp.includes(nome))) {
-              return false; // Se o nome estiver na lista de parceiros, esconde!
+              return false;
             }
-
-            return true; // Se passou pelas duas checagens, é interno, então mostra.
+            return true;
           });
         }
 
+        // 🔥 SALVA TODOS NA MEMÓRIA (sem apagar os concluídos)
         window.todosPedidos = pedidosArray;
         todosPedidos = window.todosPedidos;
 
         atualizarSelectParceiros();
-        aplicarFiltros();
+        aplicarFiltros(); // Aplica o filtro visual
         atualizarKPIs();
       } else {
         tbody.innerHTML = '<tr><td colspan="7" class="loading-state"><i class="fas fa-exclamation-triangle"></i> Falha ao carregar</td></tr>';
@@ -2124,7 +2122,7 @@ function limparModulo() {
     const busca = document.getElementById('filtro-busca').value.toLowerCase();
     
     pedidosFiltrados = todosPedidos.filter(p => {
-      // 🔥 Se não estiver mostrando concluídos E não tiver busca ativa, esconde os concluídos
+      // 🔥 REGRA: Se não estiver mostrando concluídos E não tiver busca ativa, esconde os concluídos
       if (!window.mostrarConcluidos && !busca && p.status_etapa === 6) return false;
       
       if (statusFiltro !== 'todos' && p.status_etapa != statusFiltro) return false;
