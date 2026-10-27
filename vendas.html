@@ -559,7 +559,7 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
   // ============================================================
   // GERAR FORMULÁRIO
   // ============================================================
-  window.gerarFormularioVenda = function() {
+window.gerarFormularioVenda = function() {
     const areaVenda = document.getElementById('area_campos_venda');
     if (!areaVenda) return;
 
@@ -573,56 +573,86 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
       return;
     }
 
-    // 🔥 Detecta modo edição (vem do pedidos_gestao.html)
+    // 🔥 Detecta modo edição e o perfil do usuário
     let modoEdicao = false;
+    let statusAtual = 'PENDENTE DE INPUT';
     try {
       const raw = sessionStorage.getItem('pedidoParaInput');
       if (raw) {
         const p = JSON.parse(raw);
         modoEdicao = p.modoEdicao === true;
+        statusAtual = p.status_atual || 'PENDENTE DE INPUT';
       }
     } catch (e) {
       console.warn('⚠️ [gerarFormularioVenda] erro ao detectar modoEdicao:', e);
     }
 
+    const role = (PERFIL_USUARIO?.role || '').toUpperCase();
+    const isGestao = ['BACKOFFICE', 'ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR'].includes(role);
+    
+    // 🔥 A TRAVA SÓ EXISTE SE FOR CONSULTOR EDITANDO
+    const travarCampos = modoEdicao && !isGestao;
+
     areaVenda.style.display = 'block';
     const titulo = selecionadas.join(' | ');
     const eConsultor = (PERFIL_USUARIO?.role === 'CONSULTOR DE VENDAS');
 
-    const mostrarAtribuicaoInput = ['BACKOFFICE', 'ADMINISTRADOR', 'ADMIN'].includes(
-      (PERFIL_USUARIO?.role || '').toUpperCase()
-    );
+    const mostrarAtribuicaoInput = ['BACKOFFICE', 'ADMINISTRADOR', 'ADMIN'].includes(role);
 
+    // 🔥 Rótulos dinâmicos
     let labelBotao = '🚀 Finalizar e Gravar Venda';
-    if (modoEdicao) labelBotao = '💾 Salvar Alterações';
-    else if (mostrarAtribuicaoInput) labelBotao = '🚀 Finalizar Pedido';
+    if (modoEdicao) {
+      labelBotao = isGestao ? '💾 Salvar Correção' : '💾 Salvar Alterações';
+    } else if (mostrarAtribuicaoInput) {
+      labelBotao = '🚀 Finalizar Pedido';
+    }
 
-    const readonlyAttr  = modoEdicao ? 'readonly' : '';
-    const readonlyStyle = modoEdicao ? 'background:#f1f5f9; cursor:not-allowed; color:#64748b;' : '';
-    const lockIconData  = modoEdicao ? ' <span style="color:#dc2626;" title="Bloqueado (faz parte da identidade do pedido)">🔒</span>' : '';
+    const readonlyAttr  = travarCampos ? 'readonly' : '';
+    const readonlyStyle = travarCampos ? 'background:#f1f5f9; cursor:not-allowed; color:#64748b;' : '';
+    const lockIconData  = travarCampos ? ' <span style="color:#dc2626;" title="Bloqueado (faz parte da identidade do pedido)">🔒</span>' : '';
 
-    const bannerEdicao = modoEdicao ? `
-      <div style="background:#fff7ed; border:2px solid #f59e0b; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:flex-start; gap:12px;">
-        <span style="font-size:24px; line-height:1;">✏️</span>
-        <div>
-          <div style="font-weight:800; color:#b45309; font-size:14px;">Editando Pedido Existente</div>
-          <div style="font-size:12px; color:#92400e; margin-top:4px; line-height:1.5;">
-            A <strong>Data da Venda</strong> está bloqueada (faz parte da identidade do pedido).
-            O <strong>CNPJ</strong> pode ser corrigido se você digitou errado — o sistema atualiza o pedido para o novo CNPJ.
-            O pedido continuará como <strong>Pendente de Input</strong> até o backoffice iniciar o fluxo.
+    // 🔥 BANNER DINÂMICO (Aviso diferente para Gestão e Consultor)
+    let bannerEdicao = '';
+    if (modoEdicao) {
+      if (isGestao) {
+        bannerEdicao = `
+          <div style="background:#eff6ff; border:2px solid #3b82f6; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:flex-start; gap:12px;">
+            <span style="font-size:24px; line-height:1;">🛠️</span>
+            <div>
+              <div style="font-weight:800; color:#1e40af; font-size:14px;">Modo de Correção (Gestão)</div>
+              <div style="font-size:12px; color:#1e3a8a; margin-top:4px; line-height:1.5;">
+                Você está corrigindo um pedido no status <b>${statusAtual}</b>. 
+                Todos os campos, incluindo <b>CNPJ e Data da Venda</b>, estão liberados para edição.
+                <br>Ao salvar, o pedido <b>manterá o status atual</b> e não voltará para a esteira.
+              </div>
+            </div>
           </div>
-        </div>
-      </div>
-    ` : '';
+        `;
+      } else {
+        bannerEdicao = `
+          <div style="background:#fff7ed; border:2px solid #f59e0b; border-radius:10px; padding:14px 18px; margin-bottom:20px; display:flex; align-items:flex-start; gap:12px;">
+            <span style="font-size:24px; line-height:1;">✏️</span>
+            <div>
+              <div style="font-weight:800; color:#b45309; font-size:14px;">Editando Pedido Pendente</div>
+              <div style="font-size:12px; color:#92400e; margin-top:4px; line-height:1.5;">
+                A <strong>Data da Venda</strong> está bloqueada (faz parte da identidade do pedido).
+                O <strong>CNPJ</strong> pode ser corrigido se você digitou errado.
+                O pedido continuará como <strong>Pendente de Input</strong> até o backoffice iniciar o fluxo.
+              </div>
+            </div>
+          </div>
+        `;
+      }
+    }
 
-    const corBorda = modoEdicao ? '#f59e0b' : '#1e3c72';
-    const corTitulo = modoEdicao ? '#b45309' : '#1e3c72';
+    const corBorda = modoEdicao ? (isGestao ? '#3b82f6' : '#f59e0b') : '#1e3c72';
+    const corTitulo = modoEdicao ? (isGestao ? '#1e40af' : '#b45309') : '#1e3c72';
 
     let html = `
       <div style="background:#fff; border:2px solid ${corBorda}; border-radius:15px; padding:25px;">
         ${bannerEdicao}
         <h3 style="color:${corTitulo}; margin-top:0; font-weight:800;">
-          ${modoEdicao ? '✏️ Editando Contrato' : '📋 Dados do Contrato'}: ${titulo}
+          ${modoEdicao ? (isGestao ? '🛠️ Corrigindo Contrato' : '✏️ Editando Contrato') : '📋 Dados do Contrato'}: ${titulo}
         </h3>
 
         <datalist id="lista-planos-vexo">
@@ -653,8 +683,8 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
 
         <div style="display:grid; grid-template-columns:1.2fr 1.2fr 2fr; gap:15px; margin-bottom:20px;">
           <div>
-            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">CNPJ / CPF</label>
-            <input type="text" id="v_cnpj" onblur="window._buscarCNPJ(this.value)" class="v-input" placeholder="Digite o CNPJ correto">
+            <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">CNPJ / CPF ${lockIconData}</label>
+            <input type="text" id="v_cnpj" onblur="window._buscarCNPJ(this.value)" class="v-input" ${readonlyAttr} style="${readonlyStyle}" placeholder="Digite o CNPJ correto">
           </div>
           <div>
             <label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">INSCRIÇÃO ESTADUAL</label>
@@ -690,7 +720,6 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
               + Adicionar linha
             </button>
           </div>
-          <!-- 🔥 Adicionado data-modalidade para facilitar a restauração -->
           <div id="box-linhas-${modID}" data-modalidade="${modalidade}" style="display:flex; flex-direction:column; gap:10px;"></div>
         </div>
       `;
@@ -724,7 +753,7 @@ window.preCarregarPedidoParaInput = preCarregarPedidoParaInput;
         ` : ''}
 
         <button type="button" id="btn_finalizar"
-                style="margin-top:10px; width:100%; padding:18px; background:${modoEdicao ? '#f59e0b' : '#1e3c72'}; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; font-size:16px;">
+                style="margin-top:10px; width:100%; padding:18px; background:${modoEdicao ? (isGestao ? '#3b82f6' : '#f59e0b') : '#1e3c72'}; color:white; border:none; border-radius:10px; font-weight:bold; cursor:pointer; font-size:16px;">
           ${labelBotao}
         </button>
       </div>
@@ -1220,9 +1249,12 @@ async function _finalizarPedidoExistente(pedido) {
   }
   window._finalizandoPedido = true;
 
-  // 🔥 NOVO — Detecta modo edição (consultor editando pedido próprio)
+  // 🔥 Detecta modo edição e perfil do usuário
   const modoEdicao = pedido.modoEdicao === true;
-  console.log(`🎯 [FINALIZAR PEDIDO EXISTENTE] modoEdicao=${modoEdicao}`);
+  const cargo = (PERFIL_USUARIO?.role || '').toUpperCase();
+  const isGestao = ['BACKOFFICE', 'ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR'].includes(cargo);
+  
+  console.log(`🎯 [FINALIZAR PEDIDO EXISTENTE] modoEdicao=${modoEdicao} | isGestao=${isGestao}`);
 
   try {
     const linhas = _coletarLinhasDoFormulario();
@@ -1233,11 +1265,12 @@ async function _finalizarPedidoExistente(pedido) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // VALIDAÇÃO — leve para consultor, completa para backoffice
+    // VALIDAÇÃO — leve para edição (consultor e gestão), completa para novo input (gestão)
     // ═══════════════════════════════════════════════════════
     let faltando = [];
 
     if (modoEdicao) {
+      // Validação leve (tanto para consultor quanto para gestão, já que estão corrigindo dados)
       const semPlano = linhas.filter(l => !l.plano);
       if (semPlano.length > 0) faltando.push('Todas as linhas precisam ter plano');
 
@@ -1247,6 +1280,7 @@ async function _finalizarPedidoExistente(pedido) {
         faltando.push('Número obrigatório em MIGRAÇÃO / PORTABILIDADE / RENEG.');
       }
     } else {
+      // Validação completa para quando o Backoffice está fazendo um INPUT novo
       faltando = _validarInputBackofficeCompleto(linhas);
     }
 
@@ -1270,9 +1304,7 @@ async function _finalizarPedidoExistente(pedido) {
     const TENANT = 'f9cca67a-41f8-4ad7-a119-74bc58018dee';
 
     // ═══════════════════════════════════════════════════════
-    // 🔥 SEPARAR CNPJ ORIGINAL × CNPJ NOVO (editável em modo consultor)
-    //    - cnpjOriginal: vem do pedido/id_unico → usado em SELECT e DELETE
-    //    - cnpjNovo:     vem do formulário  → usado apenas no INSERT
+    // SEPARAR CNPJ ORIGINAL × CNPJ NOVO
     // ═══════════════════════════════════════════════════════
     const cnpjNovo = String(campos.cnpj || '').trim();
 
@@ -1289,7 +1321,6 @@ async function _finalizarPedidoExistente(pedido) {
       throw new Error('⚠️ CNPJ é obrigatório.');
     }
 
-    // ... resto igual (data original, modalidades)
     let dataOriginal = '';
     if (pedido.id_unico && pedido.id_unico.includes('|')) {
       dataOriginal = pedido.id_unico.split('|')[1] || '';
@@ -1325,8 +1356,7 @@ async function _finalizarPedidoExistente(pedido) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // 🔥 VALIDAÇÃO EXTRA — se o CNPJ mudou, verifica se o CNPJ novo
-    //    já tem pedido para a mesma data (evita duplicar / sobrescrever)
+    // 🔥 VALIDAÇÃO EXTRA: Conflito de CNPJ (só se mudou)
     // ═══════════════════════════════════════════════════════
     if (cnpjMudou) {
       console.log(`🔍 Verificando conflito: CNPJ ${cnpjNovo} já tem pedido em ${dataOriginal}?`);
@@ -1356,16 +1386,15 @@ async function _finalizarPedidoExistente(pedido) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // DEFESA EM PROFUNDIDADE — em modo edição, revalida no banco
-    // se o backoffice já capturou o pedido (usa CNPJ ORIGINAL)
+    // 🛡️ DEFESA EM PROFUNDIDADE: Bloqueio de edição (SÓ PARA CONSULTOR)
     // ═══════════════════════════════════════════════════════
-    if (modoEdicao) {
+    if (modoEdicao && !isGestao) {
       try {
         const { data: linhasAtuais, error: errCheck } = await sb
           .from('VENDAS')
           .select('status_do_pedido')
           .eq('tenant_id', TENANT)
-          .eq('cnpj', cnpjOriginal)   // 🔥 original
+          .eq('cnpj', cnpjOriginal)
           .eq('data_da_venda', dataOriginal);
 
         if (errCheck) throw errCheck;
@@ -1389,7 +1418,7 @@ async function _finalizarPedidoExistente(pedido) {
     }
 
     // ═══════════════════════════════════════════════════════
-    // Preservar o consultor ORIGINAL (usa CNPJ ORIGINAL)
+    // Preservar o consultor ORIGINAL
     // ═══════════════════════════════════════════════════════
     let consultorOriginal = null;
     try {
@@ -1397,7 +1426,7 @@ async function _finalizarPedidoExistente(pedido) {
         .from('VENDAS')
         .select('consultor_que_vendeu')
         .eq('tenant_id', TENANT)
-        .eq('cnpj', cnpjOriginal)   // 🔥 original
+        .eq('cnpj', cnpjOriginal)
         .eq('data_da_venda', dataOriginal)
         .not('consultor_que_vendeu', 'is', null)
         .limit(10);
@@ -1417,26 +1446,52 @@ async function _finalizarPedidoExistente(pedido) {
       || PERFIL_USUARIO.email;
 
     console.log(`👤 Consultor que vendeu (PRESERVADO): ${nomeConsultor}`);
-    console.log(`📋 Consultor do input: ${campos.consultor_do_input_no_easy_vendas || 'NULL'}`);
 
     // ═══════════════════════════════════════════════════════
-    // Status de gravação — muda conforme o modo
+    // 🛡️ RESGATAR DADOS DO RADAR/BOC PARA NÃO PERDER NA EDIÇÃO
     // ═══════════════════════════════════════════════════════
-    const novoStatusGravado = modoEdicao ? 'PENDENTE DE INPUT' : '1. INPUT REALIZADO';
+    let originalDataRadar = null;
+    let originalBocData = null;
+    if (modoEdicao) {
+      try {
+        const { data: orig } = await sb.from('VENDAS')
+          .select('data_de_ativacao_no_radar, validacao_boc_vendas_aprovado')
+          .eq('tenant_id', TENANT)
+          .eq('cnpj', cnpjOriginal)
+          .eq('data_da_venda', dataOriginal)
+          .limit(1);
+        if (orig && orig.length > 0) {
+          originalDataRadar = orig[0].data_de_ativacao_no_radar;
+          originalBocData = orig[0].validacao_boc_vendas_aprovado;
+        }
+      } catch (e) { }
+    }
+
+    // ═══════════════════════════════════════════════════════
+    // Status de gravação — mantém o atual se for edição
+    // ═══════════════════════════════════════════════════════
+    const statusAnterior = pedido.status_atual || 'PENDENTE DE INPUT';
+    const novoStatusGravado = modoEdicao ? statusAnterior : '1. INPUT REALIZADO';
     console.log(`📌 Status que será gravado: "${novoStatusGravado}"`);
 
     let totalLinhasGravadas = 0;
 
     for (const modalidade of todasModalidades) {
-      // 🔥 DELETE usa CNPJ ORIGINAL (é o registro antigo que precisa sair)
-      const { error: errDel } = await sb
+      // 🔥 DELETE (Comportamento diferente para Gestão)
+      let deleteQuery = sb
         .from('VENDAS')
         .delete()
         .eq('tenant_id', TENANT)
-        .eq('cnpj', cnpjOriginal)   // 🔥 original
+        .eq('cnpj', cnpjOriginal)
         .eq('data_da_venda', dataOriginal)
-        .eq('modalidade', modalidade)
-        .eq('status_do_pedido', 'PENDENTE DE INPUT');
+        .eq('modalidade', modalidade);
+
+      // Se NÃO for gestão, só pode apagar o que está PENDENTE (regra de segurança)
+      if (!isGestao) {
+        deleteQuery = deleteQuery.eq('status_do_pedido', 'PENDENTE DE INPUT');
+      }
+
+      const { error: errDel } = await deleteQuery;
 
       if (errDel) {
         console.warn('⚠️ Erro ao deletar linhas antigas de', modalidade, errDel);
@@ -1447,9 +1502,9 @@ async function _finalizarPedidoExistente(pedido) {
       const linhasMod = linhas.filter(l => l.modalidade === modalidade);
       if (linhasMod.length === 0) continue;
 
-      // 🔥 INSERT usa CNPJ NOVO (vem de ...campos)
+      // 🔥 INSERT usa CNPJ NOVO e resgata as datas
       const registros = linhasMod.map(l => ({
-        ...campos,   // campos.cnpj = cnpjNovo ✓
+        ...campos,
         modalidade:                l.modalidade,
         plano:                     l.plano,
         numero_da_linha:           l.numero,
@@ -1457,6 +1512,8 @@ async function _finalizarPedidoExistente(pedido) {
         operadora_doadora:         l.operadora || null,
         consultor_que_vendeu:      nomeConsultor,
         status_do_pedido:          novoStatusGravado,
+        data_de_ativacao_no_radar: originalDataRadar, // 🔥 Preserva a data original
+        validacao_boc_vendas_aprovado: originalBocData, // 🔥 Preserva o BOC
         ativacao_em_sistema_tim:   null,
         tenant_id:                 TENANT
       }));
@@ -1465,19 +1522,19 @@ async function _finalizarPedidoExistente(pedido) {
       if (errIns) throw errIns;
 
       totalLinhasGravadas += registros.length;
-      console.log(`   ✅ ${registros.length} linha(s) gravada(s) em "${modalidade}"${cnpjMudou ? ` com CNPJ novo ${cnpjNovo}` : ''}`);
+      console.log(`   ✅ ${registros.length} linha(s) gravada(s) em "${modalidade}"`);
     }
 
     _limparPedidoPendente();
 
     // ═══════════════════════════════════════════════════════
-    // Toast final adaptado ao modo (e ao CNPJ alterado)
+    // Toast final adaptado
     // ═══════════════════════════════════════════════════════
     let mensagem = '';
     if (modoEdicao) {
-      mensagem = `✅ Alterações salvas! ${totalLinhasGravadas} linha(s) atualizada(s).`;
+      mensagem = `✅ Correções salvas! ${totalLinhasGravadas} linha(s) atualizada(s).`;
       if (cnpjMudou) {
-        mensagem = `✅ Alterações salvas! ${totalLinhasGravadas} linha(s) movida(s) para o CNPJ ${cnpjNovo}.`;
+        mensagem = `✅ Correções salvas! ${totalLinhasGravadas} linha(s) movida(s) para o CNPJ ${cnpjNovo}.`;
       }
     } else {
       mensagem = `✅ Pedido finalizado! ${totalLinhasGravadas} linha(s) atualizada(s).`;
