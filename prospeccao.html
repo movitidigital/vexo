@@ -1996,25 +1996,30 @@ async function carregarMeuFunil() {
 
         contadores[etapaLower]++;
         
-        // Soma o valor da oportunidade para o KPI
         const valorLead = Number(lead.valor_oportunidade) || 0;
         valores[etapaLower] += valorLead;
 
         const dias = Number(lead.dias_parado) || 0;
         const eNegligenciado = dias >= 7; 
 
-        // 🔥 BADGE DO CONSULTOR (Usando o campo captacao_do_lead do seu banco)
+        // 🔥 CORREÇÃO DO NOME: Pega o Nome + Inicial do Sobrenome
         let badgeConsultor = '';
         if (temVisaoEquipe && lead.captacao_do_lead) {
           const cor = coresBadge[index % coresBadge.length];
-          // Pega apenas o primeiro nome para não quebrar o layout
-          const primeiroNome = lead.captacao_do_lead.split(' ')[0];
-          badgeConsultor = `<div style="margin-top: 6px; font-size: 9px; font-weight: 800; color: ${cor}; background: ${cor}15; padding: 3px 8px; border-radius: 4px; display: inline-block;">👤 ${primeiroNome}</div>`;
+          const partesNome = lead.captacao_do_lead.trim().split(/\s+/);
+          let nomeExibicao = partesNome[0];
+          // Se tiver sobrenome, adiciona a inicial (Ex: Maria S.)
+          if (partesNome.length > 1) {
+            nomeExibicao += ` ${partesNome[partesNome.length - 1].charAt(0)}.`;
+          }
+          badgeConsultor = `<div style="margin-top: 6px; font-size: 9px; font-weight: 800; color: ${cor}; background: ${cor}15; padding: 3px 8px; border-radius: 4px; display: inline-block; white-space: nowrap;">👤 ${nomeExibicao}</div>`;
         }
 
         const card = document.createElement('div');
         card.className = `card-lead-min ${eNegligenciado ? 'card-negligenciado' : ''}`;
         card.id = `card-${lead.id}`;
+        
+        // 🔥 CORREÇÃO DO DRAG: Mantém o draggable, mas deixa o evento global cuidar do resto
         card.setAttribute('draggable', 'true');
         
         card.innerHTML = `
@@ -2044,20 +2049,16 @@ async function carregarMeuFunil() {
           </div>
         `;
 
+        // Evento de clique
         card.addEventListener('click', (e) => {
           if (e.target.tagName !== 'SELECT') abrirModalUnificado(lead.id);
         });
 
+        // Evento do Select
+        card.querySelector('.kanban-select').addEventListener('click', (e) => e.stopPropagation());
         card.querySelector('.kanban-select').addEventListener('change', (e) => {
           atualizarStatusLeadSemRefresh(lead.id, e.target.value, card);
         });
-
-        // Reativa o drag and drop nativo
-        card.addEventListener('dragstart', (e) => {
-          e.dataTransfer.setData('text/plain', lead.id);
-          card.classList.add('dragging');
-        });
-        card.addEventListener('dragend', () => card.classList.remove('dragging'));
 
         targetDiv.appendChild(card);
       });
@@ -2079,7 +2080,10 @@ async function carregarMeuFunil() {
         }
       });
 
-      configurarDragDrop();
+      // Reativa as configurações do seu código original
+      if (typeof configurarDragDrop === 'function') configurarDragDrop();
+      if (typeof atualizarContadoresSimples === 'function') atualizarContadoresSimples();
+      
     })
     .withFailureHandler((err) => {
       notificar('Erro ao carregar Kanban: ' + err, 'erro');
