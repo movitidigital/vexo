@@ -2025,6 +2025,13 @@ async function carregarMeuFunil() {
         }
 
         const card = document.createElement('div');
+		
+		        const card = document.createElement('div');
+        // 🔥 ADICIONE ESTA LINHA AQUI:
+        if (lead.captacao_do_lead) card.setAttribute('data-consultor', lead.captacao_do_lead.toLowerCase());
+        
+        card.className = `card-lead-min ${eNegligenciado ? 'card-negligenciado' : ''}`;
+		
         // 🔥 CORRIGIDO O ERRO DE DIGITAÇÃO AQUI (neglig enciado -> negligenciado)
         card.className = `card-lead-min ${eNegligenciado ? 'card-negligenciado' : ''}`;
         card.id = `card-${lead.id}`;
@@ -6665,25 +6672,30 @@ function fecharPainelProdutividade() {
   modal.style.opacity = '0';
   setTimeout(() => { modal.style.display = 'none'; }, 300);
 }
-  function filtrarKanbanVisual() {
+function filtrarKanbanVisual() {
   const termo = document.getElementById('filtro-busca-kanban').value.toLowerCase();
-  const consultor = document.getElementById('filtro-consultor-kanban').value;
+  const consultor = document.getElementById('filtro-consultor-kanban').value.toLowerCase();
   const apenasAtrasados = document.getElementById('filtro-atrasados').checked;
 
-  document.querySelectorAll('.col-k .k-body .card-lead-min').forEach(card => {
+  // Pega todos os cards de uma vez para otimizar a performance
+  const cards = document.querySelectorAll('.col-k .k-body .card-lead-min');
+
+  cards.forEach(card => {
     const titulo = card.querySelector('.card-title').innerText.toLowerCase();
-    const badgeConsultor = card.querySelector('.card-header div:last-child'); // Div do nome do consultor
-    const nomeConsultor = badgeConsultor ? badgeConsultor.innerText.toLowerCase() : '';
     
-    // Verifica se o card tem a badge de atrasado
+    // 🔥 Agora lê o nome exato direto do atributo data-consultor
+    const nomeConsultor = card.getAttribute('data-consultor') || '';
+    
+    // Verifica se tem o texto de atraso no card
     const isAtrasado = card.innerHTML.includes('⏰ ATRASADO');
 
     let mostrar = true;
 
     if (termo && !titulo.includes(termo)) mostrar = false;
-    if (consultor && !nomeConsultor.includes(consultor.toLowerCase())) mostrar = false;
+    if (consultor && nomeConsultor !== consultor) mostrar = false;
     if (apenasAtrasados && !isAtrasado) mostrar = false;
 
+    // Aplica o display (block se mostrar, none se esconder)
     card.style.display = mostrar ? 'block' : 'none';
   });
 }
