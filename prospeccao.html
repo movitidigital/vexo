@@ -1708,61 +1708,6 @@ function dropHandler(e) {
     .atualizarStatusLeadPlanilha(idLead, novaEtapa);
 }
 
-// ============================================
-// INÍCIO DO ARRASTO
-// ============================================
-function handleDragStart(e) {
-  const card = e.target.closest('.card-lead-min');
-  if (!card) {
-    e.preventDefault();
-    return false;
-  }
-  
-  const idLead = card.id.replace('card-', '');
-  console.log(`🟢 Arrastando lead: ${idLead}`);
-  
-  e.dataTransfer.setData('text/plain', idLead);
-  e.dataTransfer.effectAllowed = 'move';
-  card.classList.add('dragging');
-  card.style.opacity = '0.5';
-  
-  return true;
-}
-
-// ============================================
-// FIM DO ARRASTO
-// ============================================
-function handleDragEnd(e) {
-  const card = e.target.closest('.card-lead-min');
-  if (card) {
-    card.classList.remove('dragging');
-    card.style.opacity = '';
-  }
-  
-  // Remove destaque das colunas
-  document.querySelectorAll('.col-k .k-body').forEach(col => {
-    col.classList.remove('drag-over');
-    col.style.backgroundColor = '';
-    col.style.border = '';
-  });
-  
-  console.log("🔴 Fim do arrasto");
-}
-
-// ============================================
-// PERMITIR SOLTAR (DRAG OVER)
-// ============================================
-function handleDragOver(e) {
-  e.preventDefault(); // 🔥 ESSENCIAL
-  e.dataTransfer.dropEffect = 'move';
-  
-  const coluna = e.target.closest('.k-body');
-  if (coluna) {
-    coluna.classList.add('drag-over');
-    coluna.style.backgroundColor = '#fef3c7';
-    coluna.style.border = '2px dashed #e65100';
-  }
-}
 
 // ============================================
 // SOLTAR O CARD (DROP)
@@ -1874,16 +1819,6 @@ function recarregarDragDrop() {
     console.log("🔄 Drag & Drop reconectado");
   }, 200);
 }
-
-
-
-// Handler para dragleave
-function handleDragLeave(e) {
-  const coluna = e.target.closest('.k-body');
-  if (coluna) coluna.classList.remove('drag-over');
-}
-
-
 
 
 
@@ -2018,9 +1953,16 @@ async function carregarMeuFunil() {
           </div>
         `;
 
-        // Evento de clique
+        // Evento de clique (com verificação para não abrir o modal se estiver arrastando)
+        let isDragging = false;
+        card.addEventListener('mousedown', () => isDragging = false);
+        card.addEventListener('mousemove', () => isDragging = true);
+        
         card.addEventListener('click', (e) => {
-          if (e.target.tagName !== 'SELECT') abrirModalUnificado(lead.id);
+          if (isDragging) return; // Ignora o clique se moveu o mouse (arrastou)
+          if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'OPTION') {
+            abrirModalUnificado(lead.id);
+          }
         });
 
         // Evento do Select
@@ -3432,107 +3374,6 @@ function moverCardParaTopo(card, colunaDestino) {
   return true;
 }
 
-// Configuração única (nunca precisa ser chamada novamente)
-(function initDragDrop() {
-  // Garante que os cards sejam arrastáveis
-  document.body.addEventListener('dragstart', function(e) {
-    const card = e.target.closest('.card-lead-min');
-    if (!card) return;
-    const idLead = card.id.replace('card-', '');
-    e.dataTransfer.setData('text/plain', idLead);
-    e.dataTransfer.effectAllowed = 'move';
-    card.classList.add('dragging');
-    card.style.opacity = '0.5';
-  });
-
-  document.body.addEventListener('dragend', function(e) {
-    const card = e.target.closest('.card-lead-min');
-    if (card) {
-      card.classList.remove('dragging');
-      card.style.opacity = '';
-    }
-    document.querySelectorAll('.col-k .k-body').forEach(col => {
-      col.classList.remove('drag-over');
-      col.style.backgroundColor = '';
-      col.style.border = '';
-    });
-  });
-
-  document.body.addEventListener('dragover', function(e) {
-    const coluna = e.target.closest('.k-body');
-    if (coluna) {
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      if (!coluna.classList.contains('drag-over')) {
-        coluna.classList.add('drag-over');
-        coluna.style.backgroundColor = '#fef3c7';
-        coluna.style.border = '2px dashed #e65100';
-      }
-    }
-  });
-
-  document.body.addEventListener('dragleave', function(e) {
-    const coluna = e.target.closest('.k-body');
-    if (coluna) {
-      coluna.classList.remove('drag-over');
-      coluna.style.backgroundColor = '';
-      coluna.style.border = '';
-    }
-  });
-
-  document.body.addEventListener('drop', function(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    
-    const coluna = e.target.closest('.k-body');
-    if (!coluna) return;
-    
-    coluna.classList.remove('drag-over');
-    coluna.style.backgroundColor = '';
-    coluna.style.border = '';
-    
-    const idLead = e.dataTransfer.getData('text/plain');
-    if (!idLead) return;
-    
-    const card = document.getElementById('card-' + idLead);
-    if (!card) return;
-    
-    // Determina a nova etapa
-    const colunaPai = coluna.parentElement;
-    let novaEtapa = '';
-    if (colunaPai.id === 'k_oportunidade') novaEtapa = "OPORTUNIDADE";
-    else if (colunaPai.id === 'k_contato') novaEtapa = "CONTATO";
-    else if (colunaPai.id === 'k_apresentacao') novaEtapa = "APRESENTACAO";
-    else if (colunaPai.id === 'k_negociacao') novaEtapa = "NEGOCIACAO";
-    else if (colunaPai.id === 'k_fechado') novaEtapa = "FECHADO";
-    else return;
-    
-    // Se já está na mesma coluna, não faz nada
-    if (card.parentElement === coluna) return;
-    
-    // 🔥 MOVE PARA O TOPO
-    moverCardParaTopo(card, coluna);
-    
-    // Atualiza o select visual
-    const selectEl = card.querySelector('.kanban-select');
-    if (selectEl) selectEl.value = novaEtapa;
-    
-    // Atualiza contadores
-    atualizarContadoresSimples();
-    
-    // Salva no backend
-    google.script.run
-      .withSuccessHandler(function(res) {
-        if (res && res.success) {
-          notificar(`Lead movido para ${novaEtapa}`, "sucesso");
-        } else {
-          carregarMeuFunil();
-        }
-      })
-      .withFailureHandler(() => carregarMeuFunil())
-      .atualizarStatusLeadPlanilha(idLead, novaEtapa);
-  });
-})();
 // Função para carregar APENAS o histórico (sem recarregar o modal inteiro)
 function carregarApenasHistorico(idLead) {
   google.script.run
@@ -6442,57 +6283,60 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
-
-  // ============================================================
-// 🚀 DRAG & DROP DEFINITIVO E BLINDADO (VEXO)
 // ============================================================
-document.body.addEventListener('dragstart', function(e) {
+// 🚀 DRAG & DROP DEFINITIVO VEXO (CORRIGIDO E SEM CONFLITOS)
+// ============================================================
+let _draggedCardId = null;
+
+// 1. INICIAR O ARRASTO (Apenas nos Cards)
+document.addEventListener('dragstart', function(e) {
   const card = e.target.closest('.card-lead-min');
   if (!card) return;
   
-  // Evita conflito se o usuário tentar arrastar clicando no select
+  // Evita que clicar no select inicie um arrasto
   if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') {
     e.preventDefault();
     return;
   }
 
-  const idLead = card.id.replace('card-', '');
-  e.dataTransfer.setData('text/plain', idLead);
+  _draggedCardId = card.id.replace('card-', '');
+  e.dataTransfer.setData('text/plain', _draggedCardId);
   e.dataTransfer.effectAllowed = 'move';
-  card.classList.add('dragging');
-  card.style.opacity = '0.5';
+  
+  // Adiciona classe visual
+  setTimeout(() => card.classList.add('dragging'), 0);
 });
 
-document.body.addEventListener('dragend', function(e) {
+// 2. FINALIZAR O ARRASTO (Limpar visual)
+document.addEventListener('dragend', function(e) {
   const card = e.target.closest('.card-lead-min');
-  if (card) {
-    card.classList.remove('dragging');
-    card.style.opacity = '';
-  }
-  // Limpa o visual de todas as colunas
-  document.querySelectorAll('.col-k .k-body').forEach(col => {
+  if (card) card.classList.remove('dragging');
+  
+  _draggedCardId = null;
+  document.querySelectorAll('.k-body').forEach(col => {
     col.classList.remove('drag-over');
     col.style.backgroundColor = '';
     col.style.border = '';
   });
 });
 
-document.body.addEventListener('dragover', function(e) {
+// 3. PERMITIR O DROP E DAR FEEDBACK VISUAL (Apenas nas colunas)
+document.addEventListener('dragover', function(e) {
   const coluna = e.target.closest('.k-body');
-  if (coluna) {
-    e.preventDefault(); // 🔥 OBRIGATÓRIO: Permite o drop
-    e.dataTransfer.dropEffect = 'move';
-    
-    // Efeito visual na coluna
-    if (!coluna.classList.contains('drag-over')) {
-      coluna.classList.add('drag-over');
-      coluna.style.backgroundColor = '#f8fafc';
-      coluna.style.border = '2px dashed #94a3b8';
-    }
+  if (!coluna) return; // Se não for coluna, ignora
+
+  e.preventDefault(); // Essencial para permitir o drop
+  e.dataTransfer.dropEffect = 'move';
+
+  if (!coluna.classList.contains('drag-over')) {
+    coluna.classList.add('drag-over');
+    coluna.style.backgroundColor = '#fef3c7'; // Amarelo claro
+    coluna.style.border = '2px dashed #e65100'; // Borda laranja
   }
 });
 
-document.body.addEventListener('dragleave', function(e) {
+// 4. REMOVER O FEEDBACK VISUAL AO SAIR DA COLUNA
+document.addEventListener('dragleave', function(e) {
   const coluna = e.target.closest('.k-body');
   if (coluna) {
     coluna.classList.remove('drag-over');
@@ -6501,47 +6345,51 @@ document.body.addEventListener('dragleave', function(e) {
   }
 });
 
-document.body.addEventListener('drop', function(e) {
-  e.preventDefault();
-  e.stopPropagation();
-  
+// 5. EXECUTAR O DROP
+document.addEventListener('drop', function(e) {
   const coluna = e.target.closest('.k-body');
   if (!coluna) return;
-  
+
+  e.preventDefault();
+  e.stopPropagation();
+
+  // Limpa visual
   coluna.classList.remove('drag-over');
   coluna.style.backgroundColor = '';
   coluna.style.border = '';
-  
+
   const idLead = e.dataTransfer.getData('text/plain');
   if (!idLead) return;
-  
+
   const card = document.getElementById('card-' + idLead);
   if (!card) return;
+
+  // Descobre a coluna de destino
+  const colunaPai = coluna.closest('.col-k');
+  if (!colunaPai) return;
   
-  // Descobre a nova etapa
-  const colunaPai = coluna.parentElement;
   let novaEtapa = '';
-  if (colunaPai.id === 'k_oportunidade') novaEtapa = "OPORTUNIDADE";
-  else if (colunaPai.id === 'k_contato') novaEtapa = "CONTATO";
-  else if (colunaPai.id === 'k_apresentacao') novaEtapa = "APRESENTACAO";
-  else if (colunaPai.id === 'k_negociacao') novaEtapa = "NEGOCIACAO";
-  else if (colunaPai.id === 'k_fechado') novaEtapa = "FECHADO";
+  if (colunaPai.id === 'k_oportunidade' || coluna.id === 'k_oportunidade') novaEtapa = "OPORTUNIDADE";
+  else if (colunaPai.id === 'k_contato' || coluna.id === 'k_contato') novaEtapa = "CONTATO";
+  else if (colunaPai.id === 'k_apresentacao' || coluna.id === 'k_apresentacao') novaEtapa = "APRESENTACAO";
+  else if (colunaPai.id === 'k_negociacao' || coluna.id === 'k_negociacao') novaEtapa = "NEGOCIACAO";
+  else if (colunaPai.id === 'k_fechado' || coluna.id === 'k_fechado') novaEtapa = "FECHADO";
   else return;
-  
-  // Se já está na mesma coluna, ignora
+
+  // Se soltou na mesma coluna, não faz nada
   if (card.parentElement === coluna) return;
-  
-  // Move para o topo da coluna
+
+  // Move o card no DOM (para o topo)
   coluna.insertBefore(card, coluna.firstChild);
-  
-  // Atualiza o select para a nova etapa
+
+  // Atualiza o select do card
   const selectEl = card.querySelector('.kanban-select');
   if (selectEl) selectEl.value = novaEtapa;
-  
-  // Atualiza os contadores visuais
+
+  // Atualiza os contadores do topo
   if (typeof atualizarContadoresSimples === 'function') atualizarContadoresSimples();
-  
-  // Salva no banco de dados via Supabase
+
+  // Salva no banco de dados
   google.script.run
     .withSuccessHandler(function(res) {
       if (res && res.success) {
