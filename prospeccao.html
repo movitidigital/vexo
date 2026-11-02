@@ -261,7 +261,7 @@
       <div style="padding: 25px 30px; overflow-y: auto; flex: 1;">
 
         <!-- ========================================================== -->
-        <!-- ABA OPORTUNIDADE (Dados Básicos)                           -->
+        <!-- ABA OPORTUNIDADE (Dados Básicos + Inteligência)            -->
         <!-- ========================================================== -->
         <div id="tab-oportunidade" class="tab-conteudo" style="display: none;">
           <div style="background: #f8fafc; border-radius: 16px; padding: 24px;">
@@ -277,6 +277,29 @@
               <div><label style="font-size: 11px; font-weight: 800; color: #1e3c72;">📞 CONTATO PRINCIPAL</label><p id="oportunidade_contato" style="margin-top: 6px; font-size: 13px;">-</p></div>
               <div><label style="font-size: 11px; font-weight: 800; color: #1e3c72;">📱 CONTATO ALT.</label><p id="oportunidade_contato_alt" style="margin-top: 6px; font-size: 13px;">-</p></div>
               <div style="grid-column: span 3;"><label style="font-size: 11px; font-weight: 800; color: #1e3c72;">📍 LOCALIZAÇÃO</label><p id="oportunidade_endereco" style="margin-top: 6px; font-size: 13px;">-</p></div>
+              
+              <!-- 🔥 NOVOS CAMPOS FINANCEIROS -->
+              <div style="grid-column: span 3; border-top: 1px solid #e2e8f0; margin-top: 10px; padding-top: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: #1e3c72; font-size: 13px; text-transform: uppercase;">💰 Inteligência de Vendas</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 15px;">
+                  
+                  <div>
+                    <label style="font-size: 11px; font-weight: 800; color: #1e3c72;">VALOR DA OPORTUNIDADE (R$)</label>
+                    <input type="number" id="oportunidade_valor" class="v-input" placeholder="0.00" step="0.01" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 6px; font-size: 14px; font-weight: 700; color: #059669;">
+                  </div>
+
+                  <div>
+                    <label style="font-size: 11px; font-weight: 800; color: #1e3c72;">PROBABILIDADE (%)</label>
+                    <input type="number" id="oportunidade_probabilidade" class="v-input" placeholder="0 a 100" min="0" max="100" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 6px; font-size: 14px;">
+                  </div>
+
+                  <div>
+                    <label style="font-size: 11px; font-weight: 800; color: #1e3c72;">PREVISÃO DE FECHAMENTO</label>
+                    <input type="date" id="oportunidade_data_prevista" class="v-input" style="width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #cbd5e1; margin-top: 6px; font-size: 14px;">
+                  </div>
+
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -1261,6 +1284,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
   const MAP = {
     getLeadsDisponiveis:         { rpc: 'leads_disponiveis',         args: () => ({}) },
     getMeusLeadsKanban:          { rpc: 'meus_leads_kanban',         args: (u) => ({ p_usuario: u }), paginate: true },
+    atualizarDadosOportunidade:  { rpc: 'atualizar_dados_oportunidade', args: (id, v, p, d) => ({ p_id: id, p_valor: v, p_probabilidade: p, p_data_prevista: d }) },
     atribuirLead:                { rpc: 'atribuir_lead',             args: (id, _u, st) => ({ p_id: id, p_novo_status: st || 'OPORTUNIDADE' }) },
     atualizarStatusLeadPlanilha: { rpc: 'atualizar_status_lead',     args: (id, st) => ({ p_id: id, p_novo_status: st }) },
     registrarProspeccao:         { rpc: 'registrar_prospeccao',      args: (d) => ({ p_dados: d }) },
@@ -3009,6 +3033,20 @@ function preencherModalComDados(idLead, res) {
   document.getElementById('oportunidade_endereco').innerHTML = res.dados.endereco || '-';
   document.getElementById('oportunidade_admin').innerText = res.dados.admin || '-';
   document.getElementById('oportunidade_data_abertura').innerText = res.dados.dataAbertura || '-';
+
+  // 🔥 NOVOS CAMPOS FINANCEIROS
+  if (document.getElementById('oportunidade_valor')) {
+    document.getElementById('oportunidade_valor').value = res.dados.valor_oportunidade || '';
+  }
+  if (document.getElementById('oportunidade_probabilidade')) {
+    document.getElementById('oportunidade_probabilidade').value = res.dados.probabilidade || '';
+  }
+  if (document.getElementById('oportunidade_data_prevista')) {
+    // Garante que a data venha apenas como YYYY-MM-DD
+    let dataPrev = res.dados.data_prevista_fechamento;
+    if (dataPrev && dataPrev.includes('T')) dataPrev = dataPrev.split('T')[0];
+    document.getElementById('oportunidade_data_prevista').value = dataPrev || '';
+  }
 
   // Preenche histórico
   const historico = res.dados.historico || 'Nenhuma interação registrada.';
