@@ -1604,37 +1604,6 @@ function atualizarStatusLead(idLead, novoStatus) {
     .atualizarStatusLeadPlanilha(idLead, novoStatus);
 }
 
-function configurarDragDrop() {
-  console.log("🎯 Configurando Drag & Drop (Robusto)...");
-  
-  // 1. Garante que todos os cards sejam arrastáveis
-  const cards = document.querySelectorAll('.card-lead-min');
-  cards.forEach(card => {
-    card.setAttribute('draggable', 'true');
-    // Remove listeners antigos para evitar duplicação
-    card.removeEventListener('dragstart', dragStartHandler);
-    card.removeEventListener('dragend', dragEndHandler);
-    // Adiciona novos
-    card.addEventListener('dragstart', dragStartHandler);
-    card.addEventListener('dragend', dragEndHandler);
-  });
-  
-  // 2. Configura as colunas para aceitar drop
-  const colunas = document.querySelectorAll('.col-k .k-body');
-  colunas.forEach(coluna => {
-    // Remove listeners antigos
-    coluna.removeEventListener('dragover', dragOverHandler);
-    coluna.removeEventListener('drop', dropHandler);
-    coluna.removeEventListener('dragleave', dragLeaveHandler);
-    // Adiciona novos
-    coluna.addEventListener('dragover', dragOverHandler);
-    coluna.addEventListener('drop', dropHandler);
-    coluna.addEventListener('dragleave', dragLeaveHandler);
-  });
-  
-  console.log(`✅ Configurado: ${cards.length} cards arrastáveis, ${colunas.length} colunas`);
-}
-
 // Handlers globais para usar com addEventListener/removeEventListener
 function dragStartHandler(e) {
   const card = e.target.closest('.card-lead-min');
@@ -2080,9 +2049,7 @@ async function carregarMeuFunil() {
         }
       });
 
-      // Reativa as configurações do seu código original
-      if (typeof configurarDragDrop === 'function') configurarDragDrop();
-      if (typeof atualizarContadoresSimples === 'function') atualizarContadoresSimples();
+
       
     })
     .withFailureHandler((err) => {
@@ -6474,5 +6441,118 @@ document.addEventListener('keydown', function(e) {
       e.preventDefault();
     }
   }
+});
+
+  // ============================================================
+// 🚀 DRAG & DROP DEFINITIVO E BLINDADO (VEXO)
+// ============================================================
+document.body.addEventListener('dragstart', function(e) {
+  const card = e.target.closest('.card-lead-min');
+  if (!card) return;
+  
+  // Evita conflito se o usuário tentar arrastar clicando no select
+  if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') {
+    e.preventDefault();
+    return;
+  }
+
+  const idLead = card.id.replace('card-', '');
+  e.dataTransfer.setData('text/plain', idLead);
+  e.dataTransfer.effectAllowed = 'move';
+  card.classList.add('dragging');
+  card.style.opacity = '0.5';
+});
+
+document.body.addEventListener('dragend', function(e) {
+  const card = e.target.closest('.card-lead-min');
+  if (card) {
+    card.classList.remove('dragging');
+    card.style.opacity = '';
+  }
+  // Limpa o visual de todas as colunas
+  document.querySelectorAll('.col-k .k-body').forEach(col => {
+    col.classList.remove('drag-over');
+    col.style.backgroundColor = '';
+    col.style.border = '';
+  });
+});
+
+document.body.addEventListener('dragover', function(e) {
+  const coluna = e.target.closest('.k-body');
+  if (coluna) {
+    e.preventDefault(); // 🔥 OBRIGATÓRIO: Permite o drop
+    e.dataTransfer.dropEffect = 'move';
+    
+    // Efeito visual na coluna
+    if (!coluna.classList.contains('drag-over')) {
+      coluna.classList.add('drag-over');
+      coluna.style.backgroundColor = '#f8fafc';
+      coluna.style.border = '2px dashed #94a3b8';
+    }
+  }
+});
+
+document.body.addEventListener('dragleave', function(e) {
+  const coluna = e.target.closest('.k-body');
+  if (coluna) {
+    coluna.classList.remove('drag-over');
+    coluna.style.backgroundColor = '';
+    coluna.style.border = '';
+  }
+});
+
+document.body.addEventListener('drop', function(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  
+  const coluna = e.target.closest('.k-body');
+  if (!coluna) return;
+  
+  coluna.classList.remove('drag-over');
+  coluna.style.backgroundColor = '';
+  coluna.style.border = '';
+  
+  const idLead = e.dataTransfer.getData('text/plain');
+  if (!idLead) return;
+  
+  const card = document.getElementById('card-' + idLead);
+  if (!card) return;
+  
+  // Descobre a nova etapa
+  const colunaPai = coluna.parentElement;
+  let novaEtapa = '';
+  if (colunaPai.id === 'k_oportunidade') novaEtapa = "OPORTUNIDADE";
+  else if (colunaPai.id === 'k_contato') novaEtapa = "CONTATO";
+  else if (colunaPai.id === 'k_apresentacao') novaEtapa = "APRESENTACAO";
+  else if (colunaPai.id === 'k_negociacao') novaEtapa = "NEGOCIACAO";
+  else if (colunaPai.id === 'k_fechado') novaEtapa = "FECHADO";
+  else return;
+  
+  // Se já está na mesma coluna, ignora
+  if (card.parentElement === coluna) return;
+  
+  // Move para o topo da coluna
+  coluna.insertBefore(card, coluna.firstChild);
+  
+  // Atualiza o select para a nova etapa
+  const selectEl = card.querySelector('.kanban-select');
+  if (selectEl) selectEl.value = novaEtapa;
+  
+  // Atualiza os contadores visuais
+  if (typeof atualizarContadoresSimples === 'function') atualizarContadoresSimples();
+  
+  // Salva no banco de dados via Supabase
+  google.script.run
+    .withSuccessHandler(function(res) {
+      if (res && res.success) {
+        notificar(`Lead movido para ${novaEtapa}`, "sucesso");
+      } else {
+        if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
+      }
+    })
+    .withFailureHandler(() => {
+      if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
+    })
+    .atualizarStatusLeadPlanilha(idLead, novaEtapa);
 });
 </script>
