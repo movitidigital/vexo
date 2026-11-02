@@ -1941,14 +1941,12 @@ async function carregarMeuFunil() {
   const isGestaoUser = ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE', 'SUPERVISOR', 'GERENTE/SUPERVISOR'].includes(String(usuarioVexo.role).toUpperCase());
   const temVisaoEquipe = await temAcesso('visaoEquipe') && isGestaoUser;
 
-  // Limpa as colunas
   const colunasIds = ['oportunidade', 'contato', 'apresentacao', 'negociacao', 'fechado'];
   colunasIds.forEach(c => {
     const el = document.getElementById('k_' + c);
     if (el) el.innerHTML = '<div class="kanban-loader">Carregando...</div>';
   });
 
-  // 🔥 USA A FUNÇÃO QUE JÁ EXISTE NO SEU BANCO (Agora atualizada)
   google.script.run
     .withSuccessHandler(async (leadsRaw) => {
       const arrayKanban = Array.isArray(leadsRaw) ? leadsRaw : (leadsRaw?.data || leadsRaw?.dados || []);
@@ -1957,13 +1955,10 @@ async function carregarMeuFunil() {
       
       let contadores = { oportunidade: 0, contato: 0, apresentacao: 0, negociacao: 0, fechado: 0 };
       let valores = { oportunidade: 0, contato: 0, apresentacao: 0, negociacao: 0, fechado: 0 };
-
-      // 🔥 NOVAS VARIÁVEIS DE PREVISÃO (FORECAST)
       let totalComprometido = 0;
       let totalMelhorCaso = 0;
       let totalFrio = 0;
 
-      // Paleta de cores para as badges dos consultores
       const coresBadge = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
 
       arrayKanban.forEach((lead, index) => {
@@ -1983,28 +1978,21 @@ async function carregarMeuFunil() {
         const valorLead = Number(lead.valor_oportunidade) || 0;
         valores[etapaLower] += valorLead;
 
-        // 🔥 CÁLCULO DAS CATEGORIAS DE PREVISÃO
         if (valorLead > 0) {
           const prob = Number(lead.probabilidade) || 0;
-          if (prob >= 70) {
-            totalComprometido += valorLead;
-          } else if (prob >= 30) {
-            totalMelhorCaso += valorLead;
-          } else {
-            totalFrio += valorLead;
-          }
+          if (prob >= 70) totalComprometido += valorLead;
+          else if (prob >= 30) totalMelhorCaso += valorLead;
+          else totalFrio += valorLead;
         }
 
         const dias = Number(lead.dias_parado) || 0;
         const eNegligenciado = dias >= 7; 
 
-        // 🔥 VERIFICA SE O PRAZO ESTÁ ATRASADO
+        // Verifica atraso
         let alertaPrazo = '';
         if (lead.data_prevista && etapaLower !== 'fechado') {
-          // Zera as horas para comparar apenas os dias
           const hoje = new Date(); hoje.setHours(0,0,0,0);
           const dataPrev = new Date(lead.data_prevista + 'T00:00:00');
-          
           if (dataPrev < hoje) {
             const diffTime = Math.abs(hoje - dataPrev);
             const diasAtraso = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -2012,33 +2000,23 @@ async function carregarMeuFunil() {
           }
         }
 
-        // 🔥 CORREÇÃO DO NOME: Pega o Nome + Inicial do Sobrenome
         let badgeConsultor = '';
         if (temVisaoEquipe && lead.captacao_do_lead) {
           const cor = coresBadge[index % coresBadge.length];
           const partesNome = lead.captacao_do_lead.trim().split(/\s+/);
           let nomeExibicao = partesNome[0];
-          if (partesNome.length > 1) {
-            nomeExibicao += ` ${partesNome[partesNome.length - 1].charAt(0)}.`;
-          }
+          if (partesNome.length > 1) nomeExibicao += ` ${partesNome[partesNome.length - 1].charAt(0)}.`;
           badgeConsultor = `<div style="margin-top: 6px; font-size: 9px; font-weight: 800; color: ${cor}; background: ${cor}15; padding: 3px 8px; border-radius: 4px; display: inline-block; white-space: nowrap;">👤 ${nomeExibicao}</div>`;
         }
 
-        const card = document.createElement('div');
-		
-		        const card = document.createElement('div');
-        // 🔥 ADICIONE ESTA LINHA AQUI:
-        if (lead.captacao_do_lead) card.setAttribute('data-consultor', lead.captacao_do_lead.toLowerCase());
+        const cardEl = document.createElement('div');
+        if (lead.captacao_do_lead) cardEl.setAttribute('data-consultor', lead.captacao_do_lead.toLowerCase());
         
-        card.className = `card-lead-min ${eNegligenciado ? 'card-negligenciado' : ''}`;
-		
-        // 🔥 CORRIGIDO O ERRO DE DIGITAÇÃO AQUI (neglig enciado -> negligenciado)
-        card.className = `card-lead-min ${eNegligenciado ? 'card-negligenciado' : ''}`;
-        card.id = `card-${lead.id}`;
+        cardEl.className = `card-lead-min ${eNegligenciado ? 'card-negligenciado' : ''}`;
+        cardEl.id = `card-${lead.id}`;
+        cardEl.setAttribute('draggable', 'true');
         
-        card.setAttribute('draggable', 'true');
-        
-        card.innerHTML = `
+        cardEl.innerHTML = `
           <div class='temp-bar ${dias >= 7 ? 't-frio' : (dias >= 3 ? 't-morno' : 't-quente')}'></div>
           <div class='card-header' style='padding-left: 10px; display:flex; justify-content:space-between; align-items:flex-start;'>
             <div>
@@ -2068,32 +2046,28 @@ async function carregarMeuFunil() {
           </div>
         `;
 
-        // Evento de clique (com verificação para não abrir o modal se estiver arrastando)
         let isDragging = false;
-        card.addEventListener('mousedown', () => isDragging = false);
-        card.addEventListener('mousemove', () => isDragging = true);
+        cardEl.addEventListener('mousedown', () => isDragging = false);
+        cardEl.addEventListener('mousemove', () => isDragging = true);
         
-        card.addEventListener('click', (e) => {
+        cardEl.addEventListener('click', (e) => {
           if (isDragging) return;
           if (e.target.tagName !== 'SELECT' && e.target.tagName !== 'OPTION') {
             abrirModalUnificado(lead.id);
           }
         });
 
-        // Evento do Select
-        card.querySelector('.kanban-select').addEventListener('click', (e) => e.stopPropagation());
-        card.querySelector('.kanban-select').addEventListener('change', (e) => {
-          atualizarStatusLeadSemRefresh(lead.id, e.target.value, card);
+        cardEl.querySelector('.kanban-select').addEventListener('click', (e) => e.stopPropagation());
+        cardEl.querySelector('.kanban-select').addEventListener('change', (e) => {
+          atualizarStatusLeadSemRefresh(lead.id, e.target.value, cardEl);
         });
 
-        targetDiv.appendChild(card);
+        targetDiv.appendChild(cardEl);
       });
 
-      // 🔥 ATUALIZA OS KPIs NO CABEÇALHO DAS COLUNAS
       const temKPIs = await temAcesso('kpisColunas');
       colunasIds.forEach(c => {
         document.getElementById('count-' + c).innerText = contadores[c];
-        
         let kpiEl = document.getElementById('kpi-valor-' + c);
         if (temKPIs) {
           if (!kpiEl) {
@@ -2106,15 +2080,12 @@ async function carregarMeuFunil() {
         }
       });
 
-      // 🔥 ATUALIZA O PAINEL DE PREVISÃO (Apenas para Gestão)
       if (temVisaoEquipe) {
         const painel = document.getElementById('painel-previsao');
         if (painel) {
           painel.style.display = 'block';
-          
           const fmtMoeda = (v) => `R$ ${v.toLocaleString('pt-BR', {maximumFractionDigits:0})}`;
           const totalGeral = valores.oportunidade + valores.contato + valores.apresentacao + valores.negociacao + valores.fechado;
-          
           document.getElementById('forecast-total').innerText = fmtMoeda(totalGeral);
           document.getElementById('forecast-comprometido').innerText = fmtMoeda(totalComprometido);
           document.getElementById('forecast-melhor-caso').innerText = fmtMoeda(totalMelhorCaso);
@@ -2122,13 +2093,10 @@ async function carregarMeuFunil() {
         }
       }
 
-      // 🔥 PREENCHE O FILTRO DE CONSULTORES (Nova função do Filtro)
       const selectConsultor = document.getElementById('filtro-consultor-kanban');
       if (selectConsultor && selectConsultor.children.length <= 1) {
         const consultoresUnicos = [...new Set(arrayKanban.map(l => l.captacao_do_lead).filter(Boolean))];
-        // Ordena alfabeticamente para ficar bonito
         consultoresUnicos.sort((a, b) => a.localeCompare(b));
-        
         consultoresUnicos.forEach(c => {
           const opt = document.createElement('option');
           opt.value = c;
@@ -6677,26 +6645,19 @@ function filtrarKanbanVisual() {
   const consultor = document.getElementById('filtro-consultor-kanban').value.toLowerCase();
   const apenasAtrasados = document.getElementById('filtro-atrasados').checked;
 
-  // Pega todos os cards de uma vez para otimizar a performance
   const cards = document.querySelectorAll('.col-k .k-body .card-lead-min');
 
-  cards.forEach(card => {
-    const titulo = card.querySelector('.card-title').innerText.toLowerCase();
-    
-    // 🔥 Agora lê o nome exato direto do atributo data-consultor
-    const nomeConsultor = card.getAttribute('data-consultor') || '';
-    
-    // Verifica se tem o texto de atraso no card
-    const isAtrasado = card.innerHTML.includes('⏰ ATRASADO');
+  cards.forEach(item => {
+    const titulo = item.querySelector('.card-title').innerText.toLowerCase();
+    const nomeConsultor = item.getAttribute('data-consultor') || '';
+    const isAtrasado = item.innerHTML.includes('⏰ ATRASADO');
 
     let mostrar = true;
-
     if (termo && !titulo.includes(termo)) mostrar = false;
     if (consultor && nomeConsultor !== consultor) mostrar = false;
     if (apenasAtrasados && !isAtrasado) mostrar = false;
 
-    // Aplica o display (block se mostrar, none se esconder)
-    card.style.display = mostrar ? 'block' : 'none';
+    item.style.display = mostrar ? 'block' : 'none';
   });
 }
 </script>
