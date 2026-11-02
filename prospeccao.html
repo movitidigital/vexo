@@ -924,7 +924,6 @@
     margin-bottom: 12px !important;
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
     border-left: 5px solid #1e3c72 !important;
-    transition: all 0.3s ease;
     cursor: pointer;
   }
   .card-lead-min:hover {
@@ -6284,16 +6283,14 @@ document.addEventListener('keydown', function(e) {
   }
 });
 // ============================================================
-// 🚀 DRAG & DROP DEFINITIVO VEXO (CORRIGIDO E SEM CONFLITOS)
+// 🚀 DRAG & DROP DEFINITIVO VEXO (ULTRA RÁPIDO E SEM TRAVAMENTO)
 // ============================================================
 let _draggedCardId = null;
 
-// 1. INICIAR O ARRASTO (Apenas nos Cards)
 document.addEventListener('dragstart', function(e) {
   const card = e.target.closest('.card-lead-min');
   if (!card) return;
   
-  // Evita que clicar no select inicie um arrasto
   if (e.target.tagName === 'SELECT' || e.target.tagName === 'OPTION') {
     e.preventDefault();
     return;
@@ -6303,14 +6300,17 @@ document.addEventListener('dragstart', function(e) {
   e.dataTransfer.setData('text/plain', _draggedCardId);
   e.dataTransfer.effectAllowed = 'move';
   
-  // Adiciona classe visual
-  setTimeout(() => card.classList.add('dragging'), 0);
+  // Aplica a opacidade direto (sem setTimeout)
+  card.style.opacity = '0.5';
+  card.classList.add('dragging');
 });
 
-// 2. FINALIZAR O ARRASTO (Limpar visual)
 document.addEventListener('dragend', function(e) {
   const card = e.target.closest('.card-lead-min');
-  if (card) card.classList.remove('dragging');
+  if (card) {
+    card.style.opacity = '';
+    card.classList.remove('dragging');
+  }
   
   _draggedCardId = null;
   document.querySelectorAll('.k-body').forEach(col => {
@@ -6320,22 +6320,20 @@ document.addEventListener('dragend', function(e) {
   });
 });
 
-// 3. PERMITIR O DROP E DAR FEEDBACK VISUAL (Apenas nas colunas)
 document.addEventListener('dragover', function(e) {
   const coluna = e.target.closest('.k-body');
-  if (!coluna) return; // Se não for coluna, ignora
+  if (!coluna) return;
 
-  e.preventDefault(); // Essencial para permitir o drop
+  e.preventDefault(); 
   e.dataTransfer.dropEffect = 'move';
 
   if (!coluna.classList.contains('drag-over')) {
     coluna.classList.add('drag-over');
-    coluna.style.backgroundColor = '#fef3c7'; // Amarelo claro
-    coluna.style.border = '2px dashed #e65100'; // Borda laranja
+    coluna.style.backgroundColor = '#fef3c7';
+    coluna.style.border = '2px dashed #e65100';
   }
 });
 
-// 4. REMOVER O FEEDBACK VISUAL AO SAIR DA COLUNA
 document.addEventListener('dragleave', function(e) {
   const coluna = e.target.closest('.k-body');
   if (coluna) {
@@ -6345,7 +6343,6 @@ document.addEventListener('dragleave', function(e) {
   }
 });
 
-// 5. EXECUTAR O DROP
 document.addEventListener('drop', function(e) {
   const coluna = e.target.closest('.k-body');
   if (!coluna) return;
@@ -6353,7 +6350,7 @@ document.addEventListener('drop', function(e) {
   e.preventDefault();
   e.stopPropagation();
 
-  // Limpa visual
+  // Limpa o visual imediatamente
   coluna.classList.remove('drag-over');
   coluna.style.backgroundColor = '';
   coluna.style.border = '';
@@ -6364,7 +6361,7 @@ document.addEventListener('drop', function(e) {
   const card = document.getElementById('card-' + idLead);
   if (!card) return;
 
-  // Descobre a coluna de destino
+  // Descobre a etapa
   const colunaPai = coluna.closest('.col-k');
   if (!colunaPai) return;
   
@@ -6376,26 +6373,25 @@ document.addEventListener('drop', function(e) {
   else if (colunaPai.id === 'k_fechado' || coluna.id === 'k_fechado') novaEtapa = "FECHADO";
   else return;
 
-  // Se soltou na mesma coluna, não faz nada
   if (card.parentElement === coluna) return;
 
-  // Move o card no DOM (para o topo)
-  coluna.insertBefore(card, coluna.firstChild);
+  // 🔥 AQUI ESTÁ O SEGREDO: Usa a mesma função do select (movimentação instantânea)
+  if (typeof moverCardParaTopo === 'function') {
+    moverCardParaTopo(card, coluna);
+  } else {
+    coluna.insertBefore(card, coluna.firstChild);
+  }
 
-  // Atualiza o select do card
   const selectEl = card.querySelector('.kanban-select');
   if (selectEl) selectEl.value = novaEtapa;
 
-  // Atualiza os contadores do topo
   if (typeof atualizarContadoresSimples === 'function') atualizarContadoresSimples();
 
-  // Salva no banco de dados
+  // Salva no banco em background (sem travar a tela)
   google.script.run
     .withSuccessHandler(function(res) {
       if (res && res.success) {
         notificar(`Lead movido para ${novaEtapa}`, "sucesso");
-      } else {
-        if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
       }
     })
     .withFailureHandler(() => {
