@@ -14,6 +14,7 @@
       <button onclick="abrirModalNovoLead()" class="btn-aba">➕ Novo</button>
       <button onclick="mudarAbaLeads('mural')" class="btn-aba">🌐 Oportunidades</button>
       <button onclick="mudarAbaLeads('kanban')" class="btn-aba active">🎯 Meu Funil</button>
+      <button onclick="abrirPainelProdutividade()" class="btn-aba" style="background: #0f172a; color: white; border-color: #0f172a;">📊 Produtividade</button>
     </div>
   </div>
 
@@ -866,6 +867,25 @@
     </div>
   </template>
 
+
+  <!-- MODAL DE PRODUTIVIDADE DA EQUIPE -->
+  <div id="modal-produtividade" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px); z-index:10005; justify-content:center; align-items:center; padding: 20px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s ease;">
+    <div style="background:white; width:100%; max-width: 1000px; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.3s ease;">
+      
+      <div style="padding: 20px 25px; background: #0f172a; color: white; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="margin:0; font-size: 20px; font-weight: 800;">📊 Produtividade da Equipe</h3>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #94a3b8;">Acompanhamento de esforço e gargalos (Leads Ativos)</p>
+        </div>
+        <button onclick="fecharPainelProdutividade()" style="background:rgba(255,255,255,0.1); border:none; width: 36px; height: 36px; border-radius: 50%; color: white; cursor: pointer; font-size: 20px;">&times;</button>
+      </div>
+
+      <div id="painel-produtividade-conteudo" style="padding: 25px; overflow-y: auto; max-height: 70vh;">
+        <!-- Tabela gerada via JS -->
+      </div>
+    </div>
+  </div>
+    
 </div> <!-- /modulo-card -->
 
 
@@ -1319,6 +1339,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
     atribuirLead:                { rpc: 'atribuir_lead',             args: (id, _u, st) => ({ p_id: id, p_novo_status: st || 'OPORTUNIDADE' }) },
     atualizarStatusLeadPlanilha: { rpc: 'atualizar_status_lead',     args: (id, st) => ({ p_id: id, p_novo_status: st }) },
     registrarProspeccao:         { rpc: 'registrar_prospeccao',      args: (d) => ({ p_dados: d }) },
+    dashboardProdutividade: { rpc: 'dashboard_produtividade_equipe', args: () => ({}) },
     adicionarComentarioLead:     { rpc: 'adicionar_comentario',      args: (id, t) => ({ p_id: id, p_texto: t }) },
     excluirLeadPlanilha:         { rpc: 'excluir_lead',              args: (id) => ({ p_id: id }) },
     getDadosCompletosLead:       { rpc: 'dados_completos_lead',      args: (id) => ({ p_id: id }) },
@@ -6518,4 +6539,77 @@ document.addEventListener('drop', function(e) {
     })
     .atualizarStatusLeadPlanilha(idLead, novaEtapa);
 });
+
+  function abrirPainelProdutividade() {
+  const modal = document.getElementById('modal-produtividade');
+  const conteudo = document.getElementById('painel-produtividade-conteudo');
+  
+  modal.style.display = 'flex';
+  setTimeout(() => { modal.style.opacity = '1'; modal.querySelector('div > div').style.transform = 'scale(1)'; }, 10);
+  
+  conteudo.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;">⏳ Calculando produtividade da equipe...</div>';
+
+  google.script.run
+    .withSuccessHandler(dados => {
+      if (!dados || dados.length === 0) {
+        conteudo.innerHTML = '<p style="text-align:center; color:#94a3b8;">Nenhum dado encontrado.</p>';
+        return;
+      }
+
+      const fmtMoeda = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', {maximumFractionDigits:0})}`;
+      
+      let html = `
+        <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
+          <thead>
+            <tr style="border-bottom: 2px solid #e2e8f0; color: #475569;">
+              <th style="padding: 12px; font-weight: 800;">Consultor(a)</th>
+              <th style="padding: 12px; font-weight: 800; text-align: center;">Leads Ativos</th>
+              <th style="padding: 12px; font-weight: 800;">Valor no Funil</th>
+              <th style="padding: 12px; font-weight: 800; text-align: center;">Média Dias Parado</th>
+              <th style="padding: 12px; font-weight: 800; text-align: center;">Leads Negligenciados (≥7 dias)</th>
+            </tr>
+          </thead>
+          <tbody>
+      `;
+
+      dados.forEach(row => {
+        const isNegligenciadoAlerta = row.leads_negligenciados > 0;
+        
+        html += `
+          <tr style="border-bottom: 1px solid #f1f5f9;">
+            <td style="padding: 14px 12px; font-weight: 700; color: #1e293b;">
+              👤 ${row.consultor}
+            </td>
+            <td style="padding: 14px 12px; text-align: center;">
+              <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 20px; font-weight: 700;">${row.leads_ativos}</span>
+            </td>
+            <td style="padding: 14px 12px; font-weight: 800; color: #059669;">
+              ${fmtMoeda(row.valor_total)}
+            </td>
+            <td style="padding: 14px 12px; text-align: center; font-weight: 600; color: ${row.media_dias_parado >= 5 ? '#d97706' : '#475569'};">
+              ${row.media_dias_parado} dias
+            </td>
+            <td style="padding: 14px 12px; text-align: center;">
+              ${isNegligenciadoAlerta 
+                ? `<span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-weight: 800;">⚠️ ${row.leads_negligenciados}</span>` 
+                : `<span style="color: #10b981; font-weight: 700;">✅ 0</span>`}
+            </td>
+          </tr>
+        `;
+      });
+
+      html += `</tbody></table>`;
+      conteudo.innerHTML = html;
+    })
+    .withFailureHandler(err => {
+      conteudo.innerHTML = `<p style="color: #ef4444; text-align:center;">Erro: ${err}</p>`;
+    })
+    .dashboardProdutividade();
+}
+
+function fecharPainelProdutividade() {
+  const modal = document.getElementById('modal-produtividade');
+  modal.style.opacity = '0';
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
+}
 </script>
