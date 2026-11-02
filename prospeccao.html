@@ -1201,7 +1201,7 @@ let _usuarioLogadoGlobal = null;
   // ============================================================
 // HELPERS DE USUÁRIO (lê do Supabase Auth + tabela profiles)
 // ============================================================
-let _usuarioVexoCache = null;
+var _usuarioVexoCache = null;
 
 async function obterUsuarioVexo() {
   if (_usuarioVexoCache) return _usuarioVexoCache;
@@ -1810,17 +1810,6 @@ function atualizarContadoresSimples() {
     }
   });
 }
-
-// Recarregar após carregar os cards
-function recarregarDragDrop() {
-  setTimeout(() => {
-    configurarDragDrop();
-    console.log("🔄 Drag & Drop reconectado");
-  }, 200);
-}
-
-
-
 
 
 // 4. Função para reconfigurar o Drag & Drop após carregar novos cards
@@ -2771,11 +2760,6 @@ document.addEventListener('keydown', function(event) {
     if (modalHistorico && modalHistorico.style.display === 'flex') fecharModalLead();
   }
 });
-
-// Inicialização final
-setTimeout(() => {
-  configurarDragDrop();
-}, 500);
 
 
 
@@ -6283,10 +6267,11 @@ document.addEventListener('keydown', function(e) {
   }
 });
 // ============================================================
-// 🚀 DRAG & DROP DEFINITIVO VEXO (ULTRA RÁPIDO E SEM TRAVAMENTO)
+// 🚀 DRAG & DROP ULTRA PERFORMÁTICO (ZERO DELAY)
 // ============================================================
-let _draggedCardId = null;
+let _idLeadArrastando = null;
 
+// 1. INICIAR ARRASTO
 document.addEventListener('dragstart', function(e) {
   const card = e.target.closest('.card-lead-min');
   if (!card) return;
@@ -6296,30 +6281,31 @@ document.addEventListener('dragstart', function(e) {
     return;
   }
 
-  _draggedCardId = card.id.replace('card-', '');
-  e.dataTransfer.setData('text/plain', _draggedCardId);
+  _idLeadArrastando = card.id.replace('card-', '');
+  e.dataTransfer.setData('text/plain', _idLeadArrastando);
   e.dataTransfer.effectAllowed = 'move';
   
-  // Aplica a opacidade direto (sem setTimeout)
-  card.style.opacity = '0.5';
-  card.classList.add('dragging');
+  // Desativa animações CSS no momento do arrasto
+  card.style.transition = 'none';
+  card.style.opacity = '0.4';
 });
 
+// 2. FINALIZAR ARRASTO (Limpeza)
 document.addEventListener('dragend', function(e) {
   const card = e.target.closest('.card-lead-min');
   if (card) {
-    card.style.opacity = '';
-    card.classList.remove('dragging');
+    card.style.opacity = '1';
+    card.style.transition = '';
   }
   
-  _draggedCardId = null;
+  _idLeadArrastando = null;
   document.querySelectorAll('.k-body').forEach(col => {
-    col.classList.remove('drag-over');
     col.style.backgroundColor = '';
     col.style.border = '';
   });
 });
 
+// 3. PERMITIR O DROP E FEEDBACK VISUAL
 document.addEventListener('dragover', function(e) {
   const coluna = e.target.closest('.k-body');
   if (!coluna) return;
@@ -6327,33 +6313,33 @@ document.addEventListener('dragover', function(e) {
   e.preventDefault(); 
   e.dataTransfer.dropEffect = 'move';
 
-  if (!coluna.classList.contains('drag-over')) {
-    coluna.classList.add('drag-over');
+  // Só pinta a coluna se não estiver pintada ainda (performance)
+  if (coluna.style.backgroundColor !== 'rgb(254, 243, 199)') {
     coluna.style.backgroundColor = '#fef3c7';
     coluna.style.border = '2px dashed #e65100';
   }
 });
 
+// 4. SAIR DA COLUNA
 document.addEventListener('dragleave', function(e) {
   const coluna = e.target.closest('.k-body');
-  if (coluna) {
-    coluna.classList.remove('drag-over');
+  if (coluna && !e.relatedTarget?.closest('.k-body')) {
     coluna.style.backgroundColor = '';
     coluna.style.border = '';
   }
 });
 
+// 5. EXECUTAR O DROP INSTANTANEAMENTE
 document.addEventListener('drop', function(e) {
-  const coluna = e.target.closest('.k-body');
-  if (!coluna) return;
+  const colunaDestino = e.target.closest('.k-body');
+  if (!colunaDestino) return;
 
   e.preventDefault();
   e.stopPropagation();
 
-  // Limpa o visual imediatamente
-  coluna.classList.remove('drag-over');
-  coluna.style.backgroundColor = '';
-  coluna.style.border = '';
+  // Limpa visual da coluna
+  colunaDestino.style.backgroundColor = '';
+  colunaDestino.style.border = '';
 
   const idLead = e.dataTransfer.getData('text/plain');
   if (!idLead) return;
@@ -6362,32 +6348,36 @@ document.addEventListener('drop', function(e) {
   if (!card) return;
 
   // Descobre a etapa
-  const colunaPai = coluna.closest('.col-k');
+  const colunaPai = colunaDestino.closest('.col-k');
   if (!colunaPai) return;
   
   let novaEtapa = '';
-  if (colunaPai.id === 'k_oportunidade' || coluna.id === 'k_oportunidade') novaEtapa = "OPORTUNIDADE";
-  else if (colunaPai.id === 'k_contato' || coluna.id === 'k_contato') novaEtapa = "CONTATO";
-  else if (colunaPai.id === 'k_apresentacao' || coluna.id === 'k_apresentacao') novaEtapa = "APRESENTACAO";
-  else if (colunaPai.id === 'k_negociacao' || coluna.id === 'k_negociacao') novaEtapa = "NEGOCIACAO";
-  else if (colunaPai.id === 'k_fechado' || coluna.id === 'k_fechado') novaEtapa = "FECHADO";
+  if (colunaPai.id.includes('oportunidade')) novaEtapa = "OPORTUNIDADE";
+  else if (colunaPai.id.includes('contato')) novaEtapa = "CONTATO";
+  else if (colunaPai.id.includes('apresentacao')) novaEtapa = "APRESENTACAO";
+  else if (colunaPai.id.includes('negociacao')) novaEtapa = "NEGOCIACAO";
+  else if (colunaPai.id.includes('fechado')) novaEtapa = "FECHADO";
   else return;
 
-  if (card.parentElement === coluna) return;
+  if (card.parentElement === colunaDestino) return;
 
-  // 🔥 AQUI ESTÁ O SEGREDO: Usa a mesma função do select (movimentação instantânea)
-  if (typeof moverCardParaTopo === 'function') {
-    moverCardParaTopo(card, coluna);
-  } else {
-    coluna.insertBefore(card, coluna.firstChild);
-  }
+  // 🔥 O SEGREDO DA PERFORMANCE:
+  // 1. Remove a opacidade de arrasto antes de mover
+  card.style.opacity = '1';
+  
+  // 2. Move o card no DOM imediatamente
+  colunaDestino.insertBefore(card, colunaDestino.firstChild);
 
+  // 3. Atualiza o select visualmente
   const selectEl = card.querySelector('.kanban-select');
   if (selectEl) selectEl.value = novaEtapa;
 
-  if (typeof atualizarContadoresSimples === 'function') atualizarContadoresSimples();
+  // 4. Atualiza contadores instantaneamente (função leve)
+  if (typeof atualizarContadoresSimples === 'function') {
+    atualizarContadoresSimples();
+  }
 
-  // Salva no banco em background (sem travar a tela)
+  // 5. Salva no banco em background (não trava a tela)
   google.script.run
     .withSuccessHandler(function(res) {
       if (res && res.success) {
@@ -6395,6 +6385,7 @@ document.addEventListener('drop', function(e) {
       }
     })
     .withFailureHandler(() => {
+      // Se der erro no banco, aí sim recarrega para restaurar o estado
       if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
     })
     .atualizarStatusLeadPlanilha(idLead, novaEtapa);
