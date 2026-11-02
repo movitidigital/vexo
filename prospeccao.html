@@ -38,7 +38,38 @@
           ⏰ Atualizar LEADS parados
         </button>
       </div>
+      <!-- 🔥 PAINEL DE PREVISÃO (GESTÃO) -->
+      <div id="painel-previsao" style="display: none; margin-bottom: 20px;">
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; background: #ffffff; padding: 16px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);">
+          
+          <div style="border-right: 1px solid #f1f5f9; padding-right: 12px;">
+            <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Pipeline Total</div>
+            <div id="forecast-total" style="font-size: 22px; font-weight: 900; color: #0f172a; margin-top: 4px;">R$ 0</div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Soma de todas as oportunidades</div>
+          </div>
 
+          <div style="border-right: 1px solid #f1f5f9; padding-right: 12px; padding-left: 12px;">
+            <div style="font-size: 10px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px;">🟢 Comprometido (≥70%)</div>
+            <div id="forecast-comprometido" style="font-size: 22px; font-weight: 900; color: #059669; margin-top: 4px;">R$ 0</div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Alta chance de fechamento</div>
+          </div>
+
+          <div style="border-right: 1px solid #f1f5f9; padding-right: 12px; padding-left: 12px;">
+            <div style="font-size: 10px; font-weight: 800; color: #f59e0b; text-transform: uppercase; letter-spacing: 0.5px;">🟡 Melhor Caso (30-69%)</div>
+            <div id="forecast-melhor-caso" style="font-size: 22px; font-weight: 900; color: #d97706; margin-top: 4px;">R$ 0</div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Em negociação</div>
+          </div>
+
+          <div style="padding-left: 12px;">
+            <div style="font-size: 10px; font-weight: 800; color: #3b82f6; text-transform: uppercase; letter-spacing: 0.5px;">🔵 Pipeline (<30%)</div>
+            <div id="forecast-pipeline" style="font-size: 22px; font-weight: 900; color: #2563eb; margin-top: 4px;">R$ 0</div>
+            <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">Oportunidades frias</div>
+          </div>
+
+        </div>
+      </div>
+
+      
       <!-- COLUNAS DO KANBAN -->
       <div class="kanban-mini-wrapper">
 
@@ -1895,6 +1926,11 @@ async function carregarMeuFunil() {
       let contadores = { oportunidade: 0, contato: 0, apresentacao: 0, negociacao: 0, fechado: 0 };
       let valores = { oportunidade: 0, contato: 0, apresentacao: 0, negociacao: 0, fechado: 0 };
 
+      // 🔥 NOVAS VARIÁVEIS DE PREVISÃO (FORECAST)
+      let totalComprometido = 0;
+      let totalMelhorCaso = 0;
+      let totalFrio = 0;
+
       // Paleta de cores para as badges dos consultores
       const coresBadge = ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#06b6d4'];
 
@@ -1915,6 +1951,18 @@ async function carregarMeuFunil() {
         const valorLead = Number(lead.valor_oportunidade) || 0;
         valores[etapaLower] += valorLead;
 
+        // 🔥 CÁLCULO DAS CATEGORIAS DE PREVISÃO
+        if (valorLead > 0) {
+          const prob = Number(lead.probabilidade) || 0;
+          if (prob >= 70) {
+            totalComprometido += valorLead;
+          } else if (prob >= 30) {
+            totalMelhorCaso += valorLead;
+          } else {
+            totalFrio += valorLead;
+          }
+        }
+
         const dias = Number(lead.dias_parado) || 0;
         const eNegligenciado = dias >= 7; 
 
@@ -1932,7 +1980,7 @@ async function carregarMeuFunil() {
         }
 
         const card = document.createElement('div');
-        card.className = `card-lead-min ${eNegligenciado ? 'card-negligenciado' : ''}`;
+        card.className = `card-lead-min ${eNegligenciado ? 'card-neglig enciado' : ''}`;
         card.id = `card-${lead.id}`;
         
         // 🔥 CORREÇÃO DO DRAG: Mantém o draggable, mas deixa o evento global cuidar do resto
@@ -2003,7 +2051,21 @@ async function carregarMeuFunil() {
         }
       });
 
-
+      // 🔥 ATUALIZA O PAINEL DE PREVISÃO (Apenas para Gestão)
+      if (temVisaoEquipe) {
+        const painel = document.getElementById('painel-previsao');
+        if (painel) {
+          painel.style.display = 'block';
+          
+          const fmtMoeda = (v) => `R$ ${v.toLocaleString('pt-BR', {maximumFractionDigits:0})}`;
+          const totalGeral = valores.oportunidade + valores.contato + valores.apresentacao + valores.negociacao + valores.fechado;
+          
+          document.getElementById('forecast-total').innerText = fmtMoeda(totalGeral);
+          document.getElementById('forecast-comprometido').innerText = fmtMoeda(totalComprometido);
+          document.getElementById('forecast-melhor-caso').innerText = fmtMoeda(totalMelhorCaso);
+          document.getElementById('forecast-pipeline').innerText = fmtMoeda(totalFrio);
+        }
+      }
       
     })
     .withFailureHandler((err) => {
