@@ -3159,15 +3159,43 @@ function mudarAbaUnificada(aba) {
 function salvarAbaAtual() {
   const idLead = document.getElementById('unificado_id_lead').value;
   switch(abaAtivaUnificada) {
+    case 'oportunidade':
+      salvarDadosOportunidade(idLead);
+      break;
     case 'contato':
       salvarDadosContatoUnificado(idLead);
-      break;
-    case 'oportunidade':
-      notificacaoVexo("Dados da oportunidade são apenas para visualização", "info");
       break;
     default:
       notificacaoVexo(`A aba ${abaAtivaUnificada} será implementada em breve`, "info");
   }
+}
+
+// 🔥 Nova função para salvar os dados financeiros
+function salvarDadosOportunidade(idLead) {
+  const valor = parseFloat(document.getElementById('oportunidade_valor').value) || 0;
+  const prob = parseInt(document.getElementById('oportunidade_probabilidade').value) || 0;
+  const dataPrevista = document.getElementById('oportunidade_data_prevista').value || null;
+  
+  const btn = document.getElementById('btn-salvar-aba-atual');
+  const originalTxt = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Salvando...';
+
+  google.script.run
+    .withSuccessHandler(res => {
+      btn.disabled = false;
+      btn.innerHTML = originalTxt;
+      notificar('✅ Valores da oportunidade salvos!', 'sucesso');
+      
+      // Recarrega o Kanban em background para o KPI em R$ aparecer
+      if(typeof carregarMeuFunil === 'function') carregarMeuFunil();
+    })
+    .withFailureHandler(err => {
+      btn.disabled = false;
+      btn.innerHTML = originalTxt;
+      notificar('❌ Erro ao salvar: ' + err, 'erro');
+    })
+    .atualizarDadosOportunidade(idLead, valor, prob, dataPrevista);
 }
 
 // Salvar dados da aba CONTATO - com recarga na etapa correta
