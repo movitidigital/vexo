@@ -23,13 +23,15 @@
     </div>
   </div>
 
-  <!-- ========================================================== -->
-  <!-- CONTAINER DAS ABAS (MURAL + KANBAN)                       -->
-  <!-- ========================================================== -->
-  <div id="container-leads">
-
     <!-- ========== ABA MURAL (OPORTUNIDADES) ========== -->
     <div id="aba-mural" class="item-aba" style="display: none;">
+      
+      <!-- 🔥 NOVO CAMPO DE BUSCA -->
+      <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        <input type="text" id="filtro-busca-mural" placeholder="🔍 Buscar por Razão Social, CNPJ, Decisor ou Código..." style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; flex: 1; outline: none;" onkeyup="filtrarMuralVisual()">
+        <button onclick="limparFiltroMural()" style="padding: 8px 12px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; font-weight: 700; color: #475569; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Limpar</button>
+      </div>
+
       <div id="mural-lista" style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
         <p style="text-align:center; color:#999; grid-column: span 2;">Carregando mural...</p>
       </div>
@@ -2375,7 +2377,7 @@ function carregarMetaMensal() {
 }
 
 // ==========================================
-// FUNÇÕES DO MURAL
+// FUNÇÕES DO MURAL (COM BUSCA)
 // ==========================================
 
 // Variáveis de controle de paginação
@@ -2434,6 +2436,12 @@ async function carregarMural(limparTudo = true) {
       const cnpjSeguro = l.cnpj && l.cnpj !== "undefined" ? l.cnpj : "---";
       const adminSeguro = l.nome_administrador || l.admin || "Não informado";
       
+      // 🔥 NOVAS VARIÁVEIS PARA O FILTRO DE BUSCA
+      const razaoAttr = (l.razao_social || l.razao || "").replace(/"/g, '&quot;').toLowerCase();
+      const cnpjAttr = (l.cnpj || "").replace(/\D/g, ''); // Apenas números
+      const decisorAttr = (l.nome_administrador || l.admin || "").replace(/"/g, '&quot;').toLowerCase();
+      const codigoAttr = (l.codigo || "").replace(/"/g, '&quot;').toLowerCase();
+
       let localSeguro = "Local não informado";
       if (l.cidade && l.cidade !== "undefined" && l.uf && l.uf !== "undefined") {
         localSeguro = `${l.cidade} - ${l.uf}`;
@@ -2453,6 +2461,10 @@ async function carregarMural(limparTudo = true) {
 
       htmlContent += `
         <div class="card-lead-min" id="mural-card-${l.id}" 
+             data-razao="${razaoAttr}"
+             data-cnpj="${cnpjAttr}"
+             data-decisor="${decisorAttr}"
+             data-codigo="${codigoAttr}"
              style="display:flex; flex-direction:column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; position:relative; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden;">
           
           <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #f97316, #fb923c);"></div>
@@ -2515,6 +2527,75 @@ async function carregarMural(limparTudo = true) {
     }
 
   }).getLeadsDisponiveis(MURAL_LIMIT, muralOffset);
+}
+
+// ==========================================
+// FILTRO DE BUSCA DO MURAL
+// ==========================================
+function filtrarMuralVisual() {
+  const inputBusca = document.getElementById('filtro-busca-mural');
+  if (!inputBusca) return; // Segurança caso o input não exista
+
+  const termo = inputBusca.value.toLowerCase().trim();
+  const termoNumeros = termo.replace(/\D/g, '');
+  
+  // Função para ignorar acentos na hora de buscar
+  const removerAcentos = (str) => {
+    return str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
+  };
+
+  const termoNormalizado = removerAcentos(termo);
+
+  const cards = document.querySelectorAll('#mural-lista .card-lead-min');
+  let visiveis = 0;
+
+  cards.forEach(card => {
+    // Pega os dados dos atributos (já em minúsculo) e remove acentos
+    const razao = removerAcentos(card.getAttribute('data-razao') || '');
+    const cnpj = card.getAttribute('data-cnpj') || '';
+    const decisor = removerAcentos(card.getAttribute('data-decisor') || '');
+    const codigo = (card.getAttribute('data-codigo') || '').toLowerCase();
+
+    const matchRazao = razao.includes(termoNormalizado);
+    const matchDecisor = decisor.includes(termoNormalizado);
+    const matchCodigo = codigo.includes(termoNormalizado);
+    // Só busca no CNPJ se o usuário digitou números
+    const matchCnpj = termoNumeros && cnpj.includes(termoNumeros);
+
+    // Se bater qualquer um dos campos ou se o campo estiver vazio (mostrar todos)
+    if (matchRazao || matchDecisor || matchCodigo || matchCnpj || termo === '') {
+      card.style.display = 'flex';
+      visiveis++;
+    } else {
+      card.style.display = 'none';
+    }
+  });
+
+  // Mostra ou remove a mensagem de "nada encontrado"
+  let msgVazio = document.getElementById('msg-mural-vazio-filtro');
+  
+  if (visiveis === 0 && termo !== '') {
+    if (!msgVazio) {
+      const mural = document.getElementById('mural-lista');
+      msgVazio = document.createElement('div');
+      msgVazio.id = 'msg-mural-vazio-filtro';
+      // Ajuste no CSS para ficar alinhado no grid do mural
+      msgVazio.style = 'grid-column: 1/-1; text-align:center; padding: 30px; color:#94a3b8; font-size:14px; font-weight:600; background:#f8fafc; border-radius:12px; border:2px dashed #e2e8f0; margin-top: 10px;';
+      msgVazio.innerHTML = 'Nenhum lead encontrado com esse filtro nos cards já carregados.<br><small style="font-weight:400; display:block; margin-top:6px;">Clique em "Carregar Mais Oportunidades" abaixo para buscar em mais páginas.</small>';
+      mural.appendChild(msgVazio);
+    }
+  } else if (msgVazio) {
+    msgVazio.remove();
+  }
+}
+
+function limparFiltroMural() {
+  const input = document.getElementById('filtro-busca-mural');
+  if (input) {
+    input.value = '';
+    filtrarMuralVisual();
+    input.focus();
+  }
 }
 
 async function captarLead(id) {
