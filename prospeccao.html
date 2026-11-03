@@ -2571,7 +2571,7 @@ function filtrarMuralVisual() {
   }
 }
 
-// Função que faz a busca pesada direto no banco de dados Supabase
+// Função que faz a busca pesada no banco de dados (Paginada)
 async function buscarMuralNoServidor(termo) {
   isBuscandoServidor = true;
   const mural = document.getElementById('mural-lista');
@@ -2586,25 +2586,60 @@ async function buscarMuralNoServidor(termo) {
   msgVazio.innerHTML = '⏳ Buscando em todo o banco de dados...';
 
   try {
-    // 🔥 CONSULTA DIRETA NO SUPABASE (Busca em toda a tabela 'leads')
-    // O .or() busca em várias colunas ao mesmo tempo (Razão, CNPJ, Decisor, Código)
-    const { data: leadsDB, error } = await window.sb
-      .from('leads')
-      .select('*')
-      .or(`razao_social.ilike.%${termo}%,cnpj.ilike.%${termo}%,nome_administrador.ilike.%${termo}%,codigo.ilike.%${termo}%`)
-      .limit(50); // Traz até 50 resultados se houver
+    let todosOsLeads = [];
+    let offset = 0;
+    const step = 500; // Puxa de 500 em 500
+    let temMais = true;
+    let leadsVerificados = 0;
 
-    if (error) throw error;
-    isBuscandoServidor = false;
+    // 🔥 LOOP INTELIGENTE: Puxa do servidor até não ter mais leads
+    while (temMais) {
+      const res = await new Promise((resolve) => {
+        google.script.run
+          .withSuccessHandler(data => resolve(data))
+          .withFailureHandler(() => resolve([]))
+          .getLeadsDisponiveis(step, offset);
+      });
 
-    if (leadsDB && leadsDB.length > 0) {
+      let arrayLeads = Array.isArray(res) ? res : (res?.data || res?.dados || res?.leads || res?.rows || []);
+      
+      if (!arrayLeads || arrayLeads.length === 0) {
+        break; // Se não retornou nada, para o loop
+      }
+
+      todosOsLeads = todosOsLeads.concat(arrayLeads);
+      leadsVerificados += arrayLeads.length;
+      
+      // Atualiza a mensagem para o usuário ver o progresso
+      msgVazio.innerHTML = `⏳ Buscando... (${leadsVerificados} leads verificados)`;
+
+      // Se retornou menos que o limite, é porque chegou no fim da lista
+      if (arrayLeads.length < step) {
+        temMais = false;
+      } else {
+        offset += step;
+      }
+    }
+
+    // Agora que temos TODOS os leads na memória, vamos filtrar
+    const removerAcentos = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
+    const termoNorm = removerAcentos(termo.toLowerCase());
+    const termoNum = termo.replace(/\D/g, '');
+
+    const filtrados = todosOsLeads.filter(l => {
+      const r = removerAcentos((l.razao_social || l.razao || '').toLowerCase());
+      const d = removerAcentos((l.nome_administrador || l.admin || '').toLowerCase());
+      const cn = (l.cnpj || '').replace(/\D/g, '');
+      return r.includes(termoNorm) || d.includes(termoNorm) || (termoNum && cn.includes(termoNum));
+    });
+
+    if (filtrados.length > 0) {
       const usuario = await obterUsuarioVexo();
       const podeExcluir = (usuario?.role === "ADMINISTRADOR" || usuario?.role === "BACKOFFICE");
       
-      // Limpa a tela e mostra os resultados
       mural.innerHTML = '';
       let html = '';
-      leadsDB.forEach(l => { html += gerarCardMural(l, podeExcluir); });
+      filtrados.forEach(l => { html += gerarCardMural(l, podeExcluir); });
       mural.innerHTML = html;
       
       const btnHTML = `
@@ -2616,49 +2651,14 @@ async function buscarMuralNoServidor(termo) {
       `;
       mural.insertAdjacentHTML('beforeend', btnHTML);
     } else {
-      msgVazio.innerHTML = `Nenhum lead encontrado com "${termo}" em toda a base.`;
+      msgVazio.innerHTML = `Nenhum lead encontrado com "${termo}" em toda a base (${leadsVerificados} leads verificados).`;
     }
+
   } catch (err) {
-    console.warn("Busca direta falhou, tentando via RPC antiga:", err);
-    
-    // Plano B: Se o banco bloquear a busca direta, tenta a RPC antiga
-    google.script.run.withSuccessHandler(leadsRaw => {
-      isBuscandoServidor = false;
-      let arrayLeads = Array.isArray(leadsRaw) ? leadsRaw : (leadsRaw?.data || leadsRaw?.dados || []);
-      
-      const removerAcentos = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
-      const termoNorm = removerAcentos(termo.toLowerCase());
-      const termoNum = termo.replace(/\D/g, '');
-
-      const filtrados = arrayLeads.filter(l => {
-        const r = removerAcentos((l.razao_social || l.razao || '').toLowerCase());
-        const d = removerAcentos((l.nome_administrador || l.admin || '').toLowerCase());
-        const c = (l.codigo || '').toLowerCase();
-        const cn = (l.cnpj || '').replace(/\D/g, '');
-        return r.includes(termoNorm) || d.includes(termoNorm) || c.includes(termoNorm) || (termoNum && cn.includes(termoNum));
-      });
-
-      if (filtrados.length > 0) {
-        obterUsuarioVexo().then(usuario => {
-          const podeExcluir = (usuario?.role === "ADMINISTRADOR" || usuario?.role === "BACKOFFICE");
-          mural.innerHTML = '';
-          let html = '';
-          filtrados.forEach(l => { html += gerarCardMural(l, podeExcluir); });
-          mural.innerHTML = html;
-          
-          const btnHTML = `
-            <div style="grid-column: 1/-1; text-align: center; padding: 20px;">
-              <button onclick="limparFiltroMural()" style="padding: 12px 24px; background: #e65100; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
-                Voltar para a lista completa
-              </button>
-            </div>
-          `;
-          mural.insertAdjacentHTML('beforeend', btnHTML);
-        });
-      } else {
-        msgVazio.innerHTML = `Nenhum lead encontrado com "${termo}" na base.`;
-      }
-    }).getLeadsDisponiveis(5000, 0); // Tenta puxar 5000 via RPC
+    console.error("Erro na busca:", err);
+    msgVazio.innerHTML = `Erro ao buscar: ${err.message || err}`;
+  } finally {
+    isBuscandoServidor = false;
   }
 }
 
