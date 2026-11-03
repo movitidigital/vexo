@@ -2762,37 +2762,32 @@ async function salvarNovoLead() {
   const cnpjInput = document.getElementById('p_cnpj').value;
 
   // 🔥 VALIDAÇÃO DE CNPJ DUPLICADO
-  const cnpjLimpo = cnpjInput.replace(/\D/g, ''); // Apenas números para busca exata
+  const cnpjLimpo = cnpjInput.replace(/\D/g, ''); // Apenas números
   
   if (cnpjLimpo.length >= 14) {
-    // Muda o botão para estado de carregamento
     btn.disabled = true;
-    btn.innerHTML = '⏳ Verificando CNPJ...';
+    btn.innerHTML = '⏳ Verificando...';
 
     try {
-      // Consulta rápida no banco de dados se o CNPJ já existe na tabela 'clientes'
+      // CORREÇÃO: Busca simples pelo CNPJ sem máscara
       const { data: leadsExistentes, error } = await window.sb
-        .from('clientes') // 🔥 AQUI: Nome correto da tabela
+        .from('clientes')
         .select('codigo, captacao_do_lead, status, razao_social')
-        .or(`cnpj.eq.${cnpjInput},cnpj.eq.${cnpjLimpo}`) // Busca com e sem máscara
+        .eq('cnpj', cnpjLimpo)
         .limit(1);
 
       if (error) throw error;
 
       if (leadsExistentes && leadsExistentes.length > 0) {
         const leadDuplicado = leadsExistentes[0];
-        // Normaliza o status para evitar erros de digitação no banco
         const statusLead = String(leadDuplicado.status || "").toUpperCase().trim();
         const nomeConsultor = leadDuplicado.captacao_do_lead || "Não atribuído";
         
         let msgAviso = `⚠️ Lead já cadastrado!\n\nA empresa "${leadDuplicado.razao_social}" (Cód: ${leadDuplicado.codigo}) já está no sistema.\n`;
         
-        // 🔥 REGRA 1: SE ESTIVER DISPONÍVEL NO MURAL
         if (statusLead === 'DISPONIVEL') {
           msgAviso += `\n📍 Status: Disponível no Mural (Oportunidades).\n👉 Vá até a aba "Oportunidades" e clique em "Captar Lead" para assumir esta prospecção.`;
-        } 
-        // 🔥 REGRA 2: SE JÁ ESTIVER SENDO TRABALHADO (KANBAN)
-        else {
+        } else {
           msgAviso += `\n👤 Status: ${statusLead}\n🧑‍💼 Consultor Responsável: ${nomeConsultor}\n\n👉 Este lead já está no funil de outra pessoa.`;
         }
 
@@ -2804,13 +2799,13 @@ async function salvarNovoLead() {
         return; // 🛑 Para o salvamento aqui
       }
     } catch (err) {
-      console.error("Erro na validação de CNPJ:", err);
-      // Se a validação falhar por erro de rede, segue o fluxo para não travar o usuário
+      console.warn("Aviso: Falha na validação de CNPJ (Seguindo com o salvamento...)", err);
+      // Se der erro no Supabase, ignora e segue o fluxo
+    } finally {
+      // Garante que o botão volte ao normal ou vá para "Gravando..."
+      btn.disabled = false;
+      btn.innerHTML = '⏳ Gravando...';
     }
-    
-    // Restaura o botão antes de continuar para o salvamento real
-    btn.disabled = false;
-    btn.innerHTML = '⏳ Gravando...';
   }
 
   // Tratamento da data de abertura para o padrão ISO (YYYY-MM-DD)
@@ -2852,10 +2847,14 @@ async function salvarNovoLead() {
 
   if (!dados.origem) {
     notificar("A Origem do Lead é obrigatória!", "erro");
+    btn.disabled = false;
+    btn.innerHTML = '📍 Registrar Lead';
     return;
   }
   if (!dados.razao || !dados.cnpj) {
     notificar("CNPJ e Razão Social são obrigatórios!", "erro");
+    btn.disabled = false;
+    btn.innerHTML = '📍 Registrar Lead';
     return;
   }
 
@@ -2864,6 +2863,7 @@ async function salvarNovoLead() {
 
   console.log('📤 [Novo Lead] Enviando:', dados);
 
+  // CORREÇÃO: Executa a RPC de forma isolada para evitar o erro 'is not a function'
   google.script.run
     .withSuccessHandler(res => {
       console.log('✅ [Novo Lead] Resposta:', res);
