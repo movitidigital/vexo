@@ -6858,7 +6858,7 @@ function formatarTelefoneExibicao(tel) {
   }
   return tel; // Fallback se não for 10 nem 11
 }
-  function abrirMinhasTarefas() {
+function abrirMinhasTarefas() {
   const modal = document.getElementById('modal-tarefas');
   const conteudo = document.getElementById('lista-tarefas-conteudo');
   
@@ -6901,7 +6901,9 @@ function formatarTelefoneExibicao(tel) {
 
         lista.forEach(t => {
           const dataFormatada = new Date(t.data_proxima_acao + 'T00:00:00').toLocaleDateString('pt-BR');
-          const valorStr = t.valor_oportunidade ? `💰 R$ ${Number(t.valor_oportunidade).toLocaleString('pt-BR', {minimumFractionDigits:2})` : '';
+          
+          // 🔥 AQUI ESTAVA O ERRO (Faltava um '}' e o '2' estava colado). Corrigido:
+          const valorStr = t.valor_oportunidade ? `💰 R$ ${Number(t.valor_oportunidade).toLocaleString('pt-BR', {minimumFractionDigits: 2})}` : '';
           
           html += `
             <div onclick="fecharMinhasTarefas(); abrirModalUnificado('${t.id}');" style="background: white; padding: 16px; border-radius: 12px; border-left: 4px solid ${cor}; box-shadow: 0 2px 4px rgba(0,0,0,0.02); cursor: pointer; transition: 0.2s;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='none'">
@@ -6937,4 +6939,5 @@ function fecharMinhasTarefas() {
   modal.style.opacity = '0';
   setTimeout(() => { modal.style.display = 'none'; }, 300);
 }
+
 </script>
