@@ -2012,6 +2012,10 @@ async function carregarMeuFunil() {
         const cardEl = document.createElement('div');
         if (lead.captacao_do_lead) cardEl.setAttribute('data-consultor', lead.captacao_do_lead.toLowerCase());
         
+        // 🔥 ATRIBUTOS ADICIONADOS PARA FILTRAGEM EFICIENTE
+        cardEl.setAttribute('data-razao', (lead.razao_social || lead.razao || "Sem nome").toLowerCase());
+        cardEl.setAttribute('data-atrasado', alertaPrazo !== '' ? 'true' : 'false');
+        
         cardEl.className = `card-lead-min ${eNegligenciado ? 'card-negligenciado' : ''}`;
         cardEl.id = `card-${lead.id}`;
         cardEl.setAttribute('draggable', 'true');
@@ -5333,6 +5337,7 @@ body{
 @media print {
   .app-card-hover:hover { transform: none; box-shadow: none; }
 }
+.card-oculto { display: none !important; }
 </style>
 </head>
 <body>
