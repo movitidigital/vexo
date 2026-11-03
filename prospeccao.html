@@ -17,6 +17,7 @@
       <button onclick="abrirPainelProdutividade()" class="btn-aba" style="background: #0f172a; color: white; border-color: #0f172a;">📊 Produtividade</button>
       <button onclick="abrirMinhasTarefas()" class="btn-aba" style="background: #0ea5e9; color: white; border-color: #0ea5e9;">📌 Minhas Tarefas</button>
       <button onclick="abrirRadarGestor()" class="btn-aba" style="background: #8b5cf6; color: white; border-color: #8b5cf6;">📡 Radar</button>
+      <button onclick="abrirLeadsPerdidos()" class="btn-aba" style="background: #64748b; color: white; border-color: #64748b;">🏴‍☠️ Perdidos</button>
     </div>
   </div>
 
@@ -979,6 +980,24 @@
     </div>
   </template>
 
+  <!-- MODAL LEADS PERDIDOS -->
+  <div id="modal-perdidos" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px); z-index:10005; justify-content:center; align-items:center; padding: 20px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s ease;">
+    <div style="background:white; width:100%; max-width: 800px; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.3s ease; max-height: 90vh;">
+      
+      <div style="padding: 20px 25px; background: #334155; color: white; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="margin:0; font-size: 20px; font-weight: 800;">🏴‍☠️ Leads Perdidos</h3>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #cbd5e1;">Recupere oportunidades e analise os motivos de perda</p>
+        </div>
+        <button onclick="fecharLeadsPerdidos()" style="background:rgba(255,255,255,0.2); border:none; width: 36px; height: 36px; border-radius: 50%; color: white; cursor: pointer; font-size: 20px;">&times;</button>
+      </div>
+
+      <div id="lista-perdidos-conteudo" style="padding: 25px; overflow-y: auto; flex: 1; background: #f8fafc; display: flex; flex-direction: column; gap: 12px;">
+        <!-- Preenchido via JS -->
+      </div>
+    </div>
+  </div>
+    
   <!-- MODAL DE MOTIVO DE PERDA -->
   <div id="modal-motivo-perda" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px); z-index:10010; justify-content:center; align-items:center; padding: 20px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s ease;">
     <div style="background:white; width:100%; max-width: 450px; border-radius:24px; padding: 30px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s ease; text-align: center;">
@@ -1493,6 +1512,8 @@ function moverCardParaColuna(idLead, novaEtapa) {
     minhasTarefas: { rpc: 'minhas_tarefas', args: () => ({}) },    
     obterRealizadoMes: { rpc: 'obter_realizado_mes', args: () => ({}) },
     obterFeedAtividades: { rpc: 'obter_feed_atividades', args: () => ({}) },
+    obterLeadsPerdidos: { rpc: 'obter_leads_perdidos', args: () => ({}) },
+    recuperarLead: { rpc: 'recuperar_lead', args: (id) => ({ p_id: id }) },
     marcarLeadPerdido: { rpc: 'marcar_lead_perdido', args: (id, motivo) => ({ p_id: id, p_motivo: motivo }) },
     salvarFechamentoLead: { rpc: 'salvar_fechamento_lead', args: (id, st, dt, mrr) => ({ p_id: id, p_status_ativacao: st, p_data_ativacao: dt, p_mrr_fechado: mrr }) },
     getMeusLeadsKanban:          { rpc: 'meus_leads_kanban',         args: (u) => ({ p_usuario: u }), paginate: true },
@@ -7247,5 +7268,77 @@ function confirmarPerda() {
       notificar("Erro ao marcar como perdido: " + err, "erro");
     })
     .marcarLeadPerdido(idLead, motivo);
+}
+  function abrirLeadsPerdidos() {
+  const modal = document.getElementById('modal-perdidos');
+  const lista = document.getElementById('lista-perdidos-conteudo');
+  
+  modal.style.display = 'flex';
+  setTimeout(() => { modal.style.opacity = '1'; modal.querySelector('div > div').style.transform = 'scale(1)'; }, 10);
+  
+  lista.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;">⏳ Buscando baú de perdidos...</div>';
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (!res.success || !res.feed || res.feed.length === 0) {
+        lista.innerHTML = '<div style="text-align:center; padding: 40px;"><span style="font-size:48px;">🎉</span><h3 style="color:#10b981; margin:10px 0;">Nenhum lead perdido!</h3><p style="color:#64748b; font-size:13px;">Sua equipe está com 100% de aproveitamento no momento.</p></div>';
+        return;
+      }
+
+      let html = '';
+      res.feed.forEach(l => {
+        const dataFormatada = l.data_perda ? new Date(l.data_perda).toLocaleDateString('pt-BR') : 'Data desconhecida';
+        const valorStr = l.valor_oportunidade ? `<span style="color:#059669; font-weight:800; font-size:12px;">💰 R$ ${Number(l.valor_oportunidade).toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>` : '';
+
+        html += `
+          <div style="background: white; border-radius: 12px; padding: 16px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02); gap: 15px;">
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 800; color: #1e293b; margin-bottom: 4px;">
+                ${l.razao_social} <span style="font-weight: 500; color: #94a3b8; font-size: 11px;">#${l.codigo}</span>
+              </div>
+              <div style="font-size: 12px; color: #ef4444; font-weight: 700; margin-bottom: 4px;">
+                ❌ Motivo: ${l.motivo || 'Não informado'}
+              </div>
+              <div style="font-size: 11px; color: #64748b;">
+                Perdido por <strong>${l.quem_perdeu || 'Sistema'}</strong> em ${dataFormatada}
+              </div>
+            </div>
+            
+            <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+              ${valorStr}
+              <button onclick="recuperarLeadPerdido('${l.id}')" style="background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; padding: 8px 16px; border-radius: 8px; font-weight: 700; font-size: 12px; cursor: pointer; transition: 0.2s;" onmouseover="this.style.background='#dbeafe'" onmouseout="this.style.background='#eff6ff'">
+                🔄 Recuperar
+              </button>
+            </div>
+          </div>
+        `;
+      });
+      lista.innerHTML = html;
+    })
+    .withFailureHandler(err => {
+      lista.innerHTML = `<p style="color: #ef4444; text-align:center;">Erro: ${err}</p>`;
+    })
+    .obterLeadsPerdidos();
+}
+
+function fecharLeadsPerdidos() {
+  const modal = document.getElementById('modal-perdidos');
+  modal.style.opacity = '0';
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
+}
+
+function recuperarLeadPerdido(idLead) {
+  if (!confirm("Deseja recuperar esta oportunidade? Ela voltará para a coluna 'Oportunidade' no Kanban.")) return;
+
+  google.script.run
+    .withSuccessHandler(res => {
+      notificar("✅ Lead recuperado com sucesso!", "sucesso");
+      fecharLeadsPerdidos();
+      if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
+    })
+    .withFailureHandler(err => {
+      notificar("❌ Erro ao recuperar: " + err, "erro");
+    })
+    .recuperarLead(idLead);
 }
 </script>
