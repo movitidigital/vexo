@@ -2748,7 +2748,7 @@ function fecharModalNovoLead() {
 async function salvarNovoLead() {
   const btn = document.getElementById('btnSalvarP');
 
-  // 🔥 Busca o perfil do Supabase (sessionStorage mudou de formato)
+  // 🔥 Busca o perfil do Supabase
   const usuarioVexo = await obterUsuarioVexo();
   if (!usuarioVexo) {
     notificar("Erro: Sessão expirada. Refaça o login.", "erro");
@@ -2759,6 +2759,54 @@ async function salvarNovoLead() {
   const status_ini = document.getElementById('p_status_ini').value;
   const origem_lead = document.getElementById('p_origem').value;
   const tipoCliente = document.getElementById('p_tipo_cliente').value;
+  const cnpjInput = document.getElementById('p_cnpj').value;
+
+  // 🔥 VALIDAÇÃO DE CNPJ DUPLICADO
+  const cnpjLimpo = cnpjInput.replace(/\D/g, ''); // Apenas números para busca exata
+  if (cnpjLimpo.length >= 14) {
+    // Muda o botão para estado de carregamento
+    btn.disabled = true;
+    btn.innerHTML = '⏳ Verificando CNPJ...';
+
+    try {
+      // Consulta rápida no banco de dados se o CNPJ já existe
+      const { data: leadsExistentes, error } = await window.sb
+        .from('leads')
+        .select('codigo, captacao_do_lead, status, razao_social')
+        .or(`cnpj.eq.${cnpjInput},cnpj.eq.${cnpjLimpo}`) // Busca com e sem máscara
+        .limit(1);
+
+      if (error) throw error;
+
+      if (leadsExistentes && leadsExistentes.length > 0) {
+        const leadDuplicado = leadsExistentes[0];
+        const nomeConsultor = leadDuplicado.captacao_do_lead || "Não atribuído";
+        const statusLead = leadDuplicado.status || "Desconhecido";
+        
+        let msgAviso = `⚠️ Lead já cadastrado!\n\nA empresa "${leadDuplicado.razao_social}" (Cód: ${leadDuplicado.codigo}) já está no sistema.\n`;
+        
+        if (statusLead === 'DISPONIVEL') {
+          msgAviso += `\n📍 Status: Disponível no Mural.`;
+        } else {
+          msgAviso += `\n👤 Consultor: ${nomeConsultor}\n📍 Status: ${statusLead}`;
+        }
+
+        alert(msgAviso);
+        notificar(`Lead duplicado! Já existe sob o código ${leadDuplicado.codigo}`, 'erro');
+        
+        btn.disabled = false;
+        btn.innerHTML = '📍 Registrar Lead';
+        return; // 🛑 Para o salvamento aqui
+      }
+    } catch (err) {
+      console.error("Erro na validação de CNPJ:", err);
+      // Se a validação falhar por erro de rede, segue o fluxo para não travar o usuário
+    }
+    
+    // Restaura o botão antes de continuar para o salvamento real
+    btn.disabled = false;
+    btn.innerHTML = '⏳ Gravando...';
+  }
 
   // Tratamento da data de abertura para o padrão ISO (YYYY-MM-DD)
   let dataAbertura = document.getElementById('p_data_abertura').value;
@@ -2774,7 +2822,7 @@ async function salvarNovoLead() {
   const adminVal = document.getElementById('p_admin').value;
 
   const dados = {
-    cnpj: document.getElementById('p_cnpj').value,
+    cnpj: cnpjInput,
     razao: razaoVal,
     razao_social: razaoVal,
     admin: adminVal,
@@ -2815,14 +2863,11 @@ async function salvarNovoLead() {
     .withSuccessHandler(res => {
       console.log('✅ [Novo Lead] Resposta:', res);
 
-      // 🔥 A RPC registrar_prospeccao retorna o registro direto (não { success: true })
-      // O normalizador da ponte envelopa em { success: true } se for objeto. Vamos aceitar ambos.
       const sucesso = res && (res.success === true || res.id || res.razao_social);
 
       if (sucesso) {
         notificar(`Lead registrado com sucesso!`);
 
-        // Limpa o form
         document.querySelectorAll('#modal-novo-lead .input-lead').forEach(el => {
           if (el.tagName === 'SELECT') {
             el.selectedIndex = 0;
@@ -2835,7 +2880,6 @@ async function salvarNovoLead() {
         btn.innerHTML = '📍 Registrar Lead';
         fecharModalNovoLead();
 
-        // 🔥 Muda de aba e recarrega (usa o status_ini para decidir)
         setTimeout(async () => {
           if (status_ini === "DISPONIVEL") {
             mudarAbaLeads('mural');
