@@ -63,25 +63,6 @@
 
         </div>
       </div>
-
-              <!-- BARRA DE FILTROS DO KANBAN -->
-      <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
-        
-        <!-- Campo de Busca por Nome da Empresa -->
-        <input type="text" id="filtro-busca-kanban" placeholder="🔍 Buscar empresa..." style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; flex: 1; max-width: 250px;" onkeyup="filtrarKanbanVisual()">
-        
-        <!-- Filtro por Consultor (Preenchido automaticamente pelo JS) -->
-        <select id="filtro-consultor-kanban" style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; background: white; cursor: pointer; outline: none;" onchange="filtrarKanbanVisual()">
-          <option value="">👤 Todos os Consultores</option>
-        </select>
-
-        <!-- Checkbox para ver só os atrasados -->
-        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 0;">
-          <input type="checkbox" id="filtro-atrasados" onchange="filtrarKanbanVisual()" style="cursor: pointer;">
-          ⏰ Apenas Atrasados
-        </label>
-      </div>
-        
      <!-- 🔥 PAINEL DE META E REALIZADO (GESTÃO) -->
       <div id="painel-meta" style="display: none; margin-bottom: 20px;">
         <div style="background: linear-gradient(135deg, #ffffff, #f8fafc); padding: 16px 20px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
@@ -114,6 +95,25 @@
         </div>
       </div>
 
+        
+              <!-- BARRA DE FILTROS DO KANBAN -->
+      <div style="display: flex; gap: 10px; margin-bottom: 15px; align-items: center; flex-wrap: wrap; background: white; padding: 12px; border-radius: 12px; border: 1px solid #e2e8f0; box-shadow: 0 2px 4px rgba(0,0,0,0.02);">
+        
+        <!-- Campo de Busca por Nome da Empresa -->
+        <input type="text" id="filtro-busca-kanban" placeholder="🔍 Buscar empresa..." style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; flex: 1; max-width: 250px;" onkeyup="filtrarKanbanVisual()">
+        
+        <!-- Filtro por Consultor (Preenchido automaticamente pelo JS) -->
+        <select id="filtro-consultor-kanban" style="padding: 8px 12px; border: 1px solid #e2e8f0; border-radius: 8px; font-size: 12px; background: white; cursor: pointer; outline: none;" onchange="filtrarKanbanVisual()">
+          <option value="">👤 Todos os Consultores</option>
+        </select>
+
+        <!-- Checkbox para ver só os atrasados -->
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; color: #475569; cursor: pointer; background: #f8fafc; padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0; margin: 0;">
+          <input type="checkbox" id="filtro-atrasados" onchange="filtrarKanbanVisual()" style="cursor: pointer;">
+          ⏰ Apenas Atrasados
+        </label>
+      </div>
+      
         
       <!-- COLUNAS DO KANBAN -->
       <div class="kanban-mini-wrapper">
