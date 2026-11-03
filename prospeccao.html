@@ -7044,19 +7044,38 @@ function timeAgo(dateString) {
   return `há ${diffDays} dias`;
 }
 
-function abrirRadarGestor() {
-  const modal = document.getElementById('modal-radar');
+let _radarInterval = null; // Variável global para controlar o tempo real
+
+function timeAgo(dateString) {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now - date;
+  const diffMins = Math.round(diffMs / 60000);
+  
+  if (diffMins < 1) return 'agora mesmo';
+  if (diffMins < 60) return `há ${diffMins} min`;
+  const diffHours = Math.round(diffMins / 60);
+  if (diffHours < 24) return `há ${diffHours}h`;
+  const diffDays = Math.round(diffHours / 24);
+  return `há ${diffDays} dias`;
+}
+
+function atualizarFeedRadar(silencioso = false) {
   const feed = document.getElementById('feed-atividades');
   
-  modal.style.display = 'flex';
-  setTimeout(() => { modal.style.opacity = '1'; modal.querySelector('div > div').style.transform = 'scale(1)'; }, 10);
-  
-  feed.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;">⏳ Sintonizando o radar...</div>';
+  // Se não for silencioso (primeira abertura), mostra o loading
+  if (!silencioso && feed) {
+    feed.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;"><div style="display:inline-block; animation: spin 1s linear infinite; font-size: 24px; margin-bottom: 10px;">⏳</div><br>Sintonizando o radar...</div>';
+  }
 
   google.script.run
     .withSuccessHandler(res => {
+      // Só atualiza a tela se o modal ainda estiver aberto
+      const modal = document.getElementById('modal-radar');
+      if (!modal || modal.style.display !== 'flex') return;
+
       if (!res.success || !res.feed || res.feed.length === 0) {
-        feed.innerHTML = '<p style="text-align:center; color:#94a3b8;">Nenhuma atividade recente encontrada.</p>';
+        if (!silencioso && feed) feed.innerHTML = '<p style="text-align:center; color:#94a3b8;">Nenhuma atividade recente encontrada.</p>';
         return;
       }
 
@@ -7067,7 +7086,6 @@ function abrirRadarGestor() {
         let cor = '#3b82f6';
         let textoAcao = 'Atualização';
 
-        // Define a cor e o ícone baseado na ação
         if (atv.acao === 'LEAD_CAPTADO') {
           icone = '🎯'; cor = '#f59e0b'; textoAcao = 'capturou o lead';
         } else if (atv.acao === 'STATUS_ATUALIZADO') {
@@ -7082,7 +7100,6 @@ function abrirRadarGestor() {
           icone = '➕'; cor = '#64748b'; textoAcao = 'cadastrou um novo lead';
         }
 
-        // Pega as iniciais do usuário
         const iniciais = (atv.usuario || 'Sistema').substring(0, 2).toUpperCase();
 
         html += `
@@ -7105,17 +7122,49 @@ function abrirRadarGestor() {
         `;
       });
 
-      feed.innerHTML = html;
+      // Aplica um efeito suave se for atualização em background
+      if (silencioso && feed) {
+        feed.style.opacity = '0.5';
+        setTimeout(() => { feed.innerHTML = html; feed.style.opacity = '1'; feed.style.transition = 'opacity 0.3s'; }, 200);
+      } else if (feed) {
+        feed.innerHTML = html;
+      }
+      
     })
     .withFailureHandler(err => {
-      feed.innerHTML = `<p style="color: #ef4444; text-align:center;">Erro ao carregar o radar: ${err}</p>`;
+      console.error("Erro ao buscar radar:", err);
     })
     .obterFeedAtividades();
+}
+
+function abrirRadarGestor() {
+  const modal = document.getElementById('modal-radar');
+  
+  modal.style.display = 'flex';
+  setTimeout(() => { 
+    modal.style.opacity = '1'; 
+    modal.querySelector('div > div').style.transform = 'scale(1)'; 
+  }, 10);
+  
+  // 1. Faz a primeira busca
+  atualizarFeedRadar(false);
+
+  // 2. Configura o "Tempo Real" (busca a cada 15 segundos)
+  if (_radarInterval) clearInterval(_radarInterval);
+  _radarInterval = setInterval(() => {
+    atualizarFeedRadar(true); // true = silencioso (não mostra o loading)
+  }, 15000); 
 }
 
 function fecharRadarGestor() {
   const modal = document.getElementById('modal-radar');
   modal.style.opacity = '0';
   setTimeout(() => { modal.style.display = 'none'; }, 300);
+  
+  // 🔥 Para o tempo real quando fecha o modal
+  if (_radarInterval) {
+    clearInterval(_radarInterval);
+    _radarInterval = null;
+  }
 }
 </script>
