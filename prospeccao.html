@@ -3443,20 +3443,30 @@ function salvarDadosOportunidade(idLead) {
 // Salvar dados da aba CONTATO - com recarga na etapa correta
 function salvarDadosContatoUnificado(idLead) {
   const meioContato = document.getElementById('contato_meio').value;
+  
+  // 🔥 Validação amigável
   if (!meioContato) {
-    notificacaoVexo("Por favor, selecione o meio de contato", "warning");
+    notificar("⚠️ Por favor, selecione o MEIO DE CONTATO antes de salvar.", "erro");
+    // Rola a tela para cima para o usuário ver o campo
+    document.getElementById('contato_meio').focus();
     return;
   }
 
+  // 🔥 Pega o nome do usuário com segurança (sem quebrar)
+  let usuarioNome = "Sistema";
+  if (typeof _usuarioLogadoGlobal !== 'undefined' && _usuarioLogadoGlobal) {
+    usuarioNome = _usuarioLogadoGlobal.nomeCompleto || _usuarioLogadoGlobal.username;
+  }
+
   const dados = {
-    dataPrimeiroContato: document.getElementById('contato_data').value,
+    dataPrimeiroContato: document.getElementById('contato_data').value || null,
     meioContato: meioContato,
-    quemAtendeu: document.getElementById('contato_quem').value,
-    interesseDemonstrado: document.getElementById('contato_interesse').value,
-    principalDor: document.getElementById('contato_dor').value,
-    proximaAcao: document.getElementById('contato_proxima_acao').value,
-    dataProximaAcao: document.getElementById('contato_data_acao') ? (document.getElementById('contato_data_acao').value || null) : null, // 🔥 NOVO CAMPO
-    usuario: JSON.parse(sessionStorage.getItem('usuarioLogado')).username || "Sistema"
+    quemAtendeu: document.getElementById('contato_quem').value || null,
+    interesseDemonstrado: document.getElementById('contato_interesse').value || null,
+    principalDor: document.getElementById('contato_dor').value || null,
+    proximaAcao: document.getElementById('contato_proxima_acao').value || null,
+    dataProximaAcao: document.getElementById('contato_data_acao').value || null, // 🔥 NOVO CAMPO
+    usuario: usuarioNome
   };
 
   const btn = document.getElementById('btn-salvar-aba-atual');
@@ -3470,47 +3480,33 @@ function salvarDadosContatoUnificado(idLead) {
       btn.innerHTML = textoOriginal;
 
       if (res.success) {
-        notificacaoVexo(res.message, "success");
+        notificar('✅ Contato e Follow-up salvos com sucesso!', 'sucesso');
 
-        // Limpa o formulário da aba CONTATO
-        document.getElementById('contato_data').value = '';
-        document.getElementById('contato_meio').value = '';
-        document.getElementById('contato_quem').value = '';
-        document.getElementById('contato_interesse').value = '';
-        document.getElementById('contato_dor').value = '';
-        document.getElementById('contato_proxima_acao').value = '';
-        
-        // 🔥 Limpa o campo de data do follow-up
-        const elDataAcao = document.getElementById('contato_data_acao');
-        if (elDataAcao) elDataAcao.value = '';
-
-        // Se o status foi atualizado (avançou para CONTATO)
-        if (res.statusAtualizado) {
-          // Atualiza o cabeçalho do modal
-          const etapaSpan = document.getElementById('modal-unificado-etapa-atual');
-          if (etapaSpan) etapaSpan.innerText = 'CONTATO';
-
-          // 🔥 Tenta mover o card imediatamente
+        // Se o lead estava em OPORTUNIDADE, avança automaticamente para CONTATO
+        const etapaAtual = document.getElementById('modal-unificado-etapa-atual').innerText;
+        if (etapaAtual === 'OPORTUNIDADE') {
+          document.getElementById('modal-unificado-etapa-atual').innerText = 'CONTATO';
           moverCardNoKanban(idLead, 'CONTATO');
-
-          // Atualiza histórico e dados de contato (já salvos)
-          carregarHistoricoUnificado(idLead);
-          carregarDadosContatoUnificado(idLead);
-        } else {
-          carregarHistoricoUnificado(idLead);
-          carregarDadosContatoUnificado(idLead);
         }
+
+        // Recarrega o histórico e os dados na tela
+        carregarHistoricoUnificado(idLead);
+        carregarDadosContatoUnificado(idLead);
+        
+        // Atualiza o Kanban lá atrás para mostrar o alerta de "Tarefa Atrasada"
+        if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
+        
       } else {
-        notificacaoVexo("Erro: " + res.message, "error");
+        notificar("❌ Erro: " + (res.message || "Falha desconhecida"), "erro");
       }
     })
     .withFailureHandler(function(err) {
-      console.error("Erro:", err);
-      notificacaoVexo("Erro de conexão ao salvar", "error");
+      console.error("Erro ao salvar contato:", err);
+      notificar("❌ Erro de conexão ao salvar", "erro");
       btn.disabled = false;
       btn.innerHTML = textoOriginal;
     })
-    .salvarContatoEAvancar(idLead, dados, dados.usuario);
+    .salvarContatoEAvancar(idLead, dados);
 }
 // ============================================
 // HANDLER DO DROP (DRAG & DROP) - CORRIGIDO
