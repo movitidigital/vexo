@@ -2763,15 +2763,16 @@ async function salvarNovoLead() {
 
   // 🔥 VALIDAÇÃO DE CNPJ DUPLICADO
   const cnpjLimpo = cnpjInput.replace(/\D/g, ''); // Apenas números para busca exata
+  
   if (cnpjLimpo.length >= 14) {
     // Muda o botão para estado de carregamento
     btn.disabled = true;
     btn.innerHTML = '⏳ Verificando CNPJ...';
 
     try {
-      // Consulta rápida no banco de dados se o CNPJ já existe
+      // Consulta rápida no banco de dados se o CNPJ já existe na tabela 'clientes'
       const { data: leadsExistentes, error } = await window.sb
-        .from('leads')
+        .from('clientes') // 🔥 AQUI: Nome correto da tabela
         .select('codigo, captacao_do_lead, status, razao_social')
         .or(`cnpj.eq.${cnpjInput},cnpj.eq.${cnpjLimpo}`) // Busca com e sem máscara
         .limit(1);
@@ -2780,19 +2781,23 @@ async function salvarNovoLead() {
 
       if (leadsExistentes && leadsExistentes.length > 0) {
         const leadDuplicado = leadsExistentes[0];
+        // Normaliza o status para evitar erros de digitação no banco
+        const statusLead = String(leadDuplicado.status || "").toUpperCase().trim();
         const nomeConsultor = leadDuplicado.captacao_do_lead || "Não atribuído";
-        const statusLead = leadDuplicado.status || "Desconhecido";
         
         let msgAviso = `⚠️ Lead já cadastrado!\n\nA empresa "${leadDuplicado.razao_social}" (Cód: ${leadDuplicado.codigo}) já está no sistema.\n`;
         
+        // 🔥 REGRA 1: SE ESTIVER DISPONÍVEL NO MURAL
         if (statusLead === 'DISPONIVEL') {
-          msgAviso += `\n📍 Status: Disponível no Mural.`;
-        } else {
-          msgAviso += `\n👤 Consultor: ${nomeConsultor}\n📍 Status: ${statusLead}`;
+          msgAviso += `\n📍 Status: Disponível no Mural (Oportunidades).\n👉 Vá até a aba "Oportunidades" e clique em "Captar Lead" para assumir esta prospecção.`;
+        } 
+        // 🔥 REGRA 2: SE JÁ ESTIVER SENDO TRABALHADO (KANBAN)
+        else {
+          msgAviso += `\n👤 Status: ${statusLead}\n🧑‍💼 Consultor Responsável: ${nomeConsultor}\n\n👉 Este lead já está no funil de outra pessoa.`;
         }
 
         alert(msgAviso);
-        notificar(`Lead duplicado! Já existe sob o código ${leadDuplicado.codigo}`, 'erro');
+        notificar(`Lead duplicado! Já cadastrado.`, 'erro');
         
         btn.disabled = false;
         btn.innerHTML = '📍 Registrar Lead';
