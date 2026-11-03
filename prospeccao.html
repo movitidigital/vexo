@@ -15,6 +15,7 @@
       <button onclick="mudarAbaLeads('mural')" class="btn-aba">🌐 Oportunidades</button>
       <button onclick="mudarAbaLeads('kanban')" class="btn-aba active">🎯 Meu Funil</button>
       <button onclick="abrirPainelProdutividade()" class="btn-aba" style="background: #0f172a; color: white; border-color: #0f172a;">📊 Produtividade</button>
+      <button onclick="abrirMinhasTarefas()" class="btn-aba" style="background: #0ea5e9; color: white; border-color: #0ea5e9;">📌 Minhas Tarefas</button>
     </div>
   </div>
 
@@ -347,6 +348,24 @@
           </div>
         </div>
 
+  <!-- MODAL DE MINHAS TAREFAS -->
+  <div id="modal-tarefas" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px); z-index:10005; justify-content:center; align-items:center; padding: 20px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s ease;">
+    <div style="background:white; width:100%; max-width: 800px; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.3s ease; max-height: 90vh;">
+      
+      <div style="padding: 20px 25px; background: #0ea5e9; color: white; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="margin:0; font-size: 20px; font-weight: 800;">📌 Minhas Tarefas</h3>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #e0f2fe;">Seus Follow-ups pendentes e atrasados</p>
+        </div>
+        <button onclick="fecharMinhasTarefas()" style="background:rgba(255,255,255,0.2); border:none; width: 36px; height: 36px; border-radius: 50%; color: white; cursor: pointer; font-size: 20px;">&times;</button>
+      </div>
+
+      <div id="lista-tarefas-conteudo" style="padding: 25px; overflow-y: auto; flex: 1; background: #f8fafc;">
+        <!-- Preenchido via JS -->
+      </div>
+    </div>
+  </div>
+        
         <!-- ========================================================== -->
         <!-- ABA CONTATO (Formulário)                                   -->
         <!-- ========================================================== -->
@@ -1384,6 +1403,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
 
   const MAP = {
     getLeadsDisponiveis: { rpc: 'leads_disponiveis', args: (limit, offset) => ({ p_limit: limit, p_offset: offset }) },
+    minhasTarefas: { rpc: 'minhas_tarefas', args: () => ({}) },    
     salvarFechamentoLead: { rpc: 'salvar_fechamento_lead', args: (id, st, dt, mrr) => ({ p_id: id, p_status_ativacao: st, p_data_ativacao: dt, p_mrr_fechado: mrr }) },
     getMeusLeadsKanban:          { rpc: 'meus_leads_kanban',         args: (u) => ({ p_usuario: u }), paginate: true },
     atualizarDadosOportunidade:  { rpc: 'atualizar_dados_oportunidade', args: (id, v, p, d) => ({ p_id: id, p_valor: v, p_probabilidade: p, p_data_prevista: d }) },
@@ -6837,5 +6857,84 @@ function formatarTelefoneExibicao(tel) {
     return ajustado.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
   }
   return tel; // Fallback se não for 10 nem 11
+}
+  function abrirMinhasTarefas() {
+  const modal = document.getElementById('modal-tarefas');
+  const conteudo = document.getElementById('lista-tarefas-conteudo');
+  
+  modal.style.display = 'flex';
+  setTimeout(() => { modal.style.opacity = '1'; modal.querySelector('div > div').style.transform = 'scale(1)'; }, 10);
+  
+  conteudo.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;">⏳ Buscando suas tarefas...</div>';
+
+  google.script.run
+    .withSuccessHandler(tarefas => {
+      if (!tarefas || tarefas.length === 0) {
+        conteudo.innerHTML = `
+          <div style="text-align: center; padding: 40px;">
+            <span style="font-size: 48px;">🎉</span>
+            <h3 style="color: #10b981; margin: 10px 0;">Tudo em dia!</h3>
+            <p style="color: #64748b; font-size: 13px;">Você não tem nenhum follow-up pendente no momento.</p>
+          </div>
+        `;
+        return;
+      }
+
+      const hoje = new Date(); hoje.setHours(0,0,0,0);
+      let atrasadas = [];
+      let hojeTarefas = [];
+      let futuras = [];
+
+      tarefas.forEach(t => {
+        const dataAcao = new Date(t.data_proxima_acao + 'T00:00:00');
+        if (dataAcao < hoje) atrasadas.push(t);
+        else if (dataAcao.getTime() === hoje.getTime()) hojeTarefas.push(t);
+        else futuras.push(t);
+      });
+
+      const renderGrupo = (titulo, cor, icone, lista) => {
+        if (lista.length === 0) return '';
+        
+        let html = `<div style="margin-bottom: 25px;">
+          <h4 style="margin: 0 0 12px 0; color: ${cor}; font-size: 14px; font-weight: 800; display: flex; align-items: center; gap: 6px;">${icone} ${titulo} (${lista.length})</h4>
+          <div style="display: flex; flex-direction: column; gap: 10px;">`;
+
+        lista.forEach(t => {
+          const dataFormatada = new Date(t.data_proxima_acao + 'T00:00:00').toLocaleDateString('pt-BR');
+          const valorStr = t.valor_oportunidade ? `💰 R$ ${Number(t.valor_oportunidade).toLocaleString('pt-BR', {minimumFractionDigits:2})` : '';
+          
+          html += `
+            <div onclick="fecharMinhasTarefas(); abrirModalUnificado('${t.id}');" style="background: white; padding: 16px; border-radius: 12px; border-left: 4px solid ${cor}; box-shadow: 0 2px 4px rgba(0,0,0,0.02); cursor: pointer; transition: 0.2s;" onmouseover="this.style.transform='translateX(4px)'" onmouseout="this.style.transform='none'">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="flex: 1;">
+                  <strong style="display: block; color: #1e293b; font-size: 14px; margin-bottom: 4px;">${t.razao_social}</strong>
+                  <div style="font-size: 12px; color: #475569; margin-bottom: 6px;">📝 ${t.proxima_acao_contato || 'Sem descrição'}</div>
+                  <div style="font-size: 11px; color: ${cor}; font-weight: 700;">📅 Agendado para: ${dataFormatada}</div>
+                </div>
+                ${valorStr ? `<div style="font-size: 13px; font-weight: 800; color: #059669; text-align: right; margin-left: 15px;">${valorStr}</div>` : ''}
+              </div>
+            </div>
+          `;
+        });
+        html += `</div></div>`;
+        return html;
+      };
+
+      conteudo.innerHTML = 
+        renderGrupo('Atrasadas', '#ef4444', '🚨', atrasadas) +
+        renderGrupo('Para Hoje', '#f59e0b', '⚡', hojeTarefas) +
+        renderGrupo('Próximos Dias', '#3b82f6', '📅', futuras);
+
+    })
+    .withFailureHandler(err => {
+      conteudo.innerHTML = `<p style="color: #ef4444; text-align:center;">Erro ao carregar tarefas: ${err}</p>`;
+    })
+    .minhasTarefas();
+}
+
+function fecharMinhasTarefas() {
+  const modal = document.getElementById('modal-tarefas');
+  modal.style.opacity = '0';
+  setTimeout(() => { modal.style.display = 'none'; }, 300);
 }
 </script>
