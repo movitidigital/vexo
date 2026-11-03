@@ -2052,22 +2052,22 @@ async function carregarMeuFunil() {
         cardEl.id = `card-${lead.id}`;
         cardEl.setAttribute('draggable', 'true');
         
-        // 🔥 Lógica para montar os botões de WhatsApp e contatos
-        const fone1Limpo = lead.contato ? String(lead.contato).replace(/\D/g, '') : '';
-        const fone2Limpo = lead.contato_alt ? String(lead.contato_alt).replace(/\D/g, '') : '';
+        // 🔥 Lógica para montar os botões de WhatsApp com inteligência de nono dígito
+        const fone1Ajustado = ajustarNumeroTelefone(lead.contato);
+        const fone2Ajustado = ajustarNumeroTelefone(lead.contato_alt);
 
-        const zap1HTML = fone1Limpo ? `<a href='https://wa.me/55${fone1Limpo}' target='_blank' onclick='event.stopPropagation()' style='background:#25d366; color:white; padding:3px 8px; border-radius:4px; font-size:9px; text-decoration:none; font-weight:800;'>WhatsApp</a>` : "";
-        const zap2HTML = fone2Limpo ? `<a href='https://wa.me/55${fone2Limpo}' target='_blank' onclick='event.stopPropagation()' style='background:#128c7e; color:white; padding:3px 8px; border-radius:4px; font-size:9px; text-decoration:none; font-weight:800;'>WhatsApp Alt</a>` : "";
+        const zap1HTML = fone1Ajustado ? `<a href='https://wa.me/55${fone1Ajustado}' target='_blank' onclick='event.stopPropagation()' style='background:#25d366; color:white; padding:3px 8px; border-radius:4px; font-size:9px; text-decoration:none; font-weight:800;'>WhatsApp</a>` : "";
+        const zap2HTML = fone2Ajustado ? `<a href='https://wa.me/55${fone2Ajustado}' target='_blank' onclick='event.stopPropagation()' style='background:#128c7e; color:white; padding:3px 8px; border-radius:4px; font-size:9px; text-decoration:none; font-weight:800;'>WhatsApp Alt</a>` : "";
 
         const contatosHTML = `
           <div style="display:flex; flex-direction:column; gap:6px; margin-bottom: 8px; margin-top: 8px; background: #f8fafc; padding: 8px; border-radius: 6px;">
             <div style='display:flex; justify-content:space-between; align-items:center;'>
-              <span style='font-size:10.5px; font-weight:bold; color:#475569;'>📞 ${lead.contato || 'S/ Tel'}</span> 
+              <span style='font-size:10.5px; font-weight:bold; color:#475569;'>📞 ${formatarTelefoneExibicao(lead.contato)}</span> 
               ${zap1HTML}
             </div>
             ${lead.contato_alt ? `
             <div style='display:flex; justify-content:space-between; align-items:center;'>
-              <span style='font-size:10.5px; font-weight:bold; color:#475569;'>📱 ${lead.contato_alt}</span> 
+              <span style='font-size:10.5px; font-weight:bold; color:#475569;'>📱 ${formatarTelefoneExibicao(lead.contato_alt)}</span> 
               ${zap2HTML}
             </div>` : ''}
           </div>
@@ -6761,5 +6761,34 @@ function filtrarKanbanVisual() {
 
     item.style.display = mostrar ? 'block' : 'none';
   });
+}
+  // ============================================================
+// 🧠 INTELIGÊNCIA DE TELEFONE (NONO DÍGITO E FORMATAÇÃO)
+// ============================================================
+function ajustarNumeroTelefone(tel) {
+  if (!tel) return '';
+  let limpo = String(tel).replace(/\D/g, '');
+  
+  // Se tiver 10 dígitos (DDD + 8), e o primeiro dígito do número for 6,7,8,9 -> é celular sem o 9
+  if (limpo.length === 10) {
+    const primeiroDigito = limpo.charAt(2);
+    if (['6', '7', '8', '9'].includes(primeiroDigito)) {
+      limpo = limpo.substring(0, 2) + '9' + limpo.substring(2);
+    }
+  }
+  return limpo;
+}
+
+function formatarTelefoneExibicao(tel) {
+  const ajustado = ajustarNumeroTelefone(tel);
+  if (!ajustado) return 'S/ Tel';
+  
+  if (ajustado.length === 11) {
+    return ajustado.replace(/^(\d{2})(\d{5})(\d{4})$/, '($1) $2-$3');
+  }
+  if (ajustado.length === 10) {
+    return ajustado.replace(/^(\d{2})(\d{4})(\d{4})$/, '($1) $2-$3');
+  }
+  return tel; // Fallback se não for 10 nem 11
 }
 </script>
