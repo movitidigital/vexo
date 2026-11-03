@@ -350,7 +350,7 @@
         <!-- ========================================================== -->
         <!-- ABA CONTATO (Formulário)                                   -->
         <!-- ========================================================== -->
-        <div id="tab-contato" class="tab-conteudo" style="display: none;">
+<div id="tab-contato" class="tab-conteudo" style="display: none;">
           <div style="background: #f8fafc; border-radius: 16px; padding: 24px;">
             <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px;">
               <div>
@@ -398,8 +398,16 @@
                 <textarea id="contato_dor" rows="3" class="v-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 14px; resize: vertical;" placeholder="Descreva a principal dor do cliente..."></textarea>
               </div>
               <div style="grid-column: span 2;">
-                <label style="font-size: 12px; font-weight: 700; color: #475569;">📌 PRÓXIMA AÇÃO</label>
-                <textarea id="contato_proxima_acao" rows="2" class="v-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 14px; resize: vertical;" placeholder="Próximos passos acordados..."></textarea>
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 15px;">
+                  <div>
+                    <label style="font-size: 12px; font-weight: 700; color: #475569;">📌 PRÓXIMA AÇÃO (O que fazer?)</label>
+                    <textarea id="contato_proxima_acao" rows="2" class="v-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 14px; resize: vertical;" placeholder="Ex: Enviar proposta..."></textarea>
+                  </div>
+                  <div>
+                    <label style="font-size: 12px; font-weight: 700; color: #dc2626;">📅 DATA DO FOLLOW-UP</label>
+                    <input type="date" id="contato_data_acao" class="v-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 14px; color: #dc2626; font-weight: bold;">
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -2020,7 +2028,7 @@ async function carregarMeuFunil() {
         const dias = Number(lead.dias_parado) || 0;
         const eNegligenciado = dias >= 7; 
 
-        // Verifica atraso
+        // Verifica atraso de fechamento
         let alertaPrazo = '';
         if (lead.data_prevista && etapaLower !== 'fechado') {
           const hoje = new Date(); hoje.setHours(0,0,0,0);
@@ -2029,6 +2037,19 @@ async function carregarMeuFunil() {
             const diffTime = Math.abs(hoje - dataPrev);
             const diasAtraso = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
             alertaPrazo = `<div style="margin-top: 6px; font-size: 9px; font-weight: 800; color: #dc2626; background: #fee2e2; padding: 3px 8px; border-radius: 4px; display: inline-block; border: 1px solid #fecaca;">⏰ ATRASADO (${diasAtraso}d)</div>`;
+          }
+        }
+
+        // 🔥 VERIFICA SE A TAREFA (FOLLOW-UP) ESTÁ ATRASADA OU É HOJE
+        let alertaTarefa = '';
+        if (lead.data_proxima_acao && etapaLower !== 'fechado') {
+          const hoje = new Date(); hoje.setHours(0,0,0,0);
+          const dataAcao = new Date(lead.data_proxima_acao + 'T00:00:00');
+          
+          if (dataAcao < hoje) {
+            alertaTarefa = `<div style="margin-top: 6px; font-size: 9px; font-weight: 800; color: #b91c1c; background: #fef2f2; padding: 3px 8px; border-radius: 4px; display: inline-block; border: 1px solid #fecaca;">📌 TAREFA ATRASADA</div>`;
+          } else if (dataAcao.getTime() === hoje.getTime()) {
+            alertaTarefa = `<div style="margin-top: 6px; font-size: 9px; font-weight: 800; color: #b45309; background: #fffbeb; padding: 3px 8px; border-radius: 4px; display: inline-block; border: 1px solid #fde68a;">📌 FOLLOW-UP HOJE</div>`;
           }
         }
 
@@ -2044,7 +2065,7 @@ async function carregarMeuFunil() {
         const cardEl = document.createElement('div');
         if (lead.captacao_do_lead) cardEl.setAttribute('data-consultor', lead.captacao_do_lead.toLowerCase());
         
-        // 🔥 ATRIBUTOS DE FILTRAGEM EFICIENTE
+        // Atributos de filtragem eficiente
         cardEl.setAttribute('data-razao', (lead.razao_social || lead.razao || "Sem nome").toLowerCase());
         cardEl.setAttribute('data-atrasado', alertaPrazo !== '' ? 'true' : 'false');
         
@@ -2052,7 +2073,7 @@ async function carregarMeuFunil() {
         cardEl.id = `card-${lead.id}`;
         cardEl.setAttribute('draggable', 'true');
         
-        // 🔥 Lógica para montar os botões de WhatsApp com inteligência de nono dígito
+        // Lógica para montar os botões de WhatsApp com inteligência de nono dígito
         const fone1Ajustado = ajustarNumeroTelefone(lead.contato);
         const fone2Ajustado = ajustarNumeroTelefone(lead.contato_alt);
 
@@ -2088,6 +2109,7 @@ async function carregarMeuFunil() {
                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 4px;">
                  <div><i class='fas fa-history'></i> Parado há ${dias} dias</div>
                  ${alertaPrazo}
+                 ${alertaTarefa} <!-- 🔥 ALERTA DE TAREFA / FOLLOW-UP -->
                </div>
                ${lead.valor_oportunidade ? `<div style="color:#059669; font-weight:bold; margin-top:4px; font-size:11.5px;">💰 R$ ${Number(lead.valor_oportunidade).toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>` : ''}
             </div>
@@ -3230,6 +3252,14 @@ function preencherModalComDados(idLead, res) {
     if (res.dadosContato.interesseDemonstrado) document.getElementById('contato_interesse').value = res.dadosContato.interesseDemonstrado;
     if (res.dadosContato.principalDor) document.getElementById('contato_dor').value = res.dadosContato.principalDor;
     if (res.dadosContato.proximaAcao) document.getElementById('contato_proxima_acao').value = res.dadosContato.proximaAcao;
+    
+    // 🔥 NOVO CAMPO DE DATA DO FOLLOW-UP:
+    if (res.dados.data_proxima_acao) {
+      let dtAcao = res.dados.data_proxima_acao;
+      if (dtAcao.includes('T')) dtAcao = dtAcao.split('T')[0];
+      const elDataAcao = document.getElementById('contato_data_acao');
+      if (elDataAcao) elDataAcao.value = dtAcao;
+    }
   }
 
   // 🔥 PREENCHE DADOS DA ABA FECHADO
@@ -3425,6 +3455,7 @@ function salvarDadosContatoUnificado(idLead) {
     interesseDemonstrado: document.getElementById('contato_interesse').value,
     principalDor: document.getElementById('contato_dor').value,
     proximaAcao: document.getElementById('contato_proxima_acao').value,
+    dataProximaAcao: document.getElementById('contato_data_acao') ? (document.getElementById('contato_data_acao').value || null) : null, // 🔥 NOVO CAMPO
     usuario: JSON.parse(sessionStorage.getItem('usuarioLogado')).username || "Sistema"
   };
 
@@ -3448,6 +3479,10 @@ function salvarDadosContatoUnificado(idLead) {
         document.getElementById('contato_interesse').value = '';
         document.getElementById('contato_dor').value = '';
         document.getElementById('contato_proxima_acao').value = '';
+        
+        // 🔥 Limpa o campo de data do follow-up
+        const elDataAcao = document.getElementById('contato_data_acao');
+        if (elDataAcao) elDataAcao.value = '';
 
         // Se o status foi atualizado (avançou para CONTATO)
         if (res.statusAtualizado) {
