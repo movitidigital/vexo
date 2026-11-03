@@ -10,14 +10,16 @@
       <h2 style="color: #e65100; margin: 0;">🔍 Gestão de Prospecção</h2>
       <span id="badge-leads" style="font-size: 10px; background: #fff3e0; color: #e65100; padding: 2px 8px; border-radius: 10px; font-weight: bold;">TIM SMB ENTERPRISE</span>
     </div>
-    <div style="display: flex; gap: 8px;">
+<div style="display: flex; gap: 8px;">
       <button onclick="abrirModalNovoLead()" class="btn-aba">➕ Novo</button>
       <button onclick="mudarAbaLeads('mural')" class="btn-aba">🌐 Oportunidades</button>
       <button onclick="mudarAbaLeads('kanban')" class="btn-aba active">🎯 Meu Funil</button>
-      <button onclick="abrirPainelProdutividade()" class="btn-aba" style="background: #0f172a; color: white; border-color: #0f172a;">📊 Produtividade</button>
       <button onclick="abrirMinhasTarefas()" class="btn-aba" style="background: #0ea5e9; color: white; border-color: #0ea5e9;">📌 Minhas Tarefas</button>
-      <button onclick="abrirRadarGestor()" class="btn-aba" style="background: #8b5cf6; color: white; border-color: #8b5cf6;">📡 Radar</button>
-      <button onclick="abrirLeadsPerdidos()" class="btn-aba" style="background: #64748b; color: white; border-color: #64748b;">🏴‍☠️ Perdidos</button>
+      
+      <!-- 🔥 BOTÕES DE GESTÃO COM IDs -->
+      <button id="btn-gestao-produtividade" onclick="abrirPainelProdutividade()" class="btn-aba" style="background: #0f172a; color: white; border-color: #0f172a;">📊 Produtividade</button>
+      <button id="btn-gestao-radar" onclick="abrirRadarGestor()" class="btn-aba" style="background: #8b5cf6; color: white; border-color: #8b5cf6;">📡 Radar</button>
+      <button id="btn-gestao-perdidos" onclick="abrirLeadsPerdidos()" class="btn-aba" style="background: #64748b; color: white; border-color: #64748b;">🏴‍☠️ Perdidos</button>
     </div>
   </div>
 
@@ -3141,6 +3143,7 @@ setTimeout(async () => {
   if (usuarioVexo) {
     _usuarioLogadoGlobal = usuarioVexo;   // 🔥 ADICIONAR ESTA LINHA
     console.log("Iniciando Funil para:", usuarioVexo.nomeCompleto, "Cargo:", usuarioVexo.role);
+    await configurarInterfacePorCargo(); 
     await carregarMeuFunil();
     await controlarVisibilidadeBotaoDevolver();
   }
@@ -7340,5 +7343,35 @@ function recuperarLeadPerdido(idLead) {
       notificar("❌ Erro ao recuperar: " + err, "erro");
     })
     .recuperarLead(idLead);
+}
+  async function configurarInterfacePorCargo() {
+  const usuarioVexo = await obterUsuarioVexo();
+  if (!usuarioVexo) return;
+
+  const role = String(usuarioVexo.role || '').toUpperCase().trim();
+  
+  // Cargos que PODEM ver os botões de gestão
+  const isGestao = ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE', 'SUPERVISOR', 'GERENTE/SUPERVISOR'].includes(role);
+
+  if (!isGestao) {
+    // 🔥 Consultor: Esconde os botões de gestão
+    const btnProd = document.getElementById('btn-gestao-produtividade');
+    const btnRadar = document.getElementById('btn-gestao-radar');
+    const btnPerdidos = document.getElementById('btn-gestao-perdidos');
+    
+    if (btnProd) btnProd.style.display = 'none';
+    if (btnRadar) btnRadar.style.display = 'none';
+    if (btnPerdidos) btnPerdidos.style.display = 'none';
+
+    // Esconde também o painel de meta global (já que é visão da loja, não do consultor)
+    const painelMeta = document.getElementById('painel-meta');
+    if (painelMeta) painelMeta.style.display = 'none';
+    
+    // Oculta o filtro de consultores no Kanban (ele só deve ver o funil dele)
+    const filtroConsultor = document.getElementById('filtro-consultor-kanban');
+    if (filtroConsultor) filtroConsultor.style.display = 'none';
+    
+    console.log('👤 Interface restrita para Consultor de Vendas.');
+  }
 }
 </script>
