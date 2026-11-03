@@ -2571,12 +2571,11 @@ function filtrarMuralVisual() {
   }
 }
 
-// Função que faz a busca pesada no banco de dados
-function buscarMuralNoServidor(termo) {
+// Função que faz a busca pesada direto no banco de dados Supabase
+async function buscarMuralNoServidor(termo) {
   isBuscandoServidor = true;
   const mural = document.getElementById('mural-lista');
   
-  // Mostra o aviso de que está buscando no servidor
   let msgVazio = document.getElementById('msg-mural-vazio-filtro');
   if (!msgVazio) {
     msgVazio = document.createElement('div');
@@ -2584,53 +2583,83 @@ function buscarMuralNoServidor(termo) {
     msgVazio.style = 'grid-column: 1/-1; text-align:center; padding: 30px; color:#64748b; font-size:14px; font-weight:600; background:#f8fafc; border-radius:12px; border:2px dashed #e2e8f0; margin-top: 10px;';
     mural.appendChild(msgVazio);
   }
-  msgVazio.innerHTML = '⏳ Buscando em todo o banco de dados... (isso pode levar 1 segundinho)';
+  msgVazio.innerHTML = '⏳ Buscando em todo o banco de dados...';
 
-  // Pede até 1000 leads pro servidor de uma vez só para poder filtrar
-  google.script.run.withSuccessHandler(leadsRaw => {
+  try {
+    // 🔥 CONSULTA DIRETA NO SUPABASE (Busca em toda a tabela 'leads')
+    // O .or() busca em várias colunas ao mesmo tempo (Razão, CNPJ, Decisor, Código)
+    const { data: leadsDB, error } = await window.sb
+      .from('leads')
+      .select('*')
+      .or(`razao_social.ilike.%${termo}%,cnpj.ilike.%${termo}%,nome_administrador.ilike.%${termo}%,codigo.ilike.%${termo}%`)
+      .limit(50); // Traz até 50 resultados se houver
+
+    if (error) throw error;
     isBuscandoServidor = false;
-    
-    let arrayLeads = [];
-    if (Array.isArray(leadsRaw)) arrayLeads = leadsRaw;
-    else if (leadsRaw && typeof leadsRaw === 'object') arrayLeads = leadsRaw.data || leadsRaw.dados || leadsRaw.leads || leadsRaw.rows || [];
 
-    const removerAcentos = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
-    const termoNorm = removerAcentos(termo);
-    const termoNum = termo.replace(/\D/g, '');
-
-    const filtrados = arrayLeads.filter(l => {
-      const r = removerAcentos((l.razao_social || l.razao || '').toLowerCase());
-      const d = removerAcentos((l.nome_administrador || l.admin || '').toLowerCase());
-      const c = (l.codigo || '').toLowerCase();
-      const cn = (l.cnpj || '').replace(/\D/g, '');
-
-      return r.includes(termoNorm) || d.includes(termoNorm) || c.includes(termoNorm) || (termoNum && cn.includes(termoNum));
-    });
-
-    if (filtrados.length > 0) {
-      obterUsuarioVexo().then(usuario => {
-        const podeExcluir = (usuario?.role === "ADMINISTRADOR" || usuario?.role === "BACKOFFICE");
-        
-        // Limpa a tela inteira e mostra só o resultado da busca
-        mural.innerHTML = '';
-        let html = '';
-        filtrados.forEach(l => { html += gerarCardMural(l, podeExcluir); });
-        mural.innerHTML = html;
-        
-        // Coloca um botão para voltar à lista normal
-        const btnHTML = `
-          <div style="grid-column: 1/-1; text-align: center; padding: 20px;">
-            <button onclick="limparFiltroMural()" style="padding: 12px 24px; background: #e65100; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
-              Voltar para a lista completa
-            </button>
-          </div>
-        `;
-        mural.insertAdjacentHTML('beforeend', btnHTML);
-      });
+    if (leadsDB && leadsDB.length > 0) {
+      const usuario = await obterUsuarioVexo();
+      const podeExcluir = (usuario?.role === "ADMINISTRADOR" || usuario?.role === "BACKOFFICE");
+      
+      // Limpa a tela e mostra os resultados
+      mural.innerHTML = '';
+      let html = '';
+      leadsDB.forEach(l => { html += gerarCardMural(l, podeExcluir); });
+      mural.innerHTML = html;
+      
+      const btnHTML = `
+        <div style="grid-column: 1/-1; text-align: center; padding: 20px;">
+          <button onclick="limparFiltroMural()" style="padding: 12px 24px; background: #e65100; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
+            Voltar para a lista completa
+          </button>
+        </div>
+      `;
+      mural.insertAdjacentHTML('beforeend', btnHTML);
     } else {
       msgVazio.innerHTML = `Nenhum lead encontrado com "${termo}" em toda a base.`;
     }
-  }).getLeadsDisponiveis(1000, 0); // Puxa 1000 de uma vez
+  } catch (err) {
+    console.warn("Busca direta falhou, tentando via RPC antiga:", err);
+    
+    // Plano B: Se o banco bloquear a busca direta, tenta a RPC antiga
+    google.script.run.withSuccessHandler(leadsRaw => {
+      isBuscandoServidor = false;
+      let arrayLeads = Array.isArray(leadsRaw) ? leadsRaw : (leadsRaw?.data || leadsRaw?.dados || []);
+      
+      const removerAcentos = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
+      const termoNorm = removerAcentos(termo.toLowerCase());
+      const termoNum = termo.replace(/\D/g, '');
+
+      const filtrados = arrayLeads.filter(l => {
+        const r = removerAcentos((l.razao_social || l.razao || '').toLowerCase());
+        const d = removerAcentos((l.nome_administrador || l.admin || '').toLowerCase());
+        const c = (l.codigo || '').toLowerCase();
+        const cn = (l.cnpj || '').replace(/\D/g, '');
+        return r.includes(termoNorm) || d.includes(termoNorm) || c.includes(termoNorm) || (termoNum && cn.includes(termoNum));
+      });
+
+      if (filtrados.length > 0) {
+        obterUsuarioVexo().then(usuario => {
+          const podeExcluir = (usuario?.role === "ADMINISTRADOR" || usuario?.role === "BACKOFFICE");
+          mural.innerHTML = '';
+          let html = '';
+          filtrados.forEach(l => { html += gerarCardMural(l, podeExcluir); });
+          mural.innerHTML = html;
+          
+          const btnHTML = `
+            <div style="grid-column: 1/-1; text-align: center; padding: 20px;">
+              <button onclick="limparFiltroMural()" style="padding: 12px 24px; background: #e65100; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
+                Voltar para a lista completa
+              </button>
+            </div>
+          `;
+          mural.insertAdjacentHTML('beforeend', btnHTML);
+        });
+      } else {
+        msgVazio.innerHTML = `Nenhum lead encontrado com "${termo}" na base.`;
+      }
+    }).getLeadsDisponiveis(5000, 0); // Tenta puxar 5000 via RPC
+  }
 }
 
 function limparFiltroMural() {
