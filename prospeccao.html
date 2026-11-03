@@ -82,7 +82,39 @@
         </label>
       </div>
         
-      
+     <!-- 🔥 PAINEL DE META E REALIZADO (GESTÃO) -->
+      <div id="painel-meta" style="display: none; margin-bottom: 20px;">
+        <div style="background: linear-gradient(135deg, #ffffff, #f8fafc); padding: 16px 20px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+          
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="background: #e0f2fe; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px;">🎯</div>
+            <div>
+              <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Meta do Mês</div>
+              <div id="meta-total-txt" style="font-size: 18px; font-weight: 900; color: #0f172a;">R$ 0</div>
+            </div>
+          </div>
+
+          <div style="flex: 1; min-width: 200px; margin: 0 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px;">
+              <span>Progresso</span>
+              <span id="meta-percentual-txt" style="color: #059669;">0%</span>
+            </div>
+            <div style="width: 100%; height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+              <div id="meta-barra-progresso" style="height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 10px; transition: width 0.8s ease-in-out;"></div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="text-align: right;">
+              <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Realizado (CRM)</div>
+              <div id="meta-realizado-txt" style="font-size: 18px; font-weight: 900; color: #059669;">R$ 0</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+        
       <!-- COLUNAS DO KANBAN -->
       <div class="kanban-mini-wrapper">
 
@@ -129,38 +161,6 @@
       </div> <!-- /kanban-mini-wrapper -->
     </div> <!-- /aba-kanban -->
 
-
-      <!-- 🔥 PAINEL DE META E REALIZADO (GESTÃO) -->
-      <div id="painel-meta" style="display: none; margin-bottom: 20px;">
-        <div style="background: linear-gradient(135deg, #ffffff, #f8fafc); padding: 16px 20px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
-          
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="background: #e0f2fe; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px;">🎯</div>
-            <div>
-              <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Meta do Mês</div>
-              <div id="meta-total-txt" style="font-size: 18px; font-weight: 900; color: #0f172a;">R$ 0</div>
-            </div>
-          </div>
-
-          <div style="flex: 1; min-width: 200px; margin: 0 20px;">
-            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px;">
-              <span>Progresso</span>
-              <span id="meta-percentual-txt" style="color: #059669;">0%</span>
-            </div>
-            <div style="width: 100%; height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
-              <div id="meta-barra-progresso" style="height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 10px; transition: width 0.8s ease-in-out;"></div>
-            </div>
-          </div>
-
-          <div style="display: flex; align-items: center; gap: 15px;">
-            <div style="text-align: right;">
-              <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Realizado (CRM)</div>
-              <div id="meta-realizado-txt" style="font-size: 18px; font-weight: 900; color: #059669;">R$ 0</div>
-            </div>
-          </div>
-
-        </div>
-      </div>
       
   </div> <!-- /container-leads -->
 
