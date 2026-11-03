@@ -1990,6 +1990,22 @@ async function carregarMeuFunil() {
   google.script.run
     .withSuccessHandler(async (leadsRaw) => {
       const arrayKanban = Array.isArray(leadsRaw) ? leadsRaw : (leadsRaw?.data || leadsRaw?.dados || []);
+
+            // 🔥 INTELIGÊNCIA DE ORDENAÇÃO: Tarefas atrasadas vão para o topo!
+      const hojeISO = new Date().toISOString().split('T')[0];
+      arrayKanban.sort((a, b) => {
+        const getPeso = (lead) => {
+          if (!lead.data_proxima_acao) return 3; // Sem data, fica no fundo
+          
+          const dataAcao = lead.data_proxima_acao.split('T')[0];
+          
+          if (dataAcao < hojeISO) return 0; // Tarefa ATRASADA (vem primeiro)
+          if (dataAcao === hojeISO) return 1; // Tarefa para HOJE
+          return 2; // Tarefas futuras
+        };
+
+        return getPeso(a) - getPeso(b);
+      });
       
       colunasIds.forEach(c => document.getElementById('k_' + c).innerHTML = "");
       
