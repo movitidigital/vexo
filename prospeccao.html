@@ -348,23 +348,7 @@
           </div>
         </div>
 
-  <!-- MODAL DE MINHAS TAREFAS -->
-  <div id="modal-tarefas" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px); z-index:10005; justify-content:center; align-items:center; padding: 20px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s ease;">
-    <div style="background:white; width:100%; max-width: 800px; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.3s ease; max-height: 90vh;">
-      
-      <div style="padding: 20px 25px; background: #0ea5e9; color: white; display: flex; justify-content: space-between; align-items: center;">
-        <div>
-          <h3 style="margin:0; font-size: 20px; font-weight: 800;">📌 Minhas Tarefas</h3>
-          <p style="margin: 4px 0 0 0; font-size: 12px; color: #e0f2fe;">Seus Follow-ups pendentes e atrasados</p>
-        </div>
-        <button onclick="fecharMinhasTarefas()" style="background:rgba(255,255,255,0.2); border:none; width: 36px; height: 36px; border-radius: 50%; color: white; cursor: pointer; font-size: 20px;">&times;</button>
-      </div>
 
-      <div id="lista-tarefas-conteudo" style="padding: 25px; overflow-y: auto; flex: 1; background: #f8fafc;">
-        <!-- Preenchido via JS -->
-      </div>
-    </div>
-  </div>
         
         <!-- ========================================================== -->
         <!-- ABA CONTATO (Formulário)                                   -->
@@ -951,6 +935,26 @@
 
       <div id="painel-produtividade-conteudo" style="padding: 25px; overflow-y: auto; max-height: 70vh;">
         <!-- Tabela gerada via JS -->
+      </div>
+    </div>
+  </div>
+
+      <!-- ========================================================== -->
+  <!-- MODAL DE MINHAS TAREFAS                                    -->
+  <!-- ========================================================== -->
+  <div id="modal-tarefas" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.85); backdrop-filter:blur(8px); z-index:10005; justify-content:center; align-items:center; padding: 20px; box-sizing: border-box; opacity: 0; transition: opacity 0.3s ease;">
+    <div style="background:white; width:100%; max-width: 800px; border-radius:24px; overflow:hidden; box-shadow:0 25px 50px -12px rgba(0,0,0,0.5); display: flex; flex-direction: column; transform: scale(0.95); transition: transform 0.3s ease; max-height: 90vh;">
+      
+      <div style="padding: 20px 25px; background: #0ea5e9; color: white; display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <h3 style="margin:0; font-size: 20px; font-weight: 800;">📌 Minhas Tarefas</h3>
+          <p style="margin: 4px 0 0 0; font-size: 12px; color: #e0f2fe;">Seus Follow-ups pendentes e atrasados</p>
+        </div>
+        <button onclick="fecharMinhasTarefas()" style="background:rgba(255,255,255,0.2); border:none; width: 36px; height: 36px; border-radius: 50%; color: white; cursor: pointer; font-size: 20px;">&times;</button>
+      </div>
+
+      <div id="lista-tarefas-conteudo" style="padding: 25px; overflow-y: auto; flex: 1; background: #f8fafc;">
+        <!-- Preenchido via JS -->
       </div>
     </div>
   </div>
