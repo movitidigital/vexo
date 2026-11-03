@@ -2377,29 +2377,29 @@ function carregarMetaMensal() {
 }
 
 // ==========================================
-// FUNÇÕES DO MURAL (COM BUSCA)
+// FUNÇÕES DO MURAL (COM BUSCA GLOBAL)
 // ==========================================
 
-// Variáveis de controle de paginação
 let muralOffset = 0;
 const MURAL_LIMIT = 20;
+let isBuscandoServidor = false; // Controle para não fazer várias buscas ao mesmo tempo
 
-async function carregarMural(limparTudo = true) {
-  const mural = document.getElementById('mural-lista');
+// Função separada para gerar o HTML do card (para ser usada na tela normal e na busca)
+function gerarCardMural(l, podeExcluir) {
+  const cnpjSeguro = l.cnpj && l.cnpj !== "undefined" ? l.cnpj : "---";
+  const adminSeguro = l.nome_administrador || l.admin || "Não informado";
   
-  // Se for a primeira carga, limpa a tela e reseta o contador
-  if (limparTudo) {
-    muralOffset = 0;
-    mural.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px;"><p style="color:#64748b;">🚀 Carregando Oportunidades...</p></div>`;
-  } else {
-    // Se estiver carregando mais, apenas muda o texto do botão
-    const btn = document.getElementById('btn-carregar-mais-mural');
-    if (btn) { btn.innerText = '⏳ Buscando...'; btn.disabled = true; }
+  const razaoAttr = (l.razao_social || l.razao || "").replace(/"/g, '&quot;').toLowerCase();
+  const cnpjAttr = (l.cnpj || "").replace(/\D/g, '');
+  const decisorAttr = (l.nome_administrador || l.admin || "").replace(/"/g, '&quot;').toLowerCase();
+  const codigoAttr = (l.codigo || "").replace(/"/g, '&quot;').toLowerCase();
+
+  let localSeguro = "Local não informado";
+  if (l.cidade && l.cidade !== "undefined" && l.uf && l.uf !== "undefined") {
+    localSeguro = `${l.cidade} - ${l.uf}`;
+  } else if (l.cidade && l.cidade !== "undefined") {
+    localSeguro = l.cidade;
   }
-  
-  const usuarioVexo = await obterUsuarioVexo();
-  const cargo = usuarioVexo?.role || "";
-  const podeExcluir = (cargo === "ADMINISTRADOR" || cargo === "BACKOFFICE");
 
   const formatarTelefone = (tel) => {
     if (!tel || tel === "---" || tel === "Não informado") return "<span style='color:#94a3b8;'>Não informado</span>";
@@ -2409,18 +2409,87 @@ async function carregarMural(limparTudo = true) {
     return tel;
   };
 
+  const contato1 = l.contato && l.contato !== "undefined" ? l.contato : "";
+  const contato2 = l.contato_alt && l.contato_alt !== "undefined" ? l.contato_alt : "";
+  const razaoSafe = (l.razao_social || "").replace(/'/g, "\\'");
+  
+  const botaoLixeira = podeExcluir 
+    ? `<div onclick="event.stopPropagation(); abrirModalExcluirLead('${l.id}', '${razaoSafe}')" 
+            style="color:#ef4444; font-size:15px; cursor:pointer; padding:6px; border-radius:8px; transition:0.2s;" 
+            title="Remover Lead" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">🗑️</div>` 
+    : "";
+
+  return `
+    <div class="card-lead-min" id="mural-card-${l.id}" 
+         data-razao="${razaoAttr}"
+         data-cnpj="${cnpjAttr}"
+         data-decisor="${decisorAttr}"
+         data-codigo="${codigoAttr}"
+         style="display:flex; flex-direction:column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; position:relative; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden;">
+      
+      <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #f97316, #fb923c);"></div>
+
+      <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px; margin-top: 4px;">
+         <span style="font-size: 10px; font-weight: 800; color: #ea580c; background: #ffedd5; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;">${l.codigo || "NOVO"}</span>
+         ${botaoLixeira}
+      </div>
+
+      <div style="margin-bottom: 16px;">
+        <h4 style="font-size:15px; color:#0f172a; font-weight:800; line-height:1.3; margin: 0 0 4px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${l.razao_social || l.razao || "Empresa sem nome"}</h4>
+        <div style="display: flex; align-items: center; gap: 6px; color:#64748b; font-size: 11px; font-weight: 600;">
+          <span>📄</span> CNPJ: <span style="color:#475569;">${cnpjSeguro}</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #f1f5f9; flex-grow: 1;">
+        <div style="display:flex; flex-direction:column; gap: 2px;">
+          <span style="font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase;">👤 Decisor</span>
+          <span style="font-size:12px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${adminSeguro}">${adminSeguro}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap: 2px;">
+          <span style="font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase;">📍 Local</span>
+          <span style="font-size:12px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${localSeguro}">${localSeguro}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap: 2px;">
+          <span style="font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase;">📞 Contato Oficial</span>
+          <span style="font-size:12px; font-weight:800; color:#2563eb;">${formatarTelefone(contato1)}</span>
+        </div>
+        <div style="display:flex; flex-direction:column; gap: 2px;">
+          <span style="font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase;">📱 Alternativo</span>
+          <span style="font-size:12px; font-weight:800; color:#059669;">${formatarTelefone(contato2)}</span>
+        </div>
+      </div>
+
+      <button onclick="captarLead('${l.id}')" 
+              style="margin-top:16px; width:100%; padding:14px; background: white; color: #ea580c; border: 2px solid #ea580c; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.3s;"
+              onmouseover="this.style.background='#ea580c'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#ea580c';">
+        ⚡ CAPTAR LEAD
+      </button>
+    </div>`;
+}
+
+async function carregarMural(limparTudo = true) {
+  const mural = document.getElementById('mural-lista');
+  
+  if (limparTudo) {
+    muralOffset = 0;
+    mural.innerHTML = `<div style="grid-column: 1/-1; text-align:center; padding: 40px;"><p style="color:#64748b;">🚀 Carregando Oportunidades...</p></div>`;
+  } else {
+    const btn = document.getElementById('btn-carregar-mais-mural');
+    if (btn) { btn.innerText = '⏳ Buscando...'; btn.disabled = true; }
+  }
+  
+  const usuarioVexo = await obterUsuarioVexo();
+  const cargo = usuarioVexo?.role || "";
+  const podeExcluir = (cargo === "ADMINISTRADOR" || cargo === "BACKOFFICE");
+
   google.script.run.withSuccessHandler(leadsRaw => {
     let arrayLeads = [];
-    if (Array.isArray(leadsRaw)) {
-      arrayLeads = leadsRaw;
-    } else if (leadsRaw && typeof leadsRaw === 'object') {
-      arrayLeads = leadsRaw.data || leadsRaw.dados || leadsRaw.leads || leadsRaw.rows || [];
-    }
+    if (Array.isArray(leadsRaw)) arrayLeads = leadsRaw;
+    else if (leadsRaw && typeof leadsRaw === 'object') arrayLeads = leadsRaw.data || leadsRaw.dados || leadsRaw.leads || leadsRaw.rows || [];
 
-    // Se for a primeira carga, limpa a div (remove o texto "Carregando...")
     if (limparTudo) mural.innerHTML = "";
 
-    // Remove o botão de "Carregar Mais" antigo, se existir
     const btnAntigo = document.getElementById('btn-carregar-mais-mural');
     if (btnAntigo) btnAntigo.remove();
 
@@ -2429,92 +2498,14 @@ async function carregarMural(limparTudo = true) {
       return;
     }
 
-    // 🔥 PERFORMANCE: Construir todo o HTML em uma string antes de jogar na tela
     let htmlContent = '';
-
     arrayLeads.forEach(l => {
-      const cnpjSeguro = l.cnpj && l.cnpj !== "undefined" ? l.cnpj : "---";
-      const adminSeguro = l.nome_administrador || l.admin || "Não informado";
-      
-      // 🔥 NOVAS VARIÁVEIS PARA O FILTRO DE BUSCA
-      const razaoAttr = (l.razao_social || l.razao || "").replace(/"/g, '&quot;').toLowerCase();
-      const cnpjAttr = (l.cnpj || "").replace(/\D/g, ''); // Apenas números
-      const decisorAttr = (l.nome_administrador || l.admin || "").replace(/"/g, '&quot;').toLowerCase();
-      const codigoAttr = (l.codigo || "").replace(/"/g, '&quot;').toLowerCase();
-
-      let localSeguro = "Local não informado";
-      if (l.cidade && l.cidade !== "undefined" && l.uf && l.uf !== "undefined") {
-        localSeguro = `${l.cidade} - ${l.uf}`;
-      } else if (l.cidade && l.cidade !== "undefined") {
-        localSeguro = l.cidade;
-      }
-
-      const contato1 = l.contato && l.contato !== "undefined" ? l.contato : "";
-      const contato2 = l.contato_alt && l.contato_alt !== "undefined" ? l.contato_alt : "";
-      const razaoSafe = (l.razao_social || "").replace(/'/g, "\\'");
-      
-      const botaoLixeira = podeExcluir 
-        ? `<div onclick="event.stopPropagation(); abrirModalExcluirLead('${l.id}', '${razaoSafe}')" 
-                style="color:#ef4444; font-size:15px; cursor:pointer; padding:6px; border-radius:8px; transition:0.2s;" 
-                title="Remover Lead" onmouseover="this.style.background='#fee2e2'" onmouseout="this.style.background='transparent'">🗑️</div>` 
-        : "";
-
-      htmlContent += `
-        <div class="card-lead-min" id="mural-card-${l.id}" 
-             data-razao="${razaoAttr}"
-             data-cnpj="${cnpjAttr}"
-             data-decisor="${decisorAttr}"
-             data-codigo="${codigoAttr}"
-             style="display:flex; flex-direction:column; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 20px; position:relative; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); overflow: hidden;">
-          
-          <div style="position: absolute; top: 0; left: 0; width: 100%; height: 4px; background: linear-gradient(90deg, #f97316, #fb923c);"></div>
-
-          <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 12px; margin-top: 4px;">
-             <span style="font-size: 10px; font-weight: 800; color: #ea580c; background: #ffedd5; padding: 4px 10px; border-radius: 6px; letter-spacing: 0.5px;">${l.codigo || "NOVO"}</span>
-             ${botaoLixeira}
-          </div>
-
-          <div style="margin-bottom: 16px;">
-            <h4 style="font-size:15px; color:#0f172a; font-weight:800; line-height:1.3; margin: 0 0 4px 0; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">${l.razao_social || l.razao || "Empresa sem nome"}</h4>
-            <div style="display: flex; align-items: center; gap: 6px; color:#64748b; font-size: 11px; font-weight: 600;">
-              <span>📄</span> CNPJ: <span style="color:#475569;">${cnpjSeguro}</span>
-            </div>
-          </div>
-
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; padding: 14px; background: #f8fafc; border-radius: 10px; border: 1px solid #f1f5f9; flex-grow: 1;">
-            <div style="display:flex; flex-direction:column; gap: 2px;">
-              <span style="font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase;">👤 Decisor</span>
-              <span style="font-size:12px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${adminSeguro}">${adminSeguro}</span>
-            </div>
-            <div style="display:flex; flex-direction:column; gap: 2px;">
-              <span style="font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase;">📍 Local</span>
-              <span style="font-size:12px; font-weight:700; color:#1e293b; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${localSeguro}">${localSeguro}</span>
-            </div>
-            <div style="display:flex; flex-direction:column; gap: 2px;">
-              <span style="font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase;">📞 Contato Oficial</span>
-              <span style="font-size:12px; font-weight:800; color:#2563eb;">${formatarTelefone(contato1)}</span>
-            </div>
-            <div style="display:flex; flex-direction:column; gap: 2px;">
-              <span style="font-size:9px; font-weight:800; color:#94a3b8; text-transform:uppercase;">📱 Alternativo</span>
-              <span style="font-size:12px; font-weight:800; color:#059669;">${formatarTelefone(contato2)}</span>
-            </div>
-          </div>
-
-          <button onclick="captarLead('${l.id}')" 
-                  style="margin-top:16px; width:100%; padding:14px; background: white; color: #ea580c; border: 2px solid #ea580c; border-radius:10px; font-weight:800; cursor:pointer; font-size:12px; display:flex; align-items:center; justify-content:center; gap:8px; transition: all 0.3s;"
-                  onmouseover="this.style.background='#ea580c'; this.style.color='white';" onmouseout="this.style.background='white'; this.style.color='#ea580c';">
-            ⚡ CAPTAR LEAD
-          </button>
-        </div>`;
+      htmlContent += gerarCardMural(l, podeExcluir);
     });
 
-    // 🔥 Injeta todo o HTML de uma vez só na tela (MUITO mais rápido)
     mural.insertAdjacentHTML('beforeend', htmlContent);
-
-    // Atualiza a posição do offset para a próxima busca
     muralOffset += MURAL_LIMIT;
 
-    // Se retornaram 20 leads (o limite), significa que podem existir mais. Adiciona o botão.
     if (arrayLeads.length === MURAL_LIMIT) {
       const btnHTML = `
         <div id="btn-carregar-mais-mural" style="grid-column: 1/-1; text-align: center; padding: 20px;">
@@ -2526,31 +2517,31 @@ async function carregarMural(limparTudo = true) {
       mural.insertAdjacentHTML('beforeend', btnHTML);
     }
 
+    // Reaplica o filtro caso o usuário já tenha digitado algo
+    if (document.getElementById('filtro-busca-mural') && document.getElementById('filtro-busca-mural').value.trim() !== '') {
+        filtrarMuralVisual();
+    }
+
   }).getLeadsDisponiveis(MURAL_LIMIT, muralOffset);
 }
 
 // ==========================================
-// FILTRO DE BUSCA DO MURAL
+// FILTRO DE BUSCA DO MURAL (MÁGICA AQUI)
 // ==========================================
 function filtrarMuralVisual() {
   const inputBusca = document.getElementById('filtro-busca-mural');
-  if (!inputBusca) return; // Segurança caso o input não exista
+  if (!inputBusca) return;
 
   const termo = inputBusca.value.toLowerCase().trim();
   const termoNumeros = termo.replace(/\D/g, '');
   
-  // Função para ignorar acentos na hora de buscar
-  const removerAcentos = (str) => {
-    return str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
-  };
-
+  const removerAcentos = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
   const termoNormalizado = removerAcentos(termo);
 
   const cards = document.querySelectorAll('#mural-lista .card-lead-min');
   let visiveis = 0;
 
   cards.forEach(card => {
-    // Pega os dados dos atributos (já em minúsculo) e remove acentos
     const razao = removerAcentos(card.getAttribute('data-razao') || '');
     const cnpj = card.getAttribute('data-cnpj') || '';
     const decisor = removerAcentos(card.getAttribute('data-decisor') || '');
@@ -2559,10 +2550,8 @@ function filtrarMuralVisual() {
     const matchRazao = razao.includes(termoNormalizado);
     const matchDecisor = decisor.includes(termoNormalizado);
     const matchCodigo = codigo.includes(termoNormalizado);
-    // Só busca no CNPJ se o usuário digitou números
     const matchCnpj = termoNumeros && cnpj.includes(termoNumeros);
 
-    // Se bater qualquer um dos campos ou se o campo estiver vazio (mostrar todos)
     if (matchRazao || matchDecisor || matchCodigo || matchCnpj || termo === '') {
       card.style.display = 'flex';
       visiveis++;
@@ -2571,32 +2560,88 @@ function filtrarMuralVisual() {
     }
   });
 
-  // Mostra ou remove a mensagem de "nada encontrado"
+  // Se encontrou algo na tela, limpa a mensagem de erro e para por aqui
   let msgVazio = document.getElementById('msg-mural-vazio-filtro');
-  
-  if (visiveis === 0 && termo !== '') {
-    if (!msgVazio) {
-      const mural = document.getElementById('mural-lista');
-      msgVazio = document.createElement('div');
-      msgVazio.id = 'msg-mural-vazio-filtro';
-      // Ajuste no CSS para ficar alinhado no grid do mural
-      msgVazio.style = 'grid-column: 1/-1; text-align:center; padding: 30px; color:#94a3b8; font-size:14px; font-weight:600; background:#f8fafc; border-radius:12px; border:2px dashed #e2e8f0; margin-top: 10px;';
-      msgVazio.innerHTML = 'Nenhum lead encontrado com esse filtro nos cards já carregados.<br><small style="font-weight:400; display:block; margin-top:6px;">Clique em "Carregar Mais Oportunidades" abaixo para buscar em mais páginas.</small>';
-      mural.appendChild(msgVazio);
-    }
-  } else if (msgVazio) {
-    msgVazio.remove();
+  if (visiveis > 0 && msgVazio) msgVazio.remove();
+  if (termo === '' && msgVazio) msgVazio.remove();
+
+  // 🔥 SE NÃO ENCONTROU NADA, BUSCA NO BANCO DE DADOS INTEIRO AUTOMATICAMENTE
+  if (visiveis === 0 && termo !== '' && !isBuscandoServidor) {
+    buscarMuralNoServidor(termo);
   }
+}
+
+// Função que faz a busca pesada no banco de dados
+function buscarMuralNoServidor(termo) {
+  isBuscandoServidor = true;
+  const mural = document.getElementById('mural-lista');
+  
+  // Mostra o aviso de que está buscando no servidor
+  let msgVazio = document.getElementById('msg-mural-vazio-filtro');
+  if (!msgVazio) {
+    msgVazio = document.createElement('div');
+    msgVazio.id = 'msg-mural-vazio-filtro';
+    msgVazio.style = 'grid-column: 1/-1; text-align:center; padding: 30px; color:#64748b; font-size:14px; font-weight:600; background:#f8fafc; border-radius:12px; border:2px dashed #e2e8f0; margin-top: 10px;';
+    mural.appendChild(msgVazio);
+  }
+  msgVazio.innerHTML = '⏳ Buscando em todo o banco de dados... (isso pode levar 1 segundinho)';
+
+  // Pede até 1000 leads pro servidor de uma vez só para poder filtrar
+  google.script.run.withSuccessHandler(leadsRaw => {
+    isBuscandoServidor = false;
+    
+    let arrayLeads = [];
+    if (Array.isArray(leadsRaw)) arrayLeads = leadsRaw;
+    else if (leadsRaw && typeof leadsRaw === 'object') arrayLeads = leadsRaw.data || leadsRaw.dados || leadsRaw.leads || leadsRaw.rows || [];
+
+    const removerAcentos = (str) => str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '') : '';
+    const termoNorm = removerAcentos(termo);
+    const termoNum = termo.replace(/\D/g, '');
+
+    const filtrados = arrayLeads.filter(l => {
+      const r = removerAcentos((l.razao_social || l.razao || '').toLowerCase());
+      const d = removerAcentos((l.nome_administrador || l.admin || '').toLowerCase());
+      const c = (l.codigo || '').toLowerCase();
+      const cn = (l.cnpj || '').replace(/\D/g, '');
+
+      return r.includes(termoNorm) || d.includes(termoNorm) || c.includes(termoNorm) || (termoNum && cn.includes(termoNum));
+    });
+
+    if (filtrados.length > 0) {
+      obterUsuarioVexo().then(usuario => {
+        const podeExcluir = (usuario?.role === "ADMINISTRADOR" || usuario?.role === "BACKOFFICE");
+        
+        // Limpa a tela inteira e mostra só o resultado da busca
+        mural.innerHTML = '';
+        let html = '';
+        filtrados.forEach(l => { html += gerarCardMural(l, podeExcluir); });
+        mural.innerHTML = html;
+        
+        // Coloca um botão para voltar à lista normal
+        const btnHTML = `
+          <div style="grid-column: 1/-1; text-align: center; padding: 20px;">
+            <button onclick="limparFiltroMural()" style="padding: 12px 24px; background: #e65100; color: white; border: none; border-radius: 8px; font-weight: 700; cursor: pointer;">
+              Voltar para a lista completa
+            </button>
+          </div>
+        `;
+        mural.insertAdjacentHTML('beforeend', btnHTML);
+      });
+    } else {
+      msgVazio.innerHTML = `Nenhum lead encontrado com "${termo}" em toda a base.`;
+    }
+  }).getLeadsDisponiveis(1000, 0); // Puxa 1000 de uma vez
 }
 
 function limparFiltroMural() {
   const input = document.getElementById('filtro-busca-mural');
   if (input) {
     input.value = '';
-    filtrarMuralVisual();
     input.focus();
+    carregarMural(true); // Recarrega a lista normal do zero
   }
 }
+
 
 async function captarLead(id) {
   const usuarioVexo = await obterUsuarioVexo();
