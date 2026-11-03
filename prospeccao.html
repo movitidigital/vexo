@@ -677,9 +677,40 @@
         <!-- ABA FECHADO (Placeholder)                                  -->
         <!-- ========================================================== -->
         <div id="tab-fechado" class="tab-conteudo" style="display: none;">
-          <div style="background: #f8fafc; border-radius: 16px; padding: 60px; text-align: center; color: #94a3b8;">
-            <span style="font-size: 64px;">💰</span>
-            <p style="margin-top: 20px; font-size: 16px;">Conteúdo da etapa FECHADO será construído em breve</p>
+          <div style="background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 20px;">
+            <h3 style="color: #166534; margin: 0 0 8px 0;">🎉 Negócio Ganho!</h3>
+            <p style="color: #15803d; font-size: 13px; margin: 0;">Parabéns pelo fechamento. Registre os dados de ativação abaixo para acompanhamento do faturamento.</p>
+          </div>
+
+          <div style="background: #f8fafc; border-radius: 16px; padding: 24px;">
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;">
+              
+              <div>
+                <label style="font-size: 12px; font-weight: 700; color: #475569;">📊 STATUS DE ATIVAÇÃO</label>
+                <select id="fechado_status" class="v-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 14px;">
+                  <option value="">Selecione...</option>
+                  <option value="Em Implantação">⏳ Em Implantação</option>
+                  <option value="Documentação Pendente">📄 Documentação Pendente</option>
+                  <option value="Ativado">✅ Ativado (Faturando)</option>
+                </select>
+              </div>
+
+              <div>
+                <label style="font-size: 12px; font-weight: 700; color: #475569;">📅 DATA DE ATIVAÇÃO</label>
+                <input type="date" id="fechado_data" class="v-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 14px;">
+              </div>
+
+              <div>
+                <label style="font-size: 12px; font-weight: 700; color: #475569;">💰 MRC (Faturamento Mensal)</label>
+                <input type="number" id="fechado_mrr" class="v-input" placeholder="R$ 0,00" step="0.01" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 14px; font-weight: 700; color: #059669;">
+              </div>
+
+              <div style="grid-column: span 3;">
+                <label style="font-size: 12px; font-weight: 700; color: #475569;">📝 OBSERVAÇÕES DE FECHAMENTO</label>
+                <textarea id="fechado_obs" rows="3" class="v-input" style="width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; margin-top: 6px; font-size: 14px; resize: vertical;" placeholder="Ex: Contrato assinado com vigência de 12 meses..."></textarea>
+              </div>
+
+            </div>
           </div>
         </div>
 
@@ -1345,6 +1376,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
 
   const MAP = {
     getLeadsDisponiveis: { rpc: 'leads_disponiveis', args: (limit, offset) => ({ p_limit: limit, p_offset: offset }) },
+    salvarFechamentoLead: { rpc: 'salvar_fechamento_lead', args: (id, st, dt, mrr) => ({ p_id: id, p_status_ativacao: st, p_data_ativacao: dt, p_mrr_fechado: mrr }) },
     getMeusLeadsKanban:          { rpc: 'meus_leads_kanban',         args: (u) => ({ p_usuario: u }), paginate: true },
     atualizarDadosOportunidade:  { rpc: 'atualizar_dados_oportunidade', args: (id, v, p, d) => ({ p_id: id, p_valor: v, p_probabilidade: p, p_data_prevista: d }) },
     atribuirLead:                { rpc: 'atribuir_lead',             args: (id, _u, st) => ({ p_id: id, p_novo_status: st || 'OPORTUNIDADE' }) },
@@ -3177,6 +3209,19 @@ function preencherModalComDados(idLead, res) {
     if (res.dadosContato.proximaAcao) document.getElementById('contato_proxima_acao').value = res.dadosContato.proximaAcao;
   }
 
+  // 🔥 PREENCHE DADOS DA ABA FECHADO
+  if (document.getElementById('fechado_status') && res.dados.status_ativacao) {
+    document.getElementById('fechado_status').value = res.dados.status_ativacao;
+  }
+  if (document.getElementById('fechado_data') && res.dados.data_ativacao) {
+    let dtAtiv = res.dados.data_ativacao;
+    if (typeof dtAtiv === 'string' && dtAtiv.includes('T')) dtAtiv = dtAtiv.split('T')[0];
+    document.getElementById('fechado_data').value = dtAtiv;
+  }
+  if (document.getElementById('fechado_mrr') && (res.dados.mrr_fechado !== undefined && res.dados.mrr_fechado !== null)) {
+    document.getElementById('fechado_mrr').value = res.dados.mrr_fechado;
+  }
+
   // 🔥 Abre na aba correspondente à etapa do lead
   let abaParaAbrir = "oportunidade"; // padrão
 
@@ -3184,11 +3229,11 @@ function preencherModalComDados(idLead, res) {
 
   if (statusUpper === "OPORTUNIDADE") {
     abaParaAbrir = "oportunidade";
-  } else if (statusUpper === "CONTATO") {
+  } else if (statusUpper === "CONTATO" || statusUpper === "ABORDAGEM") {
     abaParaAbrir = "contato";
-  } else if (statusUpper === "APRESENTACAO" || statusUpper === "APRESENTAÇÃO") {
+  } else if (statusUpper === "APRESENTACAO" || statusUpper === "APRESENTAÇÃO" || statusUpper === "PROPOSTA") {
     abaParaAbrir = "apresentacao";
-  } else if (statusUpper === "NEGOCIACAO" || statusUpper === "NEGOCIAÇÃO") {
+  } else if (statusUpper === "NEGOCIACAO" || statusUpper === "NEGOCIAÇÃO" || statusUpper === "ANALISE" || statusUpper === "ANÁLISE") {
     abaParaAbrir = "negociacao";
   } else if (statusUpper === "FECHADO") {
     abaParaAbrir = "fechado";
@@ -3280,9 +3325,38 @@ function salvarAbaAtual() {
     case 'contato':
       salvarDadosContatoUnificado(idLead);
       break;
+    case 'fechado': // 🔥 NOVO CASE
+      salvarDadosFechamento(idLead);
+      break;
     default:
       notificacaoVexo(`A aba ${abaAtivaUnificada} será implementada em breve`, "info");
   }
+}
+
+// 🔥 Nova função para salvar a aba FECHADO
+function salvarDadosFechamento(idLead) {
+  const status = document.getElementById('fechado_status').value;
+  const data = document.getElementById('fechado_data').value || null;
+  const mrr = parseFloat(document.getElementById('fechado_mrr').value) || 0;
+  
+  const btn = document.getElementById('btn-salvar-aba-atual');
+  const originalTxt = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '⏳ Salvando...';
+
+  google.script.run
+    .withSuccessHandler(res => {
+      btn.disabled = false;
+      btn.innerHTML = originalTxt;
+      notificar('✅ Dados de fechamento salvos!', 'sucesso');
+      if(typeof carregarMeuFunil === 'function') carregarMeuFunil();
+    })
+    .withFailureHandler(err => {
+      btn.disabled = false;
+      btn.innerHTML = originalTxt;
+      notificar('❌ Erro ao salvar: ' + err, 'erro');
+    })
+    .salvarFechamentoLead(idLead, status, data, mrr);
 }
 
 // 🔥 Nova função para salvar os dados financeiros
