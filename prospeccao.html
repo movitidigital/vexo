@@ -129,6 +129,39 @@
       </div> <!-- /kanban-mini-wrapper -->
     </div> <!-- /aba-kanban -->
 
+
+      <!-- 🔥 PAINEL DE META E REALIZADO (GESTÃO) -->
+      <div id="painel-meta" style="display: none; margin-bottom: 20px;">
+        <div style="background: linear-gradient(135deg, #ffffff, #f8fafc); padding: 16px 20px; border-radius: 14px; border: 1px solid #e2e8f0; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap;">
+          
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="background: #e0f2fe; width: 45px; height: 45px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 22px;">🎯</div>
+            <div>
+              <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Meta do Mês</div>
+              <div id="meta-total-txt" style="font-size: 18px; font-weight: 900; color: #0f172a;">R$ 0</div>
+            </div>
+          </div>
+
+          <div style="flex: 1; min-width: 200px; margin: 0 20px;">
+            <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #475569; margin-bottom: 6px;">
+              <span>Progresso</span>
+              <span id="meta-percentual-txt" style="color: #059669;">0%</span>
+            </div>
+            <div style="width: 100%; height: 10px; background: #e2e8f0; border-radius: 10px; overflow: hidden;">
+              <div id="meta-barra-progresso" style="height: 100%; width: 0%; background: linear-gradient(90deg, #10b981, #059669); border-radius: 10px; transition: width 0.8s ease-in-out;"></div>
+            </div>
+          </div>
+
+          <div style="display: flex; align-items: center; gap: 15px;">
+            <div style="text-align: right;">
+              <div style="font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px;">Realizado (CRM)</div>
+              <div id="meta-realizado-txt" style="font-size: 18px; font-weight: 900; color: #059669;">R$ 0</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      
   </div> <!-- /container-leads -->
 
   <!-- ========================================================== -->
@@ -1408,6 +1441,8 @@ function moverCardParaColuna(idLead, novaEtapa) {
   const MAP = {
     getLeadsDisponiveis: { rpc: 'leads_disponiveis', args: (limit, offset) => ({ p_limit: limit, p_offset: offset }) },
     minhasTarefas: { rpc: 'minhas_tarefas', args: () => ({}) },    
+    obterRealizadoMes: { rpc: 'obter_realizado_mes', args: () => ({}) },
+    marcarLeadPerdido: { rpc: 'marcar_lead_perdido', args: (id, motivo) => ({ p_id: id, p_motivo: motivo }) },
     salvarFechamentoLead: { rpc: 'salvar_fechamento_lead', args: (id, st, dt, mrr) => ({ p_id: id, p_status_ativacao: st, p_data_ativacao: dt, p_mrr_fechado: mrr }) },
     getMeusLeadsKanban:          { rpc: 'meus_leads_kanban',         args: (u) => ({ p_usuario: u }), paginate: true },
     atualizarDadosOportunidade:  { rpc: 'atualizar_dados_oportunidade', args: (id, v, p, d) => ({ p_id: id, p_valor: v, p_probabilidade: p, p_data_prevista: d }) },
@@ -2015,7 +2050,7 @@ async function carregarMeuFunil() {
     .withSuccessHandler(async (leadsRaw) => {
       const arrayKanban = Array.isArray(leadsRaw) ? leadsRaw : (leadsRaw?.data || leadsRaw?.dados || []);
 
-            // 🔥 INTELIGÊNCIA DE ORDENAÇÃO: Tarefas atrasadas vão para o topo!
+      // 🔥 INTELIGÊNCIA DE ORDENAÇÃO: Tarefas atrasadas vão para o topo!
       const hojeISO = new Date().toISOString().split('T')[0];
       arrayKanban.sort((a, b) => {
         const getPeso = (lead) => {
@@ -2149,7 +2184,7 @@ async function carregarMeuFunil() {
                <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap; gap: 4px;">
                  <div><i class='fas fa-history'></i> Parado há ${dias} dias</div>
                  ${alertaPrazo}
-                 ${alertaTarefa} <!-- 🔥 ALERTA DE TAREFA / FOLLOW-UP -->
+                 ${alertaTarefa}
                </div>
                ${lead.valor_oportunidade ? `<div style="color:#059669; font-weight:bold; margin-top:4px; font-size:11.5px;">💰 R$ ${Number(lead.valor_oportunidade).toLocaleString('pt-BR', {minimumFractionDigits:2})}</div>` : ''}
             </div>
@@ -2225,12 +2260,44 @@ async function carregarMeuFunil() {
           selectConsultor.appendChild(opt);
         });
       }
+
+      // 🔥 CHAMA A FUNÇÃO DA META MENSAL AQUI
+      if (temVisaoEquipe) {
+        carregarMetaMensal();
+      }
       
     })
     .withFailureHandler((err) => {
       notificar('Erro ao carregar Kanban: ' + err, 'erro');
     })
     .getMeusLeadsKanban(usuarioVexo.nomeCompleto);
+}
+  // 🔥 NOVA FUNÇÃO PARA A META
+function carregarMetaMensal() {
+  const painel = document.getElementById('painel-meta');
+  if (painel) painel.style.display = 'block';
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (res && res.success) {
+        const fmt = (v) => `R$ ${Number(v).toLocaleString('pt-BR', {maximumFractionDigits:0})}`;
+        
+        document.getElementById('meta-total-txt').innerText = fmt(res.meta);
+        document.getElementById('meta-realizado-txt').innerText = fmt(res.total);
+        document.getElementById('meta-percentual-txt').innerText = `${res.percentual}%`;
+        
+        const barra = document.getElementById('meta-barra-progresso');
+        // Limita a barra a 100% visualmente, mas o texto pode mostrar 120%
+        barra.style.width = `${Math.min(res.percentual, 100)}%`; 
+        
+        // Se bateu a meta, fica dourado/azul
+        if (res.percentual >= 100) {
+          barra.style.background = 'linear-gradient(90deg, #3b82f6, #2563eb)';
+          document.getElementById('meta-percentual-txt').style.color = '#2563eb';
+        }
+      }
+    })
+    .obterRealizadoMes();
 }
 
 // ==========================================
