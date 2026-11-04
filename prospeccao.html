@@ -7458,38 +7458,25 @@ function atualizarFeedRadar(silencioso = false) {
       const modal = document.getElementById('modal-radar');
       if (!modal || modal.style.display !== 'flex') return;
 
-      if (!res.success || !res.feed) return;
+      if (!res.success) return;
 
-      // 🔥 CALCULAR RESUMO DO DIA
-      const hojeStr = new Date().toLocaleDateString('pt-BR');
-      let captacoes = 0, propostas = 0, contatos = 0, perdidos = 0;
-      
-      res.feed.forEach(atv => {
-        if (atv.criado_em) {
-          const dtAtv = new Date(atv.criado_em).toLocaleDateString('pt-BR');
-          if (dtAtv === hojeStr) {
-            if (atv.acao === 'LEAD_CAPTADO') captacoes++;
-            if (atv.acao === 'PROPOSTA_SALVA') propostas++;
-            if (atv.acao === 'CONTATO_REGISTRADO') contatos++;
-            if (atv.acao === 'LEAD_PERDIDO') perdidos++;
-          }
-        }
-      });
-
+      // 🔥 ATUALIZA O RESUMO VINDO DO BANCO (Exato, sem limite de 100)
       const radarResumo = document.getElementById('radar-resumo');
-      if (radarResumo) radarResumo.style.display = 'flex';
-      
-      const elCaptacoes = document.getElementById('resumo-captacoes');
-      const elPropostas = document.getElementById('resumo-propostas');
-      const elContatos = document.getElementById('resumo-contatos');
-      const elPerdidos = document.getElementById('resumo-perdidos');
+      if (radarResumo && res.resumo) {
+        radarResumo.style.display = 'flex';
+        
+        const elCaptacoes = document.getElementById('resumo-captacoes');
+        const elPropostas = document.getElementById('resumo-propostas');
+        const elContatos = document.getElementById('resumo-contatos');
+        const elPerdidos = document.getElementById('resumo-perdidos');
 
-      if (elCaptacoes) elCaptacoes.innerText = captacoes;
-      if (elPropostas) elPropostas.innerText = propostas;
-      if (elContatos) elContatos.innerText = contatos;
-      if (elPerdidos) elPerdidos.innerText = perdidos;
+        if (elCaptacoes) elCaptacoes.innerText = res.resumo.captacoes || 0;
+        if (elPropostas) elPropostas.innerText = res.resumo.propostas || 0;
+        if (elContatos) elContatos.innerText = res.resumo.contatos || 0;
+        if (elPerdidos) elPerdidos.innerText = res.resumo.perdidos || 0;
+      }
 
-      if (res.feed.length === 0) {
+      if (!res.feed || res.feed.length === 0) {
         if (!silencioso && feed) {
           feed.innerHTML = '<p style="text-align:center; color:#94a3b8; padding: 30px;">Nenhuma atividade encontrada para este filtro.</p>';
         }
