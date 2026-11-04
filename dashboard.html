@@ -1845,14 +1845,13 @@ function renderizarDashboard(dados) {
   }
 
   // =====================================================================
-  // 🔥 LÓGICA DO LADO DIREITO: TERMÔMETRO DA LOJA (SÓ PARA CONSULTOR)
+  // 🔥 LÓGICA DO TERCEIRO BLOCO: TERMÔMETRO DA LOJA (SÓ PARA CONSULTOR)
   // =====================================================================
   const blocoMetaLoja = document.getElementById('bloco-meta-loja-consultor');
-  const divisor = document.getElementById('divisor-visao-loja');
   
-  if (!dados.isGestao && blocoMetaLoja && divisor) {
+  if (!dados.isGestao && blocoMetaLoja) {
+    // Mostra o bloco para o consultor
     blocoMetaLoja.style.display = 'block';
-    divisor.style.display = 'block';
 
     // Cálculos Globais da Loja (usando os dados que vieram do inicializarDados)
     const faltaParaMetaLoja = dados.metaValor - dados.fatAtivoGlobal;
@@ -1865,10 +1864,9 @@ function renderizarDashboard(dados) {
     document.getElementById('meta-loja-bar').style.width = percLoja + '%';
     document.getElementById('meta-loja-realizado').innerText = dados.fatAtivoGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     
-  } else if (blocoMetaLoja && divisor) {
-    // Se for gestão, esconde o lado direito
+  } else if (blocoMetaLoja) {
+    // Se for gestão, garante que ele fique escondido
     blocoMetaLoja.style.display = 'none';
-    divisor.style.display = 'none';
   }
 
   // Atualiza Header do mês
