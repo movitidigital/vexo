@@ -7465,7 +7465,7 @@ function atualizarFeedRadar(silencioso = false) {
 
       if (!res.success) return;
 
-      // 🔥 ATUALIZA O RESUMO VINDO DO BANCO (Exato, sem limite de 100)
+      // 🔥 ATUALIZA O RESUMO (Com a nova coluna de Movimentações)
       const radarResumo = document.getElementById('radar-resumo');
       if (radarResumo && res.resumo) {
         radarResumo.style.display = 'flex';
@@ -7473,13 +7473,13 @@ function atualizarFeedRadar(silencioso = false) {
         const elCaptacoes = document.getElementById('resumo-captacoes');
         const elPropostas = document.getElementById('resumo-propostas');
         const elContatos = document.getElementById('resumo-contatos');
-        const elMovimentacoes = document.getElementById('resumo-movimentacoes'); // 🔥 ADICIONADO AQUI
+        const elMovimentacoes = document.getElementById('resumo-movimentacoes'); // Nova
         const elPerdidos = document.getElementById('resumo-perdidos');
 
         if (elCaptacoes) elCaptacoes.innerText = res.resumo.captacoes || 0;
         if (elPropostas) elPropostas.innerText = res.resumo.propostas || 0;
         if (elContatos) elContatos.innerText = res.resumo.contatos || 0;
-        if (elMovimentacoes) elMovimentacoes.innerText = res.resumo.movimentacoes || 0; // 🔥 ATUALIZADO AQUI
+        if (elMovimentacoes) elMovimentacoes.innerText = res.resumo.movimentacoes || 0; // Nova
         if (elPerdidos) elPerdidos.innerText = res.resumo.perdidos || 0;
       }
 
