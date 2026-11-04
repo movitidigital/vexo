@@ -7322,8 +7322,6 @@ function timeAgo(dateString) {
   return `há ${diffDays} dias`;
 }
 
-let _radarInterval = null; // Variável global para controlar o tempo real
-
 function timeAgo(dateString) {
   const date = new Date(dateString);
   const now = new Date();
