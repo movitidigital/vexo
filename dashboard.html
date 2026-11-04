@@ -1239,52 +1239,75 @@
     </div>
   </div>
 
-  <!-- 🌟 DESTAQUE: META DIÁRIA (DUPLA VISÃO) -->
-  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%); border-radius: 20px; padding: 24px; color: white; margin-bottom: 25px; box-shadow: 0 15px 35px -10px rgba(30,60,114,0.4); position: relative; overflow: hidden; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px;">
+  <!-- 🌟 DESTAQUE: METAS DIÁRIAS (ENTRANTES + ATIVOS + LOJA) -->
+  <div style="background: linear-gradient(135deg, #0f172a 0%, #1e3c72 100%); border-radius: 20px; padding: 24px; color: white; margin-bottom: 25px; box-shadow: 0 15px 35px -10px rgba(30,60,114,0.4); position: relative; overflow: hidden;">
     <div style="position: absolute; right: -20px; top: -20px; font-size: 150px; opacity: 0.05; pointer-events: none;">🎯</div>
     
-    <!-- LADO ESQUERDO: SUA META (OU META DA LOJA PARA GESTÃO) -->
-    <div style="z-index: 1; flex: 1; min-width: 250px;">
-      <div id="label-meta-diaria" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #93c5fd; margin-bottom: 5px;">Meta para Hoje</div>
-      <div style="font-size: 36px; font-weight: 900; line-height: 1;" id="meta-diaria-valor">R$ 0,00</div>
-      <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">Faltam <b id="dias-uteis-txt">22</b> dias úteis</div>
+    <!-- GRID DE METAS -->
+    <div id="grid-metas-diarias" style="display: grid; grid-template-columns: 1fr; gap: 30px; position: relative; z-index: 1;">
       
-      <div style="margin-top: 15px;">
-        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
-          <span>Produção de Hoje (Ativos)</span>
-          <span id="meta-diaria-perc">0%</span>
-        </div>
-        <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
-          <div id="meta-diaria-bar" style="width: 0%; height: 100%; background: #10b981; border-radius: 10px; transition: width 1s ease;"></div>
-        </div>
-        <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px; display: flex; justify-content: space-between;">
-          <span>Realizado hoje: <b id="meta-diaria-realizado">R$ 0,00</b></span>
-          <span>Falta: <b id="meta-diaria-falta">R$ 0,00</b></span>
+      <!-- BLOCO 1: ENTRANTES (O que foi vendido hoje) -->
+      <div id="bloco-meta-entrantes">
+        <div id="label-meta-entrantes" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #93c5fd; margin-bottom: 5px;">Meta de Entrantes Hoje</div>
+        <div style="font-size: 36px; font-weight: 900; line-height: 1;" id="meta-entrantes-valor">R$ 0,00</div>
+        <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">Faltam <b id="dias-uteis-txt-entrantes">22</b> dias úteis</div>
+        
+        <div style="margin-top: 15px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+            <span>Produção de Entrantes Hoje</span>
+            <span id="meta-entrantes-perc" style="color: #60a5fa;">0%</span>
+          </div>
+          <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
+            <div id="meta-entrantes-bar" style="width: 0%; height: 100%; background: #3b82f6; border-radius: 10px; transition: width 1s ease;"></div>
+          </div>
+          <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px; display: flex; justify-content: space-between;">
+            <span>Entraram hoje: <b id="meta-entrantes-realizado">R$ 0,00</b></span>
+            <span>Falta: <b id="meta-entrantes-falta">R$ 0,00</b></span>
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- DIVISOR (Só aparece para consultores) -->
-    <div id="divisor-visao-loja" style="width: 1px; height: 120px; background: rgba(255,255,255,0.15); display: none; margin: 0 10px;"></div>
-
-    <!-- LADO DIREITO: TERMÔMETRO DA LOJA (Só aparece para consultores) -->
-    <div id="bloco-meta-loja-consultor" style="z-index: 1; flex: 1; min-width: 250px; display: none;">
-      <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #fcd34d; margin-bottom: 5px;">🏢 Meta da Loja (Time)</div>
-      <div style="font-size: 28px; font-weight: 800; line-height: 1; color: #f8fafc;" id="meta-loja-total">R$ 0,00</div>
-      <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px;">Meta diária do time: <b id="meta-loja-diaria">R$ 0,00</b></div>
-      
-      <div style="margin-top: 15px;">
-        <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
-          <span>Progresso da Loja</span>
-          <span id="meta-loja-perc">0%</span>
-        </div>
-        <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
-          <div id="meta-loja-bar" style="width: 0%; height: 100%; background: #f59e0b; border-radius: 10px; transition: width 1s ease;"></div>
-        </div>
-        <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px;">
-          Faturado no mês: <b id="meta-loja-realizado">R$ 0,00</b>
+      <!-- BLOCO 2: ATIVOS (O que foi ativado hoje) -->
+      <div id="bloco-meta-ativos">
+        <div id="label-meta-ativos" style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #10b981; margin-bottom: 5px;">Meta de Ativos Hoje</div>
+        <div style="font-size: 36px; font-weight: 900; line-height: 1;" id="meta-ativos-valor">R$ 0,00</div>
+        <div style="font-size: 12px; color: #cbd5e1; margin-top: 8px;">Faltam <b id="dias-uteis-txt-ativos">22</b> dias úteis</div>
+        
+        <div style="margin-top: 15px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+            <span>Produção de Ativos Hoje</span>
+            <span id="meta-ativos-perc" style="color: #34d399;">0%</span>
+          </div>
+          <div style="width: 100%; height: 12px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
+            <div id="meta-ativos-bar" style="width: 0%; height: 100%; background: #10b981; border-radius: 10px; transition: width 1s ease;"></div>
+          </div>
+          <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px; display: flex; justify-content: space-between;">
+            <span>Ativado hoje: <b id="meta-ativos-realizado">R$ 0,00</b></span>
+            <span>Falta: <b id="meta-ativos-falta">R$ 0,00</b></span>
+          </div>
         </div>
       </div>
+
+      <!-- BLOCO 3: TERMÔMETRO DA LOJA (Só aparece para Consultor) -->
+      <div id="bloco-meta-loja-consultor" style="display: none; border-left: 1px solid rgba(255,255,255,0.15); padding-left: 30px;">
+        <div style="font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: #fcd34d; margin-bottom: 5px;">🏢 Meta da Loja (Time)</div>
+        <div style="font-size: 28px; font-weight: 800; line-height: 1; color: #f8fafc;" id="meta-loja-total">R$ 0,00</div>
+        <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px;">Meta diária do time: <b id="meta-loja-diaria">R$ 0,00</b></div>
+        
+        <div style="margin-top: 15px;">
+          <div style="display: flex; justify-content: space-between; font-size: 12px; font-weight: 700; margin-bottom: 8px;">
+            <span>Progresso da Loja</span>
+            <span id="meta-loja-perc" style="color: #fcd34d;">0%</span>
+          </div>
+          <div style="width: 100%; height: 8px; background: rgba(255,255,255,0.2); border-radius: 10px; overflow: hidden;">
+            <div id="meta-loja-bar" style="width: 0%; height: 100%; background: #f59e0b; border-radius: 10px; transition: width 1s ease;"></div>
+          </div>
+          <div style="font-size: 11px; color: #cbd5e1; margin-top: 8px;">
+            Faturado no mês: <b id="meta-loja-realizado">R$ 0,00</b>
+          </div>
+        </div>
+      </div>
+
     </div>
   </div>
 
@@ -1530,6 +1553,10 @@ async function inicializarDados() {
     const nomeLogado = perfilLogado ? `${perfilLogado.nome} ${perfilLogado.sobrenome}`.trim().toUpperCase() : '';
     let ativoHojeIndiv = 0, fatInputIndiv = 0, fatAtivoIndiv = 0;
 
+    // 🔥 VARIÁVEIS DE ENTRANTES ADICIONADAS
+    let entranteHojeGlobal = 0;
+    let entranteHojeIndiv = 0;
+
     // 🔥 CÁLCULO DE PEDIDOS PARADOS
     let qtdPedidosParados = 0;
     let valorPedidosParados = 0;
@@ -1613,6 +1640,18 @@ async function inicializarDados() {
         }
 
         const isDono = (matriculaVenda === matriculaLogada || nomeParaExibir === nomeLogado);
+        
+        // --- INÍCIO DA INCLUSÃO: CÁLCULO DE ENTRANTES ---
+        const isVendaHoje = dataVenda && dataVenda.getDate() === hoje.getDate() && dataVenda.getMonth() === hoje.getMonth() && dataVenda.getFullYear() === hoje.getFullYear();
+        
+        if (isVendaHoje && origem === 'INTERNO') {
+          entranteHojeGlobal += valor;
+          if (isDono) {
+            entranteHojeIndiv += valor;
+          }
+        }
+        // --- FIM DA INCLUSÃO ---
+
         if (isDono) {
           fatInputIndiv += valor;
           if (estaAtivado) fatAtivoIndiv += valor;
@@ -1635,6 +1674,9 @@ async function inicializarDados() {
       ativoHojeGlobal: ativoHojeGlobal,
       fatInputGlobal: fatInputGlobal,
       fatAtivoGlobal: fatAtivoGlobal,
+      // 🔥 NOVAS PROPRIEDADES DE ENTRANTES
+      entranteHojeGlobal: entranteHojeGlobal,
+      entranteHojeIndiv: entranteHojeIndiv,
       metaIndivFat: metaConsultorFat,
       metaIndivPort: metaConsultorPort,
       metaIndivReneg: metaConsultorReneg,
@@ -1728,6 +1770,10 @@ function renderizarDashboard(dados) {
   const calcFatInput = dados.isGestao ? dados.fatInputGlobal : dados.fatInputIndiv;
   const calcFatAtivo = dados.isGestao ? dados.fatAtivoGlobal : dados.fatAtivoIndiv;
   const calcAtivoHoje = dados.isGestao ? dados.ativoHojeGlobal : dados.ativoHojeIndiv;
+  
+  // 🔥 VARIÁVEL DE ENTRANTES ADICIONADA
+  const calcEntranteHoje = dados.isGestao ? dados.entranteHojeGlobal : dados.entranteHojeIndiv;
+
   const calcMetaFat = dados.isGestao ? dados.metaValor : dados.metaIndivFat;
   
   const metaPortTopo = dados.isGestao ? dados.portMeta : dados.metaIndivPort;
@@ -1753,21 +1799,49 @@ function renderizarDashboard(dados) {
   const faltaParaMeta = calcMetaFat - calcFatAtivo;
   const metaDiaria = faltaParaMeta > 0 ? (faltaParaMeta / diasRestantes) : 0;
   const percMetaDiaria = metaDiaria > 0 ? Math.min(((calcAtivoHoje / metaDiaria) * 100), 100).toFixed(0) : (calcAtivoHoje > 0 ? 100 : 0);
+  
+  // 🔥 CÁLCULO DE PERCENTUAL DE ENTRANTES
+  const percEntrantes = metaDiaria > 0 ? Math.min(((calcEntranteHoje / metaDiaria) * 100), 100).toFixed(0) : (calcEntranteHoje > 0 ? 100 : 0);
 
-  // Atualiza Lado Esquerdo (Sua Meta)
-  const labelMeta = document.getElementById('label-meta-diaria');
-  if (labelMeta) {
-     labelMeta.innerText = dados.isGestao ? 'Meta da Loja para Hoje' : 'Sua Meta para Hoje';
+  // =====================================================================
+  // 🔥 ATUALIZAÇÃO DOS NOVOS BLOCOS (ENTRANTES e ATIVOS) E GRID
+  // =====================================================================
+
+  // 1. Ajusta o Grid de acordo com o perfil
+  const gridMetasDiarias = document.getElementById('grid-metas-diarias');
+  if (gridMetasDiarias) {
+    gridMetasDiarias.style.gridTemplateColumns = dados.isGestao ? '1fr 1fr' : '1fr 1fr 1fr';
   }
 
-  const elDias = document.getElementById('dias-uteis-txt');
-  if (elDias) {
-    elDias.innerText = diasRestantes; 
-    document.getElementById('meta-diaria-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('meta-diaria-perc').innerText = percMetaDiaria + '%';
-    document.getElementById('meta-diaria-bar').style.width = percMetaDiaria + '%';
-    document.getElementById('meta-diaria-realizado').innerText = calcAtivoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('meta-diaria-falta').innerText = (metaDiaria - calcAtivoHoje > 0 ? metaDiaria - calcAtivoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  // 2. Atualiza os textos dos rótulos
+  const labelEntrantes = document.getElementById('label-meta-entrantes');
+  const labelAtivos = document.getElementById('label-meta-ativos');
+
+  if (labelEntrantes && labelAtivos) {
+    labelEntrantes.innerText = dados.isGestao ? 'Meta de Entrantes da Loja Hoje' : 'Sua Meta de Entrantes Hoje';
+    labelAtivos.innerText = dados.isGestao ? 'Meta de Ativos da Loja Hoje' : 'Sua Meta de Ativos Hoje';
+  }
+
+  // 3. Preenche Bloco ENTRANTES
+  const elDiasEntrantes = document.getElementById('dias-uteis-txt-entrantes');
+  if (elDiasEntrantes) {
+    elDiasEntrantes.innerText = diasRestantes; 
+    document.getElementById('meta-entrantes-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-entrantes-perc').innerText = percEntrantes + '%';
+    document.getElementById('meta-entrantes-bar').style.width = percEntrantes + '%';
+    document.getElementById('meta-entrantes-realizado').innerText = calcEntranteHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-entrantes-falta').innerText = (metaDiaria - calcEntranteHoje > 0 ? metaDiaria - calcEntranteHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+
+  // 4. Preenche Bloco ATIVOS
+  const elDiasAtivos = document.getElementById('dias-uteis-txt-ativos');
+  if (elDiasAtivos) {
+    elDiasAtivos.innerText = diasRestantes; 
+    document.getElementById('meta-ativos-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-ativos-perc').innerText = percMetaDiaria + '%';
+    document.getElementById('meta-ativos-bar').style.width = percMetaDiaria + '%';
+    document.getElementById('meta-ativos-realizado').innerText = calcAtivoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-ativos-falta').innerText = (metaDiaria - calcAtivoHoje > 0 ? metaDiaria - calcAtivoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
   // =====================================================================
@@ -1842,9 +1916,9 @@ function renderizarDashboard(dados) {
         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 700; color: #64748b; margin-bottom: 6px;">
           <span>Meta: ${formatMoeda(metaPortTopo)}</span>
         </div>
-<div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-bottom: 8px; display: flex;">
-  <div style="width: ${percPort}%; height: 100%; background: #a855f7; transition: width 1s ease-in-out;"></div>
-</div>
+        <div style="width: 100%; height: 8px; background: #f1f5f9; border-radius: 10px; overflow: hidden; margin-bottom: 8px; display: flex;">
+          <div style="width: ${percPort}%; height: 100%; background: #a855f7; transition: width 1s ease-in-out;"></div>
+        </div>
         <div style="display: flex; justify-content: space-between; font-size: 11px; font-weight: 600; border-top: 1px dashed #e2e8f0; padding-top: 12px;">
           <span style="color: #64748b;">⏳ Na esteira:</span>
           <span style="color: #b45309; font-weight: 800;">${formatMoeda(portInput - portAtivo)}</span>
