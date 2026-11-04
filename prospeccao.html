@@ -199,7 +199,25 @@
         <button onclick="atualizarFeedRadar(false)" style="background: #4c1d95; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px;">🔍 Filtrar</button>
         <button onclick="exportarRelatorioCSV()" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 6px; font-weight: 700; cursor: pointer; font-size: 12px; display: flex; align-items: center; gap: 5px;">📥 Exportar Excel</button>
       </div>
-
+      <!-- RESUMO RÁPIDO DO DIA -->
+      <div id="radar-resumo" style="display: none; padding: 15px 25px; background: #ffffff; border-bottom: 1px solid #e2e8f0; display: flex; gap: 20px; justify-content: space-around;">
+        <div style="text-align: center;">
+          <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase;">🎯 Captações Hoje</div>
+          <div id="resumo-captacoes" style="font-size: 20px; font-weight: 900; color: #f59e0b;">0</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase;">📄 Propostas Hoje</div>
+          <div id="resumo-propostas" style="font-size: 20px; font-weight: 900; color: #10b981;">0</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase;">📞 Contatos Hoje</div>
+          <div id="resumo-contatos" style="font-size: 20px; font-weight: 900; color: #8b5cf6;">0</div>
+        </div>
+        <div style="text-align: center;">
+          <div style="font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase;">❌ Perdidos Hoje</div>
+          <div id="resumo-perdidos" style="font-size: 20px; font-weight: 900; color: #ef4444;">0</div>
+        </div>
+      </div>
       <div id="feed-atividades" style="padding: 25px; overflow-y: auto; flex: 1; background: #f8fafc; display: flex; flex-direction: column; gap: 12px;">
         <!-- Preenchido via JS -->
       </div>
@@ -1057,10 +1075,20 @@
         <button onclick="fecharPainelProdutividade()" style="background:rgba(255,255,255,0.1); border:none; width: 36px; height: 36px; border-radius: 50%; color: white; cursor: pointer; font-size: 20px;">&times;</button>
       </div>
 
-      <div id="painel-produtividade-conteudo" style="padding: 25px; overflow-y: auto; max-height: 70vh;">
-        <!-- Tabela gerada via JS -->
+      <div style="padding: 25px; overflow-y: auto; max-height: 70vh;">
+        <!-- 🔥 GRÁFICO DE PRODUTIVIDADE -->
+        <div style="margin-bottom: 30px;">
+          <h4 style="margin: 0 0 15px 0; color: #1e3c72; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">📊 Volume de Atividades por Hora (Últimos 30 dias)</h4>
+          <div id="grafico-horas-container" style="display: flex; align-items: flex-end; justify-content: space-between; height: 120px; background: #f8fafc; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; gap: 5px;">
+            <!-- Barras geradas via JS -->
+          </div>
+        </div>
+
+        <div id="painel-produtividade-conteudo">
+          <!-- Tabela gerada via JS -->
+        </div>
       </div>
-    </div>
+  </div>
   </div>
 
       <!-- ========================================================== -->
@@ -1533,6 +1561,7 @@ function moverCardParaColuna(idLead, novaEtapa) {
     getLeadsDisponiveis: { rpc: 'leads_disponiveis', args: (limit, offset) => ({ p_limit: limit, p_offset: offset }) },
     minhasTarefas: { rpc: 'minhas_tarefas', args: () => ({}) },    
     obterRealizadoMes: { rpc: 'obter_realizado_mes', args: () => ({}) },
+    obterProdutividadePorHora: { rpc: 'obter_produtividade_por_hora', args: () => ({}) },
     obterFeedAtividades: { rpc: 'obter_feed_atividades', args: (c, i, f) => ({ p_consultor: c, p_data_inicio: i, p_data_fim: f }) },
     obterRelatorioAtividades: { rpc: 'obter_relatorio_atividades', args: (c, i, f) => ({ p_consultor: c, p_data_inicio: i, p_data_fim: f }) },
     obterLeadsPerdidos: { rpc: 'obter_leads_perdidos', args: () => ({}) },
@@ -7106,24 +7135,25 @@ document.addEventListener('drop', function(e) {
     .atualizarStatusLeadPlanilha(idLead, novaEtapa);
 });
 
-  function abrirPainelProdutividade() {
+function abrirPainelProdutividade() {
   const modal = document.getElementById('modal-produtividade');
   const conteudo = document.getElementById('painel-produtividade-conteudo');
+  const graficoContainer = document.getElementById('grafico-horas-container');
   
   modal.style.display = 'flex';
   setTimeout(() => { modal.style.opacity = '1'; modal.querySelector('div > div').style.transform = 'scale(1)'; }, 10);
   
-  conteudo.innerHTML = '<div style="text-align:center; padding: 40px; color: #64748b;">⏳ Calculando produtividade da equipe...</div>';
+  conteudo.innerHTML = '<div style="text-align:center; padding: 20px; color: #64748b;">⏳ Calculando produtividade...</div>';
+  graficoContainer.innerHTML = '<div style="text-align:center; width:100%; color: #94a3b8; font-size:12px;">Carregando gráfico...</div>';
 
+  // 1. Carrega a Tabela (RPC antiga)
   google.script.run
     .withSuccessHandler(dados => {
       if (!dados || dados.length === 0) {
         conteudo.innerHTML = '<p style="text-align:center; color:#94a3b8;">Nenhum dado encontrado.</p>';
         return;
       }
-
       const fmtMoeda = (v) => `R$ ${Number(v || 0).toLocaleString('pt-BR', {maximumFractionDigits:0})}`;
-      
       let html = `
         <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 13px;">
           <thead>
@@ -7137,40 +7167,56 @@ document.addEventListener('drop', function(e) {
           </thead>
           <tbody>
       `;
-
       dados.forEach(row => {
         const isNegligenciadoAlerta = row.leads_negligenciados > 0;
-        
         html += `
           <tr style="border-bottom: 1px solid #f1f5f9;">
-            <td style="padding: 14px 12px; font-weight: 700; color: #1e293b;">
-              👤 ${row.consultor}
-            </td>
-            <td style="padding: 14px 12px; text-align: center;">
-              <span style="background: #f1f5f9; padding: 4px 10px; border-radius: 20px; font-weight: 700;">${row.leads_ativos}</span>
-            </td>
-            <td style="padding: 14px 12px; font-weight: 800; color: #059669;">
-              ${fmtMoeda(row.valor_total)}
-            </td>
-            <td style="padding: 14px 12px; text-align: center; font-weight: 600; color: ${row.media_dias_parado >= 5 ? '#d97706' : '#475569'};">
-              ${row.media_dias_parado} dias
-            </td>
-            <td style="padding: 14px 12px; text-align: center;">
-              ${isNegligenciadoAlerta 
-                ? `<span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-weight: 800;">⚠️ ${row.leads_negligenciados}</span>` 
-                : `<span style="color: #10b981; font-weight: 700;">✅ 0</span>`}
-            </td>
+            <td style="padding: 14px 12px; font-weight: 700; color: #1e293b;">👤 ${row.consultor}</td>
+            <td style="padding: 14px 12px; text-align: center;"><span style="background: #f1f5f9; padding: 4px 10px; border-radius: 20px; font-weight: 700;">${row.leads_ativos}</span></td>
+            <td style="padding: 14px 12px; font-weight: 800; color: #059669;">${fmtMoeda(row.valor_total)}</td>
+            <td style="padding: 14px 12px; text-align: center; font-weight: 600; color: ${row.media_dias_parado >= 5 ? '#d97706' : '#475569'};">${row.media_dias_parado} dias</td>
+            <td style="padding: 14px 12px; text-align: center;">${isNegligenciadoAlerta ? `<span style="background: #fee2e2; color: #dc2626; padding: 4px 10px; border-radius: 20px; font-weight: 800;">⚠️ ${row.leads_negligenciados}</span>` : `<span style="color: #10b981; font-weight: 700;">✅ 0</span>`}</td>
           </tr>
         `;
       });
-
       html += `</tbody></table>`;
       conteudo.innerHTML = html;
     })
-    .withFailureHandler(err => {
-      conteudo.innerHTML = `<p style="color: #ef4444; text-align:center;">Erro: ${err}</p>`;
-    })
     .dashboardProdutividade();
+
+  // 2. Carrega o Gráfico (Nova RPC)
+  google.script.run
+    .withSuccessHandler(res => {
+      if (!res.success || !res.dados || res.dados.length === 0) {
+        graficoContainer.innerHTML = '<div style="text-align:center; width:100%; color: #94a3b8; font-size:12px;">Sem dados para o gráfico.</div>';
+        return;
+      }
+
+      // Encontra o maior valor para calcular a altura das barras
+      let maxValor = Math.max(...res.dados.map(d => Number(d.total)));
+      if (maxValor === 0) maxValor = 1;
+
+      let barrasHTML = '';
+      // Cria barras das 08h às 18h (horário comercial)
+      for (let h = 8; h <= 18; h++) {
+        const dadoHora = res.dados.find(d => Number(d.hora) === h);
+        const total = dadoHora ? Number(dadoHora.total) : 0;
+        const percentualAltura = (total / maxValor) * 100;
+        
+        barrasHTML += `
+          <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; height: 100%; gap: 5px;">
+            <div style="font-size: 10px; font-weight: 700; color: #64748b;">${total > 0 ? total : ''}</div>
+            <div style="width: 80%; height: ${percentualAltura}%; background: linear-gradient(180deg, #3b82f6, #2563eb); border-radius: 4px 4px 0 0; min-height: ${total > 0 ? '4px' : '0'}; transition: height 0.5s ease;"></div>
+            <div style="font-size: 10px; color: #94a3b8; font-weight: 600;">${h}h</div>
+          </div>
+        `;
+      }
+      graficoContainer.innerHTML = barrasHTML;
+    })
+    .withFailureHandler(err => {
+      graficoContainer.innerHTML = '<div style="text-align:center; width:100%; color: #ef4444; font-size:12px;">Erro ao carregar gráfico.</div>';
+    })
+    .obterProdutividadePorHora();
 }
 
 function fecharPainelProdutividade() {
@@ -7346,6 +7392,57 @@ function formatarDataHora(dateString) {
   return date.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
 
+// 🔥 EXPORTAÇÃO CSV (EXCEL) COM CNPJ/CPF
+function exportarRelatorioCSV() {
+  const filtroConsultor = document.getElementById('radar-filtro-consultor').value;
+  const filtroInicio = document.getElementById('radar-filtro-inicio').value;
+  const filtroFim = document.getElementById('radar-filtro-fim').value;
+
+  notificar("⏳ Gerando relatório, aguarde...", "info");
+
+  google.script.run
+    .withSuccessHandler(res => {
+      if (!res.success || !res.feed || res.feed.length === 0) {
+        notificar("Nenhum dado encontrado para exportar com estes filtros.", "erro");
+        return;
+      }
+
+      // Cabeçalho do CSV (usando ponto e vírgula para o Excel em português) com CNPJ/CPF
+      let csvContent = "Data e Hora;Consultor;Ação;Empresa;CNPJ/CPF;Codigo Lead;Novo Status\n";
+      
+      res.feed.forEach(atv => {
+        // Limpa strings para não quebrar o CSV
+        const dt = formatarDataHora(atv.data || atv.criado_em);
+        const user = (atv.usuario || '').replace(/;/g, ',');
+        const acao = (atv.acao || '').replace(/;/g, ',');
+        const empresa = (atv.razao_social || '').replace(/;/g, ',');
+        const cnpj = (atv.cnpj || '').replace(/;/g, ',');
+        const cod = (atv.lead_codigo || '').replace(/;/g, ',');
+        const status = (atv.status_novo || '').replace(/;/g, ',');
+
+        csvContent += `${dt};${user};${acao};${empresa};${cnpj};${cod};${status}\n`;
+      });
+
+      // Cria o arquivo e força o download
+      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", `relatorio_radar_${new Date().toISOString().split('T')[0]}.csv`);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      notificar("✅ Relatório exportado com sucesso!", "sucesso");
+    })
+    .withFailureHandler(err => {
+      notificar("Erro ao gerar relatório: " + err, "erro");
+    })
+    .obterRelatorioAtividades(filtroConsultor, filtroInicio, filtroFim);
+}
+
+
+// 🔥 ATUALIZAR FEED COM RESUMO RÁPIDO E UI MODERNA
 function atualizarFeedRadar(silencioso = false) {
   const feed = document.getElementById('feed-atividades');
   const filtroConsultor = document.getElementById('radar-filtro-consultor')?.value || null;
@@ -7361,8 +7458,41 @@ function atualizarFeedRadar(silencioso = false) {
       const modal = document.getElementById('modal-radar');
       if (!modal || modal.style.display !== 'flex') return;
 
-      if (!res.success || !res.feed || res.feed.length === 0) {
-        if (!silencioso && feed) feed.innerHTML = '<p style="text-align:center; color:#94a3b8;">Nenhuma atividade encontrada para este filtro.</p>';
+      if (!res.success || !res.feed) return;
+
+      // 🔥 CALCULAR RESUMO DO DIA
+      const hojeStr = new Date().toLocaleDateString('pt-BR');
+      let captacoes = 0, propostas = 0, contatos = 0, perdidos = 0;
+      
+      res.feed.forEach(atv => {
+        if (atv.criado_em) {
+          const dtAtv = new Date(atv.criado_em).toLocaleDateString('pt-BR');
+          if (dtAtv === hojeStr) {
+            if (atv.acao === 'LEAD_CAPTADO') captacoes++;
+            if (atv.acao === 'PROPOSTA_SALVA') propostas++;
+            if (atv.acao === 'CONTATO_REGISTRADO') contatos++;
+            if (atv.acao === 'LEAD_PERDIDO') perdidos++;
+          }
+        }
+      });
+
+      const radarResumo = document.getElementById('radar-resumo');
+      if (radarResumo) radarResumo.style.display = 'flex';
+      
+      const elCaptacoes = document.getElementById('resumo-captacoes');
+      const elPropostas = document.getElementById('resumo-propostas');
+      const elContatos = document.getElementById('resumo-contatos');
+      const elPerdidos = document.getElementById('resumo-perdidos');
+
+      if (elCaptacoes) elCaptacoes.innerText = captacoes;
+      if (elPropostas) elPropostas.innerText = propostas;
+      if (elContatos) elContatos.innerText = contatos;
+      if (elPerdidos) elPerdidos.innerText = perdidos;
+
+      if (res.feed.length === 0) {
+        if (!silencioso && feed) {
+          feed.innerHTML = '<p style="text-align:center; color:#94a3b8; padding: 30px;">Nenhuma atividade encontrada para este filtro.</p>';
+        }
         return;
       }
 
@@ -7382,6 +7512,7 @@ function atualizarFeedRadar(silencioso = false) {
         else if (atv.acao === 'LEAD_RECUPERADO') { icone = '🔄'; cor = '#0ea5e9'; textoAcao = 'recuperou o lead'; }
 
         const iniciais = (atv.usuario || 'Sistema').substring(0, 2).toUpperCase();
+        const dataFormatada = atv.criado_em ? formatarDataHora(atv.criado_em) : '';
 
         html += `
           <div style="background: white; border-radius: 12px; padding: 16px; display: flex; gap: 16px; border-left: 4px solid ${cor}; box-shadow: 0 2px 4px rgba(0,0,0,0.02); align-items: center;">
@@ -7390,14 +7521,14 @@ function atualizarFeedRadar(silencioso = false) {
             </div>
             <div style="flex: 1;">
               <div style="font-size: 13px; color: #1e293b;">
-                <strong style="color: #0f172a;">${atv.usuario}</strong> ${textoAcao}
+                <strong style="color: #0f172a;">${atv.usuario || 'Sistema'}</strong> ${textoAcao}
               </div>
               <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-                🏢 ${atv.razao_social} <span style="color:#94a3b8;">(#${atv.lead_codigo})</span>
+                🏢 ${atv.razao_social || 'Empresa não informada'} <span style="color:#94a3b8;">(#${atv.lead_codigo || '---'})</span>
               </div>
             </div>
             <div style="font-size: 11px; color: #64748b; font-weight: 600; white-space: nowrap; text-align: right;">
-              ${icone} ${formatarDataHora(atv.criado_em)}
+              ${icone} ${dataFormatada}
             </div>
           </div>
         `;
@@ -7405,7 +7536,11 @@ function atualizarFeedRadar(silencioso = false) {
 
       if (silencioso && feed) {
         feed.style.opacity = '0.5';
-        setTimeout(() => { feed.innerHTML = html; feed.style.opacity = '1'; feed.style.transition = 'opacity 0.3s'; }, 200);
+        setTimeout(() => { 
+          feed.innerHTML = html; 
+          feed.style.opacity = '1'; 
+          feed.style.transition = 'opacity 0.3s'; 
+        }, 200);
       } else if (feed) {
         feed.innerHTML = html;
       }
@@ -7446,53 +7581,6 @@ function fecharRadarGestor() {
   if (_radarInterval) { clearInterval(_radarInterval); _radarInterval = null; }
 }
 
-// 🔥 EXPORTAÇÃO CSV (EXCEL)
-function exportarRelatorioCSV() {
-  const filtroConsultor = document.getElementById('radar-filtro-consultor').value;
-  const filtroInicio = document.getElementById('radar-filtro-inicio').value;
-  const filtroFim = document.getElementById('radar-filtro-fim').value;
-
-  notificar("⏳ Gerando relatório, aguarde...", "info");
-
-  google.script.run
-    .withSuccessHandler(res => {
-      if (!res.success || !res.feed || res.feed.length === 0) {
-        notificar("Nenhum dado encontrado para exportar com estes filtros.", "erro");
-        return;
-      }
-
-      // Cabeçalho do CSV (usando ponto e vírgula para o Excel em português)
-      let csvContent = "Data e Hora;Consultor;Ação;Empresa;Codigo Lead;Novo Status\n";
-      
-      res.feed.forEach(atv => {
-        // Limpa strings para não quebrar o CSV
-        const dt = formatarDataHora(atv.data);
-        const user = (atv.usuario || '').replace(/;/g, ',');
-        const acao = (atv.acao || '').replace(/;/g, ',');
-        const empresa = (atv.razao_social || '').replace(/;/g, ',');
-        const cod = (atv.lead_codigo || '').replace(/;/g, ',');
-        const status = (atv.status_novo || '').replace(/;/g, ',');
-
-        csvContent += `${dt};${user};${acao};${empresa};${cod};${status}\n`;
-      });
-
-      // Cria o arquivo e força o download
-      const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
-      const link = document.createElement("a");
-      const url = URL.createObjectURL(blob);
-      link.setAttribute("href", url);
-      link.setAttribute("download", `relatorio_radar_${new Date().toISOString().split('T')[0]}.csv`);
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-
-      notificar("✅ Relatório exportado com sucesso!", "sucesso");
-    })
-    .withFailureHandler(err => {
-      notificar("Erro ao gerar relatório: " + err, "erro");
-    })
-    .obterRelatorioAtividades(filtroConsultor, filtroInicio, filtroFim);
-}
 
   function abrirModalMotivoPerda() {
   const modal = document.getElementById('modal-motivo-perda');
