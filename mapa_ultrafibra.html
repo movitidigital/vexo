@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Consulta de Viabilidade - VEXO TIM</title>
+    
+    <link href="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.css" rel="stylesheet" />
+    
+    <style>
+        :root {
+            --primary: #003399; --primary-light: #2563eb; --success: #16a34a;
+            --success-bg: #dcfce7; --danger: #dc2626; --danger-bg: #fee2e2;
+            --gray-bg: #f3f4f6; --border: #e5e7eb;
+        }
+
+        body { margin: 0; padding: 0; font-family: 'Segoe UI', Roboto, sans-serif; background-color: #fff; display: flex; height: 100vh; overflow: hidden; }
+
+        /* --- SIDEBAR --- */
+        .sidebar { width: 400px; height: 100%; display: flex; flex-direction: column; border-right: 1px solid var(--border); box-shadow: 2px 0 10px rgba(0,0,0,0.05); z-index: 10; background: white; }
+        .header-sidebar { background-color: var(--primary); color: white; padding: 20px; }
+        .header-sidebar h1 { margin: 0; font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .header-sidebar p { margin: 4px 0 0 0; font-size: 12px; opacity: 0.8; }
+        
+        .search-area { padding: 20px; border-bottom: 1px solid var(--border); }
+        .form-group { margin-bottom: 15px; position: relative; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #4b5563; margin-bottom: 5px; text-transform: uppercase; }
+        .form-control { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 14px; box-sizing: border-box; outline: none; transition: border 0.2s; }
+        .form-control:focus { border-color: var(--primary-light); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+        
+        /* Dropdown de Sugestões */
+        .autocomplete-dropdown { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); z-index: 100; max-height: 200px; overflow-y: auto; display: none; margin-top: 4px; }
+        .autocomplete-item { padding: 10px 12px; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.2s; }
+        .autocomplete-item:hover { background: var(--gray-bg); }
+        .auto-rua { font-weight: 600; color: #1f2937; font-size: 13px; display: block; }
+        .auto-bairro { font-size: 11px; color: #6b7280; }
+
+        .btn-primary { width: 100%; padding: 14px; background-color: var(--primary-light); color: white; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; transition: background 0.2s; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-primary:hover { background-color: #1d4ed8; }
+
+        /* --- RESULTADOS --- */
+        .result-area { padding: 20px; overflow-y: auto; flex: 1; display: none; }
+        .card { border: 1px solid var(--border); border-radius: 12px; padding: 16px; margin-bottom: 15px; background: white; }
+        .card-title { font-size: 12px; font-weight: 700; color: #9ca3af; text-transform: uppercase; margin-bottom: 12px; }
+        .address-main { font-size: 16px; font-weight: bold; color: #1f2937; display: block; margin-bottom: 4px;}
+        .address-sub { font-size: 13px; color: #6b7280; display: block; }
+        .grid-info { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .info-item { background: var(--gray-bg); padding: 10px; border-radius: 6px; }
+        .info-label { display: block; font-size: 10px; color: #6b7280; font-weight: 600; text-transform: uppercase; margin-bottom: 2px; }
+        .info-value { font-size: 13px; font-weight: 700; color: #374151; word-break: break-all; }
+        .status-badge { padding: 12px; border-radius: 8px; text-align: center; font-weight: bold; font-size: 14px; margin-top: 15px; }
+        .status-badge.disponivel { background: var(--success-bg); color: var(--success); border: 1px solid #bbf7d0; }
+        .status-badge.restrito { background: var(--danger-bg); color: var(--danger); border: 1px solid #fecaca; }
+
+        /* Loading */
+        .loading-overlay { display: none; flex-direction: column; align-items: center; padding: 40px 0; color: var(--primary); }
+        .spinner { border: 4px solid #e5e7eb; border-top: 4px solid var(--primary); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin-bottom: 15px; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* --- MAPA E MARCADORES --- */
+        .map-container { flex: 1; position: relative; }
+        #map { width: 100%; height: 100%; }
+        
+        /* Pinos da Cobertura Geral */
+        .marker-pin { width: 14px; height: 14px; border-radius: 50%; border: 2px solid white; box-shadow: 0 2px 4px rgba(0,0,0,0.3); cursor: pointer; transition: transform 0.2s; }
+        .marker-pin:hover { transform: scale(1.4); z-index: 999; }
+        .marker-pin.disponivel { background-color: var(--primary-light); }
+        .marker-pin.restrito { background-color: #6b7280; }
+        
+        /* Pino da Busca (Destaque Vermelho Pulsante) */
+        .search-marker {
+            width: 28px;
+            height: 28px;
+            background-color: #ef4444;
+            border: 4px solid white;
+            border-radius: 50%;
+            box-shadow: 0 0 0 rgba(239, 68, 68, 0.7);
+            animation: pulse 2s infinite;
+            z-index: 9999;
+            cursor: pointer;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+            70% { box-shadow: 0 0 0 20px rgba(239, 68, 68, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        
+        /* Popup do Mapa */
+        .maplibregl-popup-content { padding: 0; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.15); overflow: hidden; font-family: inherit; }
+        .popup-container { padding: 16px; min-width: 260px; }
+        .popup-endereco { font-weight: 700; font-size: 15px; color: #1f2937; margin-bottom: 4px; }
+        .popup-bairro { font-size: 12px; color: #6b7280; margin-bottom: 12px; }
+        .popup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .popup-item { background: var(--gray-bg); padding: 8px; border-radius: 6px; }
+        .popup-label { font-size: 10px; color: #6b7280; text-transform: uppercase; font-weight: 600; display: block;}
+        .popup-value { font-size: 12px; font-weight: 700; color: #374151; }
+        .popup-status { padding: 8px; border-radius: 6px; text-align: center; font-weight: bold; font-size: 12px; }
+        .popup-status.disponivel { background-color: var(--success-bg); color: var(--success); }
+        .popup-status.restrito { background-color: var(--danger-bg); color: var(--danger); }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR DE CONSULTA -->
+    <div class="sidebar">
+        <div class="header-sidebar">
+            <h1><span style="font-size: 24px;">📡</span> TIM Ultra Fibra</h1>
+            <p>Consulta de Viabilidade Técnica</p>
+        </div>
+
+        <div class="search-area">
+            <div class="form-group">
+                <label>Buscar Endereço (Rua ou CEP)</label>
+                <input type="text" id="input-busca" class="form-control" placeholder="Ex: Rua das Ninfas ou 50050415" autocomplete="off">
+                <div id="autocomplete-list" class="autocomplete-dropdown"></div>
+            </div>
+            <div class="form-group">
+                <label>Número</label>
+                <input type="text" id="input-numero" class="form-control" placeholder="Ex: 741" onkeypress="handleKeyPress(event)">
+            </div>
+            <button class="btn-primary" onclick="consultarViabilidade()">
+                🔍 Consultar Endereço
+            </button>
+        </div>
+
+        <div id="loading" class="loading-overlay">
+            <div class="spinner"></div>
+            <span style="font-weight: 600;">Consultando base TIM...</span>
+        </div>
+
+        <div id="resultado" class="result-area"></div>
+    </div>
+
+    <!-- MAPA -->
+    <div class="map-container">
+        <div id="map"></div>
+    </div>
+
+    <!-- SCRIPTS -->
+    <script src="https://unpkg.com/maplibre-gl@3.6.2/dist/maplibre-gl.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <script>
+        // 1. CONEXÃO SUPABASE
+        const SUPABASE_URL = 'https://stibecxkiupfbarftftd.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_4gh2pbNMg0yyLdOujrMs9Q_3Zspl9AE';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 2. CONFIGURAÇÃO DO MAPA
+        const map = new maplibregl.Map({
+            container: 'map',
+            style: 'https://basemaps.cartocdn.com/gl/voyager-gl-style/style.json',
+            center: [-34.8770, -8.0476], // Recife
+            zoom: 13
+        });
+        map.addControl(new maplibregl.NavigationControl(), 'bottom-right');
+
+        let marcadoresAtuais = [];
+        let marcadorConsulta = null;
+        let cepSelecionado = "";
+
+        // ==========================================
+        // 3. FUNÇÕES DO MAPA (PONTOS DE COBERTURA)
+        // ==========================================
+        function criarPopupHTML(ponto) {
+            const comp = ponto.complemento ? ` - ${ponto.complemento}` : '';
+            return `
+                <div class="popup-container">
+                    <div class="popup-endereco">${ponto.logradouro}, ${ponto.numero}${comp}</div>
+                    <div class="popup-bairro">${ponto.bairro} • CEP: ${ponto.cep}</div>
+                    <div class="popup-grid">
+                        <div class="popup-item"><span class="popup-label">Segmento</span><span class="popup-value">${ponto.topologia || 'N/A'}</span></div>
+                        <div class="popup-item"><span class="popup-label">Infraco</span><span class="popup-value">${ponto.infraco || 'N/A'}</span></div>
+                        <div class="popup-item"><span class="popup-label">OLT</span><span class="popup-value">${ponto.olt_ftth || 'N/A'}</span></div>
+                        <div class="popup-item"><span class="popup-label">ID Lote</span><span class="popup-value">${ponto.id_lote || 'N/A'}</span></div>
+                    </div>
+                    <div class="popup-status ${ponto.status === 'Disponivel' ? 'disponivel' : 'restrito'}">
+                        ${ponto.status === 'Disponivel' ? '✅ Ok para venda' : '❌ Restrito'}
+                    </div>
+                </div>
+            `;
+        }
+
+        async function carregarPontosNoMapa() {
+            // Otimização: Só carrega os pontos se o zoom for próximo o suficiente (evita travar)
+            if (map.getZoom() < 14) {
+                marcadoresAtuais.forEach(m => m.remove());
+                marcadoresAtuais = [];
+                return;
+            }
+
+            const bounds = map.getBounds();
+            const params = {
+                min_lat: bounds.getSouth(), max_lat: bounds.getNorth(),
+                min_lng: bounds.getWest(), max_lng: bounds.getEast()
+            };
+
+            const { data, error } = await supabaseClient.rpc('get_coverage_in_bounds', params);
+            if (error) { console.error(error); return; }
+
+            // Limpa os pontos anteriores
+            marcadoresAtuais.forEach(m => m.remove());
+            marcadoresAtuais = [];
+
+            // Desenha os novos pontos
+            data.forEach(ponto => {
+                const el = document.createElement('div');
+                el.className = ponto.status === 'Disponivel' ? 'marker-pin disponivel' : 'marker-pin restrito';
+                
+                const popup = new maplibregl.Popup({ offset: 15, maxWidth: '320px' }).setHTML(criarPopupHTML(ponto));
+                
+                const marker = new maplibregl.Marker(el)
+                    .setLngLat([Number(ponto.longitude), Number(ponto.latitude)])
+                    .setPopup(popup)
+                    .addTo(map);
+                
+                marcadoresAtuais.push(marker);
+            });
+        }
+
+        map.on('load', carregarPontosNoMapa);
+        map.on('moveend', carregarPontosNoMapa);
+
+        // ==========================================
+        // 4. AUTOCOMPLETE E BUSCA
+        // ==========================================
+        const inputBusca = document.getElementById('input-busca');
+        const autocompleteList = document.getElementById('autocomplete-list');
+        let debounceTimer;
+
+        inputBusca.addEventListener('input', (e) => {
+            const termo = e.target.value.trim();
+            cepSelecionado = ""; 
+            clearTimeout(debounceTimer);
+
+            if (termo.length < 3) { autocompleteList.style.display = 'none'; return; }
+
+            debounceTimer = setTimeout(() => buscarSugestoes(termo), 500);
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!inputBusca.contains(e.target) && !autocompleteList.contains(e.target)) {
+                autocompleteList.style.display = 'none';
+            }
+        });
+
+        async function buscarSugestoes(termo) {
+            const { data, error } = await supabaseClient
+                .from('tim_ultra_fibra_coverage')
+                .select('logradouro, bairro, cep')
+                .or(`logradouro.ilike.%${termo}%,cep.eq.${termo}`)
+                .limit(15);
+
+            if (error || !data || data.length === 0) { autocompleteList.style.display = 'none'; return; }
+
+            // Remove ruas duplicadas para o dropdown ficar limpo
+            const unicos = [];
+            const vistos = new Set();
+            data.forEach(item => {
+                const chave = `${item.logradouro}-${item.bairro}`;
+                if (!vistos.has(chave)) { vistos.add(chave); unicos.push(item); }
+            });
+
+            autocompleteList.innerHTML = unicos.map(item => `
+                <div class="autocomplete-item" onclick="selecionarSugestao('${item.logradouro.replace(/'/g, "\\'")}', '${item.bairro.replace(/'/g, "\\'")}', '${item.cep}')">
+                    <span class="auto-rua">${item.logradouro}</span>
+                    <span class="auto-bairro">${item.bairro} • CEP: ${item.cep}</span>
+                </div>
+            `).join('');
+
+            autocompleteList.style.display = 'block';
+        }
+
+        function selecionarSugestao(rua, bairro, cep) {
+            inputBusca.value = `${rua} - ${bairro}`;
+            cepSelecionado = cep;
+            autocompleteList.style.display = 'none';
+            document.getElementById('input-numero').focus();
+        }
+
+        // ==========================================
+        // 5. CONSULTA DE VIABILIDADE
+        // ==========================================
+        async function consultarViabilidade() {
+            const textoBusca = inputBusca.value.trim();
+            const numeroInput = document.getElementById('input-numero').value.trim();
+
+            if (!textoBusca) { alert("Por favor, digite uma rua ou CEP."); return; }
+
+            document.getElementById('resultado').style.display = 'none';
+            document.getElementById('loading').style.display = 'flex';
+            if (marcadorConsulta) marcadorConsulta.remove();
+
+            try {
+                let query = supabaseClient.from('tim_ultra_fibra_coverage').select('*');
+
+                // Lógica de busca inteligente
+                if (cepSelecionado) {
+                    query = query.eq('cep', cepSelecionado);
+                } else {
+                    const apenasNumeros = textoBusca.replace(/\D/g, '');
+                    if (apenasNumeros.length === 8) query = query.eq('cep', apenasNumeros);
+                    else {
+                        const ruaPura = textoBusca.split('-')[0].trim();
+                        query = query.ilike('logradouro', `%${ruaPura}%`);
+                    }
+                }
+
+                if (numeroInput) query = query.eq('numero', numeroInput);
+                let { data, error } = await query.limit(1);
+
+                // Fallback: Se não achou o número exato, busca pela rua/cep
+                if ((!data || data.length === 0) && numeroInput) {
+                    let fallbackQuery = supabaseClient.from('tim_ultra_fibra_coverage').select('*');
+                    if (cepSelecionado) fallbackQuery = fallbackQuery.eq('cep', cepSelecionado);
+                    else {
+                        const ruaPura = textoBusca.split('-')[0].trim();
+                        fallbackQuery = fallbackQuery.ilike('logradouro', `%${ruaPura}%`);
+                    }
+                    const fallback = await fallbackQuery.limit(1);
+                    data = fallback.data;
+                }
+
+                if (error || !data || data.length === 0) {
+                    document.getElementById('resultado').innerHTML = `
+                        <div class="card" style="text-align: center; padding: 30px;">
+                            <span style="font-size: 40px;">❌</span>
+                            <h3 style="color: #374151; margin-top: 10px;">Sem Cobertura</h3>
+                            <p style="color: #6b7280; font-size: 13px;">O endereço <b>${textoBusca}</b> não foi encontrado na base de dados.</p>
+                        </div>`;
+                } else {
+                    const ponto = data[0];
+                    renderizarResultado(ponto, numeroInput);
+                    voarParaLocal(ponto);
+                }
+            } catch (err) { 
+                console.error(err);
+                alert("Erro ao consultar."); 
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('resultado').style.display = 'block';
+            }
+        }
+
+        function renderizarResultado(ponto, numeroBuscado) {
+            const isDisponivel = ponto.status === 'Disponivel';
+            const numeroFinal = numeroBuscado || ponto.numero;
+            const complemento = ponto.complemento ? ` - ${ponto.complemento}` : '';
+
+            const aviso = (numeroBuscado && numeroBuscado !== ponto.numero) 
+                ? `<div style="background: #fef3c7; color: #b45309; padding: 8px; border-radius: 6px; font-size: 11px; margin-bottom: 10px; font-weight: 600;">⚠️ Número não encontrado. Mostrando o mais próximo (${ponto.numero}).</div>` : '';
+
+            document.getElementById('resultado').innerHTML = `
+                ${aviso}
+                <div class="card">
+                    <div class="card-title">📍 Endereço Encontrado</div>
+                    <span class="address-main">${ponto.logradouro}, ${numeroFinal}${complemento}</span>
+                    <span class="address-sub">${ponto.bairro} • CEP: ${ponto.cep}</span>
+                    <span class="address-sub">${ponto.cidade} - ${ponto.uf}</span>
+                </div>
+                <div class="card">
+                    <div class="card-title">⚙️ Dados Técnicos</div>
+                    <div class="grid-info">
+                        <div class="info-item"><span class="info-label">Segmento</span><span class="info-value">${ponto.topologia || 'FTTH'}</span></div>
+                        <div class="info-item"><span class="info-label">Infraco</span><span class="info-value">${ponto.infraco || 'N/A'}</span></div>
+                        <div class="info-item"><span class="info-label">MSAN / OLT</span><span class="info-value">${ponto.olt_ftth || 'N/A'}</span></div>
+                        <div class="info-item"><span class="info-label">ID Lote</span><span class="info-value">${ponto.id_lote || 'N/A'}</span></div>
+                    </div>
+                    <div class="status-badge ${isDisponivel ? 'disponivel' : 'restrito'}">
+                        ${isDisponivel ? '✅ Viabilidade Confirmada' : '❌ Restrito'}
+                    </div>
+                </div>`;
+        }
+
+        // ==========================================
+        // 6. DESTAQUE NO MAPA (PIN VERMELHO PULSANTE)
+        // ==========================================
+        function voarParaLocal(ponto) {
+            const lat = Number(ponto.latitude);
+            const lng = Number(ponto.longitude);
+
+            // Voar até o local
+            map.flyTo({ 
+                center: [lng, lat], 
+                zoom: 17, 
+                essential: true, 
+                duration: 1500 
+            });
+
+            // Cria o pino especial de busca
+            const el = document.createElement('div');
+            el.className = 'search-marker';
+            
+            // Cria o popup com os detalhes
+            const popup = new maplibregl.Popup({ offset: 20, maxWidth: '320px' })
+                .setHTML(criarPopupHTML(ponto));
+
+            // Adiciona o marcador
+            marcadorConsulta = new maplibregl.Marker(el)
+                .setLngLat([lng, lat])
+                .setPopup(popup)
+                .addTo(map);
+
+            // Abre o popup automaticamente após a animação do voo
+            setTimeout(() => {
+                marcadorConsulta.togglePopup();
+            }, 1600);
+        }
+
+        function handleKeyPress(e) { if (e.key === 'Enter') consultarViabilidade(); }
+    </script>
+</body>
+</html>
