@@ -3886,12 +3886,11 @@ function salvarDadosContatoUnificado(idLead) {
   // 🔥 Validação amigável
   if (!meioContato) {
     notificar("⚠️ Por favor, selecione o MEIO DE CONTATO antes de salvar.", "erro");
-    // Rola a tela para cima para o usuário ver o campo
     document.getElementById('contato_meio').focus();
     return;
   }
 
-  // 🔥 Pega o nome do usuário com segurança (sem quebrar)
+  // Pega o nome do usuário com segurança
   let usuarioNome = "Sistema";
   if (typeof _usuarioLogadoGlobal !== 'undefined' && _usuarioLogadoGlobal) {
     usuarioNome = _usuarioLogadoGlobal.nomeCompleto || _usuarioLogadoGlobal.username;
@@ -3904,7 +3903,7 @@ function salvarDadosContatoUnificado(idLead) {
     interesseDemonstrado: document.getElementById('contato_interesse').value || null,
     principalDor: document.getElementById('contato_dor').value || null,
     proximaAcao: document.getElementById('contato_proxima_acao').value || null,
-    dataProximaAcao: document.getElementById('contato_data_acao').value || null, // 🔥 NOVO CAMPO
+    dataProximaAcao: document.getElementById('contato_data_acao').value || null,
     usuario: usuarioNome
   };
 
@@ -3921,19 +3920,31 @@ function salvarDadosContatoUnificado(idLead) {
       if (res.success) {
         notificar('✅ Contato e Follow-up salvos com sucesso!', 'sucesso');
 
-        // Se o lead estava em OPORTUNIDADE, avança automaticamente para CONTATO
-        const etapaAtual = document.getElementById('modal-unificado-etapa-atual').innerText;
+        // Verifica a etapa atual com robustez (removendo espaços e ignorando maiúsculas/minúsculas)
+        const etapaAtual = String(document.getElementById('modal-unificado-etapa-atual').innerText || '').trim().toUpperCase();
+        
         if (etapaAtual === 'OPORTUNIDADE') {
+          // Atualiza o badge na tela
           document.getElementById('modal-unificado-etapa-atual').innerText = 'CONTATO';
-          moverCardNoKanban(idLead, 'CONTATO');
+          
+          // 🔥 MUDANÇA CRÍTICA: Força a atualização do status no banco de dados
+          google.script.run
+            .withSuccessHandler(() => {
+                moverCardNoKanban(idLead, 'CONTATO');
+                if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
+            })
+            .withFailureHandler(() => {
+                if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
+            })
+            .atualizarStatusLeadPlanilha(idLead, 'CONTATO');
+        } else {
+            // Se já não era OPORTUNIDADE, apenas recarrega
+            if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
         }
 
         // Recarrega o histórico e os dados na tela
         carregarHistoricoUnificado(idLead);
         carregarDadosContatoUnificado(idLead);
-        
-        // Atualiza o Kanban lá atrás para mostrar o alerta de "Tarefa Atrasada"
-        if (typeof carregarMeuFunil === 'function') carregarMeuFunil();
         
       } else {
         notificar("❌ Erro: " + (res.message || "Falha desconhecida"), "erro");
