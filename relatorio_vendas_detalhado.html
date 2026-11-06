@@ -80,14 +80,13 @@
 <div class="rvd-wrap">
 
   <!-- FILTROS -->
-  <div class="rvd-filters">
     <div class="rvd-field">
       <label>Início</label>
-      <input type="date" id="rvd-ini">
+      <input type="date" id="rvd-ini" onchange="RVD.filtrar()">
     </div>
     <div class="rvd-field">
       <label>Fim</label>
-      <input type="date" id="rvd-fim">
+      <input type="date" id="rvd-fim" onchange="RVD.filtrar()">
     </div>
     <div class="rvd-field">
       <label>Consultor</label>
@@ -291,24 +290,25 @@
     }).join('');
   }
 
-  // 🔒 Blindado: só mexe nos selects que existem
+  // 🔒 Dinâmico: Atualiza a lista sempre, mas mantém a seleção se ainda existir
   function popularFiltros(f) {
     const opts = (arr, valorVazio) => `<option value="">${valorVazio}</option>` +
       (arr||[]).filter(Boolean).sort().map(x => `<option value="${esc(x)}">${esc(x)}</option>`).join('');
 
+    // 🔥 CONSULTOR DINÂMICO
     const elConsultor = $('rvd-consultor');
-    if (elConsultor && elConsultor.children.length <= 1) {
-      elConsultor.innerHTML = opts(f.consultores, 'Todos');
+    if (elConsultor) {
+      const valorAtual = elConsultor.value; // Guarda quem estava selecionado
+      elConsultor.innerHTML = opts(f.consultores, 'Todos'); // Atualiza a lista do banco
+      elConsultor.value = valorAtual; // Tenta restaurar a seleção antiga
     }
 
+    // 🔥 MODALIDADE DINÂMICA
     const elMod = $('rvd-modalidade');
-    if (elMod && elMod.children.length <= 1) {
+    if (elMod) {
+      const valorAtual = elMod.value;
       elMod.innerHTML = opts(f.modalidades, 'Todas');
-    }
-
-    const elUf = $('rvd-uf');
-    if (elUf && elUf.children.length <= 1) {
-      elUf.innerHTML = opts(f.ufs, 'Todas');
+      elMod.value = valorAtual;
     }
   }
 
