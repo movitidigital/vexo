@@ -80,25 +80,30 @@
 <div class="rvd-wrap">
 
   <!-- FILTROS -->
-    <div class="rvd-field">
+  <div class="rvd-filters" style="display: flex; gap: 12px; flex-wrap: wrap; align-items: flex-end;">
+    <div class="rvd-field" style="flex: 1; min-width: 130px;">
       <label>Início</label>
-      <input type="date" id="rvd-ini" onchange="RVD.filtrar()">
+      <input type="date" id="rvd-ini" onchange="RVD.filtrar()" style="width: 100%; box-sizing: border-box;">
     </div>
-    <div class="rvd-field">
+    <div class="rvd-field" style="flex: 1; min-width: 130px;">
       <label>Fim</label>
-      <input type="date" id="rvd-fim" onchange="RVD.filtrar()">
+      <input type="date" id="rvd-fim" onchange="RVD.filtrar()" style="width: 100%; box-sizing: border-box;">
     </div>
-    <div class="rvd-field">
+    <div class="rvd-field" style="flex: 1.5; min-width: 180px;">
       <label>Consultor</label>
-      <select id="rvd-consultor"><option value="">Todos</option></select>
+      <select id="rvd-consultor" onchange="RVD.filtrar()" style="width: 100%; box-sizing: border-box;">
+        <option value="">Todos</option>
+      </select>
     </div>
-    <div class="rvd-field">
+    <div class="rvd-field" style="flex: 1; min-width: 130px;">
       <label>Modalidade</label>
-      <select id="rvd-modalidade"><option value="">Todas</option></select>
+      <select id="rvd-modalidade" onchange="RVD.filtrar()" style="width: 100%; box-sizing: border-box;">
+        <option value="">Todas</option>
+      </select>
     </div>
-    <div class="rvd-field">
+    <div class="rvd-field" style="flex: 1.2; min-width: 140px;">
       <label>Status</label>
-      <select id="rvd-status">
+      <select id="rvd-status" onchange="RVD.filtrar()" style="width: 100%; box-sizing: border-box;">
         <option value="">Todos</option>
         <option value="PENDENTE DE INPUT">Pendente</option>
         <option value="1. INPUT REALIZADO">Input Realizado</option>
@@ -109,10 +114,13 @@
         <option value="6. ATIVADO">Ativado</option>
       </select>
     </div>
-    <button class="rvd-btn rvd-btn-primary" id="rvd-btn-filtrar" onclick="RVD.filtrar()">🔍 Filtrar</button>
-    <button class="rvd-btn rvd-btn-soft" onclick="RVD.limpar()">Limpar</button>
-    <button class="rvd-btn rvd-btn-pdf" id="rvd-btn-pdf" onclick="RVD.exportarPDF()" disabled>📄 PDF</button>
-    <button class="rvd-btn rvd-btn-xls" id="rvd-btn-xls" onclick="RVD.exportarExcel()" disabled>📊 Excel</button>
+    
+    <div style="display: flex; gap: 8px; flex-wrap: wrap; margin-left: auto;">
+      <button class="rvd-btn rvd-btn-primary" id="rvd-btn-filtrar" onclick="RVD.filtrar()" style="height: 39px;">🔍 Filtrar</button>
+      <button class="rvd-btn rvd-btn-soft" onclick="RVD.limpar()" style="height: 39px;">Limpar</button>
+      <button class="rvd-btn rvd-btn-pdf" id="rvd-btn-pdf" onclick="RVD.exportarPDF()" disabled style="height: 39px;">📄 PDF</button>
+      <button class="rvd-btn rvd-btn-xls" id="rvd-btn-xls" onclick="RVD.exportarExcel()" disabled style="height: 39px;">📊 Excel</button>
+    </div>
   </div>
 
   <!-- KPIs -->
