@@ -1606,11 +1606,15 @@ async function inicializarDados() {
       let ativouHoje = false;
 
       if (estaAtivado) {
-        if (dataAtivacao && (dataAtivacao.getMonth() + 1) === mesNumericoSelecionado && dataAtivacao.getFullYear() === anoSelecionado) {
+        // 🔥 FALLBACK: Se ativou mas não tem data de ativação, usa a data da venda
+        const dataRefAtivacao = dataAtivacao || dataVenda;
+        
+        if (dataRefAtivacao && (dataRefAtivacao.getMonth() + 1) === mesNumericoSelecionado && dataRefAtivacao.getFullYear() === anoSelecionado) {
           incluir = true;
           statusFinalPainel = 'ATIVADO';
-          dataParaDashboard = dataAtivacao;
-          if (dataAtivacao.getDate() === hoje.getDate() && dataAtivacao.getMonth() === hoje.getMonth() && dataAtivacao.getFullYear() === hoje.getFullYear()) {
+          dataParaDashboard = dataRefAtivacao;
+          
+          if (dataRefAtivacao.getDate() === hoje.getDate() && dataRefAtivacao.getMonth() === hoje.getMonth() && dataRefAtivacao.getFullYear() === hoje.getFullYear()) {
             ativouHoje = true;
           }
         }
@@ -1621,7 +1625,6 @@ async function inicializarDados() {
           dataParaDashboard = dataVenda;
         }
       }
-
       if (incluir) {
         ranking[nomeParaExibir] = (ranking[nomeParaExibir] || 0) + valor;
         listaVendasDashboard.push({
@@ -3083,19 +3086,25 @@ async function carregarMetasIndividuaisTime() {
     const parseDataBR = (str) => {
       if (!str) return null;
       str = String(str).trim();
-      if (str === '' || str === '-') return null;
-      if (str.includes('T') || /^\d{4}-\d{2}-\d{2}/.test(str)) {
+      
+      // Se vier com hora (Timestamp), converte direto
+      if (str.includes('T')) {
         const d = new Date(str);
         return isNaN(d.getTime()) ? null : d;
       }
-      const apenasData = str.split(' ')[0];
-      const p = apenasData.split(/[\/\-]/);
+      
+      // Se for formato YYYY-MM-DD, força o meio-dia para evitar fuso horário
+      if (/^\d{4}-\d{2}-\d{2}/.test(str)) {
+        const d = new Date(str.substring(0, 10) + 'T12:00:00');
+        return isNaN(d.getTime()) ? null : d;
+      }
+      
+      // Formato DD/MM/YYYY
+      const p = str.split(' ')[0].split(/[\/\-]/);
       if (p.length === 3) {
         let ano = parseInt(p[2]);
         if (ano < 100) ano += 2000;
-        const mes = parseInt(p[1]) - 1;
-        const dia = parseInt(p[0]);
-        const d = new Date(ano, mes, dia);
+        const d = new Date(ano, parseInt(p[1]) - 1, parseInt(p[0]), 12, 0, 0); // Força meio-dia
         return isNaN(d.getTime()) ? null : d;
       }
       return null;
