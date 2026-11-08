@@ -960,7 +960,7 @@
           </div>
         </div>
         <!-- NOVO BLOCO: Endereço do Cliente (Oculto por padrão) -->
-        <div id="fibra-endereco-cliente-fields" style="display: none; width: 100%; margin-top: 20px;">
+<div id="fibra-endereco-cliente-fields" style="display: block; width: 100%; margin-top: 20px;">
           <div class="section-header"><i class="fa-solid fa-map-marker-alt"></i> Endereço do Cliente</div>
           <div class="form-grid">
             <div class="field col-4">
@@ -2769,6 +2769,13 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         const enderecoFields = document.getElementById('fibra-endereco-fields');
         const billingFields = document.getElementById('fibra-billing-fields');
         const btnSalvar = document.getElementById('btnSalvarFibra');
+
+        // Verifica se o bloco de endereço do cliente deve aparecer logo ao digitar o documento
+        const checkEnderecoIgual = document.getElementById('fibraEnderecoIgualCliente');
+        const clientAddressBlock = document.getElementById('fibra-endereco-cliente-fields');
+        if (clientAddressBlock && checkEnderecoIgual) {
+            clientAddressBlock.style.display = checkEnderecoIgual.checked ? 'none' : 'block';
+        }
 
         if (cleanValue.length === 11) {
           pjFields.style.display = 'none';
