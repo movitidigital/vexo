@@ -724,15 +724,57 @@
           <div class="field col-4">
             <label>Tipo de Documento *</label>
             <select id="fibraTipoDoc">
-              <option value="CARTEIRA_DE_IDENTIDADE">Carteira de Identidade</option>
+              <option value="CARTEIRA_DE_ESTRANGEIRO">Carteira de Estrangeiro</option>
+              <option value="CARTEIRA_DE_IDENTIDADE" selected>Carteira de Identidade</option>
               <option value="CARTEIRA_DE_TRABALHO">Carteira de Trabalho</option>
+              <option value="CERTIDAO_DE_NASCIMENTO">Certidão de Nasc.</option>
+              <option value="CNH">CNH</option>
+              <option value="IDENTIDADE_FUNCIONAL">Ident. Funcional</option>
+              <option value="IDENTIDADE_INDIGENA">Ident. Indígena</option>
+              <option value="IDENTIDADE_PROFISSIONAL">Ident. Profissional</option>
+              <option value="IDENTIDADE_ESTRANGEIRA">Identidade Estrang.</option>
+              <option value="IDENTIDADE_MILITAR">Identidade Militar</option>
+              <option value="OUTROS">Outros</option>
               <option value="PASSAPORTE">Passaporte</option>
+              <option value="PASSAPORTE_ESTRANGEIRO">Passaporte Estrang.</option>
             </select>
           </div>
           <div class="field col-4"><label>Número do Documento *</label><input type="text" id="fibraNumeroDoc"></div>
           <div class="field col-4"><label>Data de Emissão *</label><input type="date" id="fibraDataEmissaoDoc"></div>
           <div class="field col-6"><label>Órgão Emissor *</label><input type="text" id="fibraOrgaoEmissor" placeholder="Ex: SSP"></div>
-          <div class="field col-6"><label>UF do Documento *</label><input type="text" id="fibraUfDoc" maxlength="2" placeholder="PE"></div>
+          <div class="field col-6">
+            <label>UF do Documento *</label>
+            <select id="fibraUfDoc">
+              <option value="">Selecione...</option>
+              <option value="AC">AC</option>
+              <option value="AL">AL</option>
+              <option value="AP">AP</option>
+              <option value="AM">AM</option>
+              <option value="BA">BA</option>
+              <option value="CE">CE</option>
+              <option value="DF">DF</option>
+              <option value="ES">ES</option>
+              <option value="GO">GO</option>
+              <option value="MA">MA</option>
+              <option value="MT">MT</option>
+              <option value="MS">MS</option>
+              <option value="MG">MG</option>
+              <option value="PA">PA</option>
+              <option value="PB">PB</option>
+              <option value="PR">PR</option>
+              <option value="PE" selected>PE</option>
+              <option value="PI">PI</option>
+              <option value="RJ">RJ</option>
+              <option value="RN">RN</option>
+              <option value="RS">RS</option>
+              <option value="RO">RO</option>
+              <option value="RR">RR</option>
+              <option value="SC">SC</option>
+              <option value="SP">SP</option>
+              <option value="SE">SE</option>
+              <option value="TO">TO</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -772,7 +814,7 @@
           <div class="field col-4">
             <label>CEP *</label>
             <input type="text" id="fibraCep" placeholder="00000-000" maxlength="9" required>
-            <button type="button" onclick="window.buscarCepFibra(this)" style="margin-top: 4px; font-size: 11px; background: none; border: none; color: #3b82f6; cursor: pointer; text-align: left;">Buscar CEP</button>
+            <button type="button" onclick="window.buscarCepGenerico('fibraCep', 'fibraUf', 'fibraMunicipio', 'fibraBairro', 'fibraLogradouro', this)" style="margin-top: 4px; font-size: 11px; background: none; border: none; color: #3b82f6; cursor: pointer; text-align: left;">Buscar CEP</button>
           </div>
           <div class="field col-4"><label>Número *</label><input type="text" id="fibraNumero" placeholder="Nº" required></div>
           <div class="field col-4"><label>UF *</label><input type="text" id="fibraUf" maxlength="2" placeholder="UF" required></div>
@@ -792,24 +834,31 @@
           <div class="field col-6"><label>Logradouro *</label><input type="text" id="fibraLogradouro" placeholder="Nome da rua/avenida" required></div>
           <div class="field col-12"><label>Ponto de Referência</label><input type="text" id="fibraPontoReferencia" placeholder="Ponto de referência do cliente"></div>
           
-          <!-- Complemento movido para cá para ficar junto do endereço -->
           <div class="field col-6">
             <label>Tipo de Complemento *</label>
             <select id="fibraTipoComplemento" required>
-              <option value="">Selecione</option>
-              <option value="Ala">Ala</option>
+              <option value="">Selecione...</option>
+              <option value="Andar">Andar</option>
               <option value="Apartamento">Apartamento</option>
               <option value="Bloco">Bloco</option>
               <option value="Casa">Casa</option>
+              <option value="Condomínio">Condomínio</option>
               <option value="Conjunto">Conjunto</option>
+              <option value="Departamento">Departamento</option>
               <option value="Edifício">Edifício</option>
-              <option value="Entrada">Entrada</option>
-              <option value="Frente">Frente</option>
-              <option value="Fundos">Fundos</option>
-              <option value="Garagem">Garagem</option>
               <option value="Loja">Loja</option>
               <option value="Lote">Lote</option>
-              <option value="Módulo">Módulo</option>
+              <option value="Outros">Outros</option>
+              <option value="Pavimentos">Pavimentos</option>
+              <option value="Prédio">Prédio</option>
+              <option value="Quadra">Quadra</option>
+              <option value="Sala">Sala</option>
+              <option value="Setor">Setor</option>
+              <option value="Sobrado">Sobrado</option>
+              <option value="Sobreloja">Sobreloja</option>
+              <option value="Subsolo">Subsolo</option>
+              <option value="Torre">Torre</option>
+              <option value="Área Comum">Área Comum</option>
             </select>
           </div>
           <div class="field col-6">
@@ -821,6 +870,73 @@
               <input type="checkbox" id="fibraMesmoEndereco" style="width: 18px; height: 18px;">
               Endereço do cliente é o mesmo da instalação
             </label>
+          </div>
+        </div>
+
+        <!-- ENDEREÇO DE COBRANÇA (Oculto por padrão) -->
+        <div id="fibra-bloco-cobranca" style="display: none; margin-top: 20px; padding: 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px;">
+          <div class="field col-12" style="margin-bottom: 15px;">
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; color: #0f172a; font-weight: 700;">
+              <input type="checkbox" id="fibraCobrancaDiferente" style="width: 18px; height: 18px;">
+              Utilizar o endereço de cobrança diferente do endereço do cliente
+            </label>
+          </div>
+
+          <div id="fibra-cobranca-campos" style="display: none;">
+            <div class="section-header" style="margin-top: 0;"><i class="fa-solid fa-file-invoice"></i> Endereço de Cobrança</div>
+            <div class="form-grid">
+              <div class="field col-4">
+                <label>CEP *</label>
+                <input type="text" id="cobrancaCep" placeholder="00000-000" maxlength="9">
+                <button type="button" onclick="window.buscarCepGenerico('cobrancaCep', 'cobrancaUf', 'cobrancaMunicipio', 'cobrancaBairro', 'cobrancaLogradouro', this)" style="margin-top: 4px; font-size: 11px; background: none; border: none; color: #3b82f6; cursor: pointer; text-align: left;">Buscar CEP</button>
+              </div>
+              <div class="field col-4"><label>Número *</label><input type="text" id="cobrancaNumero" placeholder="Nº"></div>
+              <div class="field col-4"><label>UF *</label><input type="text" id="cobrancaUf" maxlength="2" placeholder="UF"></div>
+              <div class="field col-6"><label>Município *</label><input type="text" id="cobrancaMunicipio" placeholder="Cidade"></div>
+              <div class="field col-6"><label>Bairro *</label><input type="text" id="cobrancaBairro" placeholder="Bairro"></div>
+              <div class="field col-6">
+                <label>Tipo de Logradouro *</label>
+                <select id="cobrancaTipoLogradouro">
+                  <option value="">Selecione</option>
+                  <option value="RUA">Rua</option>
+                  <option value="AVENIDA">Avenida</option>
+                  <option value="TRAVESSA">Travessa</option>
+                  <option value="ALAMEDA">Alameda</option>
+                  <option value="RODOVIA">Rodovia</option>
+                </select>
+              </div>
+              <div class="field col-6"><label>Logradouro *</label><input type="text" id="cobrancaLogradouro" placeholder="Nome da rua/avenida"></div>
+              
+              <div class="field col-4"><label>Caixa Postal</label><input type="text" id="cobrancaCaixaPostal" placeholder="Caixa Postal"></div>
+              <div class="field col-4">
+                <label>Tipo de Complemento</label>
+                <select id="cobrancaTipoComplemento">
+                  <option value="">Selecione...</option>
+                  <option value="Andar">Andar</option>
+                  <option value="Apartamento">Apartamento</option>
+                  <option value="Bloco">Bloco</option>
+                  <option value="Casa">Casa</option>
+                  <option value="Condomínio">Condomínio</option>
+                  <option value="Conjunto">Conjunto</option>
+                  <option value="Departamento">Departamento</option>
+                  <option value="Edifício">Edifício</option>
+                  <option value="Loja">Loja</option>
+                  <option value="Lote">Lote</option>
+                  <option value="Outros">Outros</option>
+                  <option value="Pavimentos">Pavimentos</option>
+                  <option value="Prédio">Prédio</option>
+                  <option value="Quadra">Quadra</option>
+                  <option value="Sala">Sala</option>
+                  <option value="Setor">Setor</option>
+                  <option value="Sobrado">Sobrado</option>
+                  <option value="Sobreloja">Sobreloja</option>
+                  <option value="Subsolo">Subsolo</option>
+                  <option value="Torre">Torre</option>
+                  <option value="Área Comum">Área Comum</option>
+                </select>
+              </div>
+              <div class="field col-4"><label>Complemento (Descrição)</label><input type="text" id="cobrancaComplementoDescricao" placeholder="Informe o complemento"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -2501,20 +2617,13 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         let v = e.target.value.replace(/\D/g, '');
         
         if (v.length <= 11) {
-          v = v.replace(/(\d{3})(\d)/, '$1.$2')
-               .replace(/(\d{3})(\d)/, '$1.$2')
-               .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+          v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
         } else {
-          v = v.replace(/^(\d{2})(\d)/, '$1.$2')
-               .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-               .replace(/\.(\d{3})(\d)/, '.$1/$2')
-               .replace(/(\d{4})(\d)/, '$1-$2');
+          v = v.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3').replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2');
         }
         e.target.value = v.slice(0, 18);
 
         const cleanValue = e.target.value.replace(/\D/g, '');
-        
-        // Lógica de alternância PF / PJ
         const pjFields = document.getElementById('fibra-pj-fields');
         const pfFields = document.getElementById('fibra-pf-fields');
         const contatoFields = document.getElementById('fibra-contato-fields');
@@ -2523,7 +2632,6 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         const btnSalvar = document.getElementById('btnSalvarFibra');
 
         if (cleanValue.length === 11) {
-          // É CPF
           pjFields.style.display = 'none';
           pfFields.style.display = 'block';
           contatoFields.style.display = 'block';
@@ -2531,17 +2639,14 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
           billingFields.style.display = 'block';
           btnSalvar.style.display = 'block';
         } else if (cleanValue.length === 14) {
-          // É CNPJ
           pjFields.style.display = 'block';
           pfFields.style.display = 'none';
           contatoFields.style.display = 'block';
           enderecoFields.style.display = 'block';
           billingFields.style.display = 'block';
           btnSalvar.style.display = 'block';
-          
           window.buscarEmpresaFibra(cleanValue);
         } else {
-          // Incompleto
           pjFields.style.display = 'none';
           pfFields.style.display = 'none';
           contatoFields.style.display = 'none';
@@ -2552,15 +2657,30 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       });
     }
 
+    // Toggle Endereço de Cobrança
+    const checkCobrancaDiferente = document.getElementById('fibraCobrancaDiferente');
+    if (checkCobrancaDiferente) {
+      checkCobrancaDiferente.addEventListener('change', function() {
+        const camposCobranca = document.getElementById('fibra-cobranca-campos');
+        camposCobranca.style.display = this.checked ? 'block' : 'none';
+      });
+    }
+
+    // Máscaras para o Endereço de Cobrança
+    const cobrancaCepInput = document.getElementById('cobrancaCep');
+    if (cobrancaCepInput) {
+      cobrancaCepInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        v = v.replace(/(\d{5})(\d)/, '$1-$2');
+        e.target.value = v.slice(0, 9);
+      });
+    }
+
     // Lógica do Débito Automático
     document.querySelectorAll('input[name="fibraFormaPagamento"]').forEach(radio => {
       radio.addEventListener('change', function() {
         const divBancos = document.getElementById('fibra-dados-bancarios');
-        if (this.value === 'DEBITO_AUTOMATICO') {
-          divBancos.style.display = 'grid';
-        } else {
-          divBancos.style.display = 'none';
-        }
+        divBancos.style.display = this.value === 'DEBITO_AUTOMATICO' ? 'grid' : 'none';
       });
     });
 
@@ -2569,20 +2689,14 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     const ieInput = document.getElementById('fibraInscricaoEstadual');
     if (isentoIE && ieInput) {
       isentoIE.addEventListener('change', function() {
-        if (this.checked) {
-          ieInput.value = '';
-          ieInput.disabled = true;
-          ieInput.placeholder = 'Isento';
-          ieInput.style.background = '#f1f5f9';
-        } else {
-          ieInput.disabled = false;
-          ieInput.placeholder = 'Número da IE';
-          ieInput.style.background = '';
-        }
+        ieInput.value = this.checked ? '' : ieInput.value;
+        ieInput.disabled = this.checked;
+        ieInput.placeholder = this.checked ? 'Isento' : 'Número da IE';
+        ieInput.style.background = this.checked ? '#f1f5f9' : '';
       });
     }
 
-    // Outras máscaras
+    // Máscaras Comuns (CPF Sócio, Telefone, CEP principal)
     const cpfSocioInput = document.getElementById('fibraCpfSocio');
     if (cpfSocioInput) {
       cpfSocioInput.addEventListener('input', function(e) {
@@ -2669,6 +2783,41 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     }
   };
 
+  // 3.1. Função Genérica para Buscar CEP (Evita duplicar código)
+  window.buscarCepGenerico = function(cepId, ufId, cidadeId, bairroId, ruaId, btn) {
+    const cep = document.getElementById(cepId).value.replace(/\D/g, '');
+    if (cep.length !== 8) {
+      alert('CEP inválido. Digite 8 dígitos.');
+      return;
+    }
+    
+    const originalText = btn.innerText;
+    btn.innerText = "Buscando...";
+    btn.disabled = true;
+
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(response => response.json())
+      .then(data => {
+        btn.innerText = originalText;
+        btn.disabled = false;
+        
+        if (data.erro) {
+          alert('CEP não encontrado.');
+          return;
+        }
+        document.getElementById(ufId).value = data.uf || '';
+        document.getElementById(cidadeId).value = data.localidade || '';
+        document.getElementById(bairroId).value = data.bairro || '';
+        document.getElementById(ruaId).value = data.logradouro || '';
+      })
+      .catch(error => {
+        btn.innerText = originalText;
+        btn.disabled = false;
+        console.error('Erro ao buscar CEP:', error);
+        alert('Erro ao buscar CEP. Tente novamente.');
+      });
+  };
+  
   // 4. Buscar CEP via ViaCEP
   window.buscarCepFibra = function() {
     const cep = document.getElementById('fibraCep').value.replace(/\D/g, '');
@@ -2731,6 +2880,8 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       telefone3: document.getElementById('fibraTelefone3').value,
       email: document.getElementById('fibraEmail').value,
       emailConfirmacao: document.getElementById('fibraEmailConfirmacao').value,
+      
+      // Endereço de Instalação
       cep: document.getElementById('fibraCep').value,
       numero: document.getElementById('fibraNumero').value,
       uf: document.getElementById('fibraUf').value,
@@ -2747,9 +2898,30 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       diaVencimento: document.getElementById('fibraDiaVencimento').value,
       tipoFatura: document.getElementById('fibraTipoFatura').value,
       formaPagamento: document.querySelector('input[name="fibraFormaPagamento"]:checked').value,
-      enderecoCobrancaDiferente: document.getElementById('fibraEnderecoCobrancaDiferente').checked,
       statusPedido: 'PENDENTE DE INPUT'
     };
+
+    // Coleta Endereço de Cobrança (se aplicável)
+    const usaCobrancaDiferente = document.getElementById('fibraCobrancaDiferente').checked;
+    dados.usarEnderecoCobrancaDiferente = usaCobrancaDiferente;
+    
+    if (usaCobrancaDiferente) {
+      dados.cobrancaCep = document.getElementById('cobrancaCep').value;
+      dados.cobrancaNumero = document.getElementById('cobrancaNumero').value;
+      dados.cobrancaUf = document.getElementById('cobrancaUf').value;
+      dados.cobrancaMunicipio = document.getElementById('cobrancaMunicipio').value;
+      dados.cobrancaBairro = document.getElementById('cobrancaBairro').value;
+      dados.cobrancaTipoLogradouro = document.getElementById('cobrancaTipoLogradouro').value;
+      dados.cobrancaLogradouro = document.getElementById('cobrancaLogradouro').value;
+      dados.cobrancaCaixaPostal = document.getElementById('cobrancaCaixaPostal').value;
+      dados.cobrancaTipoComplemento = document.getElementById('cobrancaTipoComplemento').value;
+      dados.cobrancaComplementoDescricao = document.getElementById('cobrancaComplementoDescricao').value;
+
+      if (!dados.cobrancaCep || !dados.cobrancaNumero || !dados.cobrancaUf) {
+        alert('Preencha os campos obrigatórios do Endereço de Cobrança.');
+        return;
+      }
+    }
 
     // Adiciona dados bancários se for débito automático
     if (dados.formaPagamento === 'DEBITO_AUTOMATICO') {
@@ -2777,8 +2949,8 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       dados.orgaoEmissor = document.getElementById('fibraOrgaoEmissor').value;
       dados.ufDocumento = document.getElementById('fibraUfDoc').value;
 
-      if (!dados.nomeCompleto || !dados.dataNascimento || !dados.nomeMae) {
-        alert('Preencha os dados obrigatórios do cliente (Nome, Nascimento, Mãe).');
+      if (!dados.nomeCompleto || !dados.dataNascimento || !dados.nomeMae || !dados.numeroDocumento) {
+        alert('Preencha todos os dados obrigatórios do cliente (Nome, Nascimento, Mãe, Documento).');
         return;
       }
     } else {
