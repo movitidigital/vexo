@@ -675,10 +675,8 @@
   </div>
 </div>
 
-<!-- ÁREA DO FORMULÁRIO DE FIBRA (Oculto por padrão) -->
+<!-- ÁREA DO FORMULÁRIO DE FIBRA -->
 <div id="areaFormularioFibra" style="display: none;">
-  
-  <!-- O formulário agora fica DENTRO da div oculta -->
   <div class="form-card" id="formFibra">
     <h2 style="text-align: center; color: #0f172a; font-weight: 800; margin-bottom: 30px;">
       Venda TIM ULTRAFIBRA
@@ -688,157 +686,223 @@
       <!-- SEÇÃO 1: IDENTIFICAÇÃO -->
       <div class="section-header"><i class="fa-solid fa-id-card"></i> Identificação do Cliente</div>
       <div class="form-grid">
-        <div class="field col-6">
+        <div class="field col-12">
           <label>CPF/CNPJ *</label>
-          <input type="text" id="fibraCpfCnpj" placeholder="000.000.000-00 ou 00.000.000/0000-00" maxlength="18" required>
-        </div>
-        <div class="field col-6">
-          <label>Razão Social *</label>
-          <input type="text" id="fibraRazaoSocial" placeholder="Nome completo ou Razão Social" required>
-        </div>
-        <div class="field col-6">
-          <label>CPF do Sócio *</label>
-          <input type="text" id="fibraCpfSocio" placeholder="000.000.000-00" maxlength="14" required>
-        </div>
-        <div class="field col-6">
-          <label>Data de Fundação *</label>
-          <input type="date" id="fibraDataFundacao" required>
+          <input type="text" id="fibraCpfCnpj" placeholder="Digite o CPF ou CNPJ" maxlength="18" required>
         </div>
       </div>
 
-      <!-- SEÇÃO 2: DADOS COMPLEMENTARES -->
-      <div class="section-header"><i class="fa-solid fa-address-book"></i> Dados Complementares</div>
-      <div class="form-grid">
-        <div class="field col-4">
-          <label>Telefone de Contato 1 *</label>
-          <input type="text" id="fibraTelefone1" placeholder="(00) 00000-0000" maxlength="15" required>
-        </div>
-        <div class="field col-4">
-          <label>Telefone de Contato 2</label>
-          <input type="text" id="fibraTelefone2" placeholder="(00) 00000-0000" maxlength="15">
-        </div>
-        <div class="field col-4">
-          <label>Telefone de Contato 3</label>
-          <input type="text" id="fibraTelefone3" placeholder="(00) 00000-0000" maxlength="15">
-        </div>
-        <div class="field col-6">
-          <label>E-mail *</label>
-          <input type="email" id="fibraEmail" placeholder="email@exemplo.com" required>
-        </div>
-        <div class="field col-6">
-          <label>Confirmação de E-mail *</label>
-          <input type="email" id="fibraEmailConfirmacao" placeholder="Repita o e-mail" required>
-        </div>
-      </div>
-
-      <!-- INSCRIÇÃO ESTADUAL -->
-      <div class="section-header"><i class="fa-solid fa-file-invoice"></i> Inscrição Estadual</div>
-      <div class="form-grid">
-        <div class="field col-6">
-          <label style="display: flex; align-items: center; gap: 8px;">
-            Inscrição Estadual
-            <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
-              <input type="checkbox" id="fibraIsentoIE" style="opacity: 0; width: 0; height: 0;">
-              <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; border-radius: 22px; transition: .4s;"></span>
+      <!-- CONTAINER PF (Oculto por padrão) -->
+      <div id="fibra-pf-fields" style="display: none; width: 100%;">
+        <div class="section-header"><i class="fa-solid fa-user"></i> Dados do Cliente (CPF)</div>
+        <div class="form-grid">
+          <div class="field col-6"><label>Nome Completo *</label><input type="text" id="fibraNomeCompleto" placeholder="Nome completo do cliente"></div>
+          <div class="field col-6"><label>Data de Nascimento *</label><input type="date" id="fibraDataNascimento"></div>
+          <div class="field col-6"><label>Nome da Mãe *</label><input type="text" id="fibraNomeMae" placeholder="Nome da mãe do cliente"></div>
+          
+          <div class="field col-12" style="flex-direction: row; gap: 20px; margin-top: 10px;">
+            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600;">
+              <input type="checkbox" id="fibraNaoAlfabetizado" style="width:18px;height:18px;"> Cliente não Alfabetizado
             </label>
-            <span style="font-size: 12px; color: #64748b;">Isento</span>
-          </label>
-          <input type="text" id="fibraInscricaoEstadual" placeholder="Número da IE" style="margin-top: 8px;">
+            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600;">
+              <input type="checkbox" id="fibraNecessidadesEspeciais" style="width:18px;height:18px;"> Cliente com Necessidades Especiais
+            </label>
+          </div>
         </div>
-        <div class="field col-6">
-          <label>UF de Emissão *</label>
-          <select id="fibraUfEmissao" required>
-            <option value="">Selecione</option>
-            <option value="AC">AC</option>
-            <option value="AL">AL</option>
-            <option value="PE">PE</option>
-            <option value="SP">SP</option>
-            <!-- Adicione as demais UFs -->
-          </select>
+
+        <div class="section-header"><i class="fa-solid fa-address-card"></i> Documento e Gênero</div>
+        <div class="form-grid">
+          <div class="field col-12" style="flex-direction: row; gap: 20px; align-items: center;">
+            <label style="font-weight:700; font-size: 12px; color: #475569;">Sexo *</label>
+            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px;">
+              <input type="radio" name="fibraSexo" value="MASCULINO" checked> Masculino
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px;">
+              <input type="radio" name="fibraSexo" value="FEMININO"> Feminino
+            </label>
+          </div>
+          <div class="field col-4">
+            <label>Tipo de Documento *</label>
+            <select id="fibraTipoDoc">
+              <option value="CARTEIRA_DE_IDENTIDADE">Carteira de Identidade</option>
+              <option value="CARTEIRA_DE_TRABALHO">Carteira de Trabalho</option>
+              <option value="PASSAPORTE">Passaporte</option>
+            </select>
+          </div>
+          <div class="field col-4"><label>Número do Documento *</label><input type="text" id="fibraNumeroDoc"></div>
+          <div class="field col-4"><label>Data de Emissão *</label><input type="date" id="fibraDataEmissaoDoc"></div>
+          <div class="field col-6"><label>Órgão Emissor *</label><input type="text" id="fibraOrgaoEmissor" placeholder="Ex: SSP"></div>
+          <div class="field col-6"><label>UF do Documento *</label><input type="text" id="fibraUfDoc" maxlength="2" placeholder="PE"></div>
         </div>
       </div>
 
-      <!-- SEÇÃO 3: ENDEREÇO DO CLIENTE -->
-      <div class="section-header"><i class="fa-solid fa-map-marked-alt"></i> Endereço do Cliente</div>
-      <div class="form-grid">
-        <div class="field col-4">
-          <label>CEP *</label>
-          <input type="text" id="fibraCep" placeholder="00000-000" maxlength="9" required>
-          <button type="button" onclick="window.buscarCepFibra()" style="margin-top: 4px; font-size: 11px; background: none; border: none; color: #3b82f6; cursor: pointer; text-align: left;">Buscar CEP</button>
-        </div>
-        <div class="field col-4">
-          <label>Número *</label>
-          <input type="text" id="fibraNumero" placeholder="Nº" required>
-        </div>
-        <div class="field col-4">
-          <label>UF *</label>
-          <input type="text" id="fibraUf" maxlength="2" placeholder="UF" required>
-        </div>
-        <div class="field col-6">
-          <label>Município *</label>
-          <input type="text" id="fibraMunicipio" placeholder="Cidade" required>
-        </div>
-        <div class="field col-6">
-          <label>Bairro *</label>
-          <input type="text" id="fibraBairro" placeholder="Bairro" required>
-        </div>
-        <div class="field col-6">
-          <label>Tipo de Logradouro *</label>
-          <select id="fibraTipoLogradouro" required>
-            <option value="">Selecione</option>
-            <option value="RUA">Rua</option>
-            <option value="AVENIDA">Avenida</option>
-            <option value="TRAVESSA">Travessa</option>
-            <option value="ALAMEDA">Alameda</option>
-            <option value="RODOVIA">Rodovia</option>
-          </select>
-        </div>
-        <div class="field col-6">
-          <label>Logradouro *</label>
-          <input type="text" id="fibraLogradouro" placeholder="Nome da rua/avenida" required>
-        </div>
-        <div class="field col-12">
-          <label>Ponto de Referência</label>
-          <input type="text" id="fibraPontoReferencia" placeholder="Ponto de referência do cliente">
-        </div>
-        <div class="field col-12">
-          <label style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
-            <input type="checkbox" id="fibraMesmoEndereco" style="width: 18px; height: 18px;">
-            Endereço do cliente é o mesmo da instalação
-          </label>
+      <!-- CONTAINER PJ (Oculto por padrão) -->
+      <div id="fibra-pj-fields" style="display: none; width: 100%;">
+        <div class="section-header"><i class="fa-solid fa-building"></i> Dados da Empresa (CNPJ)</div>
+        <div class="form-grid">
+          <div class="field col-6"><label>Razão Social *</label><input type="text" id="fibraRazaoSocial" placeholder="Razão Social"></div>
+          <div class="field col-6"><label>CPF do Sócio *</label><input type="text" id="fibraCpfSocio" placeholder="000.000.000-00" maxlength="14"></div>
+          <div class="field col-6"><label>Data de Fundação *</label><input type="date" id="fibraDataFundacao"></div>
+          <div class="field col-6">
+            <label style="display:flex; align-items:center; gap:8px;">Inscrição Estadual
+              <input type="checkbox" id="fibraIsentoIE" style="width:auto; height:auto; margin-left: 10px;"> <span style="text-transform:none; font-weight:normal; font-size:12px;">Isento</span>
+            </label>
+            <input type="text" id="fibraInscricaoEstadual" placeholder="Número da IE" style="margin-top:8px;">
+          </div>
+          <div class="field col-6"><label>UF de Emissão *</label><input type="text" id="fibraUfEmissao" maxlength="2" placeholder="UF"></div>
         </div>
       </div>
 
-      <!-- SEÇÃO 4: COMPLEMENTO -->
-      <div class="section-header"><i class="fa-solid fa-building"></i> Complemento</div>
-      <div class="form-grid">
-        <div class="field col-6">
-          <label>Tipo de Complemento *</label>
-          <select id="fibraTipoComplemento" required>
-            <option value="">Selecione</option>
-            <option value="Ala">Ala</option>
-            <option value="Apartamento">Apartamento</option>
-            <option value="Bloco">Bloco</option>
-            <option value="Casa">Casa</option>
-            <option value="Conjunto">Conjunto</option>
-            <option value="Edifício">Edifício</option>
-            <option value="Entrada">Entrada</option>
-            <option value="Frente">Frente</option>
-            <option value="Fundos">Fundos</option>
-            <option value="Garagem">Garagem</option>
-            <option value="Loja">Loja</option>
-            <option value="Lote">Lote</option>
-            <option value="Módulo">Módulo</option>
-          </select>
+      <!-- SEÇÃO 3: CONTATO (Comum a PF e PJ) -->
+      <div id="fibra-contato-fields" style="display: none; width: 100%;">
+        <div class="section-header"><i class="fa-solid fa-address-book"></i> Contato</div>
+        <div class="form-grid">
+          <div class="field col-4"><label>Telefone 1 *</label><input type="text" id="fibraTelefone1" placeholder="(00) 00000-0000" maxlength="15" required></div>
+          <div class="field col-4"><label>Telefone 2</label><input type="text" id="fibraTelefone2" placeholder="(00) 00000-0000" maxlength="15"></div>
+          <div class="field col-4"><label>Telefone 3</label><input type="text" id="fibraTelefone3" placeholder="(00) 00000-0000" maxlength="15"></div>
+          <div class="field col-6"><label>E-mail *</label><input type="email" id="fibraEmail" placeholder="email@exemplo.com" required></div>
+          <div class="field col-6"><label>Confirmação de E-mail *</label><input type="email" id="fibraEmailConfirmacao" placeholder="Repita o e-mail" required></div>
         </div>
-        <div class="field col-6">
-          <label>Complemento (Descrição)</label>
-          <input type="text" id="fibraComplementoDescricao" placeholder="Ex: Apto 101, Bloco B">
+      </div>
+
+      <!-- SEÇÃO 4: ENDEREÇO (Comum a PF e PJ) -->
+      <div id="fibra-endereco-fields" style="display: none; width: 100%;">
+        <div class="section-header"><i class="fa-solid fa-map-marked-alt"></i> Endereço de Instalação</div>
+        <div class="form-grid">
+          <div class="field col-4">
+            <label>CEP *</label>
+            <input type="text" id="fibraCep" placeholder="00000-000" maxlength="9" required>
+            <button type="button" onclick="window.buscarCepFibra(this)" style="margin-top: 4px; font-size: 11px; background: none; border: none; color: #3b82f6; cursor: pointer; text-align: left;">Buscar CEP</button>
+          </div>
+          <div class="field col-4"><label>Número *</label><input type="text" id="fibraNumero" placeholder="Nº" required></div>
+          <div class="field col-4"><label>UF *</label><input type="text" id="fibraUf" maxlength="2" placeholder="UF" required></div>
+          <div class="field col-6"><label>Município *</label><input type="text" id="fibraMunicipio" placeholder="Cidade" required></div>
+          <div class="field col-6"><label>Bairro *</label><input type="text" id="fibraBairro" placeholder="Bairro" required></div>
+          <div class="field col-6">
+            <label>Tipo de Logradouro *</label>
+            <select id="fibraTipoLogradouro" required>
+              <option value="">Selecione</option>
+              <option value="RUA">Rua</option>
+              <option value="AVENIDA">Avenida</option>
+              <option value="TRAVESSA">Travessa</option>
+              <option value="ALAMEDA">Alameda</option>
+              <option value="RODOVIA">Rodovia</option>
+            </select>
+          </div>
+          <div class="field col-6"><label>Logradouro *</label><input type="text" id="fibraLogradouro" placeholder="Nome da rua/avenida" required></div>
+          <div class="field col-12"><label>Ponto de Referência</label><input type="text" id="fibraPontoReferencia" placeholder="Ponto de referência do cliente"></div>
+          
+          <!-- Complemento movido para cá para ficar junto do endereço -->
+          <div class="field col-6">
+            <label>Tipo de Complemento *</label>
+            <select id="fibraTipoComplemento" required>
+              <option value="">Selecione</option>
+              <option value="Ala">Ala</option>
+              <option value="Apartamento">Apartamento</option>
+              <option value="Bloco">Bloco</option>
+              <option value="Casa">Casa</option>
+              <option value="Conjunto">Conjunto</option>
+              <option value="Edifício">Edifício</option>
+              <option value="Entrada">Entrada</option>
+              <option value="Frente">Frente</option>
+              <option value="Fundos">Fundos</option>
+              <option value="Garagem">Garagem</option>
+              <option value="Loja">Loja</option>
+              <option value="Lote">Lote</option>
+              <option value="Módulo">Módulo</option>
+            </select>
+          </div>
+          <div class="field col-6">
+            <label>Complemento (Descrição)</label>
+            <input type="text" id="fibraComplementoDescricao" placeholder="Ex: Apto 101, Bloco B">
+          </div>
+          <div class="field col-12">
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+              <input type="checkbox" id="fibraMesmoEndereco" style="width: 18px; height: 18px;">
+              Endereço do cliente é o mesmo da instalação
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 5: FATURAMENTO (Comum a PF e PJ) -->
+      <div id="fibra-billing-fields" style="display: none; width: 100%;">
+        <div class="section-header"><i class="fa-solid fa-file-invoice-dollar"></i> Informações de Faturamento</div>
+        <div class="form-grid">
+          <div class="field col-6">
+            <label>Dia de Vencimento *</label>
+            <select id="fibraDiaVencimento">
+              <option value="7">Dia 07</option>
+              <option value="10">Dia 10</option>
+              <option value="12">Dia 12</option>
+              <option value="15">Dia 15</option>
+              <option value="20">Dia 20</option>
+              <option value="1">Dia 01</option>
+            </select>
+          </div>
+          <div class="field col-6">
+            <label>Tipo de Fatura *</label>
+            <select id="fibraTipoFatura">
+              <option value="ONLINE">Online</option>
+              <option value="IMPRESSA">Impressa</option>
+            </select>
+          </div>
+
+          <div class="field col-12" style="margin-top: 10px;">
+            <label>Forma de Pagamento *</label>
+            <div style="display: flex; gap: 20px; margin-top: 8px; flex-wrap: wrap;">
+              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;">
+                <input type="radio" name="fibraFormaPagamento" value="FATURA"> Fatura
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;">
+                <input type="radio" name="fibraFormaPagamento" value="DEBITO_AUTOMATICO"> Débito Automático
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;">
+                <input type="radio" name="fibraFormaPagamento" value="CARTAO_CREDITO"> Cartão de Crédito
+              </label>
+            </div>
+          </div>
+
+          <!-- Dados Bancários (Oculto por padrão) -->
+          <div id="fibra-dados-bancarios" class="col-12 form-grid" style="display: none; margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
+            <div class="field col-4">
+              <label>Banco *</label>
+              <select id="fibraBanco">
+                <option value="">Selecione...</option>
+                <option value="BANCO DO BRASIL S.A.">BANCO DO BRASIL S.A.</option>
+                <option value="BANCO DA AMAZÔNIA">BANCO DA AMAZÔNIA</option>
+                <option value="BANCO DO NORDESTE DO BRASIL">BANCO DO NORDESTE DO BRASIL</option>
+                <option value="BANESTES">BANESTES</option>
+                <option value="BANCO SANTANDER">BANCO SANTANDER</option>
+                <option value="BANPARÁ">BANPARÁ</option>
+                <option value="BANCO INTER">BANCO INTER</option>
+                <option value="CECRED">CECRED</option>
+                <option value="CAIXA ECONÔMICA FEDERAL">CAIXA ECONÔMICA FEDERAL</option>
+                <option value="BANCO BRADESCO S.A.">BANCO BRADESCO S.A.</option>
+                <option value="BANCO C6">BANCO C6</option>
+                <option value="BANCO ITAÚ S.A.">BANCO ITAÚ S.A.</option>
+                <option value="MERCANTIL">MERCANTIL</option>
+                <option value="BANCO SAFRA SA">BANCO SAFRA SA</option>
+                <option value="BANSICREDI">BANSICREDI</option>
+                <option value="BANCOOB">BANCOOB</option>
+                <option value="NUBANK">NUBANK</option>
+              </select>
+            </div>
+            <div class="field col-4"><label>Agência *</label><input type="text" id="fibraAgencia" placeholder="0000"></div>
+            <div class="field col-4"><label>Conta (com dígito) *</label><input type="text" id="fibraConta" placeholder="00000-0"></div>
+          </div>
+
+          <div class="field col-12" style="margin-top: 15px;">
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+              <input type="checkbox" id="fibraEnderecoCobrancaDiferente" style="width: 18px; height: 18px;">
+              Utilizar o endereço de cobrança diferente do endereço do cliente
+            </label>
+          </div>
         </div>
       </div>
 
       <!-- BOTÃO DE ENVIO -->
-      <button type="button" class="btn-save" id="btnSalvarFibra" onclick="window.salvarVendaFibra()">
+      <button type="button" class="btn-save" id="btnSalvarFibra" onclick="window.salvarVendaFibra()" style="display: none; margin-top: 30px;">
         <i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO ULTRAFIBRA
       </button>
     </form>
@@ -2431,13 +2495,11 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
 
   // 2. Inicializar máscaras e eventos do formulário de fibra
   function inicializarMascarasFibra() {
-    // Máscara CPF/CNPJ + Disparo da API
     const cpfCnpjInput = document.getElementById('fibraCpfCnpj');
     if (cpfCnpjInput) {
       cpfCnpjInput.addEventListener('input', function(e) {
         let v = e.target.value.replace(/\D/g, '');
         
-        // Aplica a máscara correta
         if (v.length <= 11) {
           v = v.replace(/(\d{3})(\d)/, '$1.$2')
                .replace(/(\d{3})(\d)/, '$1.$2')
@@ -2450,48 +2512,57 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         }
         e.target.value = v.slice(0, 18);
 
-        // 🔥 DISPARA A BUSCA SE FOR UM CNPJ COMPLETO (14 dígitos)
         const cleanValue = e.target.value.replace(/\D/g, '');
-        if (cleanValue.length === 14) {
+        
+        // Lógica de alternância PF / PJ
+        const pjFields = document.getElementById('fibra-pj-fields');
+        const pfFields = document.getElementById('fibra-pf-fields');
+        const contatoFields = document.getElementById('fibra-contato-fields');
+        const enderecoFields = document.getElementById('fibra-endereco-fields');
+        const billingFields = document.getElementById('fibra-billing-fields');
+        const btnSalvar = document.getElementById('btnSalvarFibra');
+
+        if (cleanValue.length === 11) {
+          // É CPF
+          pjFields.style.display = 'none';
+          pfFields.style.display = 'block';
+          contatoFields.style.display = 'block';
+          enderecoFields.style.display = 'block';
+          billingFields.style.display = 'block';
+          btnSalvar.style.display = 'block';
+        } else if (cleanValue.length === 14) {
+          // É CNPJ
+          pjFields.style.display = 'block';
+          pfFields.style.display = 'none';
+          contatoFields.style.display = 'block';
+          enderecoFields.style.display = 'block';
+          billingFields.style.display = 'block';
+          btnSalvar.style.display = 'block';
+          
           window.buscarEmpresaFibra(cleanValue);
+        } else {
+          // Incompleto
+          pjFields.style.display = 'none';
+          pfFields.style.display = 'none';
+          contatoFields.style.display = 'none';
+          enderecoFields.style.display = 'none';
+          billingFields.style.display = 'none';
+          btnSalvar.style.display = 'none';
         }
       });
     }
 
-    // Máscara CPF do Sócio
-    const cpfSocioInput = document.getElementById('fibraCpfSocio');
-    if (cpfSocioInput) {
-      cpfSocioInput.addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, '');
-        v = v.replace(/(\d{3})(\d)/, '$1.$2')
-             .replace(/(\d{3})(\d)/, '$1.$2')
-             .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-        e.target.value = v.slice(0, 14);
+    // Lógica do Débito Automático
+    document.querySelectorAll('input[name="fibraFormaPagamento"]').forEach(radio => {
+      radio.addEventListener('change', function() {
+        const divBancos = document.getElementById('fibra-dados-bancarios');
+        if (this.value === 'DEBITO_AUTOMATICO') {
+          divBancos.style.display = 'grid';
+        } else {
+          divBancos.style.display = 'none';
+        }
       });
-    }
-
-    // Máscara Telefone
-    ['fibraTelefone1', 'fibraTelefone2', 'fibraTelefone3'].forEach(id => {
-      const input = document.getElementById(id);
-      if (input) {
-        input.addEventListener('input', function(e) {
-          let v = e.target.value.replace(/\D/g, '');
-          v = v.replace(/^(\d{2})(\d)/, '($1) $2')
-               .replace(/(\d)(\d{4})$/, '$1-$2');
-          e.target.value = v.slice(0, 15);
-        });
-      }
     });
-
-    // Máscara CEP
-    const cepInput = document.getElementById('fibraCep');
-    if (cepInput) {
-      cepInput.addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, '');
-        v = v.replace(/(\d{5})(\d)/, '$1-$2');
-        e.target.value = v.slice(0, 9);
-      });
-    }
 
     // Toggle Isento IE
     const isentoIE = document.getElementById('fibraIsentoIE');
@@ -2508,6 +2579,36 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
           ieInput.placeholder = 'Número da IE';
           ieInput.style.background = '';
         }
+      });
+    }
+
+    // Outras máscaras
+    const cpfSocioInput = document.getElementById('fibraCpfSocio');
+    if (cpfSocioInput) {
+      cpfSocioInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        e.target.value = v.slice(0, 14);
+      });
+    }
+
+    ['fibraTelefone1', 'fibraTelefone2', 'fibraTelefone3'].forEach(id => {
+      const input = document.getElementById(id);
+      if (input) {
+        input.addEventListener('input', function(e) {
+          let v = e.target.value.replace(/\D/g, '');
+          v = v.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2');
+          e.target.value = v.slice(0, 15);
+        });
+      }
+    });
+
+    const cepInput = document.getElementById('fibraCep');
+    if (cepInput) {
+      cepInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        v = v.replace(/(\d{5})(\d)/, '$1-$2');
+        e.target.value = v.slice(0, 9);
       });
     }
   }
@@ -2610,22 +2711,26 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     const btn = document.getElementById('btnSalvarFibra');
     const user = JSON.parse(sessionStorage.getItem('usuarioLogado')) || {};
 
-    // Coleta de dados
-    const dados = {
+    const docStr = document.getElementById('fibraCpfCnpj').value.replace(/\D/g, '');
+    const isPF = docStr.length === 11;
+    const isPJ = docStr.length === 14;
+
+    if (!isPF && !isPJ) {
+      alert('CPF ou CNPJ inválido.');
+      return;
+    }
+
+    // Coleta de dados base
+    let dados = {
       tipoProduto: 'TIM ULTRAFIBRA',
       matriculaUsuario: user.matricula || user.email || user.username,
+      tipoPessoa: isPF ? 'PF' : 'PJ',
       cpfCnpj: document.getElementById('fibraCpfCnpj').value,
-      razaoSocial: document.getElementById('fibraRazaoSocial').value,
-      cpfSocio: document.getElementById('fibraCpfSocio').value,
-      dataFundacao: document.getElementById('fibraDataFundacao').value,
       telefone1: document.getElementById('fibraTelefone1').value,
       telefone2: document.getElementById('fibraTelefone2').value,
       telefone3: document.getElementById('fibraTelefone3').value,
       email: document.getElementById('fibraEmail').value,
       emailConfirmacao: document.getElementById('fibraEmailConfirmacao').value,
-      isentoIE: document.getElementById('fibraIsentoIE').checked,
-      inscricaoEstadual: document.getElementById('fibraInscricaoEstadual').value,
-      ufEmissao: document.getElementById('fibraUfEmissao').value,
       cep: document.getElementById('fibraCep').value,
       numero: document.getElementById('fibraNumero').value,
       uf: document.getElementById('fibraUf').value,
@@ -2637,11 +2742,61 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       mesmoEndereco: document.getElementById('fibraMesmoEndereco').checked,
       tipoComplemento: document.getElementById('fibraTipoComplemento').value,
       complementoDescricao: document.getElementById('fibraComplementoDescricao').value,
+      
+      // Faturamento
+      diaVencimento: document.getElementById('fibraDiaVencimento').value,
+      tipoFatura: document.getElementById('fibraTipoFatura').value,
+      formaPagamento: document.querySelector('input[name="fibraFormaPagamento"]:checked').value,
+      enderecoCobrancaDiferente: document.getElementById('fibraEnderecoCobrancaDiferente').checked,
       statusPedido: 'PENDENTE DE INPUT'
     };
 
-    // Validações básicas
-    if (!dados.cpfCnpj || !dados.razaoSocial || !dados.email || !dados.cep) {
+    // Adiciona dados bancários se for débito automático
+    if (dados.formaPagamento === 'DEBITO_AUTOMATICO') {
+      dados.banco = document.getElementById('fibraBanco').value;
+      dados.agencia = document.getElementById('fibraAgencia').value;
+      dados.conta = document.getElementById('fibraConta').value;
+      
+      if (!dados.banco || !dados.agencia || !dados.conta) {
+        alert('Preencha todos os dados bancários para o Débito Automático.');
+        return;
+      }
+    }
+
+    // Adiciona dados específicos de PF ou PJ
+    if (isPF) {
+      dados.nomeCompleto = document.getElementById('fibraNomeCompleto').value;
+      dados.dataNascimento = document.getElementById('fibraDataNascimento').value;
+      dados.nomeMae = document.getElementById('fibraNomeMae').value;
+      dados.naoAlfabetizado = document.getElementById('fibraNaoAlfabetizado').checked;
+      dados.necessidadesEspeciais = document.getElementById('fibraNecessidadesEspeciais').checked;
+      dados.sexo = document.querySelector('input[name="fibraSexo"]:checked').value;
+      dados.tipoDocumento = document.getElementById('fibraTipoDoc').value;
+      dados.numeroDocumento = document.getElementById('fibraNumeroDoc').value;
+      dados.dataEmissaoDocumento = document.getElementById('fibraDataEmissaoDoc').value;
+      dados.orgaoEmissor = document.getElementById('fibraOrgaoEmissor').value;
+      dados.ufDocumento = document.getElementById('fibraUfDoc').value;
+
+      if (!dados.nomeCompleto || !dados.dataNascimento || !dados.nomeMae) {
+        alert('Preencha os dados obrigatórios do cliente (Nome, Nascimento, Mãe).');
+        return;
+      }
+    } else {
+      dados.razaoSocial = document.getElementById('fibraRazaoSocial').value;
+      dados.cpfSocio = document.getElementById('fibraCpfSocio').value;
+      dados.dataFundacao = document.getElementById('fibraDataFundacao').value;
+      dados.isentoIE = document.getElementById('fibraIsentoIE').checked;
+      dados.inscricaoEstadual = document.getElementById('fibraInscricaoEstadual').value;
+      dados.ufEmissao = document.getElementById('fibraUfEmissao').value;
+
+      if (!dados.razaoSocial) {
+        alert('Preencha a Razão Social da empresa.');
+        return;
+      }
+    }
+
+    // Validações comuns
+    if (!dados.email || !dados.cep) {
       alert('Preencha todos os campos obrigatórios (*).');
       return;
     }
