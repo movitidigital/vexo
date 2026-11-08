@@ -2655,13 +2655,18 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       });
     }
 
-    // Máscaras para o Endereço de Cobrança
+    // Máscara e Auto-Busca para o CEP de Cobrança
     const cobrancaCepInput = document.getElementById('cobrancaCep');
     if (cobrancaCepInput) {
       cobrancaCepInput.addEventListener('input', function(e) {
         let v = e.target.value.replace(/\D/g, '');
         v = v.replace(/(\d{5})(\d)/, '$1-$2');
         e.target.value = v.slice(0, 9);
+
+        // 🔥 AUTO-BUSCA COBRANÇA
+        if (v.length === 8) {
+          window.buscarCepGenerico('cobrancaCep', 'cobrancaUf', 'cobrancaMunicipio', 'cobrancaBairro', 'cobrancaLogradouro');
+        }
       });
     }
 
@@ -2706,12 +2711,18 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       }
     });
 
+    // Máscara e Auto-Busca para o CEP de Instalação
     const cepInput = document.getElementById('fibraCep');
     if (cepInput) {
       cepInput.addEventListener('input', function(e) {
         let v = e.target.value.replace(/\D/g, '');
         v = v.replace(/(\d{5})(\d)/, '$1-$2');
         e.target.value = v.slice(0, 9);
+
+        // 🔥 AUTO-BUSCA INSTALAÇÃO
+        if (v.length === 8) {
+          window.buscarCepGenerico('fibraCep', 'fibraUf', 'fibraMunicipio', 'fibraBairro', 'fibraLogradouro');
+        }
       });
     }
   }
