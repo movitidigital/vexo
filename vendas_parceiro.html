@@ -2784,25 +2784,31 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
   };
 
   // 3.1. Função Genérica para Buscar CEP (Evita duplicar código)
-  window.buscarCepGenerico = function(cepId, ufId, cidadeId, bairroId, ruaId, btn) {
+  window.buscarCepGenerico = function(cepId, ufId, cidadeId, bairroId, ruaId, btn = null) {
     const cep = document.getElementById(cepId).value.replace(/\D/g, '');
     if (cep.length !== 8) {
-      alert('CEP inválido. Digite 8 dígitos.');
+      if (btn) alert('CEP inválido. Digite 8 dígitos.');
       return;
     }
     
-    const originalText = btn.innerText;
-    btn.innerText = "Buscando...";
-    btn.disabled = true;
+    // Só altera o botão se ele for passado (clique manual)
+    let originalText = "";
+    if (btn) {
+      originalText = btn.innerText;
+      btn.innerText = "Buscando...";
+      btn.disabled = true;
+    }
 
     fetch(`https://viacep.com.br/ws/${cep}/json/`)
       .then(response => response.json())
       .then(data => {
-        btn.innerText = originalText;
-        btn.disabled = false;
+        if (btn) {
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
         
         if (data.erro) {
-          alert('CEP não encontrado.');
+          if (btn) alert('CEP não encontrado.');
           return;
         }
         document.getElementById(ufId).value = data.uf || '';
@@ -2811,10 +2817,12 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         document.getElementById(ruaId).value = data.logradouro || '';
       })
       .catch(error => {
-        btn.innerText = originalText;
-        btn.disabled = false;
+        if (btn) {
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
         console.error('Erro ao buscar CEP:', error);
-        alert('Erro ao buscar CEP. Tente novamente.');
+        if (btn) alert('Erro ao buscar CEP. Tente novamente.');
       });
   };
   
