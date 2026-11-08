@@ -2653,15 +2653,17 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       });
     }
 
-    // Máscara e Auto-Busca para o CEP de Cobrança
+    // 🔥 MÁSCARA E AUTO-BUSCA: CEP DE COBRANÇA
     const cobrancaCepInput = document.getElementById('cobrancaCep');
     if (cobrancaCepInput) {
       cobrancaCepInput.addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, '');
-        v = v.replace(/(\d{5})(\d)/, '$1-$2');
-        e.target.value = v.slice(0, 9);
+        let v = e.target.value.replace(/\D/g, ''); // Pega apenas números
+        if (v.length > 8) v = v.slice(0, 8); // Limita a 8 dígitos
+        
+        // Formata o valor no input
+        e.target.value = v.replace(/(\d{5})(\d)/, '$1-$2');
 
-        // 🔥 AUTO-BUSCA COBRANÇA
+        // 🔥 Auto-Busca (verifica os números limpos)
         if (v.length === 8) {
           window.buscarCepGenerico('cobrancaCep', 'cobrancaUf', 'cobrancaMunicipio', 'cobrancaBairro', 'cobrancaLogradouro');
         }
@@ -2688,7 +2690,7 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       });
     }
 
-    // Máscaras Comuns (CPF Sócio, Telefone, CEP principal)
+    // Máscaras Comuns (CPF Sócio, Telefone)
     const cpfSocioInput = document.getElementById('fibraCpfSocio');
     if (cpfSocioInput) {
       cpfSocioInput.addEventListener('input', function(e) {
@@ -2709,15 +2711,17 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       }
     });
 
-    // Máscara e Auto-Busca para o CEP de Instalação
+    // 🔥 MÁSCARA E AUTO-BUSCA: CEP DE INSTALAÇÃO
     const cepInput = document.getElementById('fibraCep');
     if (cepInput) {
       cepInput.addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, '');
-        v = v.replace(/(\d{5})(\d)/, '$1-$2');
-        e.target.value = v.slice(0, 9);
+        let v = e.target.value.replace(/\D/g, ''); // Pega apenas números
+        if (v.length > 8) v = v.slice(0, 8); // Limita a 8 dígitos
+        
+        // Formata o valor no input
+        e.target.value = v.replace(/(\d{5})(\d)/, '$1-$2');
 
-        // 🔥 AUTO-BUSCA INSTALAÇÃO
+        // 🔥 Auto-Busca (verifica os números limpos)
         if (v.length === 8) {
           window.buscarCepGenerico('fibraCep', 'fibraUf', 'fibraMunicipio', 'fibraBairro', 'fibraLogradouro');
         }
