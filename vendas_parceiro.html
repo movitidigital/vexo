@@ -864,6 +864,14 @@
             <label>Complemento (Descrição)</label>
             <input type="text" id="fibraComplementoDescricao" placeholder="Ex: Apto 101, Bloco B">
           </div>
+          
+          <!-- NOVA CAIXINHA AQUI -->
+          <div class="field col-12" style="margin-top: 5px;">
+            <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase; font-weight: 700; color: #475569; cursor: pointer;">
+              <input type="checkbox" id="fibraEnderecoIgualCliente" style="width: 18px; height: 18px;">
+              Endereço do cliente é o mesmo da instalação
+            </label>
+          </div>
         </div>
       <!-- FIM DA SEÇÃO 4: ENDEREÇO -->
       </div>
@@ -2653,6 +2661,36 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       });
     }
 
+        // 🔥 NOVO: Lógica do Checkbox "Endereço do cliente é o mesmo da instalação"
+    const checkEnderecoIgual = document.getElementById('fibraEnderecoIgualCliente');
+    if (checkEnderecoIgual) {
+      checkEnderecoIgual.addEventListener('change', function() {
+        const isChecked = this.checked;
+        // Lista de IDs dos campos de endereço de instalação
+        const camposEndereco = [
+          'fibraCep', 'fibraNumero', 'fibraUf', 'fibraMunicipio', 
+          'fibraBairro', 'fibraTipoLogradouro', 'fibraLogradouro', 
+          'fibraPontoReferencia', 'fibraTipoComplemento', 'fibraComplementoDescricao'
+        ];
+
+        camposEndereco.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.disabled = isChecked; // Desabilita ou habilita
+            if (isChecked) {
+              el.style.backgroundColor = '#f1f5f9'; // Cor de bloqueado
+              el.style.cursor = 'not-allowed';
+              el.style.opacity = '0.8';
+            } else {
+              el.style.backgroundColor = ''; // Volta ao normal
+              el.style.cursor = '';
+              el.style.opacity = '1';
+            }
+          }
+        });
+      });
+    }
+
     // 🔥 MÁSCARA E AUTO-BUSCA: CEP DE COBRANÇA
     const cobrancaCepInput = document.getElementById('cobrancaCep');
     if (cobrancaCepInput) {
@@ -2973,6 +3011,17 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       if (!dados.razaoSocial) {
         alert('Preencha a Razão Social da empresa.');
         return;
+      }
+
+      // 🔥 REGRA DE NEGÓCIO: UF da IE x UF do Endereço de Instalação
+      const ufEnderecoInstalacao = document.getElementById('fibraUf').value;
+      
+      // Verifica se não é isento, se ambas as UFs estão preenchidas e se são diferentes
+      if (!dados.isentoIE && dados.ufEmissao && ufEnderecoInstalacao) {
+        if (dados.ufEmissao.toUpperCase() !== ufEnderecoInstalacao.toUpperCase()) {
+          alert("ATENÇÃO\n\nIdentificamos uma inconsistência entre a UF da inscrição estadual (CNPJ) e o endereço do cliente. Para seguir com o pedido, verificar as alternativas com ponto focal TIM.");
+          return;
+        }
       }
     }
 
