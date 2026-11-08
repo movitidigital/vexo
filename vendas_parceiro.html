@@ -993,9 +993,10 @@
   let pedidoEmEdicaoData = null;
 
   // ============================================
+  // ============================================
   // MÁSCARAS
   // ============================================
-  const fmk = {
+  window.fmk = { // <-- Alterado de "const fmk" para "window.fmk"
     cnpj: v => v.replace(/\D/g, "").replace(/^(\d{2})(\d)/, "$1.$2").replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3").replace(/\.(\d{3})(\d)/, ".$1/$2").replace(/(\d{4})(\d)/, "$1-$2").slice(0, 18),
     cpf: v => v.replace(/\D/g, "").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d)/, "$1.$2").replace(/(\d{3})(\d{1,2})$/, "$1-$2").slice(0, 14),
     cep: v => v.replace(/\D/g, "").replace(/(\d{5})(\d)/, "$1-$2").slice(0, 9),
@@ -2514,7 +2515,7 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
   // 3. Autopreencher dados do CNPJ (API VEXO)
   window.buscarEmpresaFibra = async function(cnpjLimpo) {
     const rz = document.getElementById("fibraRazaoSocial");
-    const originalPlaceholder = rz.placeholder;
+    const originalPlaceholder = rz ? rz.placeholder : "";
     
     if (rz) {
       rz.value = "Consultando base VEXO...";
@@ -2533,8 +2534,13 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
           rz.style.color = "#1e293b";
         }
         
-        // Preenche os outros campos do formulário Fibra
-        if (document.getElementById("fibraCep") && data.cep) document.getElementById("fibraCep").value = fmk.cep(data.cep);
+        // Preenche os outros campos do formulário Fibra de forma segura
+        if (document.getElementById("fibraCep") && data.cep) {
+          // Formata o CEP manualmente para não depender do objeto fmk
+          let cepFormatado = data.cep.replace(/\D/g, "").replace(/(\d{5})(\d)/, "$1-$2").slice(0, 9);
+          document.getElementById("fibraCep").value = cepFormatado;
+        }
+        
         if (document.getElementById("fibraLogradouro")) document.getElementById("fibraLogradouro").value = data.logradouro || "";
         if (document.getElementById("fibraNumero")) document.getElementById("fibraNumero").value = data.numero || "";
         if (document.getElementById("fibraBairro")) document.getElementById("fibraBairro").value = data.bairro || "";
@@ -2542,8 +2548,8 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         if (document.getElementById("fibraUf")) document.getElementById("fibraUf").value = data.uf || "";
 
         // Feedback visual
-        if (typeof mostrarToastPequno === 'function') {
-          mostrarToastPequno('✅ Dados do CNPJ carregados com sucesso!', 'success');
+        if (typeof window.mostrarToastPequno === 'function') {
+          window.mostrarToastPequno('✅ Dados do CNPJ carregados com sucesso!', 'success');
         }
       } else {
         throw new Error('Dados não encontrados');
@@ -2556,8 +2562,8 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         rz.style.color = "#ef4444";
         setTimeout(() => { rz.placeholder = originalPlaceholder; rz.style.color = ""; }, 4000);
       }
-      if (typeof mostrarToastPequno === 'function') {
-        mostrarToastPequno('⚠️ CNPJ não localizado. Preencha os dados manualmente.', 'warning');
+      if (typeof window.mostrarToastPequno === 'function') {
+        window.mostrarToastPequno('⚠️ CNPJ não localizado. Preencha os dados manualmente.', 'warning');
       }
     }
   };
