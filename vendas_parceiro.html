@@ -945,7 +945,7 @@
           </div>
 
           <!-- CAMPOS DE COBRANÇA (Oculto até marcar o checkbox) -->
-          <div id="fibra-cobranca-campos" style="display: none; width: 100%; margin-top: 15px; padding: 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px;">
+          <div id="fibra-cobranca-campos" class="col-12" style="display: none; margin-top: 15px; padding: 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; grid-column: span 12;">
             <div class="section-header" style="margin-top: 0;"><i class="fa-solid fa-file-invoice"></i> Endereço de Cobrança</div>
             <div class="form-grid">
               <div class="field col-4">
@@ -955,8 +955,10 @@
               </div>
               <div class="field col-4"><label>Número *</label><input type="text" id="cobrancaNumero" placeholder="Nº"></div>
               <div class="field col-4"><label>UF *</label><input type="text" id="cobrancaUf" maxlength="2" placeholder="UF"></div>
+              
               <div class="field col-6"><label>Município *</label><input type="text" id="cobrancaMunicipio" placeholder="Cidade"></div>
               <div class="field col-6"><label>Bairro *</label><input type="text" id="cobrancaBairro" placeholder="Bairro"></div>
+              
               <div class="field col-6">
                 <label>Tipo de Logradouro *</label>
                 <select id="cobrancaTipoLogradouro">
