@@ -780,18 +780,104 @@
 
       <!-- CONTAINER PJ (Oculto por padrão) -->
       <div id="fibra-pj-fields" style="display: none; width: 100%;">
+        
+        <!-- DADOS DA EMPRESA -->
         <div class="section-header"><i class="fa-solid fa-building"></i> Dados da Empresa (CNPJ)</div>
         <div class="form-grid">
           <div class="field col-6"><label>Razão Social *</label><input type="text" id="fibraRazaoSocial" placeholder="Razão Social"></div>
-          <div class="field col-6"><label>CPF do Sócio *</label><input type="text" id="fibraCpfSocio" placeholder="000.000.000-00" maxlength="14"></div>
           <div class="field col-6"><label>Data de Fundação *</label><input type="date" id="fibraDataFundacao"></div>
+          
           <div class="field col-6">
             <label style="display:flex; align-items:center; gap:8px;">Inscrição Estadual
               <input type="checkbox" id="fibraIsentoIE" style="width:auto; height:auto; margin-left: 10px;"> <span style="text-transform:none; font-weight:normal; font-size:12px;">Isento</span>
             </label>
             <input type="text" id="fibraInscricaoEstadual" placeholder="Número da IE" style="margin-top:8px;">
           </div>
-          <div class="field col-6"><label>UF de Emissão *</label><input type="text" id="fibraUfEmissao" maxlength="2" placeholder="UF"></div>
+          <div class="field col-6">
+            <label>UF de Emissão *</label>
+            <input type="text" id="fibraUfEmissao" maxlength="2" placeholder="UF">
+          </div>
+        </div>
+
+        <!-- DADOS DO CONTATO (SÓCIO) -->
+        <div class="section-header" style="margin-top: 25px;"><i class="fa-solid fa-user-tie"></i> Dados do Contato (Sócio)</div>
+        <div class="form-grid">
+          <div class="field col-6"><label>Nome do Contato *</label><input type="text" id="socioNome" placeholder="Nome completo"></div>
+          <div class="field col-6"><label>Data de Nascimento *</label><input type="date" id="socioDataNascimento"></div>
+          
+          <div class="field col-4">
+            <label>Tipo de Contato *</label>
+            <select id="socioTipoContato">
+              <option value="SOCIO" selected>Sócio</option>
+              <option value="ADMINISTRADOR">Administrador</option>
+              <option value="PROCURADOR">Procurador</option>
+            </select>
+          </div>
+          <div class="field col-4">
+            <label>País *</label>
+            <select id="socioPais">
+              <option value="BRASIL" selected>Brasil</option>
+              <option value="OUTROS">Outros</option>
+            </select>
+          </div>
+          <div class="field col-4"><label>CPF *</label><input type="text" id="socioCpf" placeholder="000.000.000-00" maxlength="14"></div>
+
+          <div class="field col-4">
+            <label>Tipo de Documento *</label>
+            <select id="socioTipoDoc">
+              <option value="CARTEIRA_DE_ESTRANGEIRO">Carteira de Estrangeiro</option>
+              <option value="CARTEIRA_DE_IDENTIDADE" selected>Carteira de Identidade</option>
+              <option value="CARTEIRA_DE_TRABALHO">Carteira de Trabalho</option>
+              <option value="CERTIDAO_DE_NASCIMENTO">Certidão de Nasc.</option>
+              <option value="CNH">CNH</option>
+              <option value="IDENTIDADE_FUNCIONAL">Ident. Funcional</option>
+              <option value="IDENTIDADE_INDIGENA">Ident. Indígena</option>
+              <option value="IDENTIDADE_PROFISSIONAL">Ident. Profissional</option>
+              <option value="IDENTIDADE_ESTRANGEIRA">Identidade Estrang.</option>
+              <option value="IDENTIDADE_MILITAR">Identidade Militar</option>
+              <option value="OUTROS">Outros</option>
+              <option value="PASSAPORTE">Passaporte</option>
+              <option value="PASSAPORTE_ESTRANGEIRO">Passaporte Estrang.</option>
+            </select>
+          </div>
+          <div class="field col-4"><label>Número do Documento *</label><input type="text" id="socioNumeroDoc"></div>
+          <div class="field col-4"><label>Data de Emissão *</label><input type="date" id="socioDataEmissaoDoc"></div>
+
+          <div class="field col-4"><label>Órgão Emissor *</label><input type="text" id="socioOrgaoEmissor" placeholder="Ex: SSP"></div>
+          <div class="field col-4">
+            <label>UF do Documento *</label>
+            <select id="socioUfDoc">
+              <option value="">Selecione...</option>
+              <option value="AC">AC</option>
+              <option value="AL">AL</option>
+              <option value="AP">AP</option>
+              <option value="AM">AM</option>
+              <option value="BA">BA</option>
+              <option value="CE">CE</option>
+              <option value="DF">DF</option>
+              <option value="ES">ES</option>
+              <option value="GO">GO</option>
+              <option value="MA">MA</option>
+              <option value="MT">MT</option>
+              <option value="MS">MS</option>
+              <option value="MG">MG</option>
+              <option value="PA">PA</option>
+              <option value="PB">PB</option>
+              <option value="PR">PR</option>
+              <option value="PE">PE</option>
+              <option value="PI">PI</option>
+              <option value="RJ">RJ</option>
+              <option value="RN">RN</option>
+              <option value="RS">RS</option>
+              <option value="RO">RO</option>
+              <option value="RR">RR</option>
+              <option value="SC">SC</option>
+              <option value="SP">SP</option>
+              <option value="SE">SE</option>
+              <option value="TO">TO</option>
+            </select>
+          </div>
+          <div class="field col-4"><label>Telefone *</label><input type="text" id="socioTelefone" placeholder="(00) 00000-0000" maxlength="15"></div>
         </div>
       </div>
 
@@ -873,6 +959,64 @@
             </label>
           </div>
         </div>
+        <!-- NOVO BLOCO: Endereço do Cliente (Oculto por padrão) -->
+        <div id="fibra-endereco-cliente-fields" style="display: none; width: 100%; margin-top: 20px;">
+          <div class="section-header"><i class="fa-solid fa-map-marker-alt"></i> Endereço do Cliente</div>
+          <div class="form-grid">
+            <div class="field col-4">
+              <label>CEP *</label>
+              <input type="text" id="clienteCep" placeholder="00000-000" maxlength="9">
+            </div>
+            <div class="field col-4"><label>Número *</label><input type="text" id="clienteNumero" placeholder="Nº"></div>
+            <div class="field col-4"><label>UF *</label><input type="text" id="clienteUf" maxlength="2" placeholder="UF"></div>
+            
+            <div class="field col-6"><label>Município *</label><input type="text" id="clienteMunicipio" placeholder="Cidade"></div>
+            <div class="field col-6"><label>Bairro *</label><input type="text" id="clienteBairro" placeholder="Bairro"></div>
+            
+            <div class="field col-6">
+              <label>Tipo de Logradouro *</label>
+              <select id="clienteTipoLogradouro">
+                <option value="">Selecione</option>
+                <option value="RUA">Rua</option>
+                <option value="AVENIDA">Avenida</option>
+                <option value="TRAVESSA">Travessa</option>
+                <option value="ALAMEDA">Alameda</option>
+                <option value="RODOVIA">Rodovia</option>
+              </select>
+            </div>
+            <div class="field col-6"><label>Logradouro *</label><input type="text" id="clienteLogradouro" placeholder="Nome da rua/avenida"></div>
+            
+            <div class="field col-6">
+              <label>Tipo de Complemento</label>
+              <select id="clienteTipoComplemento">
+                <option value="">Selecione...</option>
+                <option value="Andar">Andar</option>
+                <option value="Apartamento">Apartamento</option>
+                <option value="Bloco">Bloco</option>
+                <option value="Casa">Casa</option>
+                <option value="Condomínio">Condomínio</option>
+                <option value="Conjunto">Conjunto</option>
+                <option value="Departamento">Departamento</option>
+                <option value="Edifício">Edifício</option>
+                <option value="Loja">Loja</option>
+                <option value="Lote">Lote</option>
+                <option value="Outros">Outros</option>
+                <option value="Pavimentos">Pavimentos</option>
+                <option value="Prédio">Prédio</option>
+                <option value="Quadra">Quadra</option>
+                <option value="Sala">Sala</option>
+                <option value="Setor">Setor</option>
+                <option value="Sobrado">Sobrado</option>
+                <option value="Sobreloja">Sobreloja</option>
+                <option value="Subsolo">Subsolo</option>
+                <option value="Torre">Torre</option>
+                <option value="Área Comum">Área Comum</option>
+              </select>
+            </div>
+            <div class="field col-6"><label>Complemento (Descrição)</label><input type="text" id="clienteComplementoDescricao" placeholder="Ex: Apto 101"></div>
+          </div>
+        </div>
+        
       <!-- FIM DA SEÇÃO 4: ENDEREÇO -->
       </div>
 
@@ -2661,11 +2805,13 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       });
     }
 
-        // 🔥 NOVO: Lógica do Checkbox "Endereço do cliente é o mesmo da instalação"
+    // 🔥 Lógica do Checkbox "Endereço do cliente é o mesmo da instalação"
     const checkEnderecoIgual = document.getElementById('fibraEnderecoIgualCliente');
     if (checkEnderecoIgual) {
       checkEnderecoIgual.addEventListener('change', function() {
         const isChecked = this.checked;
+        const clientAddressBlock = document.getElementById('fibra-endereco-cliente-fields');
+        
         // Lista de IDs dos campos de endereço de instalação
         const camposEndereco = [
           'fibraCep', 'fibraNumero', 'fibraUf', 'fibraMunicipio', 
@@ -2673,21 +2819,44 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
           'fibraPontoReferencia', 'fibraTipoComplemento', 'fibraComplementoDescricao'
         ];
 
-        camposEndereco.forEach(id => {
-          const el = document.getElementById(id);
-          if (el) {
-            el.disabled = isChecked; // Desabilita ou habilita
-            if (isChecked) {
-              el.style.backgroundColor = '#f1f5f9'; // Cor de bloqueado
+        if (isChecked) {
+          // Se marcou, esconde o bloco do cliente e bloqueia o da instalação
+          if (clientAddressBlock) clientAddressBlock.style.display = 'none';
+          camposEndereco.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+              el.disabled = true;
+              el.style.backgroundColor = '#f1f5f9';
               el.style.cursor = 'not-allowed';
               el.style.opacity = '0.8';
-            } else {
-              el.style.backgroundColor = ''; // Volta ao normal
+            }
+          });
+        } else {
+          // Se desmarcou, mostra o bloco do cliente e libera o da instalação
+          if (clientAddressBlock) clientAddressBlock.style.display = 'block';
+          camposEndereco.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+              el.disabled = false;
+              el.style.backgroundColor = '';
               el.style.cursor = '';
               el.style.opacity = '1';
             }
-          }
-        });
+          });
+        }
+      });
+    }
+
+    // 🔥 MÁSCARA E AUTO-BUSCA: CEP DO CLIENTE (Novo Bloco)
+    const clienteCepInput = document.getElementById('clienteCep');
+    if (clienteCepInput) {
+      clienteCepInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length > 8) v = v.slice(0, 8);
+        e.target.value = v.replace(/(\d{5})(\d)/, '$1-$2');
+        if (v.length === 8) {
+          window.buscarCepGenerico('clienteCep', 'clienteUf', 'clienteMunicipio', 'clienteBairro', 'clienteLogradouro');
+        }
       });
     }
 
@@ -2695,13 +2864,9 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     const cobrancaCepInput = document.getElementById('cobrancaCep');
     if (cobrancaCepInput) {
       cobrancaCepInput.addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, ''); // Pega apenas números
-        if (v.length > 8) v = v.slice(0, 8); // Limita a 8 dígitos
-        
-        // Formata o valor no input
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length > 8) v = v.slice(0, 8);
         e.target.value = v.replace(/(\d{5})(\d)/, '$1-$2');
-
-        // 🔥 Auto-Busca (verifica os números limpos)
         if (v.length === 8) {
           window.buscarCepGenerico('cobrancaCep', 'cobrancaUf', 'cobrancaMunicipio', 'cobrancaBairro', 'cobrancaLogradouro');
         }
@@ -2728,16 +2893,26 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       });
     }
 
-    // Máscaras Comuns (CPF Sócio, Telefone)
-    const cpfSocioInput = document.getElementById('fibraCpfSocio');
-    if (cpfSocioInput) {
-      cpfSocioInput.addEventListener('input', function(e) {
+    // 🔥 MÁSCARAS: DADOS DO SÓCIO
+    const socioCpfInput = document.getElementById('socioCpf');
+    if (socioCpfInput) {
+      socioCpfInput.addEventListener('input', function(e) {
         let v = e.target.value.replace(/\D/g, '');
         v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
         e.target.value = v.slice(0, 14);
       });
     }
 
+    const socioTelInput = document.getElementById('socioTelefone');
+    if (socioTelInput) {
+      socioTelInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        v = v.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2');
+        e.target.value = v.slice(0, 15);
+      });
+    }
+
+    // Máscaras de Telefone de Contato Principal
     ['fibraTelefone1', 'fibraTelefone2', 'fibraTelefone3'].forEach(id => {
       const input = document.getElementById(id);
       if (input) {
@@ -2753,13 +2928,9 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     const cepInput = document.getElementById('fibraCep');
     if (cepInput) {
       cepInput.addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, ''); // Pega apenas números
-        if (v.length > 8) v = v.slice(0, 8); // Limita a 8 dígitos
-        
-        // Formata o valor no input
+        let v = e.target.value.replace(/\D/g, '');
+        if (v.length > 8) v = v.slice(0, 8);
         e.target.value = v.replace(/(\d{5})(\d)/, '$1-$2');
-
-        // 🔥 Auto-Busca (verifica os números limpos)
         if (v.length === 8) {
           window.buscarCepGenerico('fibraCep', 'fibraUf', 'fibraMunicipio', 'fibraBairro', 'fibraLogradouro');
         }
@@ -2948,6 +3119,27 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       statusPedido: 'PENDENTE DE INPUT'
     };
 
+    // 🔥 Coleta Endereço do Cliente (se NÃO for o mesmo da instalação)
+    const enderecoIgual = document.getElementById('fibraEnderecoIgualCliente').checked;
+    dados.enderecoClienteIgualInstalacao = enderecoIgual;
+
+    if (!enderecoIgual) {
+      dados.clienteCep = document.getElementById('clienteCep').value;
+      dados.clienteNumero = document.getElementById('clienteNumero').value;
+      dados.clienteUf = document.getElementById('clienteUf').value;
+      dados.clienteMunicipio = document.getElementById('clienteMunicipio').value;
+      dados.clienteBairro = document.getElementById('clienteBairro').value;
+      dados.clienteTipoLogradouro = document.getElementById('clienteTipoLogradouro').value;
+      dados.clienteLogradouro = document.getElementById('clienteLogradouro').value;
+      dados.clienteTipoComplemento = document.getElementById('clienteTipoComplemento').value;
+      dados.clienteComplementoDescricao = document.getElementById('clienteComplementoDescricao').value;
+
+      if (!dados.clienteCep || !dados.clienteNumero || !dados.clienteUf) {
+        alert('Preencha os campos obrigatórios do Endereço do Cliente.');
+        return;
+      }
+    }
+
     // Coleta Endereço de Cobrança (se aplicável)
     const usaCobrancaDiferente = document.getElementById('fibraCobrancaDiferente').checked;
     dados.usarEnderecoCobrancaDiferente = usaCobrancaDiferente;
@@ -3001,22 +3193,40 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         return;
       }
     } else {
+      // Dados da Empresa
       dados.razaoSocial = document.getElementById('fibraRazaoSocial').value;
-      dados.cpfSocio = document.getElementById('fibraCpfSocio').value;
       dados.dataFundacao = document.getElementById('fibraDataFundacao').value;
       dados.isentoIE = document.getElementById('fibraIsentoIE').checked;
       dados.inscricaoEstadual = document.getElementById('fibraInscricaoEstadual').value;
       dados.ufEmissao = document.getElementById('fibraUfEmissao').value;
 
+      // 🔥 Dados do Sócio
+      dados.socioNome = document.getElementById('socioNome').value;
+      dados.socioDataNascimento = document.getElementById('socioDataNascimento').value;
+      dados.socioTipoContato = document.getElementById('socioTipoContato').value;
+      dados.socioPais = document.getElementById('socioPais').value;
+      dados.socioCpf = document.getElementById('socioCpf').value;
+      dados.socioTipoDoc = document.getElementById('socioTipoDoc').value;
+      dados.socioNumeroDoc = document.getElementById('socioNumeroDoc').value;
+      dados.socioDataEmissaoDoc = document.getElementById('socioDataEmissaoDoc').value;
+      dados.socioOrgaoEmissor = document.getElementById('socioOrgaoEmissor').value;
+      dados.socioUfDoc = document.getElementById('socioUfDoc').value;
+      dados.socioTelefone = document.getElementById('socioTelefone').value;
+
+      // Validações PJ
       if (!dados.razaoSocial) {
         alert('Preencha a Razão Social da empresa.');
+        return;
+      }
+
+      if (!dados.socioNome || !dados.socioDataNascimento || !dados.socioCpf || !dados.socioNumeroDoc || !dados.socioDataEmissaoDoc || !dados.socioOrgaoEmissor || !dados.socioUfDoc || !dados.socioTelefone) {
+        alert('Preencha todos os dados obrigatórios do Sócio (Nome, Nascimento, CPF, Documento, Telefone).');
         return;
       }
 
       // 🔥 REGRA DE NEGÓCIO: UF da IE x UF do Endereço de Instalação
       const ufEnderecoInstalacao = document.getElementById('fibraUf').value;
       
-      // Verifica se não é isento, se ambas as UFs estão preenchidas e se são diferentes
       if (!dados.isentoIE && dados.ufEmissao && ufEnderecoInstalacao) {
         if (dados.ufEmissao.toUpperCase() !== ufEnderecoInstalacao.toUpperCase()) {
           alert("ATENÇÃO\n\nIdentificamos uma inconsistência entre a UF da inscrição estadual (CNPJ) e o endereço do cliente. Para seguir com o pedido, verificar as alternativas com ponto focal TIM.");
