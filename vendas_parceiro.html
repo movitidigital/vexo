@@ -675,9 +675,174 @@
   </div>
 </div>
 
-<!-- NOVA ÁREA PARA O FORMULÁRIO DE FIBRA (inicialmente oculta) -->
+<!-- ÁREA DO FORMULÁRIO DE FIBRA (Oculto por padrão) -->
 <div id="areaFormularioFibra" style="display: none;">
-  <!-- O formulário será injetado aqui via JavaScript -->
+  
+  <!-- O formulário agora fica DENTRO da div oculta -->
+  <div class="form-card" id="formFibra">
+    <h2 style="text-align: center; color: #0f172a; font-weight: 800; margin-bottom: 30px;">
+      Venda TIM ULTRAFIBRA
+    </h2>
+
+    <form id="fibraForm">
+      <!-- SEÇÃO 1: IDENTIFICAÇÃO -->
+      <div class="section-header"><i class="fa-solid fa-id-card"></i> Identificação do Cliente</div>
+      <div class="form-grid">
+        <div class="field col-6">
+          <label>CPF/CNPJ *</label>
+          <input type="text" id="fibraCpfCnpj" placeholder="000.000.000-00 ou 00.000.000/0000-00" maxlength="18" required>
+        </div>
+        <div class="field col-6">
+          <label>Razão Social *</label>
+          <input type="text" id="fibraRazaoSocial" placeholder="Nome completo ou Razão Social" required>
+        </div>
+        <div class="field col-6">
+          <label>CPF do Sócio *</label>
+          <input type="text" id="fibraCpfSocio" placeholder="000.000.000-00" maxlength="14" required>
+        </div>
+        <div class="field col-6">
+          <label>Data de Fundação *</label>
+          <input type="date" id="fibraDataFundacao" required>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 2: DADOS COMPLEMENTARES -->
+      <div class="section-header"><i class="fa-solid fa-address-book"></i> Dados Complementares</div>
+      <div class="form-grid">
+        <div class="field col-4">
+          <label>Telefone de Contato 1 *</label>
+          <input type="text" id="fibraTelefone1" placeholder="(00) 00000-0000" maxlength="15" required>
+        </div>
+        <div class="field col-4">
+          <label>Telefone de Contato 2</label>
+          <input type="text" id="fibraTelefone2" placeholder="(00) 00000-0000" maxlength="15">
+        </div>
+        <div class="field col-4">
+          <label>Telefone de Contato 3</label>
+          <input type="text" id="fibraTelefone3" placeholder="(00) 00000-0000" maxlength="15">
+        </div>
+        <div class="field col-6">
+          <label>E-mail *</label>
+          <input type="email" id="fibraEmail" placeholder="email@exemplo.com" required>
+        </div>
+        <div class="field col-6">
+          <label>Confirmação de E-mail *</label>
+          <input type="email" id="fibraEmailConfirmacao" placeholder="Repita o e-mail" required>
+        </div>
+      </div>
+
+      <!-- INSCRIÇÃO ESTADUAL -->
+      <div class="section-header"><i class="fa-solid fa-file-invoice"></i> Inscrição Estadual</div>
+      <div class="form-grid">
+        <div class="field col-6">
+          <label style="display: flex; align-items: center; gap: 8px;">
+            Inscrição Estadual
+            <label class="switch" style="position: relative; display: inline-block; width: 40px; height: 22px;">
+              <input type="checkbox" id="fibraIsentoIE" style="opacity: 0; width: 0; height: 0;">
+              <span class="slider" style="position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; border-radius: 22px; transition: .4s;"></span>
+            </label>
+            <span style="font-size: 12px; color: #64748b;">Isento</span>
+          </label>
+          <input type="text" id="fibraInscricaoEstadual" placeholder="Número da IE" style="margin-top: 8px;">
+        </div>
+        <div class="field col-6">
+          <label>UF de Emissão *</label>
+          <select id="fibraUfEmissao" required>
+            <option value="">Selecione</option>
+            <option value="AC">AC</option>
+            <option value="AL">AL</option>
+            <option value="PE">PE</option>
+            <option value="SP">SP</option>
+            <!-- Adicione as demais UFs -->
+          </select>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 3: ENDEREÇO DO CLIENTE -->
+      <div class="section-header"><i class="fa-solid fa-map-marked-alt"></i> Endereço do Cliente</div>
+      <div class="form-grid">
+        <div class="field col-4">
+          <label>CEP *</label>
+          <input type="text" id="fibraCep" placeholder="00000-000" maxlength="9" required>
+          <button type="button" onclick="window.buscarCepFibra()" style="margin-top: 4px; font-size: 11px; background: none; border: none; color: #3b82f6; cursor: pointer; text-align: left;">Buscar CEP</button>
+        </div>
+        <div class="field col-4">
+          <label>Número *</label>
+          <input type="text" id="fibraNumero" placeholder="Nº" required>
+        </div>
+        <div class="field col-4">
+          <label>UF *</label>
+          <input type="text" id="fibraUf" maxlength="2" placeholder="UF" required>
+        </div>
+        <div class="field col-6">
+          <label>Município *</label>
+          <input type="text" id="fibraMunicipio" placeholder="Cidade" required>
+        </div>
+        <div class="field col-6">
+          <label>Bairro *</label>
+          <input type="text" id="fibraBairro" placeholder="Bairro" required>
+        </div>
+        <div class="field col-6">
+          <label>Tipo de Logradouro *</label>
+          <select id="fibraTipoLogradouro" required>
+            <option value="">Selecione</option>
+            <option value="RUA">Rua</option>
+            <option value="AVENIDA">Avenida</option>
+            <option value="TRAVESSA">Travessa</option>
+            <option value="ALAMEDA">Alameda</option>
+            <option value="RODOVIA">Rodovia</option>
+          </select>
+        </div>
+        <div class="field col-6">
+          <label>Logradouro *</label>
+          <input type="text" id="fibraLogradouro" placeholder="Nome da rua/avenida" required>
+        </div>
+        <div class="field col-12">
+          <label>Ponto de Referência</label>
+          <input type="text" id="fibraPontoReferencia" placeholder="Ponto de referência do cliente">
+        </div>
+        <div class="field col-12">
+          <label style="display: flex; align-items: center; gap: 10px; font-size: 13px;">
+            <input type="checkbox" id="fibraMesmoEndereco" style="width: 18px; height: 18px;">
+            Endereço do cliente é o mesmo da instalação
+          </label>
+        </div>
+      </div>
+
+      <!-- SEÇÃO 4: COMPLEMENTO -->
+      <div class="section-header"><i class="fa-solid fa-building"></i> Complemento</div>
+      <div class="form-grid">
+        <div class="field col-6">
+          <label>Tipo de Complemento *</label>
+          <select id="fibraTipoComplemento" required>
+            <option value="">Selecione</option>
+            <option value="Ala">Ala</option>
+            <option value="Apartamento">Apartamento</option>
+            <option value="Bloco">Bloco</option>
+            <option value="Casa">Casa</option>
+            <option value="Conjunto">Conjunto</option>
+            <option value="Edifício">Edifício</option>
+            <option value="Entrada">Entrada</option>
+            <option value="Frente">Frente</option>
+            <option value="Fundos">Fundos</option>
+            <option value="Garagem">Garagem</option>
+            <option value="Loja">Loja</option>
+            <option value="Lote">Lote</option>
+            <option value="Módulo">Módulo</option>
+          </select>
+        </div>
+        <div class="field col-6">
+          <label>Complemento (Descrição)</label>
+          <input type="text" id="fibraComplementoDescricao" placeholder="Ex: Apto 101, Bloco B">
+        </div>
+      </div>
+
+      <!-- BOTÃO DE ENVIO -->
+      <button type="button" class="btn-save" id="btnSalvarFibra" onclick="window.salvarVendaFibra()">
+        <i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO ULTRAFIBRA
+      </button>
+    </form>
+  </div>
 </div>
 
   <div id="areaFormularios" style="display: none;">
@@ -2402,239 +2567,286 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
 })();   // 🛡️ fecha a IIFE do guard
 
   // ============================================
-// LÓGICA PARA TIM ULTRAFIBRA
-// ============================================
+  // LÓGICA PARA TIM ULTRAFIBRA
+  // ============================================
 
-// 1. Alternar entre formulários
-window.escolherSegmento = function(tipo, elemento) {
-  // Remove active de todos os cards
-  document.querySelectorAll('.seg-card').forEach(card => card.classList.remove('active'));
-  elemento.classList.add('active');
+  // 1. Alternar entre formulários (Corrigido para não recriar o form)
+  window.escolherSegmento = function(tipo, elemento) {
+    document.querySelectorAll('.seg-card').forEach(card => card.classList.remove('active'));
+    elemento.classList.add('active');
 
-  const areaEmpresas = document.getElementById('areaFormularios');
-  const areaFibra = document.getElementById('areaFormularioFibra');
+    const areaEmpresas = document.getElementById('areaFormularios');
+    const areaFibra = document.getElementById('areaFormularioFibra');
 
-  if (tipo === 'empresas') {
-    areaEmpresas.style.display = 'block';
-    areaFibra.style.display = 'none';
-    // Carrega planos de empresas se necessário
-    if (typeof window.carregarPlanosVexo === 'function') window.carregarPlanosVexo();
-  } else if (tipo === 'fibra') {
-    areaEmpresas.style.display = 'none';
-    areaFibra.style.display = 'block';
-    // Injeta o formulário de fibra se ainda não estiver presente
-    if (!document.getElementById('formFibra')) {
-      document.getElementById('areaFormularioFibra').innerHTML = document.getElementById('templateFibra').innerHTML;
-      inicializarMascarasFibra();
+    if (tipo === 'empresas') {
+      areaEmpresas.style.display = 'block';
+      areaFibra.style.display = 'none';
+      if (typeof window.carregarPlanosVexo === 'function') window.carregarPlanosVexo();
+    } else if (tipo === 'fibra') {
+      areaEmpresas.style.display = 'none';
+      areaFibra.style.display = 'block';
+      
+      // 🔥 Garante que as máscaras só sejam inicializadas uma vez
+      if (!window._fibraMasksInitialized) {
+        inicializarMascarasFibra();
+        window._fibraMasksInitialized = true;
+      }
     }
-  }
-};
+  };
 
-// 2. Inicializar máscaras e eventos do formulário de fibra
-function inicializarMascarasFibra() {
-  // Máscara CPF/CNPJ
-  const cpfCnpjInput = document.getElementById('fibraCpfCnpj');
-  if (cpfCnpjInput) {
-    cpfCnpjInput.addEventListener('input', function(e) {
-      let v = e.target.value.replace(/\D/g, '');
-      if (v.length <= 11) {
-        // CPF
+  // 2. Inicializar máscaras e eventos do formulário de fibra
+  function inicializarMascarasFibra() {
+    // Máscara CPF/CNPJ + Disparo da API
+    const cpfCnpjInput = document.getElementById('fibraCpfCnpj');
+    if (cpfCnpjInput) {
+      cpfCnpjInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        
+        // Aplica a máscara correta
+        if (v.length <= 11) {
+          v = v.replace(/(\d{3})(\d)/, '$1.$2')
+               .replace(/(\d{3})(\d)/, '$1.$2')
+               .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        } else {
+          v = v.replace(/^(\d{2})(\d)/, '$1.$2')
+               .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+               .replace(/\.(\d{3})(\d)/, '.$1/$2')
+               .replace(/(\d{4})(\d)/, '$1-$2');
+        }
+        e.target.value = v.slice(0, 18);
+
+        // 🔥 DISPARA A BUSCA SE FOR UM CNPJ COMPLETO (14 dígitos)
+        const cleanValue = e.target.value.replace(/\D/g, '');
+        if (cleanValue.length === 14) {
+          window.buscarEmpresaFibra(cleanValue);
+        }
+      });
+    }
+
+    // Máscara CPF do Sócio
+    const cpfSocioInput = document.getElementById('fibraCpfSocio');
+    if (cpfSocioInput) {
+      cpfSocioInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
         v = v.replace(/(\d{3})(\d)/, '$1.$2')
              .replace(/(\d{3})(\d)/, '$1.$2')
              .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-      } else {
-        // CNPJ
-        v = v.replace(/^(\d{2})(\d)/, '$1.$2')
-             .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-             .replace(/\.(\d{3})(\d)/, '.$1/$2')
-             .replace(/(\d{4})(\d)/, '$1-$2');
-      }
-      e.target.value = v.slice(0, 18);
-    });
-  }
-
-  // Máscara CPF do Sócio
-  const cpfSocioInput = document.getElementById('fibraCpfSocio');
-  if (cpfSocioInput) {
-    cpfSocioInput.addEventListener('input', function(e) {
-      let v = e.target.value.replace(/\D/g, '');
-      v = v.replace(/(\d{3})(\d)/, '$1.$2')
-           .replace(/(\d{3})(\d)/, '$1.$2')
-           .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-      e.target.value = v.slice(0, 14);
-    });
-  }
-
-  // Máscara Telefone
-  ['fibraTelefone1', 'fibraTelefone2', 'fibraTelefone3'].forEach(id => {
-    const input = document.getElementById(id);
-    if (input) {
-      input.addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, '');
-        v = v.replace(/^(\d{2})(\d)/, '($1) $2')
-             .replace(/(\d)(\d{4})$/, '$1-$2');
-        e.target.value = v.slice(0, 15);
+        e.target.value = v.slice(0, 14);
       });
     }
-  });
 
-  // Máscara CEP
-  const cepInput = document.getElementById('fibraCep');
-  if (cepInput) {
-    cepInput.addEventListener('input', function(e) {
-      let v = e.target.value.replace(/\D/g, '');
-      v = v.replace(/(\d{5})(\d)/, '$1-$2');
-      e.target.value = v.slice(0, 9);
+    // Máscara Telefone
+    ['fibraTelefone1', 'fibraTelefone2', 'fibraTelefone3'].forEach(id => {
+      const input = document.getElementById(id);
+      if (input) {
+        input.addEventListener('input', function(e) {
+          let v = e.target.value.replace(/\D/g, '');
+          v = v.replace(/^(\d{2})(\d)/, '($1) $2')
+               .replace(/(\d)(\d{4})$/, '$1-$2');
+          e.target.value = v.slice(0, 15);
+        });
+      }
     });
+
+    // Máscara CEP
+    const cepInput = document.getElementById('fibraCep');
+    if (cepInput) {
+      cepInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        v = v.replace(/(\d{5})(\d)/, '$1-$2');
+        e.target.value = v.slice(0, 9);
+      });
+    }
+
+    // Toggle Isento IE
+    const isentoIE = document.getElementById('fibraIsentoIE');
+    const ieInput = document.getElementById('fibraInscricaoEstadual');
+    if (isentoIE && ieInput) {
+      isentoIE.addEventListener('change', function() {
+        if (this.checked) {
+          ieInput.value = '';
+          ieInput.disabled = true;
+          ieInput.placeholder = 'Isento';
+          ieInput.style.background = '#f1f5f9';
+        } else {
+          ieInput.disabled = false;
+          ieInput.placeholder = 'Número da IE';
+          ieInput.style.background = '';
+        }
+      });
+    }
   }
 
-  // Toggle Isento IE
-  const isentoIE = document.getElementById('fibraIsentoIE');
-  const ieInput = document.getElementById('fibraInscricaoEstadual');
-  if (isentoIE && ieInput) {
-    isentoIE.addEventListener('change', function() {
-      if (this.checked) {
-        ieInput.value = '';
-        ieInput.disabled = true;
-        ieInput.placeholder = 'Isento';
+  // 3. Autopreencher dados do CNPJ (API VEXO)
+  window.buscarEmpresaFibra = async function(cnpjLimpo) {
+    const rz = document.getElementById("fibraRazaoSocial");
+    const originalPlaceholder = rz.placeholder;
+    
+    if (rz) {
+      rz.value = "Consultando base VEXO...";
+      rz.style.color = "#3b82f6";
+    }
+
+    try {
+      const response = await fetch(`/api/cnpj?cnpj=${cnpjLimpo}`);
+      if (!response.ok) throw new Error(`Erro na API: ${response.status}`);
+      
+      const data = await response.json();
+
+      if (data && data.razao_social) {
+        if (rz) {
+          rz.value = data.razao_social || '';
+          rz.style.color = "#1e293b";
+        }
+        
+        // Preenche os outros campos do formulário Fibra
+        if (document.getElementById("fibraCep") && data.cep) document.getElementById("fibraCep").value = fmk.cep(data.cep);
+        if (document.getElementById("fibraLogradouro")) document.getElementById("fibraLogradouro").value = data.logradouro || "";
+        if (document.getElementById("fibraNumero")) document.getElementById("fibraNumero").value = data.numero || "";
+        if (document.getElementById("fibraBairro")) document.getElementById("fibraBairro").value = data.bairro || "";
+        if (document.getElementById("fibraMunicipio")) document.getElementById("fibraMunicipio").value = data.municipio || "";
+        if (document.getElementById("fibraUf")) document.getElementById("fibraUf").value = data.uf || "";
+
+        // Feedback visual
+        if (typeof mostrarToastPequno === 'function') {
+          mostrarToastPequno('✅ Dados do CNPJ carregados com sucesso!', 'success');
+        }
       } else {
-        ieInput.disabled = false;
-        ieInput.placeholder = 'Número da IE';
+        throw new Error('Dados não encontrados');
       }
-    });
-  }
-
-  // Checkbox "Mesmo endereço"
-  const mesmoEndereco = document.getElementById('fibraMesmoEndereco');
-  if (mesmoEndereco) {
-    mesmoEndereco.addEventListener('change', function() {
-      // Lógica para copiar endereço, se necessário
-      // Pode ser implementada posteriormente
-    });
-  }
-}
-
-// 3. Buscar CEP via ViaCEP
-window.buscarCepFibra = function() {
-  const cep = document.getElementById('fibraCep').value.replace(/\D/g, '');
-  if (cep.length !== 8) {
-    alert('CEP inválido. Digite 8 dígitos.');
-    return;
-  }
-  fetch(`https://viacep.com.br/ws/${cep}/json/`)
-    .then(response => response.json())
-    .then(data => {
-      if (data.erro) {
-        alert('CEP não encontrado.');
-        return;
+    } catch (e) {
+      console.warn('⚠️ Falha na consulta do CNPJ:', e.message);
+      if (rz) {
+        rz.value = ""; 
+        rz.placeholder = "Não localizado. Preencha manualmente.";
+        rz.style.color = "#ef4444";
+        setTimeout(() => { rz.placeholder = originalPlaceholder; rz.style.color = ""; }, 4000);
       }
-      document.getElementById('fibraUf').value = data.uf || '';
-      document.getElementById('fibraMunicipio').value = data.localidade || '';
-      document.getElementById('fibraBairro').value = data.bairro || '';
-      document.getElementById('fibraLogradouro').value = data.logradouro || '';
-      // Tipo de logradouro pode ser inferido, mas deixamos para o usuário
-    })
-    .catch(error => {
-      console.error('Erro ao buscar CEP:', error);
-      alert('Erro ao buscar CEP. Tente novamente.');
-    });
-};
-
-// 4. Salvar venda de fibra
-window.salvarVendaFibra = function() {
-  const btn = document.getElementById('btnSalvarFibra');
-  const user = JSON.parse(sessionStorage.getItem('usuarioLogado')) || {};
-
-  // Coleta de dados
-  const dados = {
-    tipoProduto: 'TIM ULTRAFIBRA',
-    matriculaUsuario: user.matricula || user.email || user.username,
-    cpfCnpj: document.getElementById('fibraCpfCnpj').value,
-    razaoSocial: document.getElementById('fibraRazaoSocial').value,
-    cpfSocio: document.getElementById('fibraCpfSocio').value,
-    dataFundacao: document.getElementById('fibraDataFundacao').value,
-    telefone1: document.getElementById('fibraTelefone1').value,
-    telefone2: document.getElementById('fibraTelefone2').value,
-    telefone3: document.getElementById('fibraTelefone3').value,
-    email: document.getElementById('fibraEmail').value,
-    emailConfirmacao: document.getElementById('fibraEmailConfirmacao').value,
-    isentoIE: document.getElementById('fibraIsentoIE').checked,
-    inscricaoEstadual: document.getElementById('fibraInscricaoEstadual').value,
-    ufEmissao: document.getElementById('fibraUfEmissao').value,
-    cep: document.getElementById('fibraCep').value,
-    numero: document.getElementById('fibraNumero').value,
-    uf: document.getElementById('fibraUf').value,
-    municipio: document.getElementById('fibraMunicipio').value,
-    bairro: document.getElementById('fibraBairro').value,
-    tipoLogradouro: document.getElementById('fibraTipoLogradouro').value,
-    logradouro: document.getElementById('fibraLogradouro').value,
-    pontoReferencia: document.getElementById('fibraPontoReferencia').value,
-    mesmoEndereco: document.getElementById('fibraMesmoEndereco').checked,
-    tipoComplemento: document.getElementById('fibraTipoComplemento').value,
-    complementoDescricao: document.getElementById('fibraComplementoDescricao').value,
-    statusPedido: 'PENDENTE DE INPUT'
+      if (typeof mostrarToastPequno === 'function') {
+        mostrarToastPequno('⚠️ CNPJ não localizado. Preencha os dados manualmente.', 'warning');
+      }
+    }
   };
 
-  // Validações básicas
-  if (!dados.cpfCnpj || !dados.razaoSocial || !dados.email || !dados.cep) {
-    alert('Preencha todos os campos obrigatórios (*).');
-    return;
-  }
-  if (dados.email !== dados.emailConfirmacao) {
-    alert('Os e-mails não coincidem.');
-    return;
-  }
+  // 4. Buscar CEP via ViaCEP
+  window.buscarCepFibra = function() {
+    const cep = document.getElementById('fibraCep').value.replace(/\D/g, '');
+    if (cep.length !== 8) {
+      alert('CEP inválido. Digite 8 dígitos.');
+      return;
+    }
+    
+    // Feedback visual no botão
+    const btn = event.target;
+    const originalText = btn.innerText;
+    btn.innerText = "Buscando...";
+    btn.disabled = true;
 
-  btn.disabled = true;
-  btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ENVIANDO...';
-
-  // Envio para Supabase via RPC (ajuste o nome da função conforme seu backend)
-  if (window.sb) {
-    window.sb.rpc('parceiro_salvar_venda_fibra', { p_payload: dados })
-      .then(({ data, error }) => {
+    fetch(`https://viacep.com.br/ws/${cep}/json/`)
+      .then(response => response.json())
+      .then(data => {
+        btn.innerText = originalText;
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO ULTRAFIBRA';
-
-        if (error) {
-          console.error('Erro ao salvar:', error);
-          alert('Erro ao enviar: ' + error.message);
+        
+        if (data.erro) {
+          alert('CEP não encontrado.');
           return;
         }
-        if (data && data.success) {
-          // Exibe modal de sucesso (reutiliza o existente)
-          const modal = document.getElementById('modalSucesso');
-          if (modal) {
-            modal.querySelector('h3').innerText = 'Pedido ULTRAFIBRA Enviado!';
-            modal.querySelector('p').innerText = 'O pedido foi registrado e está na fila de análise.';
-            modal.style.display = 'flex';
-          }
-        } else {
-          alert('Erro: ' + (data?.message || 'Erro desconhecido'));
-        }
+        document.getElementById('fibraUf').value = data.uf || '';
+        document.getElementById('fibraMunicipio').value = data.localidade || '';
+        document.getElementById('fibraBairro').value = data.bairro || '';
+        document.getElementById('fibraLogradouro').value = data.logradouro || '';
       })
-      .catch(err => {
+      .catch(error => {
+        btn.innerText = originalText;
         btn.disabled = false;
-        btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO ULTRAFIBRA';
-        console.error('Erro inesperado:', err);
-        alert('Erro no servidor: ' + err.message);
+        console.error('Erro ao buscar CEP:', error);
+        alert('Erro ao buscar CEP. Tente novamente.');
       });
-  } else {
-    alert('Conexão com o banco de dados não disponível.');
-    btn.disabled = false;
-    btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO ULTRAFIBRA';
-  }
-};
+  };
 
-// 5. Template do formulário (para injeção dinâmica)
-const templateFibra = document.createElement('template');
-templateFibra.id = 'templateFibra';
-templateFibra.innerHTML = `
-  <!-- Todo o HTML do formulário de fibra (bloco 2) -->
-  <div class="form-card" id="formFibra">
-    <!-- ... conteúdo do formulário ... -->
-  </div>
-`;
-document.body.appendChild(templateFibra);
+  // 5. Salvar venda de fibra
+  window.salvarVendaFibra = function() {
+    const btn = document.getElementById('btnSalvarFibra');
+    const user = JSON.parse(sessionStorage.getItem('usuarioLogado')) || {};
+
+    // Coleta de dados
+    const dados = {
+      tipoProduto: 'TIM ULTRAFIBRA',
+      matriculaUsuario: user.matricula || user.email || user.username,
+      cpfCnpj: document.getElementById('fibraCpfCnpj').value,
+      razaoSocial: document.getElementById('fibraRazaoSocial').value,
+      cpfSocio: document.getElementById('fibraCpfSocio').value,
+      dataFundacao: document.getElementById('fibraDataFundacao').value,
+      telefone1: document.getElementById('fibraTelefone1').value,
+      telefone2: document.getElementById('fibraTelefone2').value,
+      telefone3: document.getElementById('fibraTelefone3').value,
+      email: document.getElementById('fibraEmail').value,
+      emailConfirmacao: document.getElementById('fibraEmailConfirmacao').value,
+      isentoIE: document.getElementById('fibraIsentoIE').checked,
+      inscricaoEstadual: document.getElementById('fibraInscricaoEstadual').value,
+      ufEmissao: document.getElementById('fibraUfEmissao').value,
+      cep: document.getElementById('fibraCep').value,
+      numero: document.getElementById('fibraNumero').value,
+      uf: document.getElementById('fibraUf').value,
+      municipio: document.getElementById('fibraMunicipio').value,
+      bairro: document.getElementById('fibraBairro').value,
+      tipoLogradouro: document.getElementById('fibraTipoLogradouro').value,
+      logradouro: document.getElementById('fibraLogradouro').value,
+      pontoReferencia: document.getElementById('fibraPontoReferencia').value,
+      mesmoEndereco: document.getElementById('fibraMesmoEndereco').checked,
+      tipoComplemento: document.getElementById('fibraTipoComplemento').value,
+      complementoDescricao: document.getElementById('fibraComplementoDescricao').value,
+      statusPedido: 'PENDENTE DE INPUT'
+    };
+
+    // Validações básicas
+    if (!dados.cpfCnpj || !dados.razaoSocial || !dados.email || !dados.cep) {
+      alert('Preencha todos os campos obrigatórios (*).');
+      return;
+    }
+    if (dados.email !== dados.emailConfirmacao) {
+      alert('Os e-mails não coincidem.');
+      return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ENVIANDO...';
+
+    if (window.sb) {
+      window.sb.rpc('parceiro_salvar_venda_fibra', { p_payload: dados })
+        .then(({ data, error }) => {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO ULTRAFIBRA';
+
+          if (error) {
+            console.error('Erro ao salvar:', error);
+            alert('Erro ao enviar: ' + error.message);
+            return;
+          }
+          if (data && data.success) {
+            const modal = document.getElementById('modalSucesso');
+            if (modal) {
+              modal.querySelector('h3').innerText = 'Pedido ULTRAFIBRA Enviado!';
+              modal.querySelector('p').innerText = 'O pedido foi registrado e está na fila de análise.';
+              modal.style.display = 'flex';
+            }
+          } else {
+            alert('Erro: ' + (data?.message || 'Erro desconhecido'));
+          }
+        })
+        .catch(err => {
+          btn.disabled = false;
+          btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO ULTRAFIBRA';
+          console.error('Erro inesperado:', err);
+          alert('Erro no servidor: ' + err.message);
+        });
+    } else {
+      alert('Conexão com o banco de dados não disponível.');
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO ULTRAFIBRA';
+    }
+  };
 </script>
 
 </body>
