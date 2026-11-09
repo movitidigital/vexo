@@ -221,7 +221,6 @@
     <!-- ABA 1: OFERTAS TIM -->
     <!-- ========================================== -->
     <div id="aba-ofertas">
-      <!-- BARRA DE AÇÕES -->
       <div class="acoes-bar">
         <div class="btn-group" id="btn-group-acoes">
           <button class="btn btn-primary" id="btn-nova-oferta" style="display: none;">
@@ -238,7 +237,6 @@
         </div>
       </div>
 
-      <!-- FILTROS -->
       <div class="filtros-bar">
         <div class="filtro-group">
           <label>🔍 BUSCAR</label>
@@ -270,7 +268,6 @@
         </div>
       </div>
 
-      <!-- TABELA DE OFERTAS -->
       <div class="tabela-wrapper">
         <table class="tabela-ofertas">
           <thead>
@@ -533,7 +530,7 @@
       let todosPlanos = [];
       let planosFiltrados = [];
 
-      let permissoes = { podeEditar: false, podeVisualizar: false, cargo: '' };
+      let permissoes = { podeEditar: false, podeVisualizar: false, podeGerenciarPlanos: false, cargo: '' };
       
       // Elementos DOM - Ofertas
       const tbody = document.getElementById('tabela-ofertas-body');
@@ -564,6 +561,11 @@
         
         document.getElementById('tab-btn-ofertas').classList.toggle('active', aba === 'ofertas');
         document.getElementById('tab-btn-planos').classList.toggle('active', aba === 'planos');
+
+        // 🔥 CORREÇÃO: Carrega os planos assim que a aba é clicada
+        if (aba === 'planos' && permissoes.podeGerenciarPlanos) {
+          carregarPlanos();
+        }
       };
 
       async function init() {
@@ -603,13 +605,11 @@
       // ============================================
       async function carregarPermissoes() {
         let cargo = '';
-        let nome  = '';
         let userId = null;
 
         try {
           const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
           userId = sessao.id || sessao.user?.id || null;
-          nome   = sessao.email || '';
         } catch(e) {}
 
         if (!userId && window.VEXO?.user?.id) {
@@ -620,15 +620,13 @@
           try {
             const { data, error } = await window.sb
               .from('profiles')
-              .select('nome, sobrenome, role, ativo')
+              .select('role, ativo')
               .eq('id', userId)
               .single();
 
             if (error) throw error;
-
             if (data) {
               cargo = data.role || '';
-              nome  = [data.nome, data.sobrenome].filter(Boolean).join(' ').trim() || nome;
               if (data.ativo === false) cargo = ''; 
             }
           } catch(e) {
@@ -638,7 +636,6 @@
 
         cargo = String(cargo).toUpperCase().trim();
         
-        // 🔥 Regra de permissão atualizada
         const cargosEdicao = ['ADMINISTRADOR', 'BACKOFFICE', 'PROPRIETÁRIO', 'PROPRIETARIO', 'GERENTE/SUPERVISOR', 'GERENTE', 'SUPERVISOR'];
         
         permissoes.podeEditar     = cargosEdicao.includes(cargo);
@@ -657,13 +654,10 @@
         } else {
           badge.innerHTML = '<span>⚠️</span> Acesso negado';
           document.querySelector('.ofertas-container').innerHTML = `
-            <div class="empty-state">
-              ❌ Você não tem permissão para acessar este módulo.
-            </div>`;
+            <div class="empty-state">❌ Você não tem permissão para acessar este módulo.</div>`;
           return;
         }
 
-        // 🔥 Mostra a aba de planos se tiver permissão
         if (permissoes.podeGerenciarPlanos) {
           document.getElementById('tab-btn-planos').style.display = 'inline-block';
         }
@@ -672,7 +666,7 @@
       }
       
       // ============================================
-      // CRUD - OFERTAS (Mantido igual ao original)
+      // CRUD - OFERTAS
       // ============================================
       function carregarOfertas() {
         tbody.innerHTML = '<tr><td colspan="7" class="loading-spinner">⏳ Carregando ofertas...</td></tr>';
@@ -902,11 +896,17 @@
       }
 
       // ============================================
-      // CRUD - PLANOS SISTÊMICOS (NOVO)
+      // CRUD - PLANOS SISTÊMICOS
       // ============================================
       
       async function carregarPlanos() {
         tbodyPlanos.innerHTML = '<tr><td colspan="5" class="loading-spinner">⏳ Carregando planos...</td></tr>';
+        
+        if (!window.sb) {
+          tbodyPlanos.innerHTML = '<tr><td colspan="5" class="empty-state">❌ Supabase não inicializado.</td></tr>';
+          return;
+        }
+
         try {
           const { data, error } = await window.sb
             .from('planos')
@@ -916,11 +916,12 @@
           if (error) throw error;
           
           todosPlanos = data || [];
+          console.log(`✅ ${todosPlanos.length} planos carregados`);
           aplicarFiltrosPlanos();
         } catch (e) {
           console.error('Erro ao carregar planos:', e);
           mostrarToast('Erro ao carregar planos do banco.', 'error');
-          tbodyPlanos.innerHTML = '<tr><td colspan="5" class="empty-state">❌ Erro ao carregar planos</td></tr>';
+          tbodyPlanos.innerHTML = `<tr><td colspan="5" class="empty-state">❌ Erro ao carregar planos: ${e.message}</td></tr>`;
         }
       }
 
@@ -945,18 +946,22 @@
 
         const formatarValor = (valor) => `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-        tbodyPlanos.innerHTML = planosFiltrados.map(plano => `
+        tbodyPlanos.innerHTML = planosFiltrados.map(plano => {
+          // Fallback: se não houver coluna 'id', usa o 'nome' para identificar
+          const planoId = plano.id || plano.nome; 
+          
+          return `
           <tr>
             <td style="font-weight: 600; font-size: 11px; color: var(--vexo-gray-500);">${plano.id || '-'}</td>
             <td><strong style="color: var(--vexo-gray-800);">${escapeHtml(plano.nome)}</strong></td>
             <td style="font-weight: 700; color: var(--vexo-primary);">${formatarValor(plano.valor)}</td>
             <td>${plano.ativo ? '<span class="badge-status badge-ativo">🟢 ATIVO</span>' : '<span class="badge-status badge-inativo">🔴 INATIVO</span>'}</td>
             <td>
-              <button class="acao-btn acao-editar" onclick="window.abrirModalEditarPlano('${plano.id}')" title="Editar">✏️</button>
-              <button class="acao-btn acao-excluir" onclick="window.excluirPlano('${plano.id}')" title="Excluir">🗑️</button>
+              <button class="acao-btn acao-editar" onclick="window.abrirModalEditarPlano('${planoId}')" title="Editar">✏️</button>
+              <button class="acao-btn acao-excluir" onclick="window.excluirPlano('${planoId}')" title="Excluir">🗑️</button>
             </td>
           </tr>
-        `).join('');
+        `}).join('');
       }
 
       function abrirModalNovoPlano() {
@@ -969,8 +974,8 @@
         setTimeout(() => modalPlano.classList.add('show'), 10);
       }
 
-      window.abrirModalEditarPlano = function(id) {
-        const plano = todosPlanos.find(p => p.id === id || p.nome === id); // Fallback se não houver ID
+      window.abrirModalEditarPlano = function(idOuNome) {
+        const plano = todosPlanos.find(p => p.id === idOuNome || p.nome === idOuNome);
         if (!plano) return mostrarToast('Plano não encontrado', 'error');
 
         document.getElementById('modal-title-plano').innerText = '✏️ Editar Plano Sistêmico';
@@ -1004,11 +1009,19 @@
           const planoData = { nome, valor: parseFloat(valor), ativo };
 
           if (id) {
-            // Update
-            const { error } = await window.sb.from('planos').update(planoData).eq('id', id);
+            // Verifica se é um UUID (contém hífens) ou se estamos usando o nome como fallback
+            const isUUID = id.includes('-') && id.length > 20;
+            let query = window.sb.from('planos').update(planoData);
+            
+            if (isUUID) {
+              query = query.eq('id', id);
+            } else {
+              query = query.eq('nome', id); // Atualiza baseado no nome antigo
+            }
+            
+            const { error } = await query;
             if (error) throw error;
           } else {
-            // Insert
             const { error } = await window.sb.from('planos').insert([planoData]);
             if (error) throw error;
           }
@@ -1025,11 +1038,21 @@
         }
       }
 
-      window.excluirPlano = async function(id) {
+      window.excluirPlano = async function(idOuNome) {
         if (confirm('⚠️ Tem certeza que deseja excluir este plano?\n\nEle deixará de aparecer no momento da venda.')) {
           try {
-            const { error } = await window.sb.from('planos').delete().eq('id', id);
+            const isUUID = idOuNome.includes('-') && idOuNome.length > 20;
+            let query = window.sb.from('planos').delete();
+            
+            if (isUUID) {
+              query = query.eq('id', idOuNome);
+            } else {
+              query = query.eq('nome', idOuNome);
+            }
+
+            const { error } = await query;
             if (error) throw error;
+            
             mostrarToast('Plano excluído com sucesso!', 'success');
             carregarPlanos();
           } catch (e) {
