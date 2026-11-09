@@ -3533,21 +3533,18 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
             const modal = document.getElementById('modalSucesso');
             if (modal) {
               modal.querySelector('h3').innerText = 'Pedido ULTRAFIBRA Enviado!';
-              modal.querySelector('p').innerText = 'O pedido foi registrado e está na fila de análise.';
+              modal.querySelector('p').innerText = 'O pedido foi registrado com sucesso e já está na fila de análise do Backoffice.';
               modal.style.display = 'flex';
 
-              // 🔥 CORREÇÃO: Ajustar o botão do modal para voltar à Etapa 3
+              // 🔥 CORREÇÃO: Botão para limpar a tela e iniciar nova venda
               const btnModal = modal.querySelector('.btn-modal');
               if (btnModal) {
-                btnModal.innerText = 'OK, ENTENDIDO';
+                btnModal.innerText = 'OK, NOVA VENDA';
                 btnModal.onclick = function() {
-                  // 1. Esconde o modal
                   modal.style.display = 'none';
-                  
-                  // 2. Volta o Wizard para a Etapa 3
-                  window.passoAtualFibra = 3;
-                  if (typeof window.mudarPassoFibra === 'function') {
-                    window.mudarPassoFibra(0); // 0 significa apenas atualizar a tela sem alterar o número do passo
+                  // Chama a função de reset do formulário
+                  if (typeof window.resetarFormularioFibra === 'function') {
+                    window.resetarFormularioFibra();
                   }
                 };
               }
