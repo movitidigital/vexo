@@ -1006,22 +1006,25 @@
         btn.disabled = true; btn.innerHTML = '⏳ Salvando...';
 
         try {
-          const planoData = { nome, valor: parseFloat(valor), ativo };
+          // 🔥 CORREÇÃO AQUI: Adicionamos o tenant_id
+          const TENANT_ID = 'f9cca67a-41f8-4ad7-a119-74bc58018dee'; 
+          const planoData = { nome, valor: parseFloat(valor), ativo, tenant_id: TENANT_ID };
 
           if (id) {
-            // Verifica se é um UUID (contém hífens) ou se estamos usando o nome como fallback
+            // Update
             const isUUID = id.includes('-') && id.length > 20;
             let query = window.sb.from('planos').update(planoData);
             
             if (isUUID) {
               query = query.eq('id', id);
             } else {
-              query = query.eq('nome', id); // Atualiza baseado no nome antigo
+              query = query.eq('nome', id); 
             }
             
             const { error } = await query;
             if (error) throw error;
           } else {
+            // Insert
             const { error } = await window.sb.from('planos').insert([planoData]);
             if (error) throw error;
           }
