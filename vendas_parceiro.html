@@ -756,7 +756,7 @@
       </div>
 
       <!-- ETAPA 1: IDENTIFICAÇÃO -->
-      <div id="step-fibra-1" class="step-content active" style="display: none;">
+<div id="step-fibra-1" class="step-content active">
         <div class="section-header"><i class="fa-solid fa-id-card"></i> Identificação do Cliente</div>
         <div class="form-grid">
           <div class="field col-12">
@@ -917,7 +917,7 @@
             <div class="field col-12" style="margin-top: 10px;">
               <label>Forma de Pagamento *</label>
               <div style="display: flex; gap: 20px; margin-top: 8px; flex-wrap: wrap;">
-                <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;"><input type="radio" name="fibraFormaPagamento" value="FATURA"> Fatura</label>
+                <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;"><input type="radio" name="fibraFormaPagamento" value="FATURA" checked> Fatura</label>
                 <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;"><input type="radio" name="fibraFormaPagamento" value="DEBITO_AUTOMATICO"> Débito Automático</label>
                 <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;"><input type="radio" name="fibraFormaPagamento" value="CARTAO_CREDITO"> Cartão de Crédito</label>
               </div>
@@ -2805,7 +2805,7 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
           if (pjContatosWrapper) pjContatosWrapper.style.display = 'none';
           
           if (contatoFields) contatoFields.style.display = 'none';
-          if (enderecoFields) contatoFields.style.display = 'none';
+          if (enderecoFields) enderecoFields.style.display = 'none';
           if (billingFields) billingFields.style.display = 'none';
           
           // Esconde o wizard
