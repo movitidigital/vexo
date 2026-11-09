@@ -799,88 +799,22 @@
           </div>
         </div>
 
-        <!-- DADOS DO CONTATO (SÓCIO) -->
-        <div class="section-header" style="margin-top: 25px;"><i class="fa-solid fa-user-tie"></i> Dados do Contato (Sócio)</div>
-        <div class="form-grid">
-          <div class="field col-6"><label>Nome do Contato *</label><input type="text" id="socioNome" placeholder="Nome completo"></div>
-          <div class="field col-6"><label>Data de Nascimento *</label><input type="date" id="socioDataNascimento"></div>
-          
-          <div class="field col-4">
-            <label>Tipo de Contato *</label>
-            <select id="socioTipoContato">
-              <option value="SOCIO" selected>Sócio</option>
-              <option value="ADMINISTRADOR">Administrador</option>
-              <option value="PROCURADOR">Procurador</option>
-            </select>
-          </div>
-          <div class="field col-4">
-            <label>País *</label>
-            <select id="socioPais">
-              <option value="BRASIL" selected>Brasil</option>
-              <option value="OUTROS">Outros</option>
-            </select>
-          </div>
-          <div class="field col-4"><label>CPF *</label><input type="text" id="socioCpf" placeholder="000.000.000-00" maxlength="14"></div>
-
-          <div class="field col-4">
-            <label>Tipo de Documento *</label>
-            <select id="socioTipoDoc">
-              <option value="CARTEIRA_DE_ESTRANGEIRO">Carteira de Estrangeiro</option>
-              <option value="CARTEIRA_DE_IDENTIDADE" selected>Carteira de Identidade</option>
-              <option value="CARTEIRA_DE_TRABALHO">Carteira de Trabalho</option>
-              <option value="CERTIDAO_DE_NASCIMENTO">Certidão de Nasc.</option>
-              <option value="CNH">CNH</option>
-              <option value="IDENTIDADE_FUNCIONAL">Ident. Funcional</option>
-              <option value="IDENTIDADE_INDIGENA">Ident. Indígena</option>
-              <option value="IDENTIDADE_PROFISSIONAL">Ident. Profissional</option>
-              <option value="IDENTIDADE_ESTRANGEIRA">Identidade Estrang.</option>
-              <option value="IDENTIDADE_MILITAR">Identidade Militar</option>
-              <option value="OUTROS">Outros</option>
-              <option value="PASSAPORTE">Passaporte</option>
-              <option value="PASSAPORTE_ESTRANGEIRO">Passaporte Estrang.</option>
-            </select>
-          </div>
-          <div class="field col-4"><label>Número do Documento *</label><input type="text" id="socioNumeroDoc"></div>
-          <div class="field col-4"><label>Data de Emissão *</label><input type="date" id="socioDataEmissaoDoc"></div>
-
-          <div class="field col-4"><label>Órgão Emissor *</label><input type="text" id="socioOrgaoEmissor" placeholder="Ex: SSP"></div>
-          <div class="field col-4">
-            <label>UF do Documento *</label>
-            <select id="socioUfDoc">
-              <option value="">Selecione...</option>
-              <option value="AC">AC</option>
-              <option value="AL">AL</option>
-              <option value="AP">AP</option>
-              <option value="AM">AM</option>
-              <option value="BA">BA</option>
-              <option value="CE">CE</option>
-              <option value="DF">DF</option>
-              <option value="ES">ES</option>
-              <option value="GO">GO</option>
-              <option value="MA">MA</option>
-              <option value="MT">MT</option>
-              <option value="MS">MS</option>
-              <option value="MG">MG</option>
-              <option value="PA">PA</option>
-              <option value="PB">PB</option>
-              <option value="PR">PR</option>
-              <option value="PE">PE</option>
-              <option value="PI">PI</option>
-              <option value="RJ">RJ</option>
-              <option value="RN">RN</option>
-              <option value="RS">RS</option>
-              <option value="RO">RO</option>
-              <option value="RR">RR</option>
-              <option value="SC">SC</option>
-              <option value="SP">SP</option>
-              <option value="SE">SE</option>
-              <option value="TO">TO</option>
-            </select>
-          </div>
-          <div class="field col-4"><label>Telefone *</label><input type="text" id="socioTelefone" placeholder="(00) 00000-0000" maxlength="15"></div>
+        <!-- DADOS DOS CONTATOS (MÚLTIPLOS) -->
+        <div class="section-header" style="margin-top: 25px;"><i class="fa-solid fa-user-tie"></i> Contatos da Empresa</div>
+        
+        <!-- Container onde os cards de contatos serão inseridos dinamicamente -->
+        <div id="container-contatos-pj" class="col-12" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
+            <!-- O primeiro contato será injetado automaticamente via JavaScript -->
         </div>
-      </div>
 
+        <!-- Botão para adicionar mais contatos -->
+        <div class="col-12" style="margin-bottom: 15px;">
+            <button type="button" onclick="window.adicionarContatoPJ()" style="background: none; border: none; color: #3b82f6; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 0;">
+                <i class="fa-solid fa-plus"></i> Adicionar Contato
+            </button>
+        </div>
+        
+      </div>
       <!-- SEÇÃO 3: CONTATO (Comum a PF e PJ) -->
       <div id="fibra-contato-fields" style="display: none; width: 100%;">
         <div class="section-header"><i class="fa-solid fa-address-book"></i> Contato</div>
@@ -2748,8 +2682,163 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     }
   };
 
+  // ============================================
+  // LÓGICA DE CONTATOS MÚLTIPLOS (PJ)
+  // ============================================
+  window.contadorContatos = 0;
+
+  window.adicionarContatoPJ = function() {
+    window.contadorContatos++;
+    const container = document.getElementById('container-contatos-pj');
+    if (!container) return;
+
+    const cardId = window.contadorContatos;
+    const cardHTML = `
+      <div class="contato-card" id="contato-card-${cardId}" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; position: relative; animation: fadeIn 0.3s ease;">
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+          <h4 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0;">Dados do Contato <span class="contato-index">${cardId}</span></h4>
+          <button type="button" onclick="window.removerContatoPJ(this)" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px; transition: 0.2s;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#ef4444'">
+            <i class="fa-solid fa-trash-can"></i>
+          </button>
+        </div>
+
+        <div class="form-grid">
+          <div class="field col-6"><label>Nome do Contato *</label><input type="text" class="contato-nome" placeholder="Nome completo"></div>
+          <div class="field col-6"><label>Data de Nascimento *</label><input type="date" class="contato-nascimento"></div>
+          
+          <div class="field col-4">
+            <label>Tipo de Contato *</label>
+            <select class="contato-tipo">
+              <option value="SOCIO" selected>Sócio</option>
+              <option value="ADMINISTRADOR">Administrador</option>
+              <option value="PROCURADOR">Procurador</option>
+            </select>
+          </div>
+          <div class="field col-4">
+            <label>País *</label>
+            <select class="contato-pais">
+              <option value="BRASIL" selected>Brasil</option>
+              <option value="OUTROS">Outros</option>
+            </select>
+          </div>
+          <div class="field col-4"><label>CPF *</label><input type="text" class="contato-cpf" placeholder="000.000.000-00" maxlength="14"></div>
+
+          <div class="field col-4">
+            <label>Tipo de Documento *</label>
+            <select class="contato-tipo-doc">
+              <option value="CARTEIRA_DE_ESTRANGEIRO">Carteira de Estrangeiro</option>
+              <option value="CARTEIRA_DE_IDENTIDADE" selected>Carteira de Identidade</option>
+              <option value="CARTEIRA_DE_TRABALHO">Carteira de Trabalho</option>
+              <option value="CERTIDAO_DE_NASCIMENTO">Certidão de Nasc.</option>
+              <option value="CNH">CNH</option>
+              <option value="IDENTIDADE_FUNCIONAL">Ident. Funcional</option>
+              <option value="IDENTIDADE_INDIGENA">Ident. Indígena</option>
+              <option value="IDENTIDADE_PROFISSIONAL">Ident. Profissional</option>
+              <option value="IDENTIDADE_ESTRANGEIRA">Identidade Estrang.</option>
+              <option value="IDENTIDADE_MILITAR">Identidade Militar</option>
+              <option value="OUTROS">Outros</option>
+              <option value="PASSAPORTE">Passaporte</option>
+              <option value="PASSAPORTE_ESTRANGEIRO">Passaporte Estrang.</option>
+            </select>
+          </div>
+          <div class="field col-4"><label>Número do Documento *</label><input type="text" class="contato-numero-doc"></div>
+          <div class="field col-4"><label>Data de Emissão *</label><input type="date" class="contato-data-emissao"></div>
+
+          <div class="field col-4"><label>Órgão Emissor *</label><input type="text" class="contato-orgao" placeholder="Ex: SSP"></div>
+          <div class="field col-4">
+            <label>UF do Documento *</label>
+            <select class="contato-uf-doc">
+              <option value="">Selecione...</option>
+              <option value="AC">AC</option>
+              <option value="AL">AL</option>
+              <option value="AP">AP</option>
+              <option value="AM">AM</option>
+              <option value="BA">BA</option>
+              <option value="CE">CE</option>
+              <option value="DF">DF</option>
+              <option value="ES">ES</option>
+              <option value="GO">GO</option>
+              <option value="MA">MA</option>
+              <option value="MT">MT</option>
+              <option value="MS">MS</option>
+              <option value="MG">MG</option>
+              <option value="PA">PA</option>
+              <option value="PB">PB</option>
+              <option value="PR">PR</option>
+              <option value="PE">PE</option>
+              <option value="PI">PI</option>
+              <option value="RJ">RJ</option>
+              <option value="RN">RN</option>
+              <option value="RS">RS</option>
+              <option value="RO">RO</option>
+              <option value="RR">RR</option>
+              <option value="SC">SC</option>
+              <option value="SP">SP</option>
+              <option value="SE">SE</option>
+              <option value="TO">TO</option>
+            </select>
+          </div>
+          <div class="field col-4"><label>Telefone *</label><input type="text" class="contato-telefone" placeholder="(00) 00000-0000" maxlength="15"></div>
+
+          <div class="field col-12" style="flex-direction: row; gap: 20px; margin-top: 10px;">
+            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600;">
+              <input type="checkbox" class="contato-nao-alfabetizado" style="width:18px;height:18px;"> Cliente Não Alfabetizado
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600;">
+              <input type="checkbox" class="contato-necessidades" style="width:18px;height:18px;"> Cliente com Necessidades Especiais
+            </label>
+          </div>
+        </div>
+      </div>
+    `;
+
+    container.insertAdjacentHTML('beforeend', cardHTML);
+
+    // 🔥 Aplica as máscaras nos novos campos
+    const newCard = document.getElementById(`contato-card-${cardId}`);
+    aplicarMascarasContato(newCard);
+  };
+
+  window.removerContatoPJ = function(btn) {
+    const card = btn.closest('.contato-card');
+    if (card) {
+      card.remove();
+      // Reajusta os números dos contatos visíveis
+      document.querySelectorAll('.contato-card').forEach((c, index) => {
+        c.querySelector('.contato-index').innerText = index + 1;
+      });
+    }
+  };
+
+  // Função auxiliar para aplicar máscaras nos inputs gerados dinamicamente
+  function aplicarMascarasContato(container) {
+    const cpfInput = container.querySelector('.contato-cpf');
+    if (cpfInput) {
+      cpfInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+        e.target.value = v.slice(0, 14);
+      });
+    }
+
+    const telInput = container.querySelector('.contato-telefone');
+    if (telInput) {
+      telInput.addEventListener('input', function(e) {
+        let v = e.target.value.replace(/\D/g, '');
+        v = v.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2');
+        e.target.value = v.slice(0, 15);
+      });
+    }
+  }
+  
   // 2. Inicializar máscaras e eventos do formulário de fibra
   function inicializarMascarasFibra() {
+    // 🔥 Cria o primeiro contato por padrão se o container estiver vazio
+    if (document.getElementById('container-contatos-pj') && document.querySelectorAll('.contato-card').length === 0) {
+      window.adicionarContatoPJ();
+    }
+
     const cpfCnpjInput = document.getElementById('fibraCpfCnpj');
     if (cpfCnpjInput) {
       cpfCnpjInput.addEventListener('input', function(e) {
@@ -2900,24 +2989,7 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       });
     }
 
-    // 🔥 MÁSCARAS: DADOS DO SÓCIO
-    const socioCpfInput = document.getElementById('socioCpf');
-    if (socioCpfInput) {
-      socioCpfInput.addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, '');
-        v = v.replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d)/, '$1.$2').replace(/(\d{3})(\d{1,2})$/, '$1-$2');
-        e.target.value = v.slice(0, 14);
-      });
-    }
-
-    const socioTelInput = document.getElementById('socioTelefone');
-    if (socioTelInput) {
-      socioTelInput.addEventListener('input', function(e) {
-        let v = e.target.value.replace(/\D/g, '');
-        v = v.replace(/^(\d{2})(\d)/, '($1) $2').replace(/(\d)(\d{4})$/, '$1-$2');
-        e.target.value = v.slice(0, 15);
-      });
-    }
+    // 🔥 REMOVIDO: As máscaras de socioCpf e socioTelefone foram para dentro da função aplicarMascarasContato()
 
     // Máscaras de Telefone de Contato Principal
     ['fibraTelefone1', 'fibraTelefone2', 'fibraTelefone3'].forEach(id => {
@@ -3207,28 +3279,48 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       dados.inscricaoEstadual = document.getElementById('fibraInscricaoEstadual').value;
       dados.ufEmissao = document.getElementById('fibraUfEmissao').value;
 
-      // 🔥 Dados do Sócio
-      dados.socioNome = document.getElementById('socioNome').value;
-      dados.socioDataNascimento = document.getElementById('socioDataNascimento').value;
-      dados.socioTipoContato = document.getElementById('socioTipoContato').value;
-      dados.socioPais = document.getElementById('socioPais').value;
-      dados.socioCpf = document.getElementById('socioCpf').value;
-      dados.socioTipoDoc = document.getElementById('socioTipoDoc').value;
-      dados.socioNumeroDoc = document.getElementById('socioNumeroDoc').value;
-      dados.socioDataEmissaoDoc = document.getElementById('socioDataEmissaoDoc').value;
-      dados.socioOrgaoEmissor = document.getElementById('socioOrgaoEmissor').value;
-      dados.socioUfDoc = document.getElementById('socioUfDoc').value;
-      dados.socioTelefone = document.getElementById('socioTelefone').value;
-
-      // Validações PJ
+      // Validação básica da empresa
       if (!dados.razaoSocial) {
         alert('Preencha a Razão Social da empresa.');
         return;
       }
 
-      if (!dados.socioNome || !dados.socioDataNascimento || !dados.socioCpf || !dados.socioNumeroDoc || !dados.socioDataEmissaoDoc || !dados.socioOrgaoEmissor || !dados.socioUfDoc || !dados.socioTelefone) {
-        alert('Preencha todos os dados obrigatórios do Sócio (Nome, Nascimento, CPF, Documento, Telefone).');
+      // 🔥 COLETA DINÂMICA DOS CONTATOS DA EMPRESA
+      dados.contatos = [];
+      const cardsContatos = document.querySelectorAll('.contato-card');
+      
+      if (cardsContatos.length === 0) {
+        alert('Adicione pelo menos um contato para a empresa.');
         return;
+      }
+
+      for (let i = 0; i < cardsContatos.length; i++) {
+        const card = cardsContatos[i];
+        const nomeContato = card.querySelector('.contato-nome').value;
+        const cpfContato = card.querySelector('.contato-cpf').value;
+        const numeroDocContato = card.querySelector('.contato-numero-doc').value;
+        
+        // Validação dos campos obrigatórios do contato
+        if (!nomeContato || !cpfContato || !numeroDocContato) {
+          alert(`Preencha os dados obrigatórios (Nome, CPF, Documento) do Contato ${i + 1}.`);
+          return;
+        }
+
+        dados.contatos.push({
+          nome: nomeContato,
+          dataNascimento: card.querySelector('.contato-nascimento').value,
+          tipoContato: card.querySelector('.contato-tipo').value,
+          pais: card.querySelector('.contato-pais').value,
+          cpf: cpfContato,
+          tipoDoc: card.querySelector('.contato-tipo-doc').value,
+          numeroDoc: numeroDocContato,
+          dataEmissao: card.querySelector('.contato-data-emissao').value,
+          orgaoEmissor: card.querySelector('.contato-orgao').value,
+          ufDoc: card.querySelector('.contato-uf-doc').value,
+          telefone: card.querySelector('.contato-telefone').value,
+          naoAlfabetizado: card.querySelector('.contato-nao-alfabetizado').checked,
+          necessidadesEspeciais: card.querySelector('.contato-necessidades').checked
+        });
       }
 
       // 🔥 REGRA DE NEGÓCIO: UF da IE x UF do Endereço de Instalação
