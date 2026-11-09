@@ -876,9 +876,24 @@
             <div class="field col-6"><label>Bairro *</label><input type="text" id="fibraBairro" placeholder="Bairro" required></div>
             <div class="field col-6">
               <label>Tipo de Logradouro *</label>
-              <select id="fibraTipoLogradouro" required>
-                <option value="">Selecione</option><option value="RUA">Rua</option><option value="AVENIDA">Avenida</option><option value="TRAVESSA">Travessa</option><option value="ALAMEDA">Alameda</option><option value="RODOVIA">Rodovia</option>
-              </select>
+<select id="fibraTipoLogradouro" required>
+  <option value="">Selecione</option>
+  <option value="ALAMEDA">ALAMEDA</option>
+  <option value="AVENIDA">AVENIDA</option>
+  <option value="CAMINHO">CAMINHO</option>
+  <option value="CONJUNTO">CONJUNTO</option>
+  <option value="ESTRADA">ESTRADA</option>
+  <option value="NA">NA</option>
+  <option value="PASSAGEM">PASSAGEM</option>
+  <option value="PRACA">PRACA</option>
+  <option value="QUADRA">QUADRA</option>
+  <option value="RODOVIA">RODOVIA</option>
+  <option value="RUA">RUA</option>
+  <option value="SERVIDAO">SERVIDAO</option>
+  <option value="SITIO">SITIO</option>
+  <option value="TRAVESSA">TRAVESSA</option>
+  <option value="VILA">VILA</option>
+</select>
             </div>
             <div class="field col-6"><label>Logradouro *</label><input type="text" id="fibraLogradouro" placeholder="Nome da rua/avenida" required></div>
             <div class="field col-12"><label>Ponto de Referência</label><input type="text" id="fibraPontoReferencia" placeholder="Ponto de referência do cliente"></div>
@@ -904,7 +919,26 @@
               <div class="field col-4"><label>UF *</label><input type="text" id="clienteUf" maxlength="2" placeholder="UF"></div>
               <div class="field col-6"><label>Município *</label><input type="text" id="clienteMunicipio" placeholder="Cidade"></div>
               <div class="field col-6"><label>Bairro *</label><input type="text" id="clienteBairro" placeholder="Bairro"></div>
-              <div class="field col-6"><label>Tipo de Logradouro *</label><select id="clienteTipoLogradouro"><option value="">Selecione</option><option value="RUA">Rua</option><option value="AVENIDA">Avenida</option><option value="TRAVESSA">Travessa</option><option value="ALAMEDA">Alameda</option><option value="RODOVIA">Rodovia</option></select></div>
+              <div class="field col-6"><label>Tipo de Logradouro *</label>
+<select id="clienteTipoLogradouro">
+  <option value="">Selecione</option>
+  <option value="ALAMEDA">ALAMEDA</option>
+  <option value="AVENIDA">AVENIDA</option>
+  <option value="CAMINHO">CAMINHO</option>
+  <option value="CONJUNTO">CONJUNTO</option>
+  <option value="ESTRADA">ESTRADA</option>
+  <option value="NA">NA</option>
+  <option value="PASSAGEM">PASSAGEM</option>
+  <option value="PRACA">PRACA</option>
+  <option value="QUADRA">QUADRA</option>
+  <option value="RODOVIA">RODOVIA</option>
+  <option value="RUA">RUA</option>
+  <option value="SERVIDAO">SERVIDAO</option>
+  <option value="SITIO">SITIO</option>
+  <option value="TRAVESSA">TRAVESSA</option>
+  <option value="VILA">VILA</option>
+</select>
+              </div>
               <div class="field col-6"><label>Logradouro *</label><input type="text" id="clienteLogradouro" placeholder="Nome da rua/avenida"></div>
               <div class="field col-6"><label>Tipo de Complemento</label><select id="clienteTipoComplemento"><option value="">Selecione...</option><option value="Andar">Andar</option><option value="Apartamento">Apartamento</option><option value="Bloco">Bloco</option><option value="Casa">Casa</option><option value="Outros">Outros</option></select></div>
               <div class="field col-6"><label>Complemento (Descrição)</label><input type="text" id="clienteComplementoDescricao" placeholder="Ex: Apto 101"></div>
@@ -951,7 +985,26 @@
                 <div class="field col-4"><label>UF *</label><input type="text" id="cobrancaUf" maxlength="2" placeholder="UF"></div>
                 <div class="field col-6"><label>Município *</label><input type="text" id="cobrancaMunicipio" placeholder="Cidade"></div>
                 <div class="field col-6"><label>Bairro *</label><input type="text" id="cobrancaBairro" placeholder="Bairro"></div>
-                <div class="field col-6"><label>Tipo de Logradouro *</label><select id="cobrancaTipoLogradouro"><option value="">Selecione</option><option value="RUA">Rua</option><option value="AVENIDA">Avenida</option><option value="TRAVESSA">Travessa</option><option value="ALAMEDA">Alameda</option><option value="RODOVIA">Rodovia</option></select></div>
+                <div class="field col-6"><label>Tipo de Logradouro *</label>
+                  <select id="cobrancaTipoLogradouro">
+  <option value="">Selecione</option>
+  <option value="ALAMEDA">ALAMEDA</option>
+  <option value="AVENIDA">AVENIDA</option>
+  <option value="CAMINHO">CAMINHO</option>
+  <option value="CONJUNTO">CONJUNTO</option>
+  <option value="ESTRADA">ESTRADA</option>
+  <option value="NA">NA</option>
+  <option value="PASSAGEM">PASSAGEM</option>
+  <option value="PRACA">PRACA</option>
+  <option value="QUADRA">QUADRA</option>
+  <option value="RODOVIA">RODOVIA</option>
+  <option value="RUA">RUA</option>
+  <option value="SERVIDAO">SERVIDAO</option>
+  <option value="SITIO">SITIO</option>
+  <option value="TRAVESSA">TRAVESSA</option>
+  <option value="VILA">VILA</option>
+</select>
+                </div>
                 <div class="field col-6"><label>Logradouro *</label><input type="text" id="cobrancaLogradouro" placeholder="Nome da rua/avenida"></div>
                 <div class="field col-4"><label>Caixa Postal</label><input type="text" id="cobrancaCaixaPostal" placeholder="Caixa Postal"></div>
                 <div class="field col-4"><label>Tipo de Complemento</label><select id="cobrancaTipoComplemento"><option value="">Selecione...</option><option value="Andar">Andar</option><option value="Apartamento">Apartamento</option><option value="Outros">Outros</option></select></div>
