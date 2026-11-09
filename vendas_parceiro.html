@@ -653,6 +653,69 @@
   background: #fef08a; color: #1e293b; border-radius: 2px; padding: 0 1px;
 }
 .plano-dropdown .vazio { padding: 14px; text-align:center; font-size:12px; color:#94a3b8; }
+
+        /* WIZARD / STEPPER */
+    .wizard-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 30px;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 15px;
+      overflow-x: auto;
+    }
+    .wizard-step {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+      color: #94a3b8;
+      font-size: 13px;
+      transition: all 0.3s ease;
+      white-space: nowrap;
+    }
+    .wizard-step .step-number {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #f1f5f9;
+      color: #64748b;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 700;
+      transition: all 0.3s ease;
+    }
+    .wizard-step.active {
+      color: #3b82f6;
+    }
+    .wizard-step.active .step-number {
+      background: #3b82f6;
+      color: white;
+      box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
+    }
+    .wizard-step.completed {
+      color: #10b981;
+    }
+    .wizard-step.completed .step-number {
+      background: #10b981;
+      color: white;
+    }
+    .step-content {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+    .step-content.active {
+      display: block;
+    }
+    .wizard-nav {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid #f1f5f9;
+    }
   </style>
 </head>
 <body>
@@ -683,417 +746,229 @@
     </h2>
 
     <form id="fibraForm">
-      <!-- SEÇÃO 1: IDENTIFICAÇÃO -->
-      <div class="section-header"><i class="fa-solid fa-id-card"></i> Identificação do Cliente</div>
-      <div class="form-grid">
-        <div class="field col-12">
-          <label>CPF/CNPJ *</label>
-          <input type="text" id="fibraCpfCnpj" placeholder="Digite o CPF ou CNPJ" maxlength="18" required>
-        </div>
+      
+      <!-- HEADER DO WIZARD (Oculto até digitar CPF/CNPJ) -->
+      <div class="wizard-header" id="fibra-wizard-header" style="display: none;">
+        <div class="wizard-step active" id="wiz-step-1"><div class="step-number">1</div> Identificação</div>
+        <div class="wizard-step" id="wiz-step-2"><div class="step-number">2</div> Contatos</div>
+        <div class="wizard-step" id="wiz-step-3"><div class="step-number">3</div> Endereços</div>
+        <div class="wizard-step" id="wiz-step-4"><div class="step-number">4</div> Faturamento</div>
       </div>
 
-      <!-- CONTAINER PF (Oculto por padrão) -->
-      <div id="fibra-pf-fields" style="display: none; width: 100%;">
-        <div class="section-header"><i class="fa-solid fa-user"></i> Dados do Cliente (CPF)</div>
+      <!-- ETAPA 1: IDENTIFICAÇÃO -->
+      <div id="step-fibra-1" class="step-content active" style="display: none;">
+        <div class="section-header"><i class="fa-solid fa-id-card"></i> Identificação do Cliente</div>
         <div class="form-grid">
-          <div class="field col-6"><label>Nome Completo *</label><input type="text" id="fibraNomeCompleto" placeholder="Nome completo do cliente"></div>
-          <div class="field col-6"><label>Data de Nascimento *</label><input type="date" id="fibraDataNascimento"></div>
-          <div class="field col-6"><label>Nome da Mãe *</label><input type="text" id="fibraNomeMae" placeholder="Nome da mãe do cliente"></div>
-          
-          <div class="field col-12" style="flex-direction: row; gap: 20px; margin-top: 10px;">
-            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600;">
-              <input type="checkbox" id="fibraNaoAlfabetizado" style="width:18px;height:18px;"> Cliente não Alfabetizado
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600;">
-              <input type="checkbox" id="fibraNecessidadesEspeciais" style="width:18px;height:18px;"> Cliente com Necessidades Especiais
-            </label>
+          <div class="field col-12">
+            <label>CPF/CNPJ *</label>
+            <input type="text" id="fibraCpfCnpj" placeholder="Digite o CPF ou CNPJ" maxlength="18" required>
           </div>
         </div>
 
-        <div class="section-header"><i class="fa-solid fa-address-card"></i> Documento e Gênero</div>
-        <div class="form-grid">
-          <div class="field col-12" style="flex-direction: row; gap: 20px; align-items: center;">
-            <label style="font-weight:700; font-size: 12px; color: #475569;">Sexo *</label>
-            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px;">
-              <input type="radio" name="fibraSexo" value="MASCULINO" checked> Masculino
-            </label>
-            <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px;">
-              <input type="radio" name="fibraSexo" value="FEMININO"> Feminino
-            </label>
-          </div>
-          <div class="field col-4">
-            <label>Tipo de Documento *</label>
-            <select id="fibraTipoDoc">
-              <option value="CARTEIRA_DE_ESTRANGEIRO">Carteira de Estrangeiro</option>
-              <option value="CARTEIRA_DE_IDENTIDADE" selected>Carteira de Identidade</option>
-              <option value="CARTEIRA_DE_TRABALHO">Carteira de Trabalho</option>
-              <option value="CERTIDAO_DE_NASCIMENTO">Certidão de Nasc.</option>
-              <option value="CNH">CNH</option>
-              <option value="IDENTIDADE_FUNCIONAL">Ident. Funcional</option>
-              <option value="IDENTIDADE_INDIGENA">Ident. Indígena</option>
-              <option value="IDENTIDADE_PROFISSIONAL">Ident. Profissional</option>
-              <option value="IDENTIDADE_ESTRANGEIRA">Identidade Estrang.</option>
-              <option value="IDENTIDADE_MILITAR">Identidade Militar</option>
-              <option value="OUTROS">Outros</option>
-              <option value="PASSAPORTE">Passaporte</option>
-              <option value="PASSAPORTE_ESTRANGEIRO">Passaporte Estrang.</option>
-            </select>
-          </div>
-          <div class="field col-4"><label>Número do Documento *</label><input type="text" id="fibraNumeroDoc"></div>
-          <div class="field col-4"><label>Data de Emissão *</label><input type="date" id="fibraDataEmissaoDoc"></div>
-          <div class="field col-6"><label>Órgão Emissor *</label><input type="text" id="fibraOrgaoEmissor" placeholder="Ex: SSP"></div>
-          <div class="field col-6">
-            <label>UF do Documento *</label>
-            <select id="fibraUfDoc">
-              <option value="">Selecione...</option>
-              <option value="AC">AC</option>
-              <option value="AL">AL</option>
-              <option value="AP">AP</option>
-              <option value="AM">AM</option>
-              <option value="BA">BA</option>
-              <option value="CE">CE</option>
-              <option value="DF">DF</option>
-              <option value="ES">ES</option>
-              <option value="GO">GO</option>
-              <option value="MA">MA</option>
-              <option value="MT">MT</option>
-              <option value="MS">MS</option>
-              <option value="MG">MG</option>
-              <option value="PA">PA</option>
-              <option value="PB">PB</option>
-              <option value="PR">PR</option>
-              <option value="PE" selected>PE</option>
-              <option value="PI">PI</option>
-              <option value="RJ">RJ</option>
-              <option value="RN">RN</option>
-              <option value="RS">RS</option>
-              <option value="RO">RO</option>
-              <option value="RR">RR</option>
-              <option value="SC">SC</option>
-              <option value="SP">SP</option>
-              <option value="SE">SE</option>
-              <option value="TO">TO</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <!-- CONTAINER PJ (Oculto por padrão) -->
-      <div id="fibra-pj-fields" style="display: none; width: 100%;">
-        
-        <!-- DADOS DA EMPRESA -->
-        <div class="section-header"><i class="fa-solid fa-building"></i> Dados da Empresa (CNPJ)</div>
-        <div class="form-grid">
-          <div class="field col-6"><label>Razão Social *</label><input type="text" id="fibraRazaoSocial" placeholder="Razão Social"></div>
-          <div class="field col-6"><label>Data de Fundação *</label><input type="date" id="fibraDataFundacao"></div>
-          
-          <div class="field col-6">
-            <label style="display:flex; align-items:center; gap:8px;">Inscrição Estadual
-              <input type="checkbox" id="fibraIsentoIE" style="width:auto; height:auto; margin-left: 10px;"> <span style="text-transform:none; font-weight:normal; font-size:12px;">Isento</span>
-            </label>
-            <input type="text" id="fibraInscricaoEstadual" placeholder="Número da IE" style="margin-top:8px;">
-          </div>
-          <div class="field col-6">
-            <label>UF de Emissão *</label>
-            <input type="text" id="fibraUfEmissao" maxlength="2" placeholder="UF">
-          </div>
-        </div>
-
-        <!-- DADOS DOS CONTATOS (MÚLTIPLOS) -->
-        <div class="section-header" style="margin-top: 25px;"><i class="fa-solid fa-user-tie"></i> Contatos da Empresa</div>
-        
-        <!-- Container onde os cards de contatos serão inseridos dinamicamente -->
-        <div id="container-contatos-pj" class="col-12" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;">
-            <!-- O primeiro contato será injetado automaticamente via JavaScript -->
-        </div>
-
-        <!-- Botão para adicionar mais contatos -->
-        <div class="col-12" style="margin-bottom: 15px;">
-            <button type="button" onclick="window.adicionarContatoPJ()" style="background: none; border: none; color: #3b82f6; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 0;">
-                <i class="fa-solid fa-plus"></i> Adicionar Contato
-            </button>
-        </div>
-        
-      </div>
-      <!-- SEÇÃO 3: CONTATO (Comum a PF e PJ) -->
-      <div id="fibra-contato-fields" style="display: none; width: 100%;">
-        <div class="section-header"><i class="fa-solid fa-address-book"></i> Contato</div>
-        <div class="form-grid">
-          <div class="field col-4"><label>Telefone 1 *</label><input type="text" id="fibraTelefone1" placeholder="(00) 00000-0000" maxlength="15" required></div>
-          <div class="field col-4"><label>Telefone 2</label><input type="text" id="fibraTelefone2" placeholder="(00) 00000-0000" maxlength="15"></div>
-          <div class="field col-4"><label>Telefone 3</label><input type="text" id="fibraTelefone3" placeholder="(00) 00000-0000" maxlength="15"></div>
-          <div class="field col-6"><label>E-mail *</label><input type="email" id="fibraEmail" placeholder="email@exemplo.com" required></div>
-          <div class="field col-6"><label>Confirmação de E-mail *</label><input type="email" id="fibraEmailConfirmacao" placeholder="Repita o e-mail" required></div>
-        </div>
-      </div>
-
-      <!-- SEÇÃO 4: ENDEREÇO (Comum a PF e PJ) -->
-      <div id="fibra-endereco-fields" style="display: none; width: 100%;">
-        <div class="section-header"><i class="fa-solid fa-map-marked-alt"></i> Endereço de Instalação</div>
-        <div class="form-grid">
-          <div class="field col-4">
-            <label>CEP *</label>
-            <input type="text" id="fibraCep" placeholder="00000-000" maxlength="9" required>
-          </div>
-          <div class="field col-4"><label>Número *</label><input type="text" id="fibraNumero" placeholder="Nº" required></div>
-          <div class="field col-4"><label>UF *</label><input type="text" id="fibraUf" maxlength="2" placeholder="UF" required></div>
-          <div class="field col-6"><label>Município *</label><input type="text" id="fibraMunicipio" placeholder="Cidade" required></div>
-          <div class="field col-6"><label>Bairro *</label><input type="text" id="fibraBairro" placeholder="Bairro" required></div>
-          <div class="field col-6">
-            <label>Tipo de Logradouro *</label>
-            <select id="fibraTipoLogradouro" required>
-              <option value="">Selecione</option>
-              <option value="RUA">Rua</option>
-              <option value="AVENIDA">Avenida</option>
-              <option value="TRAVESSA">Travessa</option>
-              <option value="ALAMEDA">Alameda</option>
-              <option value="RODOVIA">Rodovia</option>
-            </select>
-          </div>
-          <div class="field col-6"><label>Logradouro *</label><input type="text" id="fibraLogradouro" placeholder="Nome da rua/avenida" required></div>
-          <div class="field col-12"><label>Ponto de Referência</label><input type="text" id="fibraPontoReferencia" placeholder="Ponto de referência do cliente"></div>
-          
-          <div class="field col-6">
-            <label>Tipo de Complemento *</label>
-            <select id="fibraTipoComplemento" required>
-              <option value="">Selecione...</option>
-              <option value="Andar">Andar</option>
-              <option value="Apartamento">Apartamento</option>
-              <option value="Bloco">Bloco</option>
-              <option value="Casa">Casa</option>
-              <option value="Condomínio">Condomínio</option>
-              <option value="Conjunto">Conjunto</option>
-              <option value="Departamento">Departamento</option>
-              <option value="Edifício">Edifício</option>
-              <option value="Loja">Loja</option>
-              <option value="Lote">Lote</option>
-              <option value="Outros">Outros</option>
-              <option value="Pavimentos">Pavimentos</option>
-              <option value="Prédio">Prédio</option>
-              <option value="Quadra">Quadra</option>
-              <option value="Sala">Sala</option>
-              <option value="Setor">Setor</option>
-              <option value="Sobrado">Sobrado</option>
-              <option value="Sobreloja">Sobreloja</option>
-              <option value="Subsolo">Subsolo</option>
-              <option value="Torre">Torre</option>
-              <option value="Área Comum">Área Comum</option>
-            </select>
-          </div>
-          <div class="field col-6">
-            <label>Complemento (Descrição)</label>
-            <input type="text" id="fibraComplementoDescricao" placeholder="Ex: Apto 101, Bloco B">
-          </div>
-          
-          <!-- NOVA CAIXINHA AQUI -->
-          <div class="field col-12" style="margin-top: 5px;">
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase; font-weight: 700; color: #475569; cursor: pointer;">
-              <input type="checkbox" id="fibraEnderecoIgualCliente" style="width: 18px; height: 18px;">
-              Endereço do cliente é o mesmo da instalação
-            </label>
-          </div>
-        </div>
-        <!-- NOVO BLOCO: Endereço do Cliente (Oculto por padrão) -->
-<div id="fibra-endereco-cliente-fields" style="display: block; width: 100%; margin-top: 20px;">
-          <div class="section-header"><i class="fa-solid fa-map-marker-alt"></i> Endereço do Cliente</div>
+        <!-- CONTAINER PF -->
+        <div id="fibra-pf-fields" style="display: none; width: 100%;">
+          <div class="section-header"><i class="fa-solid fa-user"></i> Dados do Cliente (CPF)</div>
           <div class="form-grid">
-            <div class="field col-4">
-              <label>CEP *</label>
-              <input type="text" id="clienteCep" placeholder="00000-000" maxlength="9">
+            <div class="field col-6"><label>Nome Completo *</label><input type="text" id="fibraNomeCompleto" placeholder="Nome completo do cliente"></div>
+            <div class="field col-6"><label>Data de Nascimento *</label><input type="date" id="fibraDataNascimento"></div>
+            <div class="field col-6"><label>Nome da Mãe *</label><input type="text" id="fibraNomeMae" placeholder="Nome da mãe do cliente"></div>
+            <div class="field col-12" style="flex-direction: row; gap: 20px; margin-top: 10px;">
+              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600;">
+                <input type="checkbox" id="fibraNaoAlfabetizado" style="width:18px;height:18px;"> Cliente não Alfabetizado
+              </label>
+              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600;">
+                <input type="checkbox" id="fibraNecessidadesEspeciais" style="width:18px;height:18px;"> Cliente com Necessidades Especiais
+              </label>
             </div>
-            <div class="field col-4"><label>Número *</label><input type="text" id="clienteNumero" placeholder="Nº"></div>
-            <div class="field col-4"><label>UF *</label><input type="text" id="clienteUf" maxlength="2" placeholder="UF"></div>
-            
-            <div class="field col-6"><label>Município *</label><input type="text" id="clienteMunicipio" placeholder="Cidade"></div>
-            <div class="field col-6"><label>Bairro *</label><input type="text" id="clienteBairro" placeholder="Bairro"></div>
-            
+          </div>
+          <div class="section-header"><i class="fa-solid fa-address-card"></i> Documento e Gênero</div>
+          <div class="form-grid">
+            <div class="field col-12" style="flex-direction: row; gap: 20px; align-items: center;">
+              <label style="font-weight:700; font-size: 12px; color: #475569;">Sexo *</label>
+              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px;"><input type="radio" name="fibraSexo" value="MASCULINO" checked> Masculino</label>
+              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px;"><input type="radio" name="fibraSexo" value="FEMININO"> Feminino</label>
+            </div>
+            <div class="field col-4">
+              <label>Tipo de Documento *</label>
+              <select id="fibraTipoDoc">
+                <option value="CARTEIRA_DE_ESTRANGEIRO">Carteira de Estrangeiro</option>
+                <option value="CARTEIRA_DE_IDENTIDADE" selected>Carteira de Identidade</option>
+                <option value="CARTEIRA_DE_TRABALHO">Carteira de Trabalho</option>
+                <option value="CERTIDAO_DE_NASCIMENTO">Certidão de Nasc.</option>
+                <option value="CNH">CNH</option>
+                <option value="OUTROS">Outros</option>
+                <option value="PASSAPORTE">Passaporte</option>
+              </select>
+            </div>
+            <div class="field col-4"><label>Número do Documento *</label><input type="text" id="fibraNumeroDoc"></div>
+            <div class="field col-4"><label>Data de Emissão *</label><input type="date" id="fibraDataEmissaoDoc"></div>
+            <div class="field col-6"><label>Órgão Emissor *</label><input type="text" id="fibraOrgaoEmissor" placeholder="Ex: SSP"></div>
+            <div class="field col-6">
+              <label>UF do Documento *</label>
+              <select id="fibraUfDoc">
+                <option value="">Selecione...</option><option value="AC">AC</option><option value="AL">AL</option><option value="AP">AP</option><option value="AM">AM</option><option value="BA">BA</option><option value="CE">CE</option><option value="DF">DF</option><option value="ES">ES</option><option value="GO">GO</option><option value="MA">MA</option><option value="MT">MT</option><option value="MS">MS</option><option value="MG">MG</option><option value="PA">PA</option><option value="PB">PB</option><option value="PR">PR</option><option value="PE" selected>PE</option><option value="PI">PI</option><option value="RJ">RJ</option><option value="RN">RN</option><option value="RS">RS</option><option value="RO">RO</option><option value="RR">RR</option><option value="SC">SC</option><option value="SP">SP</option><option value="SE">SE</option><option value="TO">TO</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONTAINER PJ (DADOS DA EMPRESA) -->
+        <div id="fibra-pj-fields" style="display: none; width: 100%;">
+          <div class="section-header"><i class="fa-solid fa-building"></i> Dados da Empresa (CNPJ)</div>
+          <div class="form-grid">
+            <div class="field col-6"><label>Razão Social *</label><input type="text" id="fibraRazaoSocial" placeholder="Razão Social"></div>
+            <div class="field col-6"><label>Data de Fundação *</label><input type="date" id="fibraDataFundacao"></div>
+            <div class="field col-6">
+              <label style="display:flex; align-items:center; gap:8px;">Inscrição Estadual
+                <input type="checkbox" id="fibraIsentoIE" style="width:auto; height:auto; margin-left: 10px;"> <span style="text-transform:none; font-weight:normal; font-size:12px;">Isento</span>
+              </label>
+              <input type="text" id="fibraInscricaoEstadual" placeholder="Número da IE" style="margin-top:8px;">
+            </div>
+            <div class="field col-6">
+              <label>UF de Emissão *</label>
+              <input type="text" id="fibraUfEmissao" maxlength="2" placeholder="UF">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 2: CONTATOS -->
+      <div id="step-fibra-2" class="step-content">
+        
+        <div id="fibra-contato-fields" style="display: none; width: 100%;">
+          <div class="section-header"><i class="fa-solid fa-address-book"></i> Contato Principal</div>
+          <div class="form-grid">
+            <div class="field col-4"><label>Telefone 1 *</label><input type="text" id="fibraTelefone1" placeholder="(00) 00000-0000" maxlength="15" required></div>
+            <div class="field col-4"><label>Telefone 2</label><input type="text" id="fibraTelefone2" placeholder="(00) 00000-0000" maxlength="15"></div>
+            <div class="field col-4"><label>Telefone 3</label><input type="text" id="fibraTelefone3" placeholder="(00) 00000-0000" maxlength="15"></div>
+            <div class="field col-6"><label>E-mail *</label><input type="email" id="fibraEmail" placeholder="email@exemplo.com" required></div>
+            <div class="field col-6"><label>Confirmação de E-mail *</label><input type="email" id="fibraEmailConfirmacao" placeholder="Repita o e-mail" required></div>
+          </div>
+        </div>
+
+        <!-- CONTAINER DE MÚLTIPLOS CONTATOS (APENAS PJ) -->
+        <div id="fibra-pj-contatos-wrapper" style="display: none; width: 100%;">
+          <div class="section-header" style="margin-top: 25px;"><i class="fa-solid fa-user-tie"></i> Contatos da Empresa (Sócios)</div>
+          <div id="container-contatos-pj" class="col-12" style="display: flex; flex-direction: column; gap: 15px; margin-bottom: 15px;"></div>
+          <div class="col-12" style="margin-bottom: 15px;">
+            <button type="button" onclick="window.adicionarContatoPJ()" style="background: none; border: none; color: #3b82f6; font-weight: 700; font-size: 13px; cursor: pointer; display: flex; align-items: center; gap: 6px; padding: 0;">
+              <i class="fa-solid fa-plus"></i> Adicionar Contato
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ETAPA 3: ENDEREÇOS -->
+      <div id="step-fibra-3" class="step-content">
+        <div id="fibra-endereco-fields" style="display: none; width: 100%;">
+          <div class="section-header"><i class="fa-solid fa-map-marked-alt"></i> Endereço de Instalação</div>
+          <div class="form-grid">
+            <div class="field col-4"><label>CEP *</label><input type="text" id="fibraCep" placeholder="00000-000" maxlength="9" required></div>
+            <div class="field col-4"><label>Número *</label><input type="text" id="fibraNumero" placeholder="Nº" required></div>
+            <div class="field col-4"><label>UF *</label><input type="text" id="fibraUf" maxlength="2" placeholder="UF" required></div>
+            <div class="field col-6"><label>Município *</label><input type="text" id="fibraMunicipio" placeholder="Cidade" required></div>
+            <div class="field col-6"><label>Bairro *</label><input type="text" id="fibraBairro" placeholder="Bairro" required></div>
             <div class="field col-6">
               <label>Tipo de Logradouro *</label>
-              <select id="clienteTipoLogradouro">
-                <option value="">Selecione</option>
-                <option value="RUA">Rua</option>
-                <option value="AVENIDA">Avenida</option>
-                <option value="TRAVESSA">Travessa</option>
-                <option value="ALAMEDA">Alameda</option>
-                <option value="RODOVIA">Rodovia</option>
+              <select id="fibraTipoLogradouro" required>
+                <option value="">Selecione</option><option value="RUA">Rua</option><option value="AVENIDA">Avenida</option><option value="TRAVESSA">Travessa</option><option value="ALAMEDA">Alameda</option><option value="RODOVIA">Rodovia</option>
               </select>
             </div>
-            <div class="field col-6"><label>Logradouro *</label><input type="text" id="clienteLogradouro" placeholder="Nome da rua/avenida"></div>
-            
+            <div class="field col-6"><label>Logradouro *</label><input type="text" id="fibraLogradouro" placeholder="Nome da rua/avenida" required></div>
+            <div class="field col-12"><label>Ponto de Referência</label><input type="text" id="fibraPontoReferencia" placeholder="Ponto de referência do cliente"></div>
             <div class="field col-6">
-              <label>Tipo de Complemento</label>
-              <select id="clienteTipoComplemento">
-                <option value="">Selecione...</option>
-                <option value="Andar">Andar</option>
-                <option value="Apartamento">Apartamento</option>
-                <option value="Bloco">Bloco</option>
-                <option value="Casa">Casa</option>
-                <option value="Condomínio">Condomínio</option>
-                <option value="Conjunto">Conjunto</option>
-                <option value="Departamento">Departamento</option>
-                <option value="Edifício">Edifício</option>
-                <option value="Loja">Loja</option>
-                <option value="Lote">Lote</option>
-                <option value="Outros">Outros</option>
-                <option value="Pavimentos">Pavimentos</option>
-                <option value="Prédio">Prédio</option>
-                <option value="Quadra">Quadra</option>
-                <option value="Sala">Sala</option>
-                <option value="Setor">Setor</option>
-                <option value="Sobrado">Sobrado</option>
-                <option value="Sobreloja">Sobreloja</option>
-                <option value="Subsolo">Subsolo</option>
-                <option value="Torre">Torre</option>
-                <option value="Área Comum">Área Comum</option>
+              <label>Tipo de Complemento *</label>
+              <select id="fibraTipoComplemento" required>
+                <option value="">Selecione...</option><option value="Andar">Andar</option><option value="Apartamento">Apartamento</option><option value="Bloco">Bloco</option><option value="Casa">Casa</option><option value="Condomínio">Condomínio</option><option value="Conjunto">Conjunto</option><option value="Departamento">Departamento</option><option value="Edifício">Edifício</option><option value="Loja">Loja</option><option value="Lote">Lote</option><option value="Outros">Outros</option><option value="Pavimentos">Pavimentos</option><option value="Prédio">Prédio</option><option value="Quadra">Quadra</option><option value="Sala">Sala</option><option value="Setor">Setor</option><option value="Sobrado">Sobrado</option><option value="Sobreloja">Sobreloja</option><option value="Subsolo">Subsolo</option><option value="Torre">Torre</option><option value="Área Comum">Área Comum</option>
               </select>
             </div>
-            <div class="field col-6"><label>Complemento (Descrição)</label><input type="text" id="clienteComplementoDescricao" placeholder="Ex: Apto 101"></div>
-          </div>
-        </div>
-        
-      <!-- FIM DA SEÇÃO 4: ENDEREÇO -->
-      </div>
-
-      <!-- SEÇÃO 5: FATURAMENTO (Comum a PF e PJ) -->
-      <div id="fibra-billing-fields" style="display: none; width: 100%;">
-        <div class="section-header"><i class="fa-solid fa-file-invoice-dollar"></i> Informações de Faturamento</div>
-        <div class="form-grid">
-          <div class="field col-6">
-            <label>Dia de Vencimento *</label>
-            <select id="fibraDiaVencimento">
-              <option value="7">Dia 07</option>
-              <option value="10">Dia 10</option>
-              <option value="12">Dia 12</option>
-              <option value="15">Dia 15</option>
-              <option value="20">Dia 20</option>
-              <option value="1">Dia 01</option>
-            </select>
-          </div>
-          <div class="field col-6">
-            <label>Tipo de Fatura *</label>
-            <select id="fibraTipoFatura">
-              <option value="ONLINE">Online</option>
-              <option value="IMPRESSA">Impressa</option>
-            </select>
-          </div>
-
-          <div class="field col-12" style="margin-top: 10px;">
-            <label>Forma de Pagamento *</label>
-            <div style="display: flex; gap: 20px; margin-top: 8px; flex-wrap: wrap;">
-              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;">
-                <input type="radio" name="fibraFormaPagamento" value="FATURA"> Fatura
-              </label>
-              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;">
-                <input type="radio" name="fibraFormaPagamento" value="DEBITO_AUTOMATICO"> Débito Automático
-              </label>
-              <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;">
-                <input type="radio" name="fibraFormaPagamento" value="CARTAO_CREDITO"> Cartão de Crédito
+            <div class="field col-6"><label>Complemento (Descrição)</label><input type="text" id="fibraComplementoDescricao" placeholder="Ex: Apto 101, Bloco B"></div>
+            <div class="field col-12" style="margin-top: 5px;">
+              <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase; font-weight: 700; color: #475569; cursor: pointer;">
+                <input type="checkbox" id="fibraEnderecoIgualCliente" style="width: 18px; height: 18px;"> Endereço do cliente é o mesmo da instalação
               </label>
             </div>
           </div>
-
-          <!-- Dados Bancários (Oculto por padrão) -->
-          <div id="fibra-dados-bancarios" class="col-12 form-grid" style="display: none; margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
-            <div class="field col-4">
-              <label>Banco *</label>
-              <select id="fibraBanco">
-                <option value="">Selecione...</option>
-                <option value="BANCO DO BRASIL S.A.">BANCO DO BRASIL S.A.</option>
-                <option value="BANCO DA AMAZÔNIA">BANCO DA AMAZÔNIA</option>
-                <option value="BANCO DO NORDESTE DO BRASIL">BANCO DO NORDESTE DO BRASIL</option>
-                <option value="BANESTES">BANESTES</option>
-                <option value="BANCO SANTANDER">BANCO SANTANDER</option>
-                <option value="BANPARÁ">BANPARÁ</option>
-                <option value="BANCO INTER">BANCO INTER</option>
-                <option value="CECRED">CECRED</option>
-                <option value="CAIXA ECONÔMICA FEDERAL">CAIXA ECONÔMICA FEDERAL</option>
-                <option value="BANCO BRADESCO S.A.">BANCO BRADESCO S.A.</option>
-                <option value="BANCO C6">BANCO C6</option>
-                <option value="BANCO ITAÚ S.A.">BANCO ITAÚ S.A.</option>
-                <option value="MERCANTIL">MERCANTIL</option>
-                <option value="BANCO SAFRA SA">BANCO SAFRA SA</option>
-                <option value="BANSICREDI">BANSICREDI</option>
-                <option value="BANCOOB">BANCOOB</option>
-                <option value="NUBANK">NUBANK</option>
-              </select>
-            </div>
-            <div class="field col-4"><label>Agência *</label><input type="text" id="fibraAgencia" placeholder="0000"></div>
-            <div class="field col-4"><label>Conta (com dígito) *</label><input type="text" id="fibraConta" placeholder="00000-0"></div>
-          </div>
-
-          <!-- CHECKBOX DE COBRANÇA -->
-          <div class="field col-12" style="margin-top: 15px;">
-            <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase; font-weight: 700; color: #475569;">
-              <input type="checkbox" id="fibraCobrancaDiferente" style="width: 18px; height: 18px;">
-              Utilizar o endereço de cobrança diferente do endereço do cliente
-            </label>
-          </div>
-
-          <!-- CAMPOS DE COBRANÇA (Oculto até marcar o checkbox) -->
-          <div id="fibra-cobranca-campos" class="col-12" style="display: none; margin-top: 15px; padding: 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; grid-column: span 12;">
-            <div class="section-header" style="margin-top: 0;"><i class="fa-solid fa-file-invoice"></i> Endereço de Cobrança</div>
+          
+          <div id="fibra-endereco-cliente-fields" style="display: block; width: 100%; margin-top: 20px;">
+            <div class="section-header"><i class="fa-solid fa-map-marker-alt"></i> Endereço do Cliente</div>
             <div class="form-grid">
-              <div class="field col-4">
-                <label>CEP *</label>
-                <input type="text" id="cobrancaCep" placeholder="00000-000" maxlength="9">
-              </div>
-              <div class="field col-4"><label>Número *</label><input type="text" id="cobrancaNumero" placeholder="Nº"></div>
-              <div class="field col-4"><label>UF *</label><input type="text" id="cobrancaUf" maxlength="2" placeholder="UF"></div>
-              
-              <div class="field col-6"><label>Município *</label><input type="text" id="cobrancaMunicipio" placeholder="Cidade"></div>
-              <div class="field col-6"><label>Bairro *</label><input type="text" id="cobrancaBairro" placeholder="Bairro"></div>
-              
-              <div class="field col-6">
-                <label>Tipo de Logradouro *</label>
-                <select id="cobrancaTipoLogradouro">
-                  <option value="">Selecione</option>
-                  <option value="RUA">Rua</option>
-                  <option value="AVENIDA">Avenida</option>
-                  <option value="TRAVESSA">Travessa</option>
-                  <option value="ALAMEDA">Alameda</option>
-                  <option value="RODOVIA">Rodovia</option>
-                </select>
-              </div>
-              <div class="field col-6"><label>Logradouro *</label><input type="text" id="cobrancaLogradouro" placeholder="Nome da rua/avenida"></div>
-              
-              <div class="field col-4"><label>Caixa Postal</label><input type="text" id="cobrancaCaixaPostal" placeholder="Caixa Postal"></div>
-              <div class="field col-4">
-                <label>Tipo de Complemento</label>
-                <select id="cobrancaTipoComplemento">
-                  <option value="">Selecione...</option>
-                  <option value="Andar">Andar</option>
-                  <option value="Apartamento">Apartamento</option>
-                  <option value="Bloco">Bloco</option>
-                  <option value="Casa">Casa</option>
-                  <option value="Condomínio">Condomínio</option>
-                  <option value="Conjunto">Conjunto</option>
-                  <option value="Departamento">Departamento</option>
-                  <option value="Edifício">Edifício</option>
-                  <option value="Loja">Loja</option>
-                  <option value="Lote">Lote</option>
-                  <option value="Outros">Outros</option>
-                  <option value="Pavimentos">Pavimentos</option>
-                  <option value="Prédio">Prédio</option>
-                  <option value="Quadra">Quadra</option>
-                  <option value="Sala">Sala</option>
-                  <option value="Setor">Setor</option>
-                  <option value="Sobrado">Sobrado</option>
-                  <option value="Sobreloja">Sobreloja</option>
-                  <option value="Subsolo">Subsolo</option>
-                  <option value="Torre">Torre</option>
-                  <option value="Área Comum">Área Comum</option>
-                </select>
-              </div>
-              <div class="field col-4"><label>Complemento (Descrição)</label><input type="text" id="cobrancaComplementoDescricao" placeholder="Informe o complemento"></div>
+              <div class="field col-4"><label>CEP *</label><input type="text" id="clienteCep" placeholder="00000-000" maxlength="9"></div>
+              <div class="field col-4"><label>Número *</label><input type="text" id="clienteNumero" placeholder="Nº"></div>
+              <div class="field col-4"><label>UF *</label><input type="text" id="clienteUf" maxlength="2" placeholder="UF"></div>
+              <div class="field col-6"><label>Município *</label><input type="text" id="clienteMunicipio" placeholder="Cidade"></div>
+              <div class="field col-6"><label>Bairro *</label><input type="text" id="clienteBairro" placeholder="Bairro"></div>
+              <div class="field col-6"><label>Tipo de Logradouro *</label><select id="clienteTipoLogradouro"><option value="">Selecione</option><option value="RUA">Rua</option><option value="AVENIDA">Avenida</option><option value="TRAVESSA">Travessa</option><option value="ALAMEDA">Alameda</option><option value="RODOVIA">Rodovia</option></select></div>
+              <div class="field col-6"><label>Logradouro *</label><input type="text" id="clienteLogradouro" placeholder="Nome da rua/avenida"></div>
+              <div class="field col-6"><label>Tipo de Complemento</label><select id="clienteTipoComplemento"><option value="">Selecione...</option><option value="Andar">Andar</option><option value="Apartamento">Apartamento</option><option value="Bloco">Bloco</option><option value="Casa">Casa</option><option value="Outros">Outros</option></select></div>
+              <div class="field col-6"><label>Complemento (Descrição)</label><input type="text" id="clienteComplementoDescricao" placeholder="Ex: Apto 101"></div>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- BOTÃO DE ENVIO -->
-      <button type="button" class="btn-save" id="btnSalvarFibra" onclick="window.salvarVendaFibra()" style="display: none; margin-top: 30px; width: 100%;">
-        <i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO ULTRAFIBRA
-      </button>
+      <!-- ETAPA 4: FATURAMENTO -->
+      <div id="step-fibra-4" class="step-content">
+        <div id="fibra-billing-fields" style="display: none; width: 100%;">
+          <div class="section-header"><i class="fa-solid fa-file-invoice-dollar"></i> Informações de Faturamento</div>
+          <div class="form-grid">
+            <div class="field col-6"><label>Dia de Vencimento *</label><select id="fibraDiaVencimento"><option value="7">Dia 07</option><option value="10">Dia 10</option><option value="12">Dia 12</option><option value="15">Dia 15</option><option value="20">Dia 20</option><option value="1">Dia 01</option></select></div>
+            <div class="field col-6"><label>Tipo de Fatura *</label><select id="fibraTipoFatura"><option value="ONLINE">Online</option><option value="IMPRESSA">Impressa</option></select></div>
+            <div class="field col-12" style="margin-top: 10px;">
+              <label>Forma de Pagamento *</label>
+              <div style="display: flex; gap: 20px; margin-top: 8px; flex-wrap: wrap;">
+                <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;"><input type="radio" name="fibraFormaPagamento" value="FATURA"> Fatura</label>
+                <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;"><input type="radio" name="fibraFormaPagamento" value="DEBITO_AUTOMATICO"> Débito Automático</label>
+                <label style="display:flex; align-items:center; gap:8px; text-transform:none; font-size:13px; font-weight:600; padding:10px 15px; border:1px solid #e2e8f0; border-radius:8px; cursor:pointer; background: white;"><input type="radio" name="fibraFormaPagamento" value="CARTAO_CREDITO"> Cartão de Crédito</label>
+              </div>
+            </div>
+            <div id="fibra-dados-bancarios" class="col-12 form-grid" style="display: none; margin-top: 15px; padding: 15px; background: #f8fafc; border-radius: 12px; border: 1px dashed #cbd5e1;">
+              <div class="field col-4">
+                <label>Banco *</label>
+                <select id="fibraBanco">
+                  <option value="">Selecione...</option><option value="BANCO DO BRASIL S.A.">BANCO DO BRASIL S.A.</option><option value="BANCO DA AMAZÔNIA">BANCO DA AMAZÔNIA</option><option value="BANCO DO NORDESTE DO BRASIL">BANCO DO NORDESTE DO BRASIL</option><option value="BANESTES">BANESTES</option><option value="BANCO SANTANDER">BANCO SANTANDER</option><option value="BANPARÁ">BANPARÁ</option><option value="BANCO INTER">BANCO INTER</option><option value="CECRED">CECRED</option><option value="CAIXA ECONÔMICA FEDERAL">CAIXA ECONÔMICA FEDERAL</option><option value="BANCO BRADESCO S.A.">BANCO BRADESCO S.A.</option><option value="BANCO C6">BANCO C6</option><option value="BANCO ITAÚ S.A.">BANCO ITAÚ S.A.</option><option value="MERCANTIL">MERCANTIL</option><option value="BANCO SAFRA SA">BANCO SAFRA SA</option><option value="BANSICREDI">BANSICREDI</option><option value="BANCOOB">BANCOOB</option><option value="NUBANK">NUBANK</option>
+                </select>
+              </div>
+              <div class="field col-4"><label>Agência *</label><input type="text" id="fibraAgencia" placeholder="0000"></div>
+              <div class="field col-4"><label>Conta (com dígito) *</label><input type="text" id="fibraConta" placeholder="00000-0"></div>
+            </div>
+            <div class="field col-12" style="margin-top: 15px;">
+              <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; text-transform: uppercase; font-weight: 700; color: #475569;">
+                <input type="checkbox" id="fibraCobrancaDiferente" style="width: 18px; height: 18px;"> Utilizar o endereço de cobrança diferente do endereço do cliente
+              </label>
+            </div>
+            <div id="fibra-cobranca-campos" class="col-12" style="display: none; margin-top: 15px; padding: 20px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px; grid-column: span 12;">
+              <div class="section-header" style="margin-top: 0;"><i class="fa-solid fa-file-invoice"></i> Endereço de Cobrança</div>
+              <div class="form-grid">
+                <div class="field col-4"><label>CEP *</label><input type="text" id="cobrancaCep" placeholder="00000-000" maxlength="9"></div>
+                <div class="field col-4"><label>Número *</label><input type="text" id="cobrancaNumero" placeholder="Nº"></div>
+                <div class="field col-4"><label>UF *</label><input type="text" id="cobrancaUf" maxlength="2" placeholder="UF"></div>
+                <div class="field col-6"><label>Município *</label><input type="text" id="cobrancaMunicipio" placeholder="Cidade"></div>
+                <div class="field col-6"><label>Bairro *</label><input type="text" id="cobrancaBairro" placeholder="Bairro"></div>
+                <div class="field col-6"><label>Tipo de Logradouro *</label><select id="cobrancaTipoLogradouro"><option value="">Selecione</option><option value="RUA">Rua</option><option value="AVENIDA">Avenida</option><option value="TRAVESSA">Travessa</option><option value="ALAMEDA">Alameda</option><option value="RODOVIA">Rodovia</option></select></div>
+                <div class="field col-6"><label>Logradouro *</label><input type="text" id="cobrancaLogradouro" placeholder="Nome da rua/avenida"></div>
+                <div class="field col-4"><label>Caixa Postal</label><input type="text" id="cobrancaCaixaPostal" placeholder="Caixa Postal"></div>
+                <div class="field col-4"><label>Tipo de Complemento</label><select id="cobrancaTipoComplemento"><option value="">Selecione...</option><option value="Andar">Andar</option><option value="Apartamento">Apartamento</option><option value="Outros">Outros</option></select></div>
+                <div class="field col-4"><label>Complemento (Descrição)</label><input type="text" id="cobrancaComplementoDescricao" placeholder="Informe o complemento"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NAVEGAÇÃO DO WIZARD -->
+      <div class="wizard-nav" id="fibra-wizard-nav" style="display: none;">
+        <button type="button" class="btn-save" id="btn-voltar-fibra" onclick="window.mudarPassoFibra(-1)" style="display: none; background: #64748b; width: auto; padding: 15px 30px; margin-top: 0;">
+          <i class="fa-solid fa-arrow-left"></i> Voltar
+        </button>
+        <button type="button" class="btn-save" id="btn-proximo-fibra" onclick="window.mudarPassoFibra(1)" style="background: #3b82f6; width: auto; padding: 15px 30px; margin-top: 0; margin-left: auto;">
+          Próximo <i class="fa-solid fa-arrow-right"></i>
+        </button>
+        <button type="button" class="btn-save" id="btnSalvarFibra" onclick="window.salvarVendaFibra()" style="display: none; margin-top: 0; width: auto; padding: 15px 30px; margin-left: auto;">
+          <i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO
+        </button>
+      </div>
+
     </form>
   </div>
 </div>
@@ -2849,7 +2724,7 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     }
   }
   
-  // 2. Inicializar máscaras e eventos do formulário de fibra
+// 2. Inicializar máscaras e eventos do formulário de fibra
   function inicializarMascarasFibra() {
     // 🔥 Cria o primeiro contato por padrão se o container estiver vazio
     if (document.getElementById('container-contatos-pj') && document.querySelectorAll('.contato-card').length === 0) {
@@ -2870,11 +2745,13 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
 
         const cleanValue = e.target.value.replace(/\D/g, '');
         const pjFields = document.getElementById('fibra-pj-fields');
+        const pjContatosWrapper = document.getElementById('fibra-pj-contatos-wrapper');
         const pfFields = document.getElementById('fibra-pf-fields');
         const contatoFields = document.getElementById('fibra-contato-fields');
         const enderecoFields = document.getElementById('fibra-endereco-fields');
         const billingFields = document.getElementById('fibra-billing-fields');
-        const btnSalvar = document.getElementById('btnSalvarFibra');
+        const wizardHeader = document.getElementById('fibra-wizard-header');
+        const wizardNav = document.getElementById('fibra-wizard-nav');
 
         // Verifica se o bloco de endereço do cliente deve aparecer logo ao digitar o documento
         const checkEnderecoIgual = document.getElementById('fibraEnderecoIgualCliente');
@@ -2884,27 +2761,56 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         }
 
         if (cleanValue.length === 11) {
-          pjFields.style.display = 'none';
-          pfFields.style.display = 'block';
-          contatoFields.style.display = 'block';
-          enderecoFields.style.display = 'block';
-          billingFields.style.display = 'block';
-          btnSalvar.style.display = 'block';
+          // É CPF (Pessoa Física)
+          if (pjFields) pjFields.style.display = 'none';
+          if (pjContatosWrapper) pjContatosWrapper.style.display = 'none';
+          
+          if (pfFields) pfFields.style.display = 'block';
+          if (contatoFields) contatoFields.style.display = 'block';
+          if (enderecoFields) enderecoFields.style.display = 'block';
+          if (billingFields) billingFields.style.display = 'block';
+          
+          // Inicializa o wizard mostrando a etapa 1
+          if (wizardHeader) wizardHeader.style.display = 'flex';
+          if (wizardNav) wizardNav.style.display = 'flex';
+          window.passoAtualFibra = 1;
+          if (typeof window.mudarPassoFibra === 'function') {
+            window.mudarPassoFibra(0); // 0 para não mudar de passo, apenas atualizar a tela
+          }
+
         } else if (cleanValue.length === 14) {
-          pjFields.style.display = 'block';
-          pfFields.style.display = 'none';
-          contatoFields.style.display = 'block';
-          enderecoFields.style.display = 'block';
-          billingFields.style.display = 'block';
-          btnSalvar.style.display = 'block';
+          // É CNPJ (Pessoa Jurídica)
+          if (pjFields) pjFields.style.display = 'block';
+          if (pjContatosWrapper) pjContatosWrapper.style.display = 'block';
+          
+          if (pfFields) pfFields.style.display = 'none';
+          if (contatoFields) contatoFields.style.display = 'block';
+          if (enderecoFields) enderecoFields.style.display = 'block';
+          if (billingFields) billingFields.style.display = 'block';
+          
+          // Inicializa o wizard mostrando a etapa 1
+          if (wizardHeader) wizardHeader.style.display = 'flex';
+          if (wizardNav) wizardNav.style.display = 'flex';
+          window.passoAtualFibra = 1;
+          if (typeof window.mudarPassoFibra === 'function') {
+            window.mudarPassoFibra(0);
+          }
+
           window.buscarEmpresaFibra(cleanValue);
+
         } else {
-          pjFields.style.display = 'none';
-          pfFields.style.display = 'none';
-          contatoFields.style.display = 'none';
-          enderecoFields.style.display = 'none';
-          billingFields.style.display = 'none';
-          btnSalvar.style.display = 'none';
+          // Documento Incompleto
+          if (pfFields) pfFields.style.display = 'none';
+          if (pjFields) pjFields.style.display = 'none';
+          if (pjContatosWrapper) pjContatosWrapper.style.display = 'none';
+          
+          if (contatoFields) contatoFields.style.display = 'none';
+          if (enderecoFields) contatoFields.style.display = 'none';
+          if (billingFields) billingFields.style.display = 'none';
+          
+          // Esconde o wizard
+          if (wizardHeader) wizardHeader.style.display = 'none';
+          if (wizardNav) wizardNav.style.display = 'none';
         }
       });
     }
@@ -2914,7 +2820,7 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     if (checkCobrancaDiferente) {
       checkCobrancaDiferente.addEventListener('change', function() {
         const camposCobranca = document.getElementById('fibra-cobranca-campos');
-        camposCobranca.style.display = this.checked ? 'block' : 'none';
+        if (camposCobranca) camposCobranca.style.display = this.checked ? 'block' : 'none';
       });
     }
 
@@ -2990,7 +2896,7 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     document.querySelectorAll('input[name="fibraFormaPagamento"]').forEach(radio => {
       radio.addEventListener('change', function() {
         const divBancos = document.getElementById('fibra-dados-bancarios');
-        divBancos.style.display = this.value === 'DEBITO_AUTOMATICO' ? 'grid' : 'none';
+        if (divBancos) divBancos.style.display = this.value === 'DEBITO_AUTOMATICO' ? 'grid' : 'none';
       });
     });
 
@@ -3005,8 +2911,6 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
         ieInput.style.background = this.checked ? '#f1f5f9' : '';
       });
     }
-
-    // 🔥 REMOVIDO: As máscaras de socioCpf e socioTelefone foram para dentro da função aplicarMascarasContato()
 
     // Máscaras de Telefone de Contato Principal
     ['fibraTelefone1', 'fibraTelefone2', 'fibraTelefone3'].forEach(id => {
@@ -3033,6 +2937,55 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       });
     }
   }
+
+    // ============================================
+  // LÓGICA DO WIZARD (PASSO A PASSO)
+  // ============================================
+  window.passoAtualFibra = 1;
+  window.totalPassosFibra = 4;
+
+  window.mudarPassoFibra = function(direcao) {
+    // Se estiver avançando, valida o passo atual (Opcional, mas recomendado para não deixar campos vazios)
+    if (direcao === 1) {
+      if (window.passoAtualFibra === 1) {
+        const doc = document.getElementById('fibraCpfCnpj').value.replace(/\D/g, '');
+        if (doc.length !== 11 && doc.length !== 14) {
+          alert('Por favor, digite um CPF ou CNPJ válido antes de avançar.');
+          return;
+        }
+      }
+    }
+
+    window.passoAtualFibra += direcao;
+
+    // Limita entre 1 e 4
+    if (window.passoAtualFibra < 1) window.passoAtualFibra = 1;
+    if (window.passoAtualFibra > window.totalPassosFibra) window.passoAtualFibra = window.totalPassosFibra;
+
+    // Atualiza visual dos conteúdos (Etapas)
+    document.querySelectorAll('#fibraForm .step-content').forEach((el, index) => {
+      el.classList.toggle('active', index === (window.passoAtualFibra - 1));
+    });
+
+    // Atualiza visual do Header (Bolinhas 1, 2, 3, 4)
+    document.querySelectorAll('#fibraForm .wizard-step').forEach((el, index) => {
+      const stepNum = index + 1;
+      el.classList.remove('active', 'completed');
+      if (stepNum === window.passoAtualFibra) {
+        el.classList.add('active');
+      } else if (stepNum < window.passoAtualFibra) {
+        el.classList.add('completed');
+      }
+    });
+
+    // Controla botões
+    document.getElementById('btn-voltar-fibra').style.display = window.passoAtualFibra === 1 ? 'none' : 'inline-block';
+    document.getElementById('btn-proximo-fibra').style.display = window.passoAtualFibra === window.totalPassosFibra ? 'none' : 'inline-block';
+    document.getElementById('btnSalvarFibra').style.display = window.passoAtualFibra === window.totalPassosFibra ? 'inline-block' : 'none';
+
+    // Rola para o topo do card
+    document.getElementById('formFibra').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
 
   // 3. Autopreencher dados do CNPJ (API VEXO)
   window.buscarEmpresaFibra = async function(cnpjLimpo) {
