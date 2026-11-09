@@ -716,6 +716,45 @@
       padding-top: 20px;
       border-top: 1px solid #f1f5f9;
     }
+
+    /* ESTILOS DOS CARDS DE OFERTA */
+.oferta-card {
+  background: white;
+  border: 2px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.oferta-card:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+}
+.oferta-card.selecionado {
+  border-color: #3b82f6;
+  background: #eff6ff;
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.15);
+}
+.oferta-header-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 15px;
+}
+.oferta-nome {
+  font-weight: 700;
+  color: #1e293b;
+  font-size: 14px;
+}
+.oferta-valor {
+  font-weight: 800;
+  color: #10b981;
+  font-size: 18px;
+}
   </style>
 </head>
 <body>
@@ -747,13 +786,14 @@
 
     <form id="fibraForm">
       
-      <!-- HEADER DO WIZARD (Oculto até digitar CPF/CNPJ) -->
-      <div class="wizard-header" id="fibra-wizard-header" style="display: none;">
-        <div class="wizard-step active" id="wiz-step-1"><div class="step-number">1</div> Identificação</div>
-        <div class="wizard-step" id="wiz-step-2"><div class="step-number">2</div> Contatos</div>
-        <div class="wizard-step" id="wiz-step-3"><div class="step-number">3</div> Endereços</div>
-        <div class="wizard-step" id="wiz-step-4"><div class="step-number">4</div> Faturamento</div>
-      </div>
+<!-- HEADER DO WIZARD -->
+<div class="wizard-header" id="fibra-wizard-header" style="display: none;">
+  <div class="wizard-step active" id="wiz-step-1"><div class="step-number">1</div> Identificação</div>
+  <div class="wizard-step" id="wiz-step-2"><div class="step-number">2</div> Ofertas</div>
+  <div class="wizard-step" id="wiz-step-3"><div class="step-number">3</div> Contatos</div>
+  <div class="wizard-step" id="wiz-step-4"><div class="step-number">4</div> Endereços</div>
+  <div class="wizard-step" id="wiz-step-5"><div class="step-number">5</div> Faturamento</div>
+</div>
 
       <!-- ETAPA 1: IDENTIFICAÇÃO -->
 <div id="step-fibra-1" class="step-content active">
@@ -838,8 +878,19 @@
         </div>
       </div>
 
+<!-- ETAPA 2: OFERTAS -->
+<div id="step-fibra-2" class="step-content">
+  <div class="section-header"><i class="fa-solid fa-tags"></i> Selecione a Oferta</div>
+  
+  <div id="container-ofertas-fibra" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; width: 100%;">
+    <div style="grid-column: span 2; text-align: center; padding: 40px; color: #64748b;">
+      ⏳ Buscando ofertas disponíveis...
+    </div>
+  </div>
+</div>
+      
       <!-- ETAPA 2: CONTATOS -->
-      <div id="step-fibra-2" class="step-content">
+      <div id="step-fibra-3" class="step-content">
         
         <div id="fibra-contato-fields" style="display: none; width: 100%;">
           <div class="section-header"><i class="fa-solid fa-address-book"></i> Contato Principal</div>
@@ -865,7 +916,7 @@
       </div>
 
       <!-- ETAPA 3: ENDEREÇOS -->
-      <div id="step-fibra-3" class="step-content">
+      <div id="step-fibra-4" class="step-content">
         <div id="fibra-endereco-fields" style="display: none; width: 100%;">
           <div class="section-header"><i class="fa-solid fa-map-marked-alt"></i> Endereço de Instalação</div>
           <div class="form-grid">
@@ -948,7 +999,7 @@
       </div>
 
       <!-- ETAPA 4: FATURAMENTO -->
-      <div id="step-fibra-4" class="step-content">
+      <div id="step-fibra-5" class="step-content">
         <div id="fibra-billing-fields" style="display: none; width: 100%;">
           <div class="section-header"><i class="fa-solid fa-file-invoice-dollar"></i> Informações de Faturamento</div>
           <div class="form-grid">
@@ -3029,124 +3080,215 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     }
   }
 
-  window.validarPassoFibra = function(passo) {
-    // Limpa estilos de erro anteriores
-    document.querySelectorAll('#fibraForm .field input, #fibraForm .field select').forEach(el => {
-      el.style.borderColor = '';
-      el.style.boxShadow = '';
-      el.style.background = '';
-    });
+window.validarPassoFibra = function(passo) {
+  // Limpa estilos de erro anteriores
+  document.querySelectorAll('#fibraForm .field input, #fibraForm .field select').forEach(el => {
+    el.style.borderColor = '';
+    el.style.boxShadow = '';
+    el.style.background = '';
+  });
 
-    if (passo === 1) {
-      const doc = document.getElementById('fibraCpfCnpj').value.replace(/\D/g, '');
-      if (doc.length !== 11 && doc.length !== 14) return mostrarErroValidacao('CPF/CNPJ inválido ou incompleto.', 'fibraCpfCnpj'), false;
+  // ─── PASSO 1: IDENTIFICAÇÃO ───
+  if (passo === 1) {
+    const doc = document.getElementById('fibraCpfCnpj').value.replace(/\D/g, '');
+    if (doc.length !== 11 && doc.length !== 14) return mostrarErroValidacao('CPF/CNPJ inválido ou incompleto.', 'fibraCpfCnpj'), false;
 
-      if (doc.length === 11) {
-        // PF
-        if (!document.getElementById('fibraNomeCompleto').value) return mostrarErroValidacao('Preencha o Nome Completo.', 'fibraNomeCompleto'), false;
-        if (!document.getElementById('fibraDataNascimento').value) return mostrarErroValidacao('Preencha a Data de Nascimento.', 'fibraDataNascimento'), false;
-        if (!document.getElementById('fibraNomeMae').value) return mostrarErroValidacao('Preencha o Nome da Mãe.', 'fibraNomeMae'), false;
-        if (!document.getElementById('fibraNumeroDoc').value) return mostrarErroValidacao('Preencha o Número do Documento.', 'fibraNumeroDoc'), false;
-        if (!document.getElementById('fibraDataEmissaoDoc').value) return mostrarErroValidacao('Preencha a Data de Emissão.', 'fibraDataEmissaoDoc'), false;
-        if (!document.getElementById('fibraOrgaoEmissor').value) return mostrarErroValidacao('Preencha o Órgão Emissor.', 'fibraOrgaoEmissor'), false;
-        if (!document.getElementById('fibraUfDoc').value) return mostrarErroValidacao('Preencha a UF do Documento.', 'fibraUfDoc'), false;
-      } else {
-        // PJ
-        if (!document.getElementById('fibraRazaoSocial').value) return mostrarErroValidacao('Preencha a Razão Social.', 'fibraRazaoSocial'), false;
-        if (!document.getElementById('fibraDataFundacao').value) return mostrarErroValidacao('Preencha a Data de Fundação.', 'fibraDataFundacao'), false;
-        if (!document.getElementById('fibraIsentoIE').checked && !document.getElementById('fibraInscricaoEstadual').value) return mostrarErroValidacao('Preencha a Inscrição Estadual ou marque "Isento".', 'fibraInscricaoEstadual'), false;
-        if (!document.getElementById('fibraUfEmissao').value) return mostrarErroValidacao('Preencha a UF de Emissão.', 'fibraUfEmissao'), false;
+    if (doc.length === 11) {
+      // PF
+      if (!document.getElementById('fibraNomeCompleto').value) return mostrarErroValidacao('Preencha o Nome Completo.', 'fibraNomeCompleto'), false;
+      if (!document.getElementById('fibraDataNascimento').value) return mostrarErroValidacao('Preencha a Data de Nascimento.', 'fibraDataNascimento'), false;
+      if (!document.getElementById('fibraNomeMae').value) return mostrarErroValidacao('Preencha o Nome da Mãe.', 'fibraNomeMae'), false;
+      if (!document.getElementById('fibraNumeroDoc').value) return mostrarErroValidacao('Preencha o Número do Documento.', 'fibraNumeroDoc'), false;
+      if (!document.getElementById('fibraDataEmissaoDoc').value) return mostrarErroValidacao('Preencha a Data de Emissão.', 'fibraDataEmissaoDoc'), false;
+      if (!document.getElementById('fibraOrgaoEmissor').value) return mostrarErroValidacao('Preencha o Órgão Emissor.', 'fibraOrgaoEmissor'), false;
+      if (!document.getElementById('fibraUfDoc').value) return mostrarErroValidacao('Preencha a UF do Documento.', 'fibraUfDoc'), false;
+    } else {
+      // PJ
+      if (!document.getElementById('fibraRazaoSocial').value) return mostrarErroValidacao('Preencha a Razão Social.', 'fibraRazaoSocial'), false;
+      if (!document.getElementById('fibraDataFundacao').value) return mostrarErroValidacao('Preencha a Data de Fundação.', 'fibraDataFundacao'), false;
+      if (!document.getElementById('fibraIsentoIE').checked && !document.getElementById('fibraInscricaoEstadual').value) return mostrarErroValidacao('Preencha a Inscrição Estadual ou marque "Isento".', 'fibraInscricaoEstadual'), false;
+      if (!document.getElementById('fibraUfEmissao').value) return mostrarErroValidacao('Preencha a UF de Emissão.', 'fibraUfEmissao'), false;
+    }
+  }
+
+  // ─── PASSO 2: OFERTAS (NOVO) ───
+  if (passo === 2) {
+    // Verifica se a variável global da oferta foi preenchida (definida na função selecionarOfertaFibra)
+    if (!window.ofertaSelecionadaFibra) {
+      return mostrarErroValidacao('Por favor, selecione uma das ofertas acima para continuar.', null), false;
+    }
+  }
+
+  // ─── PASSO 3: CONTATOS (Antigo Passo 2) ───
+  if (passo === 3) {
+    if (!document.getElementById('fibraTelefone1').value) return mostrarErroValidacao('Preencha o Telefone 1.', 'fibraTelefone1'), false;
+    const email = document.getElementById('fibraEmail').value;
+    const emailConf = document.getElementById('fibraEmailConfirmacao').value;
+    if (!email) return mostrarErroValidacao('Preencha o E-mail.', 'fibraEmail'), false;
+    if (!emailConf) return mostrarErroValidacao('Confirme o E-mail.', 'fibraEmailConfirmacao'), false;
+    if (email !== emailConf) return mostrarErroValidacao('Os e-mails não coincidem.', 'fibraEmailConfirmacao'), false;
+
+    // Se for PJ, valida os contatos adicionados
+    if (document.getElementById('fibra-pj-contatos-wrapper').style.display !== 'none') {
+      const cards = document.querySelectorAll('.contato-card');
+      for (let i = 0; i < cards.length; i++) {
+        const card = cards[i];
+        if (!card.querySelector('.contato-nome').value) return mostrarErroValidacao(`Preencha o Nome do Contato ${i+1}.`, card.querySelector('.contato-nome')), false;
+        if (!card.querySelector('.contato-cpf').value) return mostrarErroValidacao(`Preencha o CPF do Contato ${i+1}.`, card.querySelector('.contato-cpf')), false;
+        if (!card.querySelector('.contato-numero-doc').value) return mostrarErroValidacao(`Preencha o Doc. do Contato ${i+1}.`, card.querySelector('.contato-numero-doc')), false;
+        if (!card.querySelector('.contato-data-emissao').value) return mostrarErroValidacao(`Preencha a Emissão do Contato ${i+1}.`, card.querySelector('.contato-data-emissao')), false;
+        if (!card.querySelector('.contato-orgao').value) return mostrarErroValidacao(`Preencha o Órgão Emissor do Contato ${i+1}.`, card.querySelector('.contato-orgao')), false;
+        if (!card.querySelector('.contato-uf-doc').value) return mostrarErroValidacao(`Preencha a UF do Contato ${i+1}.`, card.querySelector('.contato-uf-doc')), false;
+        if (!card.querySelector('.contato-telefone').value) return mostrarErroValidacao(`Preencha o Telefone do Contato ${i+1}.`, card.querySelector('.contato-telefone')), false;
       }
     }
+  }
 
-    if (passo === 2) {
-      if (!document.getElementById('fibraTelefone1').value) return mostrarErroValidacao('Preencha o Telefone 1.', 'fibraTelefone1'), false;
-      const email = document.getElementById('fibraEmail').value;
-      const emailConf = document.getElementById('fibraEmailConfirmacao').value;
-      if (!email) return mostrarErroValidacao('Preencha o E-mail.', 'fibraEmail'), false;
-      if (!emailConf) return mostrarErroValidacao('Confirme o E-mail.', 'fibraEmailConfirmacao'), false;
-      if (email !== emailConf) return mostrarErroValidacao('Os e-mails não coincidem.', 'fibraEmailConfirmacao'), false;
-
-      // Se for PJ, valida os contatos adicionados
-      if (document.getElementById('fibra-pj-contatos-wrapper').style.display !== 'none') {
-        const cards = document.querySelectorAll('.contato-card');
-        for (let i = 0; i < cards.length; i++) {
-          const card = cards[i];
-          if (!card.querySelector('.contato-nome').value) return mostrarErroValidacao(`Preencha o Nome do Contato ${i+1}.`, card.querySelector('.contato-nome')), false;
-          if (!card.querySelector('.contato-cpf').value) return mostrarErroValidacao(`Preencha o CPF do Contato ${i+1}.`, card.querySelector('.contato-cpf')), false;
-          if (!card.querySelector('.contato-numero-doc').value) return mostrarErroValidacao(`Preencha o Doc. do Contato ${i+1}.`, card.querySelector('.contato-numero-doc')), false;
-          if (!card.querySelector('.contato-data-emissao').value) return mostrarErroValidacao(`Preencha a Emissão do Contato ${i+1}.`, card.querySelector('.contato-data-emissao')), false;
-          if (!card.querySelector('.contato-orgao').value) return mostrarErroValidacao(`Preencha o Órgão Emissor do Contato ${i+1}.`, card.querySelector('.contato-orgao')), false;
-          if (!card.querySelector('.contato-uf-doc').value) return mostrarErroValidacao(`Preencha a UF do Contato ${i+1}.`, card.querySelector('.contato-uf-doc')), false;
-          if (!card.querySelector('.contato-telefone').value) return mostrarErroValidacao(`Preencha o Telefone do Contato ${i+1}.`, card.querySelector('.contato-telefone')), false;
-        }
-      }
+  // ─── PASSO 4: ENDEREÇOS (Antigo Passo 3) ───
+  if (passo === 4) {
+    const reqEnd = ['fibraCep', 'fibraNumero', 'fibraUf', 'fibraMunicipio', 'fibraBairro', 'fibraTipoLogradouro', 'fibraLogradouro', 'fibraTipoComplemento'];
+    for (let id of reqEnd) {
+      if (!document.getElementById(id).value) return mostrarErroValidacao(`Preencha os campos do Endereço de Instalação (*).`, id), false;
     }
 
-    if (passo === 3) {
-      const reqEnd = ['fibraCep', 'fibraNumero', 'fibraUf', 'fibraMunicipio', 'fibraBairro', 'fibraTipoLogradouro', 'fibraLogradouro', 'fibraTipoComplemento'];
-      for (let id of reqEnd) {
-        if (!document.getElementById(id).value) return mostrarErroValidacao(`Preencha os campos do Endereço de Instalação (*).`, id), false;
-      }
-
-      if (!document.getElementById('fibraEnderecoIgualCliente').checked) {
-        const reqEndCli = ['clienteCep', 'clienteNumero', 'clienteUf', 'clienteMunicipio', 'clienteBairro', 'clienteTipoLogradouro', 'clienteLogradouro'];
-        for (let id of reqEndCli) {
-          if (!document.getElementById(id).value) return mostrarErroValidacao(`Preencha os campos do Endereço do Cliente (*).`, id), false;
-        }
+    if (!document.getElementById('fibraEnderecoIgualCliente').checked) {
+      const reqEndCli = ['clienteCep', 'clienteNumero', 'clienteUf', 'clienteMunicipio', 'clienteBairro', 'clienteTipoLogradouro', 'clienteLogradouro'];
+      for (let id of reqEndCli) {
+        if (!document.getElementById(id).value) return mostrarErroValidacao(`Preencha os campos do Endereço do Cliente (*).`, id), false;
       }
     }
+  }
 
-    if (passo === 4) {
-      if (!document.getElementById('fibraDiaVencimento').value) return mostrarErroValidacao('Selecione o Dia de Vencimento.', 'fibraDiaVencimento'), false;
-      if (!document.getElementById('fibraTipoFatura').value) return mostrarErroValidacao('Selecione o Tipo de Fatura.', 'fibraTipoFatura'), false;
-      
-      const pagamento = document.querySelector('input[name="fibraFormaPagamento"]:checked');
-      if (!pagamento) return mostrarErroValidacao('Selecione a Forma de Pagamento.', null), false;
+  // ─── PASSO 5: FATURAMENTO (Antigo Passo 4) ───
+  if (passo === 5) {
+    if (!document.getElementById('fibraDiaVencimento').value) return mostrarErroValidacao('Selecione o Dia de Vencimento.', 'fibraDiaVencimento'), false;
+    if (!document.getElementById('fibraTipoFatura').value) return mostrarErroValidacao('Selecione o Tipo de Fatura.', 'fibraTipoFatura'), false;
+    
+    const pagamento = document.querySelector('input[name="fibraFormaPagamento"]:checked');
+    if (!pagamento) return mostrarErroValidacao('Selecione a Forma de Pagamento.', null), false;
 
-      if (pagamento.value === 'DEBITO_AUTOMATICO') {
-        if (!document.getElementById('fibraBanco').value) return mostrarErroValidacao('Selecione o Banco.', 'fibraBanco'), false;
-        if (!document.getElementById('fibraAgencia').value) return mostrarErroValidacao('Preencha a Agência.', 'fibraAgencia'), false;
-        if (!document.getElementById('fibraConta').value) return mostrarErroValidacao('Preencha a Conta.', 'fibraConta'), false;
-      }
-
-      if (document.getElementById('fibraCobrancaDiferente').checked) {
-        const reqCob = ['cobrancaCep', 'cobrancaNumero', 'cobrancaUf', 'cobrancaMunicipio', 'cobrancaBairro', 'cobrancaTipoLogradouro', 'cobrancaLogradouro'];
-        for (let id of reqCob) {
-          if (!document.getElementById(id).value) return mostrarErroValidacao(`Preencha os campos do Endereço de Cobrança (*).`, id), false;
-        }
-      }
+    if (pagamento.value === 'DEBITO_AUTOMATICO') {
+      if (!document.getElementById('fibraBanco').value) return mostrarErroValidacao('Selecione o Banco.', 'fibraBanco'), false;
+      if (!document.getElementById('fibraAgencia').value) return mostrarErroValidacao('Preencha a Agência.', 'fibraAgencia'), false;
+      if (!document.getElementById('fibraConta').value) return mostrarErroValidacao('Preencha a Conta.', 'fibraConta'), false;
     }
 
-    return true; // Passou em tudo
+    if (document.getElementById('fibraCobrancaDiferente').checked) {
+      const reqCob = ['cobrancaCep', 'cobrancaNumero', 'cobrancaUf', 'cobrancaMunicipio', 'cobrancaBairro', 'cobrancaTipoLogradouro', 'cobrancaLogradouro'];
+      for (let id of reqCob) {
+        if (!document.getElementById(id).value) return mostrarErroValidacao(`Preencha os campos do Endereço de Cobrança (*).`, id), false;
+      }
+    }
+  }
+
+  return true; // Passou em tudo
+};
+
+  // Variável global para guardar a oferta escolhida
+  window.ofertaSelecionadaFibra = null;
+
+  async function carregarOfertasFibra() {
+    const container = document.getElementById('container-ofertas-fibra');
+    const doc = document.getElementById('fibraCpfCnpj').value.replace(/\D/g, '');
+    
+    // Define se é PF ou PJ
+    const tipoCliente = doc.length === 11 ? 'PF' : (doc.length === 14 ? 'PJ' : null);
+    
+    if (!tipoCliente) {
+      container.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #ef4444;">❌ Documento inválido. Volte para a etapa 1.</div>';
+      return;
+    }
+
+    container.innerHTML = '<div style="grid-column: span 2; text-align: center; padding: 40px; color: #64748b;">⏳ Buscando ofertas...</div>';
+
+    try {
+      // Busca os planos ativos no banco
+      const { data, error } = await window.sb
+        .from('planos')
+        .select('*')
+        .eq('tenant_id', 'f9cca67a-41f8-4ad7-a119-74bc58018dee')
+        .eq('ativo', true);
+
+      if (error) throw error;
+
+      // Filtra pela regra de negócio: ULTRA FIBRA e PF/PJ
+      const ofertasFiltradas = data.filter(plano => {
+        const nomeUpper = plano.nome.toUpperCase();
+        
+        // Tem que ser Ultra Fibra
+        const isFibra = nomeUpper.includes('ULTRA FIBRA') || nomeUpper.includes('ULTRAFIBRA');
+        if (!isFibra) return false;
+        
+        // Tem que ser PF ou PJ
+        if (tipoCliente === 'PF' && !nomeUpper.includes('PF')) return false;
+        if (tipoCliente === 'PJ' && !nomeUpper.includes('PJ')) return false;
+
+        return true;
+      });
+
+      if (ofertasFiltradas.length === 0) {
+        container.innerHTML = `<div style="grid-column: span 2; text-align: center; padding: 40px;">Nenhuma oferta Ultra Fibra encontrada para ${tipoCliente}.</div>`;
+        return;
+      }
+
+      // Renderiza os cards
+      container.innerHTML = ofertasFiltradas.map(plano => `
+        <div class="oferta-card" onclick="window.selecionarOfertaFibra('${plano.id}', this, '${plano.nome}', ${plano.valor})">
+          <div class="oferta-header-card">
+            <span class="oferta-nome">${plano.nome}</span>
+            <span class="oferta-valor">R$ ${Number(plano.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+          </div>
+          <div style="font-size: 12px; color: #64748b; display: flex; justify-content: space-between;">
+            <span>Instalação Grátis</span>
+            <span>Fidelidade 12 meses</span>
+          </div>
+        </div>
+      `).join('');
+
+    } catch (err) {
+      console.error('Erro ao buscar ofertas:', err);
+      container.innerHTML = '<div style="grid-column: span 2; text-align: center; color: #ef4444;">❌ Erro ao carregar as ofertas.</div>';
+    }
+  }
+
+  window.selecionarOfertaFibra = function(id, element, nome, valor) {
+    document.querySelectorAll('.oferta-card').forEach(card => card.classList.remove('selecionado'));
+    element.classList.add('selecionado');
+    window.ofertaSelecionadaFibra = { id, nome, valor };
+    console.log('Oferta selecionada:', window.ofertaSelecionadaFibra);
   };
   
 // ============================================
   // LÓGICA DO WIZARD (PASSO A PASSO)
   // ============================================
   window.passoAtualFibra = 1;
-  window.totalPassosFibra = 4;
+  window.totalPassosFibra = 5; // 🔥 MUDOU PARA 5
 
   window.mudarPassoFibra = function(direcao) {
-    // 🔥 TRAVA DE SEGURANÇA
     if (direcao === 1) {
       if (typeof window.validarPassoFibra === 'function' && !window.validarPassoFibra(window.passoAtualFibra)) {
-        return; // Impede o avanço se tiver erro
+        return; 
       }
     }
 
     window.passoAtualFibra += direcao;
 
-    // Limita entre 1 e 4
     if (window.passoAtualFibra < 1) window.passoAtualFibra = 1;
     if (window.passoAtualFibra > window.totalPassosFibra) window.passoAtualFibra = window.totalPassosFibra;
 
-    // Atualiza visual dos conteúdos (Etapas)
+    // 🔥 GATILHO: Se acabou de entrar na etapa 2 (Ofertas), carrega os planos
+    if (window.passoAtualFibra === 2 && direcao === 1) {
+      if (typeof window.carregarOfertasFibra === 'function') {
+        window.carregarOfertasFibra();
+      } else if (typeof carregarOfertasFibra === 'function') {
+        carregarOfertasFibra();
+      }
+    }
+
     document.querySelectorAll('#fibraForm .step-content').forEach((el, index) => {
       el.classList.toggle('active', index === (window.passoAtualFibra - 1));
     });
 
-    // Atualiza visual do Header (Bolinhas 1, 2, 3, 4)
     document.querySelectorAll('#fibraForm .wizard-step').forEach((el, index) => {
       const stepNum = index + 1;
       el.classList.remove('active', 'completed');
@@ -3157,7 +3299,6 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       }
     });
 
-    // Controla botões
     const btnVoltar = document.getElementById('btn-voltar-fibra');
     const btnProximo = document.getElementById('btn-proximo-fibra');
     const btnSalvar = document.getElementById('btnSalvarFibra');
@@ -3166,11 +3307,8 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     if (btnProximo) btnProximo.style.display = window.passoAtualFibra === window.totalPassosFibra ? 'none' : 'inline-block';
     if (btnSalvar) btnSalvar.style.display = window.passoAtualFibra === window.totalPassosFibra ? 'inline-block' : 'none';
 
-    // Rola para o topo do card
     const formFibra = document.getElementById('formFibra');
-    if (formFibra) {
-      formFibra.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
+    if (formFibra) formFibra.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
   // 3. Autopreencher dados do CNPJ (API VEXO)
@@ -3311,13 +3449,21 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
 
 // 5. Salvar venda de fibra
   window.salvarVendaFibra = function() {
-    // 🔥 TRAVA DE SEGURANÇA FINAL: Valida todos os passos antes de enviar
-    for (let i = 1; i <= 4; i++) {
+    // 🔥 TRAVA DE SEGURANÇA FINAL: Valida todos os 5 passos antes de enviar
+    for (let i = 1; i <= 5; i++) { // <-- Alterado de 4 para 5
       if (typeof window.validarPassoFibra === 'function' && !window.validarPassoFibra(i)) {
         window.passoAtualFibra = i;
         window.mudarPassoFibra(0); // Volta para a tela que tem erro e atualiza o wizard
         return; // Impede o envio
       }
+    }
+
+    // Trava extra para garantir que a oferta foi selecionada
+    if (!window.ofertaSelecionadaFibra) {
+      alert('⚠️ Por favor, selecione uma oferta antes de enviar.');
+      window.passoAtualFibra = 2;
+      window.mudarPassoFibra(0);
+      return;
     }
 
     const btn = document.getElementById('btnSalvarFibra');
@@ -3343,6 +3489,11 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       telefone3: document.getElementById('fibraTelefone3').value,
       email: document.getElementById('fibraEmail').value,
       emailConfirmacao: document.getElementById('fibraEmailConfirmacao').value,
+      
+      // 🔥 DADOS DA OFERTA SELECIONADA:
+      planoId: window.ofertaSelecionadaFibra.id,
+      planoNome: window.ofertaSelecionadaFibra.nome,
+      planoValor: window.ofertaSelecionadaFibra.valor,
       
       // Endereço de Instalação
       cep: document.getElementById('fibraCep').value,
