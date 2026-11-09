@@ -3570,7 +3570,7 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     }
   };
 
-    // ============================================
+  // ============================================
   // RESETAR FORMULÁRIO ULTRAFIBRA (APÓS ENVIO)
   // ============================================
   window.resetarFormularioFibra = function() {
@@ -3592,7 +3592,7 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     if (containerContatos) containerContatos.innerHTML = '';
     window.contadorContatos = 0;
 
-    // 4. Esconde todas as seções dinâmicas
+    // 4. Esconde todas as seções dinâmicas DENTRO do formulário
     const secoesParaEsconder = [
       'fibra-pf-fields', 'fibra-pj-fields', 'fibra-contato-fields', 
       'fibra-pj-contatos-wrapper', 'fibra-endereco-fields', 'fibra-billing-fields',
@@ -3604,19 +3604,33 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       if (el) el.style.display = 'none';
     });
 
-    // 5. Volta o Wizard para a Etapa 1
+    // 5. 🔥 AQUI ESTÁ A MÁGICA: Esconde o formulário inteiro da Fibra
+    const areaFormularioFibra = document.getElementById('areaFormularioFibra');
+    if (areaFormularioFibra) {
+      areaFormularioFibra.style.display = 'none';
+    }
+
+    // 6. 🔥 Remove a seleção azul do card da UltraFibra
+    const btnFibra = document.getElementById('btn-fibra');
+    if (btnFibra) {
+      btnFibra.classList.remove('active');
+    }
+
+    // 7. Volta o Wizard para a Etapa 1 (para quando ele clicar de novo, começar limpo)
     window.passoAtualFibra = 1;
     if (typeof window.mudarPassoFibra === 'function') {
       window.mudarPassoFibra(0);
     }
 
-    // 6. Restaura o botão de envio para o estado original
+    // 8. Restaura o botão de envio para o estado original
     const btnSalvar = document.getElementById('btnSalvarFibra');
     if (btnSalvar) {
       btnSalvar.disabled = false;
       btnSalvar.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO';
-      btnSalvar.style.display = 'none'; // Esconde pois estamos na Etapa 1
     }
+    
+    // 9. Sobe a tela suavemente para o topo
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 </script>
 
