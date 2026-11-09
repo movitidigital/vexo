@@ -3,16 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VEXO - Ofertas TIM</title>
+  <title>VEXO - Ofertas TIM e Planos</title>
   <style>
     /* ============================================
        VARIÁVEIS E RESET (ALINHADO COM O VEXO)
     ============================================ */
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
     :root {
       --vexo-primary: #1e3c72;
@@ -40,9 +36,6 @@
       color: var(--vexo-gray-800);
     }
 
-    /* ============================================
-       LAYOUT PRINCIPAL
-    ============================================ */
     .ofertas-container {
       max-width: 1400px;
       margin: 0 auto;
@@ -62,18 +55,9 @@
       gap: 16px;
     }
 
-    .header-title h1 {
-      font-size: 24px;
-      font-weight: 800;
-      color: white;
-      margin-bottom: 4px;
-    }
-
-    .header-title p {
-      font-size: 13px;
-      color: var(--vexo-gray-400);
-    }
-
+    .header-title h1 { font-size: 24px; font-weight: 800; color: white; margin-bottom: 4px; }
+    .header-title p { font-size: 13px; color: var(--vexo-gray-400); }
+    
     .header-badge {
       background: rgba(255, 255, 255, 0.1);
       padding: 8px 16px;
@@ -82,472 +66,134 @@
       font-weight: 500;
       color: white;
     }
+    .header-badge span { color: var(--vexo-warning); font-weight: 700; }
 
-    .header-badge span {
-      color: var(--vexo-warning);
+    /* Abas (Tabs) */
+    .tabs-nav {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 24px;
+      border-bottom: 2px solid var(--vexo-gray-200);
+      padding-bottom: 10px;
+    }
+
+    .tab-btn {
+      background: transparent;
+      border: none;
+      padding: 10px 20px;
+      font-size: 15px;
       font-weight: 700;
+      color: var(--vexo-gray-500);
+      cursor: pointer;
+      border-radius: 8px;
+      transition: all 0.2s;
+      font-family: inherit;
+    }
+
+    .tab-btn:hover {
+      background: var(--vexo-gray-100);
+      color: var(--vexo-primary);
+    }
+
+    .tab-btn.active {
+      background: var(--vexo-primary);
+      color: white;
     }
 
     /* Barra de Ações */
     .acoes-bar {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 16px;
-      margin-bottom: 24px;
+      display: flex; justify-content: space-between; align-items: center;
+      flex-wrap: wrap; gap: 16px; margin-bottom: 24px;
     }
-
-    .btn-group {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
-
+    .btn-group { display: flex; gap: 12px; flex-wrap: wrap; }
+    
     .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: 12px;
-      font-weight: 600;
-      font-size: 13px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-      border: none;
-      font-family: inherit;
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 10px 20px; border-radius: 12px; font-weight: 600;
+      font-size: 13px; cursor: pointer; transition: all 0.2s ease;
+      border: none; font-family: inherit;
     }
-
-    .btn-primary {
-      background: var(--vexo-primary);
-      color: white;
-    }
-
-    .btn-primary:hover {
-      background: var(--vexo-primary-light);
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2);
-    }
-
-    .btn-outline {
-      background: transparent;
-      border: 1px solid var(--vexo-gray-300);
-      color: var(--vexo-gray-600);
-    }
-
-    .btn-outline:hover {
-      background: var(--vexo-gray-100);
-      border-color: var(--vexo-gray-400);
-    }
-
-    .btn-sm {
-      padding: 6px 12px;
-      font-size: 11px;
-    }
+    .btn-primary { background: var(--vexo-primary); color: white; }
+    .btn-primary:hover { background: var(--vexo-primary-light); transform: translateY(-2px); box-shadow: 0 4px 12px rgba(30, 60, 114, 0.2); }
+    .btn-outline { background: transparent; border: 1px solid var(--vexo-gray-300); color: var(--vexo-gray-600); }
+    .btn-outline:hover { background: var(--vexo-gray-100); border-color: var(--vexo-gray-400); }
+    .btn-sm { padding: 6px 12px; font-size: 11px; }
 
     /* Filtros */
     .filtros-bar {
-      background: white;
-      border-radius: 20px;
-      padding: 16px 20px;
-      margin-bottom: 24px;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      border: 1px solid var(--vexo-gray-200);
-      display: flex;
-      flex-wrap: wrap;
-      gap: 16px;
-      align-items: flex-end;
+      background: white; border-radius: 20px; padding: 16px 20px;
+      margin-bottom: 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      border: 1px solid var(--vexo-gray-200); display: flex;
+      flex-wrap: wrap; gap: 16px; align-items: flex-end;
     }
-
-    .filtro-group {
-      flex: 1;
-      min-width: 150px;
-    }
-
-    .filtro-group label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--vexo-gray-500);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 4px;
-    }
-
-    .filtro-group select,
-    .filtro-group input {
-      width: 100%;
-      padding: 10px 12px;
-      border: 1px solid var(--vexo-gray-200);
-      border-radius: 10px;
-      font-size: 13px;
-      font-family: inherit;
-      background: white;
-      transition: all 0.2s;
-    }
-
-    .filtro-group select:focus,
-    .filtro-group input:focus {
-      outline: none;
-      border-color: var(--vexo-accent);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .checkbox-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      height: 42px;
-    }
-
-    .checkbox-group input {
-      width: auto;
-      margin: 0;
-    }
+    .filtro-group { flex: 1; min-width: 150px; }
+    .filtro-group label { display: block; font-size: 11px; font-weight: 600; color: var(--vexo-gray-500); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .filtro-group select, .filtro-group input { width: 100%; padding: 10px 12px; border: 1px solid var(--vexo-gray-200); border-radius: 10px; font-size: 13px; font-family: inherit; background: white; transition: all 0.2s; }
+    .filtro-group select:focus, .filtro-group input:focus { outline: none; border-color: var(--vexo-accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    .checkbox-group { display: flex; align-items: center; gap: 8px; height: 42px; }
+    .checkbox-group input { width: auto; margin: 0; }
 
     /* Tabela */
-    .tabela-wrapper {
-      background: white;
-      border-radius: 20px;
-      overflow: hidden;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      border: 1px solid var(--vexo-gray-200);
-    }
-
-    .tabela-ofertas {
-      width: 100%;
-      border-collapse: collapse;
-    }
-
-    .tabela-ofertas th {
-      text-align: left;
-      padding: 16px;
-      background: var(--vexo-gray-50);
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--vexo-gray-600);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      border-bottom: 1px solid var(--vexo-gray-200);
-    }
-
-    .tabela-ofertas td {
-      padding: 14px 16px;
-      font-size: 13px;
-      border-bottom: 1px solid var(--vexo-gray-100);
-      vertical-align: middle;
-    }
-
-    .tabela-ofertas tr:hover {
-      background: var(--vexo-gray-50);
-    }
+    .tabela-wrapper { background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05); border: 1px solid var(--vexo-gray-200); }
+    .tabela-ofertas { width: 100%; border-collapse: collapse; }
+    .tabela-ofertas th { text-align: left; padding: 16px; background: var(--vexo-gray-50); font-size: 12px; font-weight: 700; color: var(--vexo-gray-600); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--vexo-gray-200); }
+    .tabela-ofertas td { padding: 14px 16px; font-size: 13px; border-bottom: 1px solid var(--vexo-gray-100); vertical-align: middle; }
+    .tabela-ofertas tr:hover { background: var(--vexo-gray-50); }
 
     /* Badges */
-    .badge-status {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 11px;
-      font-weight: 700;
-    }
-
-    .badge-ativo {
-      background: #d1fae5;
-      color: #065f46;
-    }
-
-    .badge-inativo {
-      background: #fee2e2;
-      color: #991b1b;
-    }
-
-    .badge-destaque {
-      background: linear-gradient(135deg, #dc2626, #ef4444);
-      color: white;
-      padding: 3px 10px;
-      border-radius: 20px;
-      font-size: 10px;
-      font-weight: 700;
-      display: inline-block;
-    }
+    .badge-status { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 700; }
+    .badge-ativo { background: #d1fae5; color: #065f46; }
+    .badge-inativo { background: #fee2e2; color: #991b1b; }
+    .badge-destaque { background: linear-gradient(135deg, #dc2626, #ef4444); color: white; padding: 3px 10px; border-radius: 20px; font-size: 10px; font-weight: 700; display: inline-block; }
 
     /* Botões de Ação */
-    .acao-btn {
-      background: none;
-      border: none;
-      cursor: pointer;
-      padding: 6px;
-      border-radius: 8px;
-      transition: all 0.2s;
-      font-size: 16px;
-    }
-
-    .acao-editar {
-      color: var(--vexo-accent);
-    }
-
-    .acao-editar:hover {
-      background: #dbeafe;
-    }
-
-    .acao-excluir {
-      color: var(--vexo-danger);
-    }
-
-    .acao-excluir:hover {
-      background: #fee2e2;
-    }
+    .acao-btn { background: none; border: none; cursor: pointer; padding: 6px; border-radius: 8px; transition: all 0.2s; font-size: 16px; }
+    .acao-editar { color: var(--vexo-accent); }
+    .acao-editar:hover { background: #dbeafe; }
+    .acao-excluir { color: var(--vexo-danger); }
+    .acao-excluir:hover { background: #fee2e2; }
 
     /* Modal */
-    .modal-overlay-ofertas {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(15, 23, 42, 0.85);
-      backdrop-filter: blur(8px);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 10000;
-      opacity: 0;
-      transition: opacity 0.3s ease;
-    }
-
-    .modal-overlay-ofertas.active {
-      display: flex;
-    }
-
-    .modal-overlay-ofertas.show {
-      opacity: 1;
-    }
-
-    .modal-container-ofertas {
-      background: white;
-      width: 90%;
-      max-width: 900px;
-      max-height: 90vh;
-      border-radius: 24px;
-      overflow: hidden;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-      transform: scale(0.95);
-      transition: transform 0.3s ease;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .modal-overlay-ofertas.show .modal-container-ofertas {
-      transform: scale(1);
-    }
-
-    .modal-header-ofertas {
-      padding: 20px 24px;
-      background: linear-gradient(135deg, var(--vexo-secondary) 0%, var(--vexo-primary) 100%);
-      color: white;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .modal-header-ofertas h3 {
-      font-size: 18px;
-      font-weight: 700;
-      margin: 0;
-    }
-
-    .modal-close-ofertas {
-      background: rgba(255, 255, 255, 0.1);
-      border: none;
-      width: 32px;
-      height: 32px;
-      border-radius: 50%;
-      cursor: pointer;
-      color: white;
-      font-size: 18px;
-      transition: all 0.2s;
-    }
-
-    .modal-close-ofertas:hover {
-      background: rgba(255, 255, 255, 0.2);
-    }
-
-    .modal-body-ofertas {
-      padding: 24px;
-      overflow-y: auto;
-      flex: 1;
-    }
-
-    .modal-footer-ofertas {
-      padding: 16px 24px;
-      background: var(--vexo-gray-50);
-      border-top: 1px solid var(--vexo-gray-200);
-      display: flex;
-      justify-content: flex-end;
-      gap: 12px;
-    }
+    .modal-overlay-ofertas { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(8px); display: none; justify-content: center; align-items: center; z-index: 10000; opacity: 0; transition: opacity 0.3s ease; }
+    .modal-overlay-ofertas.active { display: flex; }
+    .modal-overlay-ofertas.show { opacity: 1; }
+    .modal-container-ofertas { background: white; width: 90%; max-width: 900px; max-height: 90vh; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); transform: scale(0.95); transition: transform 0.3s ease; display: flex; flex-direction: column; }
+    .modal-overlay-ofertas.show .modal-container-ofertas { transform: scale(1); }
+    .modal-header-ofertas { padding: 20px 24px; background: linear-gradient(135deg, var(--vexo-secondary) 0%, var(--vexo-primary) 100%); color: white; display: flex; justify-content: space-between; align-items: center; }
+    .modal-header-ofertas h3 { font-size: 18px; font-weight: 700; margin: 0; }
+    .modal-close-ofertas { background: rgba(255, 255, 255, 0.1); border: none; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; color: white; font-size: 18px; transition: all 0.2s; }
+    .modal-close-ofertas:hover { background: rgba(255, 255, 255, 0.2); }
+    .modal-body-ofertas { padding: 24px; overflow-y: auto; flex: 1; }
+    .modal-footer-ofertas { padding: 16px 24px; background: var(--vexo-gray-50); border-top: 1px solid var(--vexo-gray-200); display: flex; justify-content: flex-end; gap: 12px; }
 
     /* Formulário */
-    .form-grid-ofertas {
-      display: grid;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 20px;
-    }
-
-    .form-full-ofertas {
-      grid-column: span 2;
-    }
-
-    .form-group-ofertas {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-
-    .form-group-ofertas label {
-      font-size: 12px;
-      font-weight: 700;
-      color: var(--vexo-gray-600);
-    }
-
-    .form-group-ofertas label span {
-      color: var(--vexo-danger);
-    }
-
-    .form-group-ofertas input,
-    .form-group-ofertas select,
-    .form-group-ofertas textarea {
-      padding: 10px 12px;
-      border: 1px solid var(--vexo-gray-200);
-      border-radius: 10px;
-      font-size: 13px;
-      font-family: inherit;
-      transition: all 0.2s;
-    }
-
-    .form-group-ofertas input:focus,
-    .form-group-ofertas select:focus,
-    .form-group-ofertas textarea:focus {
-      outline: none;
-      border-color: var(--vexo-accent);
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
-    }
-
-    .form-group-ofertas textarea {
-      resize: vertical;
-      min-height: 60px;
-    }
+    .form-grid-ofertas { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; }
+    .form-full-ofertas { grid-column: span 2; }
+    .form-group-ofertas { display: flex; flex-direction: column; gap: 6px; }
+    .form-group-ofertas label { font-size: 12px; font-weight: 700; color: var(--vexo-gray-600); }
+    .form-group-ofertas label span { color: var(--vexo-danger); }
+    .form-group-ofertas input, .form-group-ofertas select, .form-group-ofertas textarea { padding: 10px 12px; border: 1px solid var(--vexo-gray-200); border-radius: 10px; font-size: 13px; font-family: inherit; transition: all 0.2s; }
+    .form-group-ofertas input:focus, .form-group-ofertas select:focus, .form-group-ofertas textarea:focus { outline: none; border-color: var(--vexo-accent); box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1); }
+    .form-group-ofertas textarea { resize: vertical; min-height: 60px; }
 
     /* Loading */
-    .loading-spinner {
-      text-align: center;
-      padding: 60px;
-      color: var(--vexo-gray-400);
-    }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px;
-      color: var(--vexo-gray-400);
-    }
-
-    /* Paginação */
-    .pagination-ofertas {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      padding: 20px;
-      border-top: 1px solid var(--vexo-gray-200);
-    }
-
-    .page-btn-ofertas {
-      padding: 8px 14px;
-      border: 1px solid var(--vexo-gray-200);
-      background: white;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 13px;
-      transition: all 0.2s;
-    }
-
-    .page-btn-ofertas.active {
-      background: var(--vexo-primary);
-      color: white;
-      border-color: var(--vexo-primary);
-    }
-
-    .page-btn-ofertas:hover:not(.active) {
-      background: var(--vexo-gray-100);
-    }
+    .loading-spinner { text-align: center; padding: 60px; color: var(--vexo-gray-400); }
+    .empty-state { text-align: center; padding: 60px; color: var(--vexo-gray-400); }
 
     /* Toast */
-    .toast-ofertas-container {
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 10001;
-    }
+    .toast-ofertas-container { position: fixed; bottom: 20px; right: 20px; z-index: 10001; }
+    .toast-oferta { padding: 14px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-top: 10px; animation: slideInRight 0.3s ease-out; display: flex; align-items: center; gap: 10px; }
+    .toast-success { background: var(--vexo-success); color: white; }
+    .toast-error { background: var(--vexo-danger); color: white; }
+    @keyframes slideInRight { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-    .toast-oferta {
-      padding: 14px 20px;
-      border-radius: 12px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-top: 10px;
-      animation: slideInRight 0.3s ease-out;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-
-    .toast-success {
-      background: var(--vexo-success);
-      color: white;
-    }
-
-    .toast-error {
-      background: var(--vexo-danger);
-      color: white;
-    }
-
-    @keyframes slideInRight {
-      from {
-        transform: translateX(100%);
-        opacity: 0;
-      }
-      to {
-        transform: translateX(0);
-        opacity: 1;
-      }
-    }
-
-    /* Responsivo */
     @media (max-width: 768px) {
-      .ofertas-container {
-        padding: 16px;
-      }
-
-      .form-grid-ofertas {
-        grid-template-columns: 1fr;
-      }
-
-      .form-full-ofertas {
-        grid-column: span 1;
-      }
-
-      .tabela-wrapper {
-        overflow-x: auto;
-      }
-
-      .filtros-bar {
-        flex-direction: column;
-      }
-
-      .filtro-group {
-        width: 100%;
-      }
+      .ofertas-container { padding: 16px; }
+      .form-grid-ofertas { grid-template-columns: 1fr; }
+      .form-full-ofertas { grid-column: span 1; }
+      .tabela-wrapper { overflow-x: auto; }
+      .filtros-bar { flex-direction: column; }
+      .filtro-group { width: 100%; }
     }
   </style>
 </head>
@@ -557,91 +203,146 @@
     <!-- HEADER -->
     <div class="ofertas-header">
       <div class="header-title">
-        <h1>🏷️ Ofertas TIM</h1>
-        <p>Gerencie todos os planos e ofertas disponíveis para prospecção</p>
+        <h1>🏷️ Gestão de Produtos</h1>
+        <p>Gerencie ofertas de prospecção e planos sistêmicos</p>
       </div>
       <div class="header-badge" id="permissao-badge">
         <span>🔒</span> Carregando permissões...
       </div>
     </div>
 
-    <!-- BARRA DE AÇÕES -->
-    <div class="acoes-bar">
-      <div class="btn-group" id="btn-group-acoes">
-        <button class="btn btn-primary" id="btn-nova-oferta" style="display: none;">
-          ➕ NOVA OFERTA
-        </button>
-        <button class="btn btn-outline" id="btn-exportar-csv">
-          📤 EXPORTAR CSV
-        </button>
-      </div>
-      <div class="btn-group">
-        <button class="btn btn-outline btn-sm" id="btn-atualizar">
-          🔄 ATUALIZAR
-        </button>
-      </div>
+    <!-- ABAS -->
+    <div class="tabs-nav">
+      <button class="tab-btn active" id="tab-btn-ofertas" onclick="window.mudarAba('ofertas')">Ofertas TIM</button>
+      <button class="tab-btn" id="tab-btn-planos" onclick="window.mudarAba('planos')" style="display: none;">Planos Sistêmicos</button>
     </div>
 
-    <!-- FILTROS -->
-    <div class="filtros-bar">
-      <div class="filtro-group">
-        <label>🔍 BUSCAR</label>
-        <input type="text" id="filtro-busca" placeholder="Nome, ID ou valor...">
-      </div>
-      <div class="filtro-group">
-        <label>📂 CATEGORIA</label>
-        <select id="filtro-categoria">
-          <option value="">Todas</option>
-          <option value="Essencial">Essencial</option>
-          <option value="Intermediário">Intermediário</option>
-          <option value="Premium">Premium</option>
-          <option value="Ultra">Ultra</option>
-        </select>
-      </div>
-      <div class="filtro-group">
-        <label>⚡ TECNOLOGIA</label>
-        <select id="filtro-tecnologia">
-          <option value="">Todas</option>
-          <option value="4G">4G</option>
-          <option value="5G">5G</option>
-        </select>
-      </div>
-      <div class="filtro-group">
-        <div class="checkbox-group">
-          <input type="checkbox" id="filtro-ativos" checked>
-          <label>✅ Apenas Ativos</label>
+    <!-- ========================================== -->
+    <!-- ABA 1: OFERTAS TIM -->
+    <!-- ========================================== -->
+    <div id="aba-ofertas">
+      <!-- BARRA DE AÇÕES -->
+      <div class="acoes-bar">
+        <div class="btn-group" id="btn-group-acoes">
+          <button class="btn btn-primary" id="btn-nova-oferta" style="display: none;">
+            ➕ NOVA OFERTA
+          </button>
+          <button class="btn btn-outline" id="btn-exportar-csv">
+            📤 EXPORTAR CSV
+          </button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" id="btn-atualizar">
+            🔄 ATUALIZAR
+          </button>
         </div>
       </div>
+
+      <!-- FILTROS -->
+      <div class="filtros-bar">
+        <div class="filtro-group">
+          <label>🔍 BUSCAR</label>
+          <input type="text" id="filtro-busca" placeholder="Nome, ID ou valor...">
+        </div>
+        <div class="filtro-group">
+          <label>📂 CATEGORIA</label>
+          <select id="filtro-categoria">
+            <option value="">Todas</option>
+            <option value="Essencial">Essencial</option>
+            <option value="Intermediário">Intermediário</option>
+            <option value="Premium">Premium</option>
+            <option value="Ultra">Ultra</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <label>⚡ TECNOLOGIA</label>
+          <select id="filtro-tecnologia">
+            <option value="">Todas</option>
+            <option value="4G">4G</option>
+            <option value="5G">5G</option>
+          </select>
+        </div>
+        <div class="filtro-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="filtro-ativos" checked>
+            <label>✅ Apenas Ativos</label>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELA DE OFERTAS -->
+      <div class="tabela-wrapper">
+        <table class="tabela-ofertas">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome Comercial</th>
+              <th>Franquia</th>
+              <th>Valor</th>
+              <th>Destaque</th>
+              <th>Status</th>
+              <th style="width: 80px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-ofertas-body">
+            <tr><td colspan="7" class="loading-spinner"><div>⏳ Carregando ofertas...</div></td></tr>
+          </tbody>
+        </table>
+        <div id="pagination-ofertas" class="pagination-ofertas"></div>
+      </div>
     </div>
 
-    <!-- TABELA DE OFERTAS -->
-    <div class="tabela-wrapper">
-      <table class="tabela-ofertas">
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Nome Comercial</th>
-            <th>Franquia</th>
-            <th>Valor</th>
-            <th>Destaque</th>
-            <th>Status</th>
-            <th style="width: 80px;">Ações</th>
-          </tr>
-        </thead>
-        <tbody id="tabela-ofertas-body">
-          <tr>
-            <td colspan="7" class="loading-spinner">
-              <div>⏳ Carregando ofertas...</div>
-            </td>
-          </tr>
-        </tbody>
-       </table>
-      <div id="pagination-ofertas" class="pagination-ofertas"></div>
+    <!-- ========================================== -->
+    <!-- ABA 2: PLANOS SISTÊMICOS -->
+    <!-- ========================================== -->
+    <div id="aba-planos" style="display: none;">
+      <div class="acoes-bar">
+        <div class="btn-group">
+          <button class="btn btn-primary" id="btn-novo-plano">
+            ➕ NOVO PLANO SISTÊMICO
+          </button>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" id="btn-atualizar-planos">
+            🔄 ATUALIZAR
+          </button>
+        </div>
+      </div>
+
+      <div class="filtros-bar">
+        <div class="filtro-group">
+          <label>🔍 BUSCAR PLANO</label>
+          <input type="text" id="filtro-busca-planos" placeholder="Digite o nome do plano...">
+        </div>
+        <div class="filtro-group">
+          <div class="checkbox-group">
+            <input type="checkbox" id="filtro-ativos-planos" checked>
+            <label>✅ Apenas Ativos</label>
+          </div>
+        </div>
+      </div>
+
+      <div class="tabela-wrapper">
+        <table class="tabela-ofertas">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nome do Plano (Sistêmico)</th>
+              <th>Valor Base</th>
+              <th>Status</th>
+              <th style="width: 80px;">Ações</th>
+            </tr>
+          </thead>
+          <tbody id="tabela-planos-body">
+            <tr><td colspan="5" class="loading-spinner">⏳ Carregando planos...</td></tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
   </div>
 
-  <!-- MODAL DE CADASTRO/EDIÇÃO -->
+  <!-- MODAL DE CADASTRO/EDIÇÃO DE OFERTA -->
   <div id="modal-oferta" class="modal-overlay-ofertas">
     <div class="modal-container-ofertas">
       <div class="modal-header-ofertas">
@@ -708,11 +409,11 @@
             </div>
             <div class="form-full-ofertas">
               <label>🎯 APPS INCLUSOS</label>
-              <textarea id="apps-inclusos" rows="2" placeholder="EXA Cloud, Bancah Premium, AYA Books Premium, Aya Idiomas Corp., Clube + Vantagens"></textarea>
+              <textarea id="apps-inclusos" rows="2" placeholder="EXA Cloud, Bancah Premium..."></textarea>
             </div>
             <div class="form-full-ofertas">
               <label>🛡️ VAS SEGURANÇA</label>
-              <textarea id="vas-seguranca" rows="2" placeholder="TIM Segurança, TIM Monitor Intermediário"></textarea>
+              <textarea id="vas-seguranca" rows="2" placeholder="TIM Segurança..."></textarea>
             </div>
             <div class="form-full-ofertas">
               <label>🎁 VAS BENEFÍCIOS</label>
@@ -720,7 +421,7 @@
             </div>
             <div class="form-full-ofertas">
               <label>📝 DESCRIÇÃO COMPLETA</label>
-              <textarea id="descricao" rows="3" placeholder="Descrição detalhada do plano..."></textarea>
+              <textarea id="descricao" rows="3" placeholder="Descrição detalhada..."></textarea>
             </div>
             <div class="form-full-ofertas">
               <div class="checkbox-group">
@@ -738,63 +439,103 @@
     </div>
   </div>
 
+  <!-- MODAL DE CADASTRO/EDIÇÃO DE PLANO SISTÊMICO -->
+  <div id="modal-plano" class="modal-overlay-ofertas">
+    <div class="modal-container-ofertas" style="max-width: 500px;">
+      <div class="modal-header-ofertas">
+        <h3 id="modal-title-plano">➕ Novo Plano Sistêmico</h3>
+        <button class="modal-close-ofertas" id="close-modal-plano-btn">✕</button>
+      </div>
+      <div class="modal-body-ofertas">
+        <form id="form-plano">
+          <input type="hidden" id="plano-id">
+          <div class="form-grid-ofertas" style="grid-template-columns: 1fr;">
+            <div class="form-group-ofertas">
+              <label>📛 NOME DO PLANO <span>*</span></label>
+              <input type="text" id="plano-nome" placeholder="Ex: CS NV/AD B 1GB + GW">
+            </div>
+            <div class="form-group-ofertas">
+              <label>💰 VALOR BASE (R$) <span>*</span></label>
+              <input type="number" step="0.01" id="plano-valor" placeholder="Ex: 35.99">
+            </div>
+            <div class="form-group-ofertas">
+              <div class="checkbox-group">
+                <input type="checkbox" id="plano-ativo" checked>
+                <label>✅ PLANO ATIVO</label>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer-ofertas">
+        <button class="btn btn-outline" id="cancelar-modal-plano-btn">Cancelar</button>
+        <button class="btn btn-primary" id="salvar-plano-btn">💾 Salvar Plano</button>
+      </div>
+    </div>
+  </div>
+
   <!-- TOAST CONTAINER -->
   <div id="toast-ofertas-container" class="toast-ofertas-container"></div>
 
   <script>
     // ═══════════════════════════════════════════════════════════
-// PONTE SUPABASE — ofertas.html
-// ═══════════════════════════════════════════════════════════
-(function () {
-  if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
-  if (window.__vexoPonteOfertasInstalada) return;
+    // PONTE SUPABASE — ofertas.html
+    // ═══════════════════════════════════════════════════════════
+    (function () {
+      if (!window.sb) { console.error('❌ supabase-client.js ausente'); return; }
+      if (window.__vexoPonteOfertasInstalada) return;
 
-  const MAP = {
-    getOfertasTim:    { rpc: 'get_ofertas_tim',    args: ()             => ({}) },
-    salvarOfertaTim:  { rpc: 'salvar_oferta_tim',  args: (dados)        => ({ p_dados: dados || {} }) },
-    excluirOfertaTim: { rpc: 'excluir_oferta_tim', args: (id, cargo)   => ({ p_id: id, p_cargo: cargo || '' }) },
-  };
-
-  function makeRunner() {
-    let ok = null, fail = null;
-    const runner = {
-      withSuccessHandler(fn) { ok = fn; return runner; },
-      withFailureHandler(fn) { fail = fn; return runner; },
-    };
-    Object.keys(MAP).forEach(nome => {
-      runner[nome] = async function (...params) {
-        const cfg = MAP[nome];
-        try {
-          const args = cfg.args(...params);
-          const { data, error } = await window.sb.rpc(cfg.rpc, args);
-          if (error) throw error;
-          if (ok) ok(data);
-        } catch (err) {
-          console.error(`❌ RPC ${cfg.rpc}:`, err);
-          if (fail) fail(err.message || String(err));
-        }
+      const MAP = {
+        getOfertasTim:    { rpc: 'get_ofertas_tim',    args: ()             => ({}) },
+        salvarOfertaTim:  { rpc: 'salvar_oferta_tim',  args: (dados)        => ({ p_dados: dados || {} }) },
+        excluirOfertaTim: { rpc: 'excluir_oferta_tim', args: (id, cargo)   => ({ p_id: id, p_cargo: cargo || '' }) },
       };
-    });
-    return runner;
-  }
 
-  window.google = window.google || {};
-  window.google.script = window.google.script || {};
-  Object.defineProperty(window.google.script, 'run', { get: () => makeRunner(), configurable: true, enumerable: true });
-  window.__vexoPonteOfertasInstalada = true;
-  console.log('✅ Ponte Supabase ativa — ofertas.html');
-})();
+      function makeRunner() {
+        let ok = null, fail = null;
+        const runner = {
+          withSuccessHandler(fn) { ok = fn; return runner; },
+          withFailureHandler(fn) { fail = fn; return runner; },
+        };
+        Object.keys(MAP).forEach(nome => {
+          runner[nome] = async function (...params) {
+            const cfg = MAP[nome];
+            try {
+              const args = cfg.args(...params);
+              const { data, error } = await window.sb.rpc(cfg.rpc, args);
+              if (error) throw error;
+              if (ok) ok(data);
+            } catch (err) {
+              console.error(`❌ RPC ${cfg.rpc}:`, err);
+              if (fail) fail(err.message || String(err));
+            }
+          };
+        });
+        return runner;
+      }
+
+      window.google = window.google || {};
+      window.google.script = window.google.script || {};
+      Object.defineProperty(window.google.script, 'run', { get: () => makeRunner(), configurable: true, enumerable: true });
+      window.__vexoPonteOfertasInstalada = true;
+      console.log('✅ Ponte Supabase ativa — ofertas.html');
+    })();
+
     (function() {
       // ============================================
-      // VARIÁVEIS GLOBAIS
+      // ESTADO GLOBAL
       // ============================================
       let todasOfertas = [];
       let ofertasFiltradas = [];
       let paginaAtual = 1;
       const itensPorPagina = 15;
+      
+      let todosPlanos = [];
+      let planosFiltrados = [];
+
       let permissoes = { podeEditar: false, podeVisualizar: false, cargo: '' };
       
-      // Elementos DOM
+      // Elementos DOM - Ofertas
       const tbody = document.getElementById('tabela-ofertas-body');
       const buscaInput = document.getElementById('filtro-busca');
       const categoriaSelect = document.getElementById('filtro-categoria');
@@ -803,140 +544,152 @@
       const btnAtualizar = document.getElementById('btn-atualizar');
       const btnExportar = document.getElementById('btn-exportar-csv');
       const btnNovaOferta = document.getElementById('btn-nova-oferta');
-      const modal = document.getElementById('modal-oferta');
-      const closeModalBtn = document.getElementById('close-modal-btn');
-      const cancelarModalBtn = document.getElementById('cancelar-modal-btn');
-      const salvarOfertaBtn = document.getElementById('salvar-oferta-btn');
+      const modalOferta = document.getElementById('modal-oferta');
+      
+      // Elementos DOM - Planos
+      const tbodyPlanos = document.getElementById('tabela-planos-body');
+      const buscaPlanosInput = document.getElementById('filtro-busca-planos');
+      const ativosPlanosCheckbox = document.getElementById('filtro-ativos-planos');
+      const btnAtualizarPlanos = document.getElementById('btn-atualizar-planos');
+      const btnNovoPlano = document.getElementById('btn-novo-plano');
+      const modalPlano = document.getElementById('modal-plano');
       
       // ============================================
-      // INICIALIZAÇÃO
+      // INICIALIZAÇÃO E CONTROLE DE ABAS
       // ============================================
       
-      async function init() {
-  console.log('🚀 Inicializando Módulo Ofertas TIM...');
-  await carregarPermissoes();   // 🔥 await
+      window.mudarAba = function(aba) {
+        document.getElementById('aba-ofertas').style.display = aba === 'ofertas' ? 'block' : 'none';
+        document.getElementById('aba-planos').style.display = aba === 'planos' ? 'block' : 'none';
         
-        // Eventos
-        buscaInput.addEventListener('keyup', aplicarFiltros);
-        categoriaSelect.addEventListener('change', aplicarFiltros);
-        tecnologiaSelect.addEventListener('change', aplicarFiltros);
-        ativosCheckbox.addEventListener('change', aplicarFiltros);
+        document.getElementById('tab-btn-ofertas').classList.toggle('active', aba === 'ofertas');
+        document.getElementById('tab-btn-planos').classList.toggle('active', aba === 'planos');
+      };
+
+      async function init() {
+        console.log('🚀 Inicializando Módulo...');
+        await carregarPermissoes();   
+        
+        // Eventos Ofertas
+        buscaInput.addEventListener('keyup', aplicarFiltrosOfertas);
+        categoriaSelect.addEventListener('change', aplicarFiltrosOfertas);
+        tecnologiaSelect.addEventListener('change', aplicarFiltrosOfertas);
+        ativosCheckbox.addEventListener('change', aplicarFiltrosOfertas);
         btnAtualizar.addEventListener('click', carregarOfertas);
         btnExportar.addEventListener('click', exportarOfertasCSV);
         btnNovaOferta.addEventListener('click', abrirModalNovaOferta);
-        closeModalBtn.addEventListener('click', fecharModal);
-        cancelarModalBtn.addEventListener('click', fecharModal);
-        salvarOfertaBtn.addEventListener('click', salvarOferta);
         
-        // Fecha modal ao clicar fora
-        modal.addEventListener('click', function(e) {
-          if (e.target === modal) fecharModal();
-        });
-      }
-      
-      // ============================================
-      // PERMISSÕES (USANDO getPerfilUsuario existente)
-      // ============================================
-async function carregarPermissoes() {
-  let cargo = '';
-  let nome  = '';
-  let userId = null;
-
-  // 1) Pega o user id da sessão do Supabase (que está em sessionStorage.usuarioLogado)
-  try {
-    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
-    userId = sessao.id || sessao.user?.id || null;
-    nome   = sessao.email || '';
-  } catch(e) {}
-
-  // Fallback: window.VEXO
-  if (!userId && window.VEXO?.user?.id) {
-    userId = window.VEXO.user.id;
-  }
-
-  console.log('🔑 user id (ofertas):', userId);
-
-  // 2) Busca o cargo real na tabela profiles
-  if (userId && window.sb) {
-    try {
-      const { data, error } = await window.sb
-        .from('profiles')
-        .select('nome, sobrenome, role, ativo')
-        .eq('id', userId)
-        .single();
-
-      if (error) throw error;
-
-      if (data) {
-        cargo = data.role || '';
-        nome  = [data.nome, data.sobrenome].filter(Boolean).join(' ').trim() || nome;
-
-        // Bloqueia usuário inativo
-        if (data.ativo === false) {
-          cargo = ''; // força cair em "acesso negado"
+        document.getElementById('close-modal-btn').addEventListener('click', fecharModalOferta);
+        document.getElementById('cancelar-modal-btn').addEventListener('click', fecharModalOferta);
+        document.getElementById('salvar-oferta-btn').addEventListener('click', salvarOferta);
+        modalOferta.addEventListener('click', function(e) { if (e.target === modalOferta) fecharModalOferta(); });
+        
+        // Eventos Planos (se tiver permissão)
+        if (permissoes.podeGerenciarPlanos) {
+          buscaPlanosInput.addEventListener('keyup', aplicarFiltrosPlanos);
+          ativosPlanosCheckbox.addEventListener('change', aplicarFiltrosPlanos);
+          btnAtualizarPlanos.addEventListener('click', carregarPlanos);
+          btnNovoPlano.addEventListener('click', abrirModalNovoPlano);
+          
+          document.getElementById('close-modal-plano-btn').addEventListener('click', fecharModalPlano);
+          document.getElementById('cancelar-modal-plano-btn').addEventListener('click', fecharModalPlano);
+          document.getElementById('salvar-plano-btn').addEventListener('click', salvarPlano);
+          modalPlano.addEventListener('click', function(e) { if (e.target === modalPlano) fecharModalPlano(); });
         }
       }
-    } catch(e) {
-      console.warn('⚠️ Falha ao buscar profile:', e);
-    }
-  }
-
-  cargo = String(cargo).toUpperCase().trim();
-  console.log('📌 Cargo do usuário (ofertas):', cargo);
-
-  permissoes.podeEditar     = ['ADMINISTRADOR', 'BACKOFFICE', 'PROPRIETÁRIO', 'PROPRIETARIO'].includes(cargo);
-  permissoes.podeVisualizar = permissoes.podeEditar || cargo === 'CONSULTOR DE VENDAS';
-  permissoes.cargo = cargo;
-
-  const badge = document.getElementById('permissao-badge');
-
-  if (permissoes.podeEditar) {
-    badge.innerHTML = '<span>👑</span> Modo Administrador - Edição liberada';
-    btnNovaOferta.style.display = 'inline-flex';
-  } else if (permissoes.podeVisualizar) {
-    badge.innerHTML = '<span>🔒</span> Modo Leitura - Visualização apenas';
-    btnNovaOferta.style.display = 'none';
-  } else {
-    badge.innerHTML = '<span>⚠️</span> Acesso negado';
-    document.querySelector('.ofertas-container').innerHTML = `
-      <div class="empty-state">
-        ❌ Você não tem permissão para acessar este módulo.
-        <br><small style="font-size:12px; color:#94a3b8; margin-top:8px; display:block;">
-          Cargo detectado: "${cargo || 'vazio'}" | User ID: ${userId || 'não encontrado'}
-        </small>
-      </div>`;
-    return;
-  }
-
-  carregarOfertas();
-}
       
       // ============================================
-      // CRUD - CARREGAR OFERTAS
+      // PERMISSÕES
       // ============================================
+      async function carregarPermissoes() {
+        let cargo = '';
+        let nome  = '';
+        let userId = null;
+
+        try {
+          const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+          userId = sessao.id || sessao.user?.id || null;
+          nome   = sessao.email || '';
+        } catch(e) {}
+
+        if (!userId && window.VEXO?.user?.id) {
+          userId = window.VEXO.user.id;
+        }
+
+        if (userId && window.sb) {
+          try {
+            const { data, error } = await window.sb
+              .from('profiles')
+              .select('nome, sobrenome, role, ativo')
+              .eq('id', userId)
+              .single();
+
+            if (error) throw error;
+
+            if (data) {
+              cargo = data.role || '';
+              nome  = [data.nome, data.sobrenome].filter(Boolean).join(' ').trim() || nome;
+              if (data.ativo === false) cargo = ''; 
+            }
+          } catch(e) {
+            console.warn('⚠️ Falha ao buscar profile:', e);
+          }
+        }
+
+        cargo = String(cargo).toUpperCase().trim();
+        
+        // 🔥 Regra de permissão atualizada
+        const cargosEdicao = ['ADMINISTRADOR', 'BACKOFFICE', 'PROPRIETÁRIO', 'PROPRIETARIO', 'GERENTE/SUPERVISOR', 'GERENTE', 'SUPERVISOR'];
+        
+        permissoes.podeEditar     = cargosEdicao.includes(cargo);
+        permissoes.podeVisualizar = permissoes.podeEditar || cargo === 'CONSULTOR DE VENDAS';
+        permissoes.podeGerenciarPlanos = ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE/SUPERVISOR', 'GERENTE', 'SUPERVISOR'].includes(cargo);
+        permissoes.cargo = cargo;
+
+        const badge = document.getElementById('permissao-badge');
+
+        if (permissoes.podeEditar) {
+          badge.innerHTML = '<span>👑</span> Modo Administrador - Edição liberada';
+          btnNovaOferta.style.display = 'inline-flex';
+        } else if (permissoes.podeVisualizar) {
+          badge.innerHTML = '<span>🔒</span> Modo Leitura - Visualização apenas';
+          btnNovaOferta.style.display = 'none';
+        } else {
+          badge.innerHTML = '<span>⚠️</span> Acesso negado';
+          document.querySelector('.ofertas-container').innerHTML = `
+            <div class="empty-state">
+              ❌ Você não tem permissão para acessar este módulo.
+            </div>`;
+          return;
+        }
+
+        // 🔥 Mostra a aba de planos se tiver permissão
+        if (permissoes.podeGerenciarPlanos) {
+          document.getElementById('tab-btn-planos').style.display = 'inline-block';
+        }
+
+        carregarOfertas();
+      }
       
+      // ============================================
+      // CRUD - OFERTAS (Mantido igual ao original)
+      // ============================================
       function carregarOfertas() {
-        mostrarLoading();
+        tbody.innerHTML = '<tr><td colspan="7" class="loading-spinner">⏳ Carregando ofertas...</td></tr>';
         
         google.script.run
           .withSuccessHandler(function(ofertas) {
             todasOfertas = ofertas || [];
-            console.log(`📦 ${todasOfertas.length} ofertas carregadas`);
-            aplicarFiltros();
+            aplicarFiltrosOfertas();
           })
           .withFailureHandler(function(err) {
-            console.error('❌ Erro ao carregar ofertas:', err);
             mostrarToast('Erro ao carregar ofertas: ' + err, 'error');
             tbody.innerHTML = '<tr><td colspan="7" class="empty-state">❌ Erro ao carregar ofertas</td></tr>';
           })
           .getOfertasTim();
       }
       
-      // ============================================
-      // FILTROS
-      // ============================================
-      
-      function aplicarFiltros() {
+      function aplicarFiltrosOfertas() {
         const busca = buscaInput.value.toLowerCase();
         const categoria = categoriaSelect.value;
         const tecnologia = tecnologiaSelect.value;
@@ -958,14 +711,10 @@ async function carregarPermissoes() {
         
         ofertasFiltradas.sort((a, b) => (a.ordem || 999) - (b.ordem || 999));
         paginaAtual = 1;
-        renderizarTabela();
+        renderizarTabelaOfertas();
       }
       
-      // ============================================
-      // RENDERIZAÇÃO
-      // ============================================
-      
-      function renderizarTabela() {
+      function renderizarTabelaOfertas() {
         const start = (paginaAtual - 1) * itensPorPagina;
         const end = start + itensPorPagina;
         const paginatedOfertas = ofertasFiltradas.slice(start, end);
@@ -976,9 +725,7 @@ async function carregarPermissoes() {
           return;
         }
         
-        const formatarValor = (valor) => {
-          return `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-        };
+        const formatarValor = (valor) => `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
         
         tbody.innerHTML = paginatedOfertas.map(oferta => `
           <tr>
@@ -990,50 +737,27 @@ async function carregarPermissoes() {
             <td><strong>${escapeHtml(oferta.franquia_total || oferta.franquia_plano || '-')}</strong></td>
             <td style="font-weight: 700; color: var(--vexo-primary);">${formatarValor(oferta.valor)}</td>
             <td>${oferta.destaque ? `<span class="badge-destaque">${escapeHtml(oferta.destaque)}</span>` : '-'}</td>
-            <td>${renderizarStatusBadge(oferta.ativo)}</td>
-            <td>${renderizarAcoes(oferta)}</td>
+            <td>${oferta.ativo ? '<span class="badge-status badge-ativo">🟢 ATIVO</span>' : '<span class="badge-status badge-inativo">🔴 INATIVO</span>'}</td>
+            <td>
+              ${permissoes.podeEditar ? `
+                <button class="acao-btn acao-editar" onclick="window.abrirModalEditarOferta('${oferta.id}')" title="Editar">✏️</button>
+                <button class="acao-btn acao-excluir" onclick="window.excluirOferta('${oferta.id}')" title="Excluir">🗑️</button>
+              ` : '<span style="color: var(--vexo-gray-400); font-size: 11px;">🔒 Visualização</span>'}
+            </td>
           </tr>
         `).join('');
         
         renderizarPaginacao();
       }
-      
-      function renderizarStatusBadge(ativo) {
-        if (ativo) {
-          return '<span class="badge-status badge-ativo">🟢 ATIVO</span>';
-        }
-        return '<span class="badge-status badge-inativo">🔴 INATIVO</span>';
-      }
-      
-      function renderizarAcoes(oferta) {
-        if (!permissoes.podeEditar) {
-          return '<span style="color: var(--vexo-gray-400); font-size: 11px;">🔒 Visualização</span>';
-        }
-        
-        return `
-          <button class="acao-btn acao-editar" onclick="window.abrirModalEditarOferta('${oferta.id}')" title="Editar">
-            ✏️
-          </button>
-          <button class="acao-btn acao-excluir" onclick="window.excluirOferta('${oferta.id}')" title="Excluir">
-            🗑️
-          </button>
-        `;
-      }
-      
+
       function renderizarPaginacao() {
         const totalPaginas = Math.ceil(ofertasFiltradas.length / itensPorPagina);
         const paginationDiv = document.getElementById('pagination-ofertas');
         
-        if (totalPaginas <= 1) {
-          paginationDiv.innerHTML = '';
-          return;
-        }
+        if (totalPaginas <= 1) { paginationDiv.innerHTML = ''; return; }
         
         let html = '';
-        
-        if (paginaAtual > 1) {
-          html += `<button class="page-btn-ofertas" onclick="window.irParaPagina(${paginaAtual - 1})">◀</button>`;
-        }
+        if (paginaAtual > 1) html += `<button class="page-btn-ofertas" onclick="window.irParaPagina(${paginaAtual - 1})">◀</button>`;
         
         const startPage = Math.max(1, paginaAtual - 2);
         const endPage = Math.min(totalPaginas, paginaAtual + 2);
@@ -1042,48 +766,28 @@ async function carregarPermissoes() {
           html += `<button class="page-btn-ofertas ${i === paginaAtual ? 'active' : ''}" onclick="window.irParaPagina(${i})">${i}</button>`;
         }
         
-        if (paginaAtual < totalPaginas) {
-          html += `<button class="page-btn-ofertas" onclick="window.irParaPagina(${paginaAtual + 1})">▶</button>`;
-        }
-        
+        if (paginaAtual < totalPaginas) html += `<button class="page-btn-ofertas" onclick="window.irParaPagina(${paginaAtual + 1})">▶</button>`;
         paginationDiv.innerHTML = html;
       }
       
-      window.irParaPagina = function(pagina) {
-        paginaAtual = pagina;
-        renderizarTabela();
-      };
-      
-      // ============================================
-      // MODAL - ABRIR/FECHAR
-      // ============================================
-      
+      window.irParaPagina = function(pagina) { paginaAtual = pagina; renderizarTabelaOfertas(); };
+
+      // Modais Ofertas
       function abrirModalNovaOferta() {
-        if (!permissoes.podeEditar) {
-          mostrarToast('Você não tem permissão para criar ofertas', 'error');
-          return;
-        }
-        
+        if (!permissoes.podeEditar) return mostrarToast('Sem permissão', 'error');
         document.getElementById('modal-title').innerText = '➕ Nova Oferta';
         document.getElementById('form-oferta').reset();
         document.getElementById('oferta-id').value = '';
         document.getElementById('ativo').checked = true;
         document.getElementById('fidelidade').value = 12;
-        
-        abrirModal();
+        modalOferta.classList.add('active');
+        setTimeout(() => modalOferta.classList.add('show'), 10);
       }
       
       window.abrirModalEditarOferta = function(id) {
-        if (!permissoes.podeEditar) {
-          mostrarToast('Você não tem permissão para editar ofertas', 'error');
-          return;
-        }
-        
+        if (!permissoes.podeEditar) return mostrarToast('Sem permissão', 'error');
         const oferta = todasOfertas.find(o => o.id === id);
-        if (!oferta) {
-          mostrarToast('Oferta não encontrada', 'error');
-          return;
-        }
+        if (!oferta) return mostrarToast('Oferta não encontrada', 'error');
         
         document.getElementById('modal-title').innerText = '✏️ Editar Oferta';
         document.getElementById('oferta-id').value = oferta.id || '';
@@ -1103,231 +807,253 @@ async function carregarPermissoes() {
         document.getElementById('descricao').value = oferta.descricao || '';
         document.getElementById('ativo').checked = oferta.ativo !== false;
         
-        abrirModal();
+        modalOferta.classList.add('active');
+        setTimeout(() => modalOferta.classList.add('show'), 10);
       };
       
-      function abrirModal() {
-        modal.classList.add('active');
-        setTimeout(() => {
-          modal.classList.add('show');
-        }, 10);
+      function fecharModalOferta() {
+        modalOferta.classList.remove('show');
+        setTimeout(() => modalOferta.classList.remove('active'), 300);
       }
       
-      function fecharModal() {
-        modal.classList.remove('show');
-        setTimeout(() => {
-          modal.classList.remove('active');
-        }, 300);
-      }
-      
-     
-      
-    // ============================================
-// CRUD - SALVAR (VERSÃO CORRIGIDA)
-// ============================================
-
-function salvarOferta() {
-  const nomeComercial = document.getElementById('nome-comercial').value.trim();
-  const valor = document.getElementById('valor').value;
-  
-  if (!nomeComercial) {
-    mostrarToast('O Nome Comercial é obrigatório', 'error');
-    return;
-  }
-  
-  if (!valor || valor <= 0) {
-    mostrarToast('Informe um valor válido', 'error');
-    return;
-  }
-  
-  // 🔥 Usa o cargo já validado pelo carregarPermissoes()
-  const cargoUsuario = permissoes.cargo || '';
-  console.log('👤 Cargo do usuário (salvar):', cargoUsuario);
-  
-  // Calcula franquia total
-  const franquiaPlano = document.getElementById('franquia-plano').value.trim();
-  const franquiaBonus = document.getElementById('franquia-bonus').value.trim();
-  let franquiaTotal = franquiaPlano;
-  if (franquiaPlano && franquiaBonus) {
-    const numPlano = parseInt(franquiaPlano) || 0;
-    const numBonus = parseInt(franquiaBonus) || 0;
-    franquiaTotal = `${numPlano + numBonus}GB`;
-  }
-  
-  const ofertaData = {
-    id: document.getElementById('oferta-id').value || null,
-    nome_interno: document.getElementById('nome-interno').value.trim(),
-    nome_comercial: nomeComercial,
-    franquia_plano: franquiaPlano,
-    franquia_bonus: franquiaBonus,
-    franquia_total: franquiaTotal,
-    valor: parseFloat(valor),
-    destaque: document.getElementById('destaque').value,
-    tecnologia: document.getElementById('tecnologia').value,
-    fidelidade: parseInt(document.getElementById('fidelidade').value) || 12,
-    categoria: document.getElementById('categoria').value,
-    ordem: parseInt(document.getElementById('ordem').value) || 999,
-    apps_inclusos: document.getElementById('apps-inclusos').value,
-    vas_seguranca: document.getElementById('vas-seguranca').value,
-    vas_beneficios: document.getElementById('vas-beneficios').value,
-    descricao: document.getElementById('descricao').value,
-    ativo: document.getElementById('ativo').checked,
-    cargoUsuario: cargoUsuario  // 🔥 ENVIA O CARGO PARA O BACKEND
-  };
-  
-  // Validação adicional
-  if (!ofertaData.nome_comercial) {
-    mostrarToast('Nome Comercial é obrigatório', 'error');
-    return;
-  }
-  
-  if (isNaN(ofertaData.valor) || ofertaData.valor <= 0) {
-    mostrarToast('Valor inválido', 'error');
-    return;
-  }
-  
-  mostrarLoadingBotao(true);
-  
-  console.log('📤 Enviando oferta:', ofertaData);
-  
-  google.script.run
-    .withSuccessHandler(function(result) {
-      console.log('✅ Resposta do servidor:', result);
-      if (result && result.success) {
-        mostrarToast(result.message, 'success');
-        fecharModal();
-        carregarOfertas();
-      } else {
-        mostrarToast(result?.message || 'Erro ao salvar oferta', 'error');
-      }
-      mostrarLoadingBotao(false);
-    })
-    .withFailureHandler(function(err) {
-      console.error('❌ Erro na comunicação:', err);
-      mostrarToast('Erro de comunicação: ' + err, 'error');
-      mostrarLoadingBotao(false);
-    })
-    .salvarOfertaTim(ofertaData);
-}
-      
-      // ============================================
-      // CRUD - EXCLUIR
-      // ============================================
-      
-     window.excluirOferta = function(id) {
-  if (!permissoes.podeEditar) {
-    mostrarToast('Você não tem permissão para excluir ofertas', 'error');
-    return;
-  }
-  
-  const cargoUsuario = permissoes.cargo || '';   // 🔥 mesmo ajuste
-  
-  if (confirm('⚠️ Tem certeza que deseja excluir esta oferta?\n\nEsta ação não pode ser desfeita.')) {
-    google.script.run
-      .withSuccessHandler(function(result) {
-        if (result && result.success) {
-          mostrarToast(result.message, 'success');
-          carregarOfertas();
-        } else {
-          mostrarToast(result?.message || 'Erro ao excluir', 'error');
+      function salvarOferta() {
+        const nomeComercial = document.getElementById('nome-comercial').value.trim();
+        const valor = document.getElementById('valor').value;
+        
+        if (!nomeComercial) return mostrarToast('O Nome Comercial é obrigatório', 'error');
+        if (!valor || valor <= 0) return mostrarToast('Informe um valor válido', 'error');
+        
+        const franquiaPlano = document.getElementById('franquia-plano').value.trim();
+        const franquiaBonus = document.getElementById('franquia-bonus').value.trim();
+        let franquiaTotal = franquiaPlano;
+        if (franquiaPlano && franquiaBonus) {
+          franquiaTotal = `${(parseInt(franquiaPlano) || 0) + (parseInt(franquiaBonus) || 0)}GB`;
         }
-      })
-      .withFailureHandler(function(err) {
-        mostrarToast('Erro ao excluir: ' + err, 'error');
-      })
-      .excluirOfertaTim(id, cargoUsuario);  // 👈 ENVIA O ID E O CARGO
-  }
-};
+        
+        const ofertaData = {
+          id: document.getElementById('oferta-id').value || null,
+          nome_interno: document.getElementById('nome-interno').value.trim(),
+          nome_comercial: nomeComercial,
+          franquia_plano: franquiaPlano,
+          franquia_bonus: franquiaBonus,
+          franquia_total: franquiaTotal,
+          valor: parseFloat(valor),
+          destaque: document.getElementById('destaque').value,
+          tecnologia: document.getElementById('tecnologia').value,
+          fidelidade: parseInt(document.getElementById('fidelidade').value) || 12,
+          categoria: document.getElementById('categoria').value,
+          ordem: parseInt(document.getElementById('ordem').value) || 999,
+          apps_inclusos: document.getElementById('apps-inclusos').value,
+          vas_seguranca: document.getElementById('vas-seguranca').value,
+          vas_beneficios: document.getElementById('vas-beneficios').value,
+          descricao: document.getElementById('descricao').value,
+          ativo: document.getElementById('ativo').checked,
+          cargoUsuario: permissoes.cargo
+        };
+        
+        const btn = document.getElementById('salvar-oferta-btn');
+        btn.disabled = true; btn.innerHTML = '⏳ Salvando...';
+        
+        google.script.run
+          .withSuccessHandler(function(result) {
+            if (result && result.success) {
+              mostrarToast(result.message, 'success');
+              fecharModalOferta();
+              carregarOfertas();
+            } else {
+              mostrarToast(result?.message || 'Erro ao salvar', 'error');
+            }
+            btn.disabled = false; btn.innerHTML = '💾 Salvar Oferta';
+          })
+          .withFailureHandler(function(err) {
+            mostrarToast('Erro de comunicação: ' + err, 'error');
+            btn.disabled = false; btn.innerHTML = '💾 Salvar Oferta';
+          })
+          .salvarOfertaTim(ofertaData);
+      }
       
-      // ============================================
-      // EXPORTAR CSV
-      // ============================================
+      window.excluirOferta = function(id) {
+        if (!permissoes.podeEditar) return mostrarToast('Sem permissão', 'error');
+        if (confirm('⚠️ Tem certeza que deseja excluir esta oferta?')) {
+          google.script.run
+            .withSuccessHandler(function(result) {
+              if (result && result.success) { mostrarToast(result.message, 'success'); carregarOfertas(); } 
+              else mostrarToast(result?.message || 'Erro ao excluir', 'error');
+            })
+            .withFailureHandler(function(err) { mostrarToast('Erro ao excluir: ' + err, 'error'); })
+            .excluirOfertaTim(id, permissoes.cargo);
+        }
+      };
       
       function exportarOfertasCSV() {
-        const csvRows = [];
-        
-        // Cabeçalho
-        csvRows.push([
-          'ID', 'Nome Interno', 'Nome Comercial', 'Franquia Plano', 'Franquia Bônus',
-          'Franquia Total', 'Valor', 'Destaque', 'Tecnologia', 'Fidelidade',
-          'Categoria', 'Apps Inclusos', 'VAS Segurança', 'VAS Benefícios', 'Descrição', 'Ativo'
-        ].join(','));
+        if(ofertasFiltradas.length === 0) return mostrarToast('Nenhuma oferta para exportar', 'error');
+        const csvRows = [['ID', 'Nome Interno', 'Nome Comercial', 'Franquia Plano', 'Franquia Bônus', 'Franquia Total', 'Valor', 'Destaque', 'Tecnologia', 'Fidelidade', 'Categoria', 'Apps Inclusos', 'VAS Segurança', 'VAS Benefícios', 'Descrição', 'Ativo'].join(',')];
         
         ofertasFiltradas.forEach(o => {
-          csvRows.push([
-            `"${o.id || ''}"`,
-            `"${(o.nome_interno || '').replace(/"/g, '""')}"`,
-            `"${(o.nome_comercial || '').replace(/"/g, '""')}"`,
-            `"${o.franquia_plano || ''}"`,
-            `"${o.franquia_bonus || ''}"`,
-            `"${o.franquia_total || ''}"`,
-            o.valor || '',
-            `"${o.destaque || ''}"`,
-            `"${o.tecnologia || ''}"`,
-            o.fidelidade || '',
-            `"${o.categoria || ''}"`,
-            `"${(o.apps_inclusos || '').replace(/"/g, '""')}"`,
-            `"${(o.vas_seguranca || '').replace(/"/g, '""')}"`,
-            `"${(o.vas_beneficios || '').replace(/"/g, '""')}"`,
-            `"${(o.descricao || '').replace(/"/g, '""')}"`,
-            o.ativo ? 'TRUE' : 'FALSE'
-          ].join(','));
+          csvRows.push([`"${o.id || ''}"`, `"${(o.nome_interno || '').replace(/"/g, '""')}"`, `"${(o.nome_comercial || '').replace(/"/g, '""')}"`, `"${o.franquia_plano || ''}"`, `"${o.franquia_bonus || ''}"`, `"${o.franquia_total || ''}"`, o.valor || '', `"${o.destaque || ''}"`, `"${o.tecnologia || ''}"`, o.fidelidade || '', `"${o.categoria || ''}"`, `"${(o.apps_inclusos || '').replace(/"/g, '""')}"`, `"${(o.vas_seguranca || '').replace(/"/g, '""')}"`, `"${(o.vas_beneficios || '').replace(/"/g, '""')}"`, `"${(o.descricao || '').replace(/"/g, '""')}"`, o.ativo ? 'TRUE' : 'FALSE'].join(','));
         });
         
-        const csvContent = csvRows.join('\n');
-        const blob = new Blob(["\uFEFF" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const blob = new Blob(["\uFEFF" + csvRows.join('\n')], { type: 'text/csv;charset=utf-8;' });
         const link = document.createElement('a');
-        const url = URL.createObjectURL(blob);
-        link.href = url;
+        link.href = URL.createObjectURL(blob);
         link.setAttribute('download', `ofertas_tim_${new Date().toISOString().split('T')[0]}.csv`);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
+        document.body.appendChild(link); link.click(); document.body.removeChild(link);
         mostrarToast('📤 Exportação concluída!', 'success');
       }
+
+      // ============================================
+      // CRUD - PLANOS SISTÊMICOS (NOVO)
+      // ============================================
       
+      async function carregarPlanos() {
+        tbodyPlanos.innerHTML = '<tr><td colspan="5" class="loading-spinner">⏳ Carregando planos...</td></tr>';
+        try {
+          const { data, error } = await window.sb
+            .from('planos')
+            .select('*')
+            .order('nome');
+
+          if (error) throw error;
+          
+          todosPlanos = data || [];
+          aplicarFiltrosPlanos();
+        } catch (e) {
+          console.error('Erro ao carregar planos:', e);
+          mostrarToast('Erro ao carregar planos do banco.', 'error');
+          tbodyPlanos.innerHTML = '<tr><td colspan="5" class="empty-state">❌ Erro ao carregar planos</td></tr>';
+        }
+      }
+
+      function aplicarFiltrosPlanos() {
+        const busca = buscaPlanosInput.value.toLowerCase();
+        const apenasAtivos = ativosPlanosCheckbox.checked;
+
+        planosFiltrados = todosPlanos.filter(plano => {
+          if (busca && !plano.nome.toLowerCase().includes(busca)) return false;
+          if (apenasAtivos && !plano.ativo) return false;
+          return true;
+        });
+
+        renderizarTabelaPlanos();
+      }
+
+      function renderizarTabelaPlanos() {
+        if (planosFiltrados.length === 0) {
+          tbodyPlanos.innerHTML = '<tr><td colspan="5" class="empty-state">📭 Nenhum plano encontrado</td></tr>';
+          return;
+        }
+
+        const formatarValor = (valor) => `R$ ${Number(valor).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+        tbodyPlanos.innerHTML = planosFiltrados.map(plano => `
+          <tr>
+            <td style="font-weight: 600; font-size: 11px; color: var(--vexo-gray-500);">${plano.id || '-'}</td>
+            <td><strong style="color: var(--vexo-gray-800);">${escapeHtml(plano.nome)}</strong></td>
+            <td style="font-weight: 700; color: var(--vexo-primary);">${formatarValor(plano.valor)}</td>
+            <td>${plano.ativo ? '<span class="badge-status badge-ativo">🟢 ATIVO</span>' : '<span class="badge-status badge-inativo">🔴 INATIVO</span>'}</td>
+            <td>
+              <button class="acao-btn acao-editar" onclick="window.abrirModalEditarPlano('${plano.id}')" title="Editar">✏️</button>
+              <button class="acao-btn acao-excluir" onclick="window.excluirPlano('${plano.id}')" title="Excluir">🗑️</button>
+            </td>
+          </tr>
+        `).join('');
+      }
+
+      function abrirModalNovoPlano() {
+        document.getElementById('modal-title-plano').innerText = '➕ Novo Plano Sistêmico';
+        document.getElementById('form-plano').reset();
+        document.getElementById('plano-id').value = '';
+        document.getElementById('plano-ativo').checked = true;
+        
+        modalPlano.classList.add('active');
+        setTimeout(() => modalPlano.classList.add('show'), 10);
+      }
+
+      window.abrirModalEditarPlano = function(id) {
+        const plano = todosPlanos.find(p => p.id === id || p.nome === id); // Fallback se não houver ID
+        if (!plano) return mostrarToast('Plano não encontrado', 'error');
+
+        document.getElementById('modal-title-plano').innerText = '✏️ Editar Plano Sistêmico';
+        document.getElementById('plano-id').value = plano.id || plano.nome; 
+        document.getElementById('plano-nome').value = plano.nome || '';
+        document.getElementById('plano-valor').value = plano.valor || '';
+        document.getElementById('plano-ativo').checked = plano.ativo !== false;
+
+        modalPlano.classList.add('active');
+        setTimeout(() => modalPlano.classList.add('show'), 10);
+      };
+
+      function fecharModalPlano() {
+        modalPlano.classList.remove('show');
+        setTimeout(() => modalPlano.classList.remove('active'), 300);
+      }
+
+      async function salvarPlano() {
+        const id = document.getElementById('plano-id').value;
+        const nome = document.getElementById('plano-nome').value.trim();
+        const valor = document.getElementById('plano-valor').value;
+        const ativo = document.getElementById('plano-ativo').checked;
+
+        if (!nome) return mostrarToast('O nome do plano é obrigatório', 'error');
+        if (!valor || valor <= 0) return mostrarToast('Informe um valor válido', 'error');
+
+        const btn = document.getElementById('salvar-plano-btn');
+        btn.disabled = true; btn.innerHTML = '⏳ Salvando...';
+
+        try {
+          const planoData = { nome, valor: parseFloat(valor), ativo };
+
+          if (id) {
+            // Update
+            const { error } = await window.sb.from('planos').update(planoData).eq('id', id);
+            if (error) throw error;
+          } else {
+            // Insert
+            const { error } = await window.sb.from('planos').insert([planoData]);
+            if (error) throw error;
+          }
+
+          mostrarToast('Plano salvo com sucesso!', 'success');
+          fecharModalPlano();
+          carregarPlanos();
+
+        } catch (e) {
+          console.error('Erro ao salvar plano:', e);
+          mostrarToast('Erro ao salvar plano: ' + e.message, 'error');
+        } finally {
+          btn.disabled = false; btn.innerHTML = '💾 Salvar Plano';
+        }
+      }
+
+      window.excluirPlano = async function(id) {
+        if (confirm('⚠️ Tem certeza que deseja excluir este plano?\n\nEle deixará de aparecer no momento da venda.')) {
+          try {
+            const { error } = await window.sb.from('planos').delete().eq('id', id);
+            if (error) throw error;
+            mostrarToast('Plano excluído com sucesso!', 'success');
+            carregarPlanos();
+          } catch (e) {
+            console.error('Erro ao excluir plano:', e);
+            mostrarToast('Erro ao excluir plano.', 'error');
+          }
+        }
+      };
+
       // ============================================
       // UTILITÁRIOS
       // ============================================
-      
-      function mostrarLoading() {
-        tbody.innerHTML = '<tr><td colspan="7" class="loading-spinner">⏳ Carregando ofertas...</td></tr>';
-      }
-      
-      function mostrarLoadingBotao(loading) {
-        const btn = salvarOfertaBtn;
-        if (loading) {
-          btn.disabled = true;
-          btn.innerHTML = '⏳ Salvando...';
-        } else {
-          btn.disabled = false;
-          btn.innerHTML = '💾 Salvar Oferta';
-        }
-      }
-      
       function mostrarToast(mensagem, tipo = 'success') {
         const container = document.getElementById('toast-ofertas-container');
         const toast = document.createElement('div');
         toast.className = `toast-oferta toast-${tipo}`;
         toast.innerHTML = tipo === 'success' ? `✅ ${mensagem}` : `❌ ${mensagem}`;
         container.appendChild(toast);
-        
-        setTimeout(() => {
-          toast.style.opacity = '0';
-          setTimeout(() => toast.remove(), 300);
-        }, 3000);
+        setTimeout(() => { toast.style.opacity = '0'; setTimeout(() => toast.remove(), 300); }, 3000);
       }
       
       function escapeHtml(text) {
         if (!text) return '';
-        return text
-          .replace(/&/g, '&amp;')
-          .replace(/</g, '&lt;')
-          .replace(/>/g, '&gt;')
-          .replace(/"/g, '&quot;')
-          .replace(/'/g, '&#39;');
+        return text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
       }
       
       // Inicializar
