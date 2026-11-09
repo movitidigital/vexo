@@ -2693,14 +2693,23 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
     if (!container) return;
 
     const cardId = window.contadorContatos;
+    
+    // 🔥 VERIFICA SE É O PRIMEIRO CONTATO
+    const isFirst = container.children.length === 0; 
+    
+    // Se for o primeiro, o botão fica vazio (não aparece). Se for do 2º em diante, o botão é criado.
+    const botaoExcluir = isFirst ? '' : `
+      <button type="button" onclick="window.removerContatoPJ(this)" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px; transition: 0.2s;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#ef4444'">
+        <i class="fa-solid fa-trash-can"></i>
+      </button>
+    `;
+
     const cardHTML = `
       <div class="contato-card" id="contato-card-${cardId}" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 20px; position: relative; animation: fadeIn 0.3s ease;">
         
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
           <h4 style="font-size: 14px; font-weight: 700; color: #1e293b; margin: 0;">Dados do Contato <span class="contato-index">${cardId}</span></h4>
-          <button type="button" onclick="window.removerContatoPJ(this)" style="background: none; border: none; color: #ef4444; cursor: pointer; font-size: 16px; transition: 0.2s;" onmouseover="this.style.color='#dc2626'" onmouseout="this.style.color='#ef4444'">
-            <i class="fa-solid fa-trash-can"></i>
-          </button>
+          ${botaoExcluir} <!-- O botão é inserido aqui, se aplicável -->
         </div>
 
         <div class="form-grid">
@@ -2802,6 +2811,14 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
 
   window.removerContatoPJ = function(btn) {
     const card = btn.closest('.contato-card');
+    const container = document.getElementById('container-contatos-pj');
+    
+    // 🔥 REGRA DE SEGURANÇA: Bloqueia a exclusão se for o primeiro card do container
+    if (card && container && card === container.firstElementChild) {
+        alert('O primeiro contato é obrigatório e não pode ser excluído.');
+        return;
+    }
+
     if (card) {
       card.remove();
       // Reajusta os números dos contatos visíveis
