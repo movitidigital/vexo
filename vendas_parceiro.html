@@ -3535,6 +3535,22 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
               modal.querySelector('h3').innerText = 'Pedido ULTRAFIBRA Enviado!';
               modal.querySelector('p').innerText = 'O pedido foi registrado e está na fila de análise.';
               modal.style.display = 'flex';
+
+              // 🔥 CORREÇÃO: Ajustar o botão do modal para voltar à Etapa 3
+              const btnModal = modal.querySelector('.btn-modal');
+              if (btnModal) {
+                btnModal.innerText = 'OK, ENTENDIDO';
+                btnModal.onclick = function() {
+                  // 1. Esconde o modal
+                  modal.style.display = 'none';
+                  
+                  // 2. Volta o Wizard para a Etapa 3
+                  window.passoAtualFibra = 3;
+                  if (typeof window.mudarPassoFibra === 'function') {
+                    window.mudarPassoFibra(0); // 0 significa apenas atualizar a tela sem alterar o número do passo
+                  }
+                };
+              }
             }
           } else {
             alert('Erro: ' + (data?.message || 'Erro desconhecido'));
