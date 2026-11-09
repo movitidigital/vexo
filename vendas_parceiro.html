@@ -3569,6 +3569,55 @@ console.log('✅ [VEXO] Autocomplete de planos (parceiro) carregado');
       }
     }
   };
+
+    // ============================================
+  // RESETAR FORMULÁRIO ULTRAFIBRA (APÓS ENVIO)
+  // ============================================
+  window.resetarFormularioFibra = function() {
+    // 1. Limpa os campos de texto e selects nativos
+    document.getElementById('fibraForm').reset();
+    
+    // 2. Limpa os campos mascarados ou que o .reset() não limpa direito
+    const camposParaLimpar = [
+      'fibraCpfCnpj', 'fibraCep', 'fibraTelefone1', 'fibraTelefone2', 'fibraTelefone3',
+      'clienteCep', 'cobrancaCep'
+    ];
+    camposParaLimpar.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+
+    // 3. Limpa o container de contatos (sócios)
+    const containerContatos = document.getElementById('container-contatos-pj');
+    if (containerContatos) containerContatos.innerHTML = '';
+    window.contadorContatos = 0;
+
+    // 4. Esconde todas as seções dinâmicas
+    const secoesParaEsconder = [
+      'fibra-pf-fields', 'fibra-pj-fields', 'fibra-contato-fields', 
+      'fibra-pj-contatos-wrapper', 'fibra-endereco-fields', 'fibra-billing-fields',
+      'fibra-wizard-header', 'fibra-wizard-nav', 'fibra-endereco-cliente-fields',
+      'fibra-cobranca-campos', 'fibra-dados-bancarios'
+    ];
+    secoesParaEsconder.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+
+    // 5. Volta o Wizard para a Etapa 1
+    window.passoAtualFibra = 1;
+    if (typeof window.mudarPassoFibra === 'function') {
+      window.mudarPassoFibra(0);
+    }
+
+    // 6. Restaura o botão de envio para o estado original
+    const btnSalvar = document.getElementById('btnSalvarFibra');
+    if (btnSalvar) {
+      btnSalvar.disabled = false;
+      btnSalvar.innerHTML = '<i class="fa-solid fa-paper-plane"></i> ENVIAR PEDIDO';
+      btnSalvar.style.display = 'none'; // Esconde pois estamos na Etapa 1
+    }
+  };
 </script>
 
 </body>
