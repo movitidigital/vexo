@@ -3518,54 +3518,49 @@ function renderizarDetalhes(pedido) {
     return;
   }
 
-
   // ============================================
-  // FUNÇÃO PARA SALVAR CÓDIGO DO CLIENTE (NOVA)
+  // FUNÇÃO PARA SALVAR CÓDIGO DO CLIENTE
   // ============================================
-function salvarCodigoCliente() {
-  const input = document.getElementById('codigo-cliente-input');
-  const codigo = input?.value?.trim() || '';
-  if (!codigo) {
-    showToast('Informe um código de cliente válido.', 'warning');
-    return;
-  }
+  function salvarCodigoCliente() {
+    const input = document.getElementById('codigo-cliente-input');
+    const codigo = input?.value?.trim() || '';
+    if (!codigo) {
+      showToast('Informe um código de cliente válido.', 'warning');
+      return;
+    }
 
-  const pedidoAtual = window._pedidoDetalhesAtual;
-  if (!pedidoAtual) {
-    showToast('Pedido não identificado.', 'error');
-    return;
-  }
+    const pedidoAtual = window._pedidoDetalhesAtual;
+    if (!pedidoAtual) {
+      showToast('Pedido não identificado.', 'error');
+      return;
+    }
 
-  showLoading('Salvando código do cliente...');
-  google.script.run
-    .withSuccessHandler(function(res) {
-      hideLoading();
-      if (res.success) {
-        showToast('Código do cliente salvo com sucesso!', 'success');
-        // 🔥 ATUALIZA O OBJETO GLOBAL
-        const pedidoGlobal = window.todosPedidos?.find(p => p.id_unico === pedidoAtual.id_unico && p.origem === pedidoAtual.origem);
-        if (pedidoGlobal) {
-          pedidoGlobal.codigoCliente = codigo;
+    showLoading('Salvando código do cliente...');
+    google.script.run
+      .withSuccessHandler(function(res) {
+        hideLoading();
+        if (res.success) {
+          showToast('Código do cliente salvo com sucesso!', 'success');
+          const pedidoGlobal = window.todosPedidos?.find(p => p.id_unico === pedidoAtual.id_unico && p.origem === pedidoAtual.origem);
+          if (pedidoGlobal) {
+            pedidoGlobal.codigoCliente = codigo;
+          }
+          pedidoAtual.codigoCliente = codigo;
+          abrirDetalhes(pedidoAtual.linha, pedidoAtual.origem);
+        } else {
+          showToast(res.message || 'Erro ao salvar', 'error');
         }
-        // Atualiza o pedido atual também
-        pedidoAtual.codigoCliente = codigo;
-        // Recarrega os detalhes para refletir o novo valor
-        abrirDetalhes(pedidoAtual.linha, pedidoAtual.origem);
-      } else {
-        showToast(res.message || 'Erro ao salvar', 'error');
-      }
-    })
-    .withFailureHandler(function(err) {
-      hideLoading();
-      showToast('Erro de comunicação: ' + err, 'error');
-    })
-    .salvarCodigoClienteBackend(pedidoAtual.id_unico, pedidoAtual.origem, codigo, pedidoAtual.bancoDeDadosId);
-}
+      })
+      .withFailureHandler(function(err) {
+        hideLoading();
+        showToast('Erro de comunicação: ' + err, 'error');
+      })
+      .salvarCodigoClienteBackend(pedidoAtual.id_unico, pedidoAtual.origem, codigo, pedidoAtual.bancoDeDadosId);
+  }
 
   // ============================================
   // RESTANTE DA FUNÇÃO (STATUS INFO, TIMELINE, etc.)
   // ============================================
-
   const statusInfo = (typeof STATUS_INFO !== 'undefined') ? STATUS_INFO : {
     "PENDENTE DE INPUT": { etapa: 0, label: "Pendente de Input", icone: "📥", classe: "status-0" },
     "1. INPUT REALIZADO": { etapa: 1, label: "Input Realizado", icone: "📝", classe: "status-1" },
@@ -3636,109 +3631,254 @@ function salvarCodigoCliente() {
     return html;
   };
 
-  let linhasHtml = '';
-  if (pedido.linhas_agrupadas && pedido.linhas_agrupadas.length) {
-    const linhasPorPlano = {};
-    pedido.linhas_agrupadas.forEach(linha => {
-      const key = linha.plano || 'Plano não informado';
-      if (!linhasPorPlano[key]) {
-        linhasPorPlano[key] = {
-          plano: linha.plano,
-          quantidade: 0,
-          valorTotal: 0,
-          numeros: [],
-          modalidades: new Set(),
-          data: linha.data || pedido.data_criacao
-        };
-      }
-      linhasPorPlano[key].quantidade++;
-      linhasPorPlano[key].valorTotal += Number(linha.valor) || 0;
-      if (linha.numero) {
-        linhasPorPlano[key].numeros.push({
-          numero: linha.numero,
-          operadora: linha.operadora_doadora || linha.operadora || linha.operadoraDoadora || '',
-          modalidade: linha.modalidade || pedido.modalidade || ''
-        });
-      }
-      if (linha.modalidade) linhasPorPlano[key].modalidades.add(linha.modalidade);
-    });
+  // ============================================
+  // LÓGICA DE CONTEÚDO (FIBRA vs MÓVEL)
+  // ============================================
+  const isFibra = pedido.modalidade && pedido.modalidade.includes('FIBRA');
+  let conteudoPrincipalHtml = '';
 
-    linhasHtml = `
+  if (isFibra) {
+    // ─── LAYOUT DETALHADO PARA ULTRAFIBRA ───
+    const payload = pedido.payload_fibra || {}; 
+    const isPJ = payload.tipoPessoa === 'PJ' || pedido.cnpj?.length > 14;
+    
+    const formatDate = (d) => d ? d.split('-').reverse().join('/') : '—';
+    const valOrDash = (v) => v ? escapeHtml(v) : '—';
+
+    // Bloco 1: Dados do Cliente (PF/PJ)
+    const docLabel = isPJ ? 'CNPJ' : 'CPF';
+    let dadosClienteHtml = `
       <div class="detail-card">
-        <div class="detail-card-header">
-          <i class="fas fa-sim-card"></i> Linhas / Planos
-          <span class="detail-count">${pedido.linhas_agrupadas.length} linha(s)</span>
-        </div>
+        <div class="detail-card-header"><i class="fas fa-user"></i> Dados do Cliente (${isPJ ? 'Pessoa Jurídica' : 'Pessoa Física'})</div>
         <div class="detail-card-body">
-          <div class="linhas-list">
-            ${Object.values(linhasPorPlano).map(item => `
-              <div class="linha-item" style="margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
-                <div class="linha-info" style="flex: 2;">
-                  <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
-                    <span class="linha-plano" style="font-weight: 800; font-size: 14px; color: #1e293b;">${escapeHtml(item.plano)}</span>
-                    ${item.quantidade > 1 ? `<span class="linha-qtd" style="background: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 10px;">${item.quantidade}x</span>` : ''}
-                    <span class="linha-data" style="font-size: 10px; color: #64748b;"><i class="fas fa-calendar-alt"></i> ${item.data || pedido.data_criacao}</span>
-                  </div>
-                  ${item.numeros.length > 0 ? `
-                    <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
-                      ${item.numeros.map(objNum => {
-                        const isPortabilidade = String(objNum.modalidade).toUpperCase().includes('PORTABILIDADE');
-                        return `
-                          <span class="linha-numero" style="background: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;">
-                            <span onclick="copiarTelefone('${objNum.numero}')" style="color: #475569; font-weight: 600; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px;" title="Clique para copiar o número"> <i class="fas fa-phone" style="font-size: 10px;"></i> ${formatarTelefone(objNum.numero)} </span>
-                            ${isPortabilidade && objNum.operadora ? `
-                              <span style="background: #fff7ed; color: #c2410c; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; border: 1px solid #ffedd5; display: inline-flex; align-items: center; gap: 4px;" title="Portabilidade da operadora ${escapeHtml(objNum.operadora)}">
-                                <i class="fas fa-exchange-alt"></i> ${escapeHtml(objNum.operadora)}
-                              </span>
-                            ` : ''}
-                          </span>
-                        `;
-                      }).join('')}
-                    </div>
-                  ` : ''}
-                  ${item.modalidades.size > 0 ? `
-                    <div style="margin-top: 4px;">
-                      ${Array.from(item.modalidades).map(mod => `<span class="linha-modalidade" style="font-size: 10px; color: #3b82f6; background: #dbeafe; padding: 2px 8px; border-radius: 12px; margin-right: 6px;">${escapeHtml(mod)}</span>`).join('')}
-                    </div>
-                  ` : ''}
-                </div>
-                <div class="linha-valor" style="text-align: right; min-width: 100px;">
-                  <span style="font-size: 11px; color: #64748b;">Valor mensal</span>
-                  <div style="font-weight: 800; color: #1e293b; font-size: 16px;">${formatMoeda(item.valorTotal)}</div>
-                  ${item.quantidade > 1 ? `<span style="font-size: 10px; color: #64748b;">${formatMoeda(item.valorTotal / item.quantidade)}/linha</span>` : ''}
-                </div>
-              </div>
-            `).join('')}
-            <div class="linha-total" style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; margin-top: 8px; border-top: 2px solid #e2e8f0;">
-              <span style="font-weight: 700; font-size: 14px;">TOTAL DO PEDIDO</span>
-              <strong style="font-size: 20px; color: #1e3c72;">${formatMoeda(pedido.valor)}</strong>
-            </div>
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">${docLabel}</span><span class="info-value">${valOrDash(payload.cpfCnpj || pedido.cnpj)}</span></div>
+            <div class="info-item"><span class="info-label">${isPJ ? 'Razão Social' : 'Nome Completo'}</span><span class="info-value">${valOrDash(payload.razaoSocial || payload.nomeCompleto || pedido.cliente)}</span></div>
+            ${isPJ ? `
+              <div class="info-item"><span class="info-label">Data de Fundação</span><span class="info-value">${formatDate(payload.dataFundacao)}</span></div>
+              <div class="info-item"><span class="info-label">Inscrição Estadual</span><span class="info-value">${payload.isentoIE ? 'ISENTO' : valOrDash(payload.inscricaoEstadual || pedido.ie)}</span></div>
+              <div class="info-item"><span class="info-label">UF de Emissão</span><span class="info-value">${valOrDash(payload.ufEmissao)}</span></div>
+            ` : `
+              <div class="info-item"><span class="info-label">Data de Nascimento</span><span class="info-value">${formatDate(payload.dataNascimento)}</span></div>
+              <div class="info-item"><span class="info-label">Nome da Mãe</span><span class="info-value">${valOrDash(payload.nomeMae)}</span></div>
+              <div class="info-item"><span class="info-label">Sexo</span><span class="info-value">${valOrDash(payload.sexo)}</span></div>
+              <div class="info-item"><span class="info-label">Documento (${payload.tipoDocumento || 'RG'})</span><span class="info-value">${valOrDash(payload.numeroDocumento)}</span></div>
+              <div class="info-item"><span class="info-label">Emissão / Órgão</span><span class="info-value">${formatDate(payload.dataEmissaoDocumento)} - ${valOrDash(payload.orgaoEmissor)}/${valOrDash(payload.ufDocumento)}</span></div>
+            `}
           </div>
         </div>
       </div>
     `;
+
+    // Bloco 2: Contatos
+    let contatosHtml = `
+      <div class="detail-card">
+        <div class="detail-card-header"><i class="fas fa-address-book"></i> Contato Principal</div>
+        <div class="detail-card-body">
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">Telefone 1</span><span class="info-value">${valOrDash(payload.telefone1 || pedido.contato_financeiro)}</span></div>
+            <div class="info-item"><span class="info-label">Telefone 2</span><span class="info-value">${valOrDash(payload.telefone2)}</span></div>
+            <div class="info-item"><span class="info-label">Telefone 3</span><span class="info-value">${valOrDash(payload.telefone3)}</span></div>
+            <div class="info-item"><span class="info-label">E-mail</span><span class="info-value">${valOrDash(payload.email || pedido.email)}</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Bloco 3: Endereço de Instalação
+    let enderecoInstalacaoHtml = `
+      <div class="detail-card">
+        <div class="detail-card-header"><i class="fas fa-map-marker-alt"></i> Endereço de Instalação</div>
+        <div class="detail-card-body">
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">CEP</span><span class="info-value">${valOrDash(pedido.cep || payload.cep)}</span></div>
+            <div class="info-item"><span class="info-label">Logradouro</span><span class="info-value">${valOrDash(pedido.endereco || payload.logradouro)}, ${valOrDash(pedido.numero_endereco || payload.numero)}</span></div>
+            <div class="info-item"><span class="info-label">Bairro</span><span class="info-value">${valOrDash(pedido.bairro || payload.bairro)}</span></div>
+            <div class="info-item"><span class="info-label">Cidade / UF</span><span class="info-value">${valOrDash(pedido.cidade || payload.municipio)} / ${valOrDash(pedido.uf || payload.uf)}</span></div>
+            <div class="info-item"><span class="info-label">Complemento</span><span class="info-value">${valOrDash(pedido.complemento || payload.complementoDescricao)}</span></div>
+            <div class="info-item"><span class="info-label">Ponto de Referência</span><span class="info-value">${valOrDash(payload.pontoReferencia)}</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Bloco 4: Faturamento e Dados Bancários
+    let faturamentoHtml = `
+      <div class="detail-card">
+        <div class="detail-card-header"><i class="fas fa-file-invoice-dollar"></i> Faturamento e Pagamento</div>
+        <div class="detail-card-body">
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">Dia de Vencimento</span><span class="info-value">${valOrDash(pedido.vencimento || payload.diaVencimento)}</span></div>
+            <div class="info-item"><span class="info-label">Forma de Pagamento</span><span class="info-value" style="color: #10b981; font-weight: 700;">${valOrDash(payload.formaPagamento)}</span></div>
+            <div class="info-item"><span class="info-label">Tipo de Fatura</span><span class="info-value">${valOrDash(payload.tipoFatura)}</span></div>
+            
+            ${payload.formaPagamento === 'DEBITO_AUTOMATICO' ? `
+              <div style="grid-column: span 2; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
+                <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Dados Bancários (Débito Automático)</span>
+                <div class="info-grid" style="margin-top: 8px;">
+                  <div class="info-item"><span class="info-label">Banco</span><span class="info-value">${valOrDash(payload.banco)}</span></div>
+                  <div class="info-item"><span class="info-label">Agência</span><span class="info-value">${valOrDash(payload.agencia)}</span></div>
+                  <div class="info-item"><span class="info-label">Conta</span><span class="info-value">${valOrDash(payload.conta)}</span></div>
+                </div>
+              </div>
+            ` : ''}
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Bloco 5: Sócios (se PJ)
+    let sociosHtml = '';
+    if (isPJ && payload.contatos && payload.contatos.length > 0) {
+      sociosHtml = `
+        <div class="detail-card">
+          <div class="detail-card-header"><i class="fas fa-users"></i> Contatos / Sócios da Empresa</div>
+          <div class="detail-card-body" style="display: flex; flex-direction: column; gap: 16px;">
+            ${payload.contatos.map((c, i) => `
+              <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                  <strong style="color: #1e3c72; font-size: 14px;">${valOrDash(c.nome)}</strong>
+                  <span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700;">${valOrDash(c.tipoContato)}</span>
+                </div>
+                <div class="info-grid">
+                  <div class="info-item"><span class="info-label">CPF</span><span class="info-value">${valOrDash(c.cpf)}</span></div>
+                  <div class="info-item"><span class="info-label">Nascimento</span><span class="info-value">${formatDate(c.dataNascimento)}</span></div>
+                  <div class="info-item"><span class="info-label">Doc. (${c.tipoDoc || 'RG'})</span><span class="info-value">${valOrDash(c.numeroDoc)}</span></div>
+                  <div class="info-item"><span class="info-label">Emissão / Órgão</span><span class="info-value">${formatDate(c.dataEmissao)} - ${valOrDash(c.orgaoEmissor)}/${valOrDash(c.ufDoc)}</span></div>
+                  <div class="info-item"><span class="info-label">Telefone</span><span class="info-value">${valOrDash(c.telefone)}</span></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    conteudoPrincipalHtml = dadosClienteHtml + contatosHtml + enderecoInstalacaoHtml + faturamentoHtml + sociosHtml;
+
+  } else {
+    // ─── LAYOUT MÓVEL (MANTIDO COMO ESTAVA) ───
+    let linhasHtml = '';
+    if (pedido.linhas_agrupadas && pedido.linhas_agrupadas.length) {
+      const linhasPorPlano = {};
+      pedido.linhas_agrupadas.forEach(linha => {
+        const key = linha.plano || 'Plano não informado';
+        if (!linhasPorPlano[key]) {
+          linhasPorPlano[key] = { plano: linha.plano, quantidade: 0, valorTotal: 0, numeros: [], modalidades: new Set(), data: linha.data || pedido.data_criacao };
+        }
+        linhasPorPlano[key].quantidade++;
+        linhasPorPlano[key].valorTotal += Number(linha.valor) || 0;
+        if (linha.numero) {
+          linhasPorPlano[key].numeros.push({ numero: linha.numero, operadora: linha.operadora_doadora || linha.operadora || '', modalidade: linha.modalidade || pedido.modalidade || '' });
+        }
+        if (linha.modalidade) linhasPorPlano[key].modalidades.add(linha.modalidade);
+      });
+
+      linhasHtml = `
+        <div class="detail-card">
+          <div class="detail-card-header">
+            <i class="fas fa-sim-card"></i> Linhas / Planos
+            <span class="detail-count">${pedido.linhas_agrupadas.length} linha(s)</span>
+          </div>
+          <div class="detail-card-body">
+            <div class="linhas-list">
+              ${Object.values(linhasPorPlano).map(item => `
+                <div class="linha-item" style="margin-bottom: 16px; border-bottom: 1px solid #e2e8f0; padding-bottom: 12px;">
+                  <div class="linha-info" style="flex: 2;">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
+                      <span class="linha-plano" style="font-weight: 800; font-size: 14px; color: #1e293b;">${escapeHtml(item.plano)}</span>
+                      ${item.quantidade > 1 ? `<span class="linha-qtd" style="background: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 10px;">${item.quantidade}x</span>` : ''}
+                      <span class="linha-data" style="font-size: 10px; color: #64748b;"><i class="fas fa-calendar-alt"></i> ${item.data || pedido.data_criacao}</span>
+                    </div>
+                    ${item.numeros.length > 0 ? `
+                      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                        ${item.numeros.map(objNum => {
+                          const isPortabilidade = String(objNum.modalidade).toUpperCase().includes('PORTABILIDADE');
+                          return `
+                            <span class="linha-numero" style="background: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;">
+                              <span onclick="copiarTelefone('${objNum.numero}')" style="color: #475569; font-weight: 600; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px;" title="Clique para copiar o número"> <i class="fas fa-phone" style="font-size: 10px;"></i> ${formatarTelefone(objNum.numero)} </span>
+                              ${isPortabilidade && objNum.operadora ? `
+                                <span style="background: #fff7ed; color: #c2410c; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; border: 1px solid #ffedd5; display: inline-flex; align-items: center; gap: 4px;" title="Portabilidade da operadora ${escapeHtml(objNum.operadora)}">
+                                  <i class="fas fa-exchange-alt"></i> ${escapeHtml(objNum.operadora)}
+                                </span>
+                              ` : ''}
+                            </span>
+                          `;
+                        }).join('')}
+                      </div>
+                    ` : ''}
+                    ${item.modalidades.size > 0 ? `
+                      <div style="margin-top: 4px;">
+                        ${Array.from(item.modalidades).map(mod => `<span class="linha-modalidade" style="font-size: 10px; color: #3b82f6; background: #dbeafe; padding: 2px 8px; border-radius: 12px; margin-right: 6px;">${escapeHtml(mod)}</span>`).join('')}
+                      </div>
+                    ` : ''}
+                  </div>
+                  <div class="linha-valor" style="text-align: right; min-width: 100px;">
+                    <span style="font-size: 11px; color: #64748b;">Valor mensal</span>
+                    <div style="font-weight: 800; color: #1e293b; font-size: 16px;">${formatMoeda(item.valorTotal)}</div>
+                    ${item.quantidade > 1 ? `<span style="font-size: 10px; color: #64748b;">${formatMoeda(item.valorTotal / item.quantidade)}/linha</span>` : ''}
+                  </div>
+                </div>
+              `).join('')}
+              <div class="linha-total" style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; margin-top: 8px; border-top: 2px solid #e2e8f0;">
+                <span style="font-weight: 700; font-size: 14px;">TOTAL DO PEDIDO</span>
+                <strong style="font-size: 20px; color: #1e3c72;">${formatMoeda(pedido.valor)}</strong>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // Blocos originais do Móvel
+    let dadosEmpresaHtml = `
+      <div class="detail-card">
+        <div class="detail-card-header"><i class="fas fa-building"></i> Dados da Empresa</div>
+        <div class="detail-card-body">
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">Razão Social</span><span class="info-value">${escapeHtml(pedido.cliente) || '—'}</span></div>
+            <div class="info-item"><span class="info-label">CNPJ</span><span class="info-value">${escapeHtml(pedido.cnpj) || '—'}</span></div>
+            <div class="info-item"><span class="info-label">Inscrição Estadual</span><span class="info-value">${escapeHtml(pedido.ie) || '—'}</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    let enderecoHtml = `
+      <div class="detail-card">
+        <div class="detail-card-header"><i class="fas fa-map-marker-alt"></i> Endereço de Faturamento</div>
+        <div class="detail-card-body">
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">CEP</span><span class="info-value">${escapeHtml(pedido.cep) || '—'}</span></div>
+            <div class="info-item"><span class="info-label">Endereço</span><span class="info-value">${escapeHtml(pedido.endereco) || '—'}, ${escapeHtml(pedido.numero_endereco) || ''}</span></div>
+            <div class="info-item"><span class="info-label">Cidade / UF</span><span class="info-value">${escapeHtml(pedido.cidade) || '—'} / ${escapeHtml(pedido.uf) || '—'}</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    let responsavelHtml = `
+      <div class="detail-card">
+        <div class="detail-card-header"><i class="fas fa-user-tie"></i> Responsável Legal</div>
+        <div class="detail-card-body">
+          <div class="info-grid">
+            <div class="info-item"><span class="info-label">Nome Completo</span><span class="info-value">${escapeHtml(pedido.nome_admin) || '—'}</span></div>
+            <div class="info-item"><span class="info-label">E-mail</span><span class="info-value">${pedido.email ? `<a href="mailto:${escapeHtml(pedido.email)}">${escapeHtml(pedido.email)}</a>` : '—'}</span></div>
+            <div class="info-item"><span class="info-label">Telefone / WhatsApp</span><span class="info-value">${pedido.contato_financeiro ? `<a href="https://wa.me/55${String(pedido.contato_financeiro).replace(/\D/g, '')}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px;"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px;"></i> ${formatarTelefone(pedido.contato_financeiro)}</a>` : '—'}</span></div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    conteudoPrincipalHtml = dadosEmpresaHtml + linhasHtml + enderecoHtml + responsavelHtml;
   }
 
   const statusColor = {
-    'status-0': '#64748b',
-    'status-1': '#1e40af',
-    'status-2': '#6b21a5',
-    'status-3': '#4338ca',
-    'status-4': '#b45309',
-    'status-5': '#166534',
-    'status-6': '#065f46'
+    'status-0': '#64748b', 'status-1': '#1e40af', 'status-2': '#6b21a5', 'status-3': '#4338ca', 'status-4': '#b45309', 'status-5': '#166534', 'status-6': '#065f46'
   }[status.classe] || '#64748b';
 
   const getIconClass = (icone) => {
-    const iconMap = {
-      '📥': 'fa-inbox',
-      '📝': 'fa-pen',
-      '🔒': 'fa-lock',
-      '📋': 'fa-clipboard-list',
-      '📄': 'fa-file-invoice',
-      '🚚': 'fa-truck',
-      '✅': 'fa-check-circle'
-    };
+    const iconMap = { '📥': 'fa-inbox', '📝': 'fa-pen', '🔒': 'fa-lock', '📋': 'fa-clipboard-list', '📄': 'fa-file-invoice', '🚚': 'fa-truck', '✅': 'fa-check-circle' };
     return iconMap[icone] || 'fa-circle-info';
   };
 
@@ -3753,234 +3893,38 @@ function salvarCodigoCliente() {
 
   const html = `
     <style>
-      .detail-card {
-        background: white;
-        border-radius: 16px;
-        margin-bottom: 24px;
-        border: 1px solid #e2e8f0;
-        overflow: hidden;
-        transition: all 0.2s;
-      }
-      .detail-card:hover {
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-      }
-      .detail-card-header {
-        background: #f8fafc;
-        padding: 14px 20px;
-        font-weight: 700;
-        font-size: 14px;
-        color: #1e293b;
-        border-bottom: 1px solid #e2e8f0;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .detail-card-header i {
-        color: #3b82f6;
-        font-size: 16px;
-      }
-      .detail-count {
-        margin-left: auto;
-        font-size: 11px;
-        background: #e2e8f0;
-        padding: 2px 8px;
-        border-radius: 20px;
-        color: #475569;
-      }
-      .detail-card-body {
-        padding: 20px;
-      }
-      .info-grid {
-        display: grid;
-        grid-template-columns: repeat(2, 1fr);
-        gap: 16px;
-      }
-      .info-item {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-      }
-      .info-label {
-        font-size: 10px;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-      }
-      .info-value {
-        font-size: 14px;
-        font-weight: 600;
-        color: #1e293b;
-        word-break: break-word;
-      }
-      .info-value a {
-        color: #3b82f6;
-        text-decoration: none;
-      }
-      .info-value a:hover {
-        text-decoration: underline;
-      }
-      .timeline-step-item {
-        position: relative;
-      }
-      .timeline-step-item[data-tooltip]:hover::after {
-        content: attr(data-tooltip);
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #1e293b;
-        color: white;
-        font-size: 11px;
-        font-weight: 500;
-        padding: 8px 14px;
-        border-radius: 10px;
-        white-space: nowrap;
-        z-index: 1000;
-        margin-bottom: 10px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        pointer-events: none;
-        font-family: 'Inter', sans-serif;
-      }
-      .timeline-step-item[data-tooltip]:hover::before {
-        content: '';
-        position: absolute;
-        bottom: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        border: 7px solid transparent;
-        border-top-color: #1e293b;
-        margin-bottom: 3px;
-        pointer-events: none;
-      }
-      .timeline-connector {
-        flex: 1;
-        height: 2px;
-        background: #e2e8f0;
-        border-radius: 2px;
-      }
-      .timeline-connector.completed {
-        background: #10b981;
-      }
-      .linhas-list {
-        display: flex;
-        flex-direction: column;
-        gap: 12px;
-      }
-      .linha-item {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        padding: 12px;
-        background: #f8fafc;
-        border-radius: 12px;
-        border-left: 3px solid #3b82f6;
-      }
-      .linha-info {
-        flex: 2;
-      }
-      .linha-plano {
-        font-weight: 700;
-        color: #1e293b;
-        font-size: 13px;
-      }
-      .linha-qtd {
-        background: #e2e8f0;
-        padding: 2px 8px;
-        border-radius: 12px;
-        font-size: 10px;
-      }
-      .linha-data {
-        font-size: 10px;
-        color: #64748b;
-      }
-      .linha-numero {
-        background: #f1f5f9;
-        padding: 4px 10px;
-        border-radius: 16px;
-        font-size: 11px;
-        display: inline-block;
-        margin-right: 6px;
-        margin-bottom: 4px;
-      }
-      .linha-modalidade {
-        font-size: 10px;
-        color: #3b82f6;
-        background: #dbeafe;
-        padding: 2px 8px;
-        border-radius: 12px;
-        display: inline-block;
-        margin-right: 6px;
-      }
-      .linha-valor {
-        text-align: right;
-        min-width: 100px;
-      }
-      .linha-total {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-top: 16px;
-        margin-top: 8px;
-        border-top: 2px solid #e2e8f0;
-      }
-      .linha-total strong {
-        font-size: 20px;
-        color: #1e3c72;
-      }
-      .status-header-badge {
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        background: ${statusColor}15;
-        padding: 8px 16px;
-        border-radius: 30px;
-        font-size: 13px;
-        font-weight: 600;
-        color: ${statusColor};
-      }
-      .timeline-dot-large {
-        transition: transform 0.2s ease;
-      }
-      .timeline-step-item.completed:hover .timeline-dot-large,
-      .timeline-step-item.active:hover .timeline-dot-large {
-        transform: scale(1.1);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-      }
-      @media (max-width: 768px) {
-        .info-grid {
-          grid-template-columns: 1fr;
-          gap: 12px;
-        }
-        .timeline-detalhes {
-          overflow-x: auto;
-          padding: 16px;
-        }
-        .timeline-detalhes > div {
-          min-width: 500px;
-        }
-        .timeline-step-item .timeline-label {
-          font-size: 8px;
-        }
-        .timeline-dot-large {
-          width: 36px !important;
-          height: 36px !important;
-          font-size: 16px !important;
-        }
-        .linha-item {
-          flex-direction: column;
-          align-items: flex-start;
-          gap: 12px;
-        }
-        .linha-valor {
-          text-align: left;
-          width: 100%;
-        }
-        .status-header-badge {
-          font-size: 11px;
-          padding: 6px 12px;
-        }
-      }
+      .detail-card { background: white; border-radius: 16px; margin-bottom: 24px; border: 1px solid #e2e8f0; overflow: hidden; transition: all 0.2s; }
+      .detail-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+      .detail-card-header { background: #f8fafc; padding: 14px 20px; font-weight: 700; font-size: 14px; color: #1e293b; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+      .detail-card-header i { color: #3b82f6; font-size: 16px; }
+      .detail-count { margin-left: auto; font-size: 11px; background: #e2e8f0; padding: 2px 8px; border-radius: 20px; color: #475569; }
+      .detail-card-body { padding: 20px; }
+      .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+      .info-item { display: flex; flex-direction: column; gap: 4px; }
+      .info-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+      .info-value { font-size: 14px; font-weight: 600; color: #1e293b; word-break: break-word; }
+      .info-value a { color: #3b82f6; text-decoration: none; }
+      .info-value a:hover { text-decoration: underline; }
+      .timeline-step-item { position: relative; }
+      .timeline-step-item[data-tooltip]:hover::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; font-size: 11px; font-weight: 500; padding: 8px 14px; border-radius: 10px; white-space: nowrap; z-index: 1000; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); pointer-events: none; font-family: 'Inter', sans-serif; }
+      .timeline-step-item[data-tooltip]:hover::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: #1e293b; margin-bottom: 3px; pointer-events: none; }
+      .timeline-connector { flex: 1; height: 2px; background: #e2e8f0; border-radius: 2px; }
+      .timeline-connector.completed { background: #10b981; }
+      .linhas-list { display: flex; flex-direction: column; gap: 12px; }
+      .linha-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px; background: #f8fafc; border-radius: 12px; border-left: 3px solid #3b82f6; }
+      .linha-info { flex: 2; }
+      .linha-plano { font-weight: 700; color: #1e293b; font-size: 13px; }
+      .linha-qtd { background: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 10px; }
+      .linha-data { font-size: 10px; color: #64748b; }
+      .linha-numero { background: #f1f5f9; padding: 4px 10px; border-radius: 16px; font-size: 11px; display: inline-block; margin-right: 6px; margin-bottom: 4px; }
+      .linha-modalidade { font-size: 10px; color: #3b82f6; background: #dbeafe; padding: 2px 8px; border-radius: 12px; display: inline-block; margin-right: 6px; }
+      .linha-valor { text-align: right; min-width: 100px; }
+      .linha-total { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; margin-top: 8px; border-top: 2px solid #e2e8f0; }
+      .linha-total strong { font-size: 20px; color: #1e3c72; }
+      .status-header-badge { display: inline-flex; align-items: center; gap: 8px; background: ${statusColor}15; padding: 8px 16px; border-radius: 30px; font-size: 13px; font-weight: 600; color: ${statusColor}; }
+      .timeline-dot-large { transition: transform 0.2s ease; }
+      .timeline-step-item.completed:hover .timeline-dot-large, .timeline-step-item.active:hover .timeline-dot-large { transform: scale(1.1); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+      @media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; gap: 12px; } .timeline-detalhes { overflow-x: auto; padding: 16px; } .timeline-detalhes > div { min-width: 500px; } .timeline-step-item .timeline-label { font-size: 8px; } .timeline-dot-large { width: 36px !important; height: 36px !important; font-size: 16px !important; } .linha-item { flex-direction: column; align-items: flex-start; gap: 12px; } .linha-valor { text-align: left; width: 100%; } .status-header-badge { font-size: 11px; padding: 6px 12px; } }
     </style>
 
     <!-- STATUS HEADER -->
@@ -3999,9 +3943,7 @@ function salvarCodigoCliente() {
 
     <!-- 🔥 DATA DE ATIVAÇÃO RADAR -->
     <div class="detail-card">
-      <div class="detail-card-header">
-        <i class="fas fa-calendar-check"></i> Ativação no Sistema RADAR
-      </div>
+      <div class="detail-card-header"><i class="fas fa-calendar-check"></i> Ativação no Sistema RADAR</div>
       <div class="detail-card-body">
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
@@ -4016,17 +3958,14 @@ function salvarCodigoCliente() {
       </div>
     </div>
 
-    <!-- 🔥 CÓDIGO DO CLIENTE (NOVO CARD) -->
+    <!-- 🔥 CÓDIGO DO CLIENTE -->
     <div class="detail-card">
-      <div class="detail-card-header">
-        <i class="fas fa-id-card"></i> Código do Cliente
-      </div>
+      <div class="detail-card-header"><i class="fas fa-id-card"></i> Código do Cliente</div>
       <div class="detail-card-body">
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
             <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Código DO CLIENTE:</label>
-            <input type="text" id="codigo-cliente-input" value="${escapeHtml(pedido.codigoCliente || '')}" 
-                   style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; flex: 1; min-width: 150px;">
+            <input type="text" id="codigo-cliente-input" value="${escapeHtml(pedido.codigoCliente || '')}" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1; flex: 1; min-width: 150px;">
             ${podeEditarCodigo ? `<button id="btn-salvar-codigo-cliente" class="btn-primary" style="padding: 6px 16px; background: #1e3c72;">Salvar</button>` : ''}
           </div>
           <div style="font-size: 12px; color: #64748b;">
@@ -4036,109 +3975,19 @@ function salvarCodigoCliente() {
       </div>
     </div>
 
-    <!-- DADOS DA EMPRESA -->
-    <div class="detail-card">
-      <div class="detail-card-header">
-        <i class="fas fa-building"></i> Dados da Empresa
-      </div>
-      <div class="detail-card-body">
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Razão Social</span>
-            <span class="info-value">${escapeHtml(pedido.cliente) || '—'}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">CNPJ</span>
-            <span class="info-value">${escapeHtml(pedido.cnpj) || '—'}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Inscrição Estadual</span>
-            <span class="info-value">${escapeHtml(pedido.ie) || '—'}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- LINHAS / PLANOS -->
-    ${linhasHtml}
-
-    <!-- ENDEREÇO -->
-    <div class="detail-card">
-      <div class="detail-card-header">
-        <i class="fas fa-map-marker-alt"></i> Endereço de Faturamento
-      </div>
-      <div class="detail-card-body">
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">CEP</span>
-            <span class="info-value">${escapeHtml(pedido.cep) || '—'}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Endereço</span>
-            <span class="info-value">${escapeHtml(pedido.endereco) || '—'}, ${escapeHtml(pedido.numero_endereco) || ''}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Cidade / UF</span>
-            <span class="info-value">${escapeHtml(pedido.cidade) || '—'} / ${escapeHtml(pedido.uf) || '—'}</span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- RESPONSÁVEL LEGAL -->
-    <div class="detail-card">
-      <div class="detail-card-header">
-        <i class="fas fa-user-tie"></i> Responsável Legal
-      </div>
-      <div class="detail-card-body">
-        <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Nome Completo</span>
-            <span class="info-value">${escapeHtml(pedido.nome_admin) || '—'}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">E-mail</span>
-            <span class="info-value">${pedido.email ? `<a href="mailto:${escapeHtml(pedido.email)}">${escapeHtml(pedido.email)}</a>` : '—'}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Telefone / WhatsApp</span>
-            <span class="info-value">${pedido.contato_financeiro ? `<a href="https://wa.me/55${String(pedido.contato_financeiro).replace(/\D/g, '')}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px;"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px;"></i> ${formatarTelefone(pedido.contato_financeiro)}</a>` : '—'}</span>
-          </div>
-        </div>
-      </div>
-    </div>
+    <!-- 🔥 CONTEÚDO PRINCIPAL (FIBRA OU MÓVEL) -->
+    ${conteudoPrincipalHtml}
 
     <!-- INFORMAÇÕES ADICIONAIS -->
     <div class="detail-card">
-      <div class="detail-card-header">
-        <i class="fas fa-info-circle"></i> Informações Adicionais
-      </div>
+      <div class="detail-card-header"><i class="fas fa-info-circle"></i> Informações Adicionais</div>
       <div class="detail-card-body">
         <div class="info-grid">
-          <div class="info-item">
-            <span class="info-label">Origem do Pedido</span>
-            <span class="info-value">${pedido.origem === 'PARCEIRO' ? '📱 Pedido de Parceiro' : '🏢 Venda Direta'}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">📅 Dia de Vencimento</span>
-            <span class="info-value">${pedido.vencimento || '—'}</span>
-          </div>
-          <div class="info-item">
-            <span class="info-label">Responsável pelo Cadastro</span>
-            <span class="info-value">${escapeHtml(pedido.responsavel_nome || pedido.parceiro_nome || pedido.vendedor) || '—'}</span>
-          </div>
-          ${pedido.data_ativacao ? `
-          <div class="info-item">
-            <span class="info-label">Data de Ativação</span>
-            <span class="info-value">✅ ${escapeHtml(pedido.data_ativacao)}</span>
-          </div>
-          ` : ''}
-          ${pedido.data_aprovacao_boc ? `
-          <div class="info-item">
-            <span class="info-label">Data Aprovação BOC</span>
-            <span class="info-value">📋 ${escapeHtml(pedido.data_aprovacao_boc)}</span>
-          </div>
-          ` : ''}
+          <div class="info-item"><span class="info-label">Origem do Pedido</span><span class="info-value">${pedido.origem === 'PARCEIRO' ? '📱 Pedido de Parceiro' : '🏢 Venda Direta'}</span></div>
+          <div class="info-item"><span class="info-label">📅 Dia de Vencimento</span><span class="info-value">${pedido.vencimento || '—'}</span></div>
+          <div class="info-item"><span class="info-label">Responsável pelo Cadastro</span><span class="info-value">${escapeHtml(pedido.responsavel_nome || pedido.parceiro_nome || pedido.vendedor) || '—'}</span></div>
+          ${pedido.data_ativacao ? `<div class="info-item"><span class="info-label">Data de Ativação</span><span class="info-value">✅ ${escapeHtml(pedido.data_ativacao)}</span></div>` : ''}
+          ${pedido.data_aprovacao_boc ? `<div class="info-item"><span class="info-label">Data Aprovação BOC</span><span class="info-value">📋 ${escapeHtml(pedido.data_aprovacao_boc)}</span></div>` : ''}
         </div>
       </div>
     </div>
@@ -4148,49 +3997,31 @@ function salvarCodigoCliente() {
   if (modalBody) {
     modalBody.innerHTML = html;
 
-    // 🔥 Evento para botão "Salvar/Editar" da Data RADAR
     const btnSalvar = document.getElementById('btn-salvar-data-radar');
     if (btnSalvar) {
       const novoBtn = btnSalvar.cloneNode(true);
       btnSalvar.parentNode.replaceChild(novoBtn, btnSalvar);
-
       novoBtn.addEventListener('click', function(e) {
         const modo = this.dataset.mode;
         const inputData = document.getElementById('data-radar-input');
         const dataAtual = inputData ? inputData.value : '';
-
         if (modo === 'edit') {
-          this.textContent = 'Salvar';
-          this.dataset.mode = 'save';
-          this.style.background = '#1e3c72';
-          inputData.focus();
-          showToast('Altere a data e clique em Salvar.', 'info');
+          this.textContent = 'Salvar'; this.dataset.mode = 'save'; this.style.background = '#1e3c72'; inputData.focus(); showToast('Altere a data e clique em Salvar.', 'info');
         } else {
-          if (!dataAtual) {
-            showToast('Selecione uma data válida.', 'warning');
-            return;
-          }
+          if (!dataAtual) { showToast('Selecione uma data válida.', 'warning'); return; }
           const dataAnterior = pedido.data_radar || '';
           const dataAnteriorFormatada = converterDataParaInput(dataAnterior);
-          if (dataAtual === dataAnteriorFormatada) {
-            showToast('Nenhuma alteração na data.', 'info');
-            return;
-          }
+          if (dataAtual === dataAnteriorFormatada) { showToast('Nenhuma alteração na data.', 'info'); return; }
           salvarDataRadar(pedido.id_unico, pedido.origem, dataAtual, this);
         }
       });
     }
 
-    // 🔥 Evento para botão "Salvar" do Código do Cliente
     const btnSalvarCodigo = document.getElementById('btn-salvar-codigo-cliente');
     if (btnSalvarCodigo) {
-      // Remove listener antigo para evitar duplicação
       const novoBtnCod = btnSalvarCodigo.cloneNode(true);
       btnSalvarCodigo.parentNode.replaceChild(novoBtnCod, btnSalvarCodigo);
-
-      novoBtnCod.addEventListener('click', function(e) {
-        salvarCodigoCliente();
-      });
+      novoBtnCod.addEventListener('click', function(e) { salvarCodigoCliente(); });
     }
   } else {
     console.error("❌ Elemento 'modal-body' não encontrado!");
