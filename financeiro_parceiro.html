@@ -1070,6 +1070,15 @@
     if (!dataEmissao) return showErro('Informe a data de emissão.');
     if (!state.file) return showErro('Anexe o arquivo PDF da NF.');
 
+    // 🔥 ADICIONADO PARA DEBUG
+    console.log('🚀 [FINP] Enviando NF com os dados:', {
+      p_mes: state.mes,
+      p_ano: state.ano,
+      p_numero: numero,
+      p_valor: valor,
+      p_data_emissao: dataEmissao
+    });
+
     const btn = $('finp-nf-btn-enviar');
     btn.disabled = true; btn.innerHTML = '<span class="finp-spinner"></span> Enviando...';
 
