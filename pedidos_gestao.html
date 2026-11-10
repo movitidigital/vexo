@@ -3631,9 +3631,15 @@ function renderizarDetalhes(pedido) {
 
   if (isFibra) {
     // ─── LAYOUT DETALHADO PARA ULTRAFIBRA ───
-    const isPJ = pedido.tipo_pessoa === 'PJ';
+    // 🔥 AGORA PUXAMOS DOS SUB-OBJETOS QUE O SQL ENVIOU
+    const c = pedido.cliente || {};
+    const ct = pedido.contato || {};
+    const end = pedido.endereco_instalacao || {};
+    const endCli = pedido.endereco_cliente || {};
+    const fat = pedido.faturamento || {};
+    const endCob = pedido.endereco_cobranca || {};
     
-    // Helpers de formatação
+    const isPJ = c.tipo_pessoa === 'PJ';
     const formatDate = (d) => d ? d.split('-').reverse().join('/') : '—';
     const valOrDash = (v) => (v !== null && v !== undefined && v !== '') ? escapeHtml(v) : '—';
     const boolToStr = (b) => b ? 'Sim' : 'Não';
@@ -3645,21 +3651,21 @@ function renderizarDetalhes(pedido) {
         <div class="detail-card-header"><i class="fas fa-user"></i> Dados do Cliente (${isPJ ? 'Pessoa Jurídica' : 'Pessoa Física'})</div>
         <div class="detail-card-body">
           <div class="info-grid">
-            <div class="info-item"><span class="info-label">${docLabel}</span><span class="info-value">${valOrDash(pedido.cpf_cnpj)}</span></div>
-            <div class="info-item"><span class="info-label">${isPJ ? 'Razão Social' : 'Nome Completo'}</span><span class="info-value">${valOrDash(isPJ ? pedido.razao_social : pedido.nome_completo)}</span></div>
+            <div class="info-item"><span class="info-label">${docLabel}</span><span class="info-value">${valOrDash(c.cpf_cnpj)}</span></div>
+            <div class="info-item"><span class="info-label">${isPJ ? 'Razão Social' : 'Nome Completo'}</span><span class="info-value">${valOrDash(isPJ ? c.razao_social : c.nome_completo)}</span></div>
             
             ${isPJ ? `
-              <div class="info-item"><span class="info-label">Data de Fundação</span><span class="info-value">${formatDate(pedido.data_fundacao)}</span></div>
-              <div class="info-item"><span class="info-label">Inscrição Estadual</span><span class="info-value">${pedido.isento_ie ? 'ISENTO' : valOrDash(pedido.inscricao_estadual)}</span></div>
-              <div class="info-item"><span class="info-label">UF de Emissão</span><span class="info-value">${valOrDash(pedido.uf_emissao)}</span></div>
+              <div class="info-item"><span class="info-label">Data de Fundação</span><span class="info-value">${formatDate(c.data_fundacao)}</span></div>
+              <div class="info-item"><span class="info-label">Inscrição Estadual</span><span class="info-value">${c.isento_ie ? 'ISENTO' : valOrDash(c.inscricao_estadual)}</span></div>
+              <div class="info-item"><span class="info-label">UF de Emissão</span><span class="info-value">${valOrDash(c.uf_emissao)}</span></div>
             ` : `
-              <div class="info-item"><span class="info-label">Data de Nascimento</span><span class="info-value">${formatDate(pedido.data_nascimento)}</span></div>
-              <div class="info-item"><span class="info-label">Nome da Mãe</span><span class="info-value">${valOrDash(pedido.nome_mae)}</span></div>
-              <div class="info-item"><span class="info-label">Sexo</span><span class="info-value">${valOrDash(pedido.sexo)}</span></div>
-              <div class="info-item"><span class="info-label">Não Alfabetizado</span><span class="info-value">${boolToStr(pedido.nao_alfabetizado)}</span></div>
-              <div class="info-item"><span class="info-label">Nec. Especiais</span><span class="info-value">${boolToStr(pedido.necessidades_especiais)}</span></div>
-              <div class="info-item"><span class="info-label">Documento (${pedido.tipo_documento || 'RG'})</span><span class="info-value">${valOrDash(pedido.numero_documento)}</span></div>
-              <div class="info-item"><span class="info-label">Emissão / Órgão</span><span class="info-value">${formatDate(pedido.data_emissao_documento)} - ${valOrDash(pedido.orgao_emissor)}/${valOrDash(pedido.uf_documento)}</span></div>
+              <div class="info-item"><span class="info-label">Data de Nascimento</span><span class="info-value">${formatDate(c.data_nascimento)}</span></div>
+              <div class="info-item"><span class="info-label">Nome da Mãe</span><span class="info-value">${valOrDash(c.nome_mae)}</span></div>
+              <div class="info-item"><span class="info-label">Sexo</span><span class="info-value">${valOrDash(c.sexo)}</span></div>
+              <div class="info-item"><span class="info-label">Não Alfabetizado</span><span class="info-value">${boolToStr(c.nao_alfabetizado)}</span></div>
+              <div class="info-item"><span class="info-label">Nec. Especiais</span><span class="info-value">${boolToStr(c.necessidades_especiais)}</span></div>
+              <div class="info-item"><span class="info-label">Documento (${c.tipo_documento || 'RG'})</span><span class="info-value">${valOrDash(c.numero_documento)}</span></div>
+              <div class="info-item"><span class="info-label">Emissão / Órgão</span><span class="info-value">${formatDate(c.data_emissao_documento)} - ${valOrDash(c.orgao_emissor)}/${valOrDash(c.uf_documento)}</span></div>
             `}
           </div>
         </div>
@@ -3672,10 +3678,10 @@ function renderizarDetalhes(pedido) {
         <div class="detail-card-header"><i class="fas fa-address-book"></i> Contato Principal</div>
         <div class="detail-card-body">
           <div class="info-grid">
-            <div class="info-item"><span class="info-label">Telefone 1</span><span class="info-value">${valOrDash(pedido.telefone1)}</span></div>
-            <div class="info-item"><span class="info-label">Telefone 2</span><span class="info-value">${valOrDash(pedido.telefone2)}</span></div>
-            <div class="info-item"><span class="info-label">Telefone 3</span><span class="info-value">${valOrDash(pedido.telefone3)}</span></div>
-            <div class="info-item"><span class="info-label">E-mail</span><span class="info-value">${valOrDash(pedido.email)}</span></div>
+            <div class="info-item"><span class="info-label">Telefone 1</span><span class="info-value">${valOrDash(ct.telefone1)}</span></div>
+            <div class="info-item"><span class="info-label">Telefone 2</span><span class="info-value">${valOrDash(ct.telefone2)}</span></div>
+            <div class="info-item"><span class="info-label">Telefone 3</span><span class="info-value">${valOrDash(ct.telefone3)}</span></div>
+            <div class="info-item"><span class="info-label">E-mail</span><span class="info-value">${valOrDash(ct.email)}</span></div>
           </div>
         </div>
       </div>
@@ -3687,12 +3693,12 @@ function renderizarDetalhes(pedido) {
         <div class="detail-card-header"><i class="fas fa-map-marker-alt"></i> Endereço de Instalação</div>
         <div class="detail-card-body">
           <div class="info-grid">
-            <div class="info-item"><span class="info-label">CEP</span><span class="info-value">${valOrDash(pedido.cep)}</span></div>
-            <div class="info-item"><span class="info-label">Logradouro</span><span class="info-value">${valOrDash(pedido.tipo_logradouro)} ${valOrDash(pedido.logradouro)}, ${valOrDash(pedido.numero)}</span></div>
-            <div class="info-item"><span class="info-label">Bairro</span><span class="info-value">${valOrDash(pedido.bairro)}</span></div>
-            <div class="info-item"><span class="info-label">Cidade / UF</span><span class="info-value">${valOrDash(pedido.municipio)} / ${valOrDash(pedido.uf)}</span></div>
-            <div class="info-item"><span class="info-label">Complemento</span><span class="info-value">${valOrDash(pedido.tipo_complemento)} ${valOrDash(pedido.complemento_descricao)}</span></div>
-            <div class="info-item"><span class="info-label">Ponto de Referência</span><span class="info-value">${valOrDash(pedido.ponto_referencia)}</span></div>
+            <div class="info-item"><span class="info-label">CEP</span><span class="info-value">${valOrDash(end.cep)}</span></div>
+            <div class="info-item"><span class="info-label">Logradouro</span><span class="info-value">${valOrDash(end.tipo_logradouro)} ${valOrDash(end.logradouro)}, ${valOrDash(end.numero)}</span></div>
+            <div class="info-item"><span class="info-label">Bairro</span><span class="info-value">${valOrDash(end.bairro)}</span></div>
+            <div class="info-item"><span class="info-label">Cidade / UF</span><span class="info-value">${valOrDash(end.municipio)} / ${valOrDash(end.uf)}</span></div>
+            <div class="info-item"><span class="info-label">Complemento</span><span class="info-value">${valOrDash(end.tipo_complemento)} ${valOrDash(end.complemento_descricao)}</span></div>
+            <div class="info-item"><span class="info-label">Ponto de Referência</span><span class="info-value">${valOrDash(end.ponto_referencia)}</span></div>
           </div>
         </div>
       </div>
@@ -3700,17 +3706,17 @@ function renderizarDetalhes(pedido) {
 
     // Bloco 3.1: Endereço do Cliente (se for diferente)
     let enderecoClienteHtml = '';
-    if (pedido.endereco_cliente_igual_instalacao === false) {
+    if (endCli.igual_instalacao === false) {
       enderecoClienteHtml = `
         <div class="detail-card">
           <div class="detail-card-header"><i class="fas fa-home"></i> Endereço do Cliente (Diferente da Instalação)</div>
           <div class="detail-card-body">
             <div class="info-grid">
-              <div class="info-item"><span class="info-label">CEP</span><span class="info-value">${valOrDash(pedido.cliente_cep)}</span></div>
-              <div class="info-item"><span class="info-label">Logradouro</span><span class="info-value">${valOrDash(pedido.cliente_tipo_logradouro)} ${valOrDash(pedido.cliente_logradouro)}, ${valOrDash(pedido.cliente_numero)}</span></div>
-              <div class="info-item"><span class="info-label">Bairro</span><span class="info-value">${valOrDash(pedido.cliente_bairro)}</span></div>
-              <div class="info-item"><span class="info-label">Cidade / UF</span><span class="info-value">${valOrDash(pedido.cliente_municipio)} / ${valOrDash(pedido.cliente_uf)}</span></div>
-              <div class="info-item"><span class="info-label">Complemento</span><span class="info-value">${valOrDash(pedido.cliente_tipo_complemento)} ${valOrDash(pedido.cliente_complemento_descricao)}</span></div>
+              <div class="info-item"><span class="info-label">CEP</span><span class="info-value">${valOrDash(endCli.cep)}</span></div>
+              <div class="info-item"><span class="info-label">Logradouro</span><span class="info-value">${valOrDash(endCli.logradouro)}, ${valOrDash(endCli.numero)}</span></div>
+              <div class="info-item"><span class="info-label">Bairro</span><span class="info-value">${valOrDash(endCli.bairro)}</span></div>
+              <div class="info-item"><span class="info-label">Cidade / UF</span><span class="info-value">${valOrDash(endCli.municipio)} / ${valOrDash(endCli.uf)}</span></div>
+              <div class="info-item"><span class="info-label">Complemento</span><span class="info-value">${valOrDash(endCli.complemento_descricao)}</span></div>
             </div>
           </div>
         </div>
@@ -3723,17 +3729,17 @@ function renderizarDetalhes(pedido) {
         <div class="detail-card-header"><i class="fas fa-file-invoice-dollar"></i> Faturamento e Pagamento</div>
         <div class="detail-card-body">
           <div class="info-grid">
-            <div class="info-item"><span class="info-label">Dia de Vencimento</span><span class="info-value">${valOrDash(pedido.dia_vencimento)}</span></div>
-            <div class="info-item"><span class="info-label">Forma de Pagamento</span><span class="info-value" style="color: #10b981; font-weight: 700;">${valOrDash(pedido.forma_pagamento)}</span></div>
-            <div class="info-item"><span class="info-label">Tipo de Fatura</span><span class="info-value">${valOrDash(pedido.tipo_fatura)}</span></div>
+            <div class="info-item"><span class="info-label">Dia de Vencimento</span><span class="info-value">${valOrDash(fat.dia_vencimento)}</span></div>
+            <div class="info-item"><span class="info-label">Forma de Pagamento</span><span class="info-value" style="color: #10b981; font-weight: 700;">${valOrDash(fat.forma_pagamento)}</span></div>
+            <div class="info-item"><span class="info-label">Tipo de Fatura</span><span class="info-value">${valOrDash(fat.tipo_fatura)}</span></div>
             
-            ${pedido.forma_pagamento === 'DEBITO_AUTOMATICO' ? `
+            ${fat.forma_pagamento === 'DEBITO_AUTOMATICO' ? `
               <div style="grid-column: span 2; margin-top: 10px; padding-top: 10px; border-top: 1px dashed #cbd5e1;">
                 <span style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase;">Dados Bancários (Débito Automático)</span>
                 <div class="info-grid" style="margin-top: 8px;">
-                  <div class="info-item"><span class="info-label">Banco</span><span class="info-value">${valOrDash(pedido.banco)}</span></div>
-                  <div class="info-item"><span class="info-label">Agência</span><span class="info-value">${valOrDash(pedido.agencia)}</span></div>
-                  <div class="info-item"><span class="info-label">Conta</span><span class="info-value">${valOrDash(pedido.conta)}</span></div>
+                  <div class="info-item"><span class="info-label">Banco</span><span class="info-value">${valOrDash(fat.banco)}</span></div>
+                  <div class="info-item"><span class="info-label">Agência</span><span class="info-value">${valOrDash(fat.agencia)}</span></div>
+                  <div class="info-item"><span class="info-label">Conta</span><span class="info-value">${valOrDash(fat.conta)}</span></div>
                 </div>
               </div>
             ` : ''}
@@ -3744,17 +3750,17 @@ function renderizarDetalhes(pedido) {
 
     // Bloco 4.1: Endereço de Cobrança (se for diferente)
     let enderecoCobrancaHtml = '';
-    if (pedido.usar_endereco_cobranca_diferente === true) {
+    if (endCob.diferente === true) {
       enderecoCobrancaHtml = `
         <div class="detail-card">
           <div class="detail-card-header"><i class="fas fa-file-invoice"></i> Endereço de Cobrança</div>
           <div class="detail-card-body">
             <div class="info-grid">
-              <div class="info-item"><span class="info-label">CEP</span><span class="info-value">${valOrDash(pedido.cobranca_cep)}</span></div>
-              <div class="info-item"><span class="info-label">Logradouro</span><span class="info-value">${valOrDash(pedido.cobranca_tipo_logradouro)} ${valOrDash(pedido.cobranca_logradouro)}, ${valOrDash(pedido.cobranca_numero)}</span></div>
-              <div class="info-item"><span class="info-label">Bairro</span><span class="info-value">${valOrDash(pedido.cobranca_bairro)}</span></div>
-              <div class="info-item"><span class="info-label">Cidade / UF</span><span class="info-value">${valOrDash(pedido.cobranca_municipio)} / ${valOrDash(pedido.cobranca_uf)}</span></div>
-              <div class="info-item"><span class="info-label">Complemento</span><span class="info-value">${valOrDash(pedido.cobranca_tipo_complemento)} ${valOrDash(pedido.cobranca_complemento_descricao)}</span></div>
+              <div class="info-item"><span class="info-label">CEP</span><span class="info-value">${valOrDash(endCob.cep)}</span></div>
+              <div class="info-item"><span class="info-label">Logradouro</span><span class="info-value">${valOrDash(endCob.logradouro)}, ${valOrDash(endCob.numero)}</span></div>
+              <div class="info-item"><span class="info-label">Bairro</span><span class="info-value">${valOrDash(endCob.bairro)}</span></div>
+              <div class="info-item"><span class="info-label">Cidade / UF</span><span class="info-value">${valOrDash(endCob.municipio)} / ${valOrDash(endCob.uf)}</span></div>
+              <div class="info-item"><span class="info-label">Complemento</span><span class="info-value">${valOrDash(endCob.complemento_descricao)}</span></div>
             </div>
           </div>
         </div>
@@ -3763,24 +3769,24 @@ function renderizarDetalhes(pedido) {
 
     // Bloco 5: Sócios (se PJ)
     let sociosHtml = '';
-    const contatosList = Array.isArray(pedido.contatos) ? pedido.contatos : [];
+    const contatosList = Array.isArray(c.contatos) ? c.contatos : [];
     if (isPJ && contatosList.length > 0) {
       sociosHtml = `
         <div class="detail-card">
           <div class="detail-card-header"><i class="fas fa-users"></i> Contatos / Sócios da Empresa</div>
           <div class="detail-card-body" style="display: flex; flex-direction: column; gap: 16px;">
-            ${contatosList.map(c => `
+            ${contatosList.map(socio => `
               <div style="background: #f8fafc; padding: 16px; border-radius: 12px; border: 1px solid #e2e8f0;">
                 <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
-                  <strong style="color: #1e3c72; font-size: 14px;">${valOrDash(c.nome)}</strong>
-                  <span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700;">${valOrDash(c.tipoContato)}</span>
+                  <strong style="color: #1e3c72; font-size: 14px;">${valOrDash(socio.nome)}</strong>
+                  <span style="background: #dbeafe; color: #1e40af; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700;">${valOrDash(socio.tipoContato)}</span>
                 </div>
                 <div class="info-grid">
-                  <div class="info-item"><span class="info-label">CPF</span><span class="info-value">${valOrDash(c.cpf)}</span></div>
-                  <div class="info-item"><span class="info-label">Nascimento</span><span class="info-value">${formatDate(c.dataNascimento)}</span></div>
-                  <div class="info-item"><span class="info-label">Doc. (${c.tipoDoc || 'RG'})</span><span class="info-value">${valOrDash(c.numeroDoc)}</span></div>
-                  <div class="info-item"><span class="info-label">Emissão / Órgão</span><span class="info-value">${formatDate(c.dataEmissao)} - ${valOrDash(c.orgaoEmissor)}/${valOrDash(c.ufDoc)}</span></div>
-                  <div class="info-item"><span class="info-label">Telefone</span><span class="info-value">${valOrDash(c.telefone)}</span></div>
+                  <div class="info-item"><span class="info-label">CPF</span><span class="info-value">${valOrDash(socio.cpf)}</span></div>
+                  <div class="info-item"><span class="info-label">Nascimento</span><span class="info-value">${formatDate(socio.dataNascimento)}</span></div>
+                  <div class="info-item"><span class="info-label">Doc. (${socio.tipoDoc || 'RG'})</span><span class="info-value">${valOrDash(socio.numeroDoc)}</span></div>
+                  <div class="info-item"><span class="info-label">Emissão / Órgão</span><span class="info-value">${formatDate(socio.dataEmissao)} - ${valOrDash(socio.orgaoEmissor)}/${valOrDash(socio.ufDoc)}</span></div>
+                  <div class="info-item"><span class="info-label">Telefone</span><span class="info-value">${valOrDash(socio.telefone)}</span></div>
                 </div>
               </div>
             `).join('')}
@@ -3795,8 +3801,6 @@ function renderizarDetalhes(pedido) {
     // ─── LAYOUT MÓVEL (MANTIDO COMO ESTAVA) ───
     let linhasHtml = '';
     if (pedido.linhas_agrupadas && pedido.linhas_agrupadas.length) {
-      // ... (Mantenha o código que você já tem para montar o HTML das linhas Móvel)
-      // Vou resumir aqui para não quebrar sua tela, mas mantenha o seu código original
       const linhasPorPlano = {};
       pedido.linhas_agrupadas.forEach(linha => {
         const key = linha.plano || 'Plano não informado';
@@ -3819,7 +3823,7 @@ function renderizarDetalhes(pedido) {
                       <span class="linha-plano" style="font-weight: 800; font-size: 14px; color: #1e293b;">${escapeHtml(item.plano)}</span>
                       ${item.quantidade > 1 ? `<span class="linha-qtd" style="background: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 10px;">${item.quantidade}x</span>` : ''}
                     </div>
-                    ${item.numeros.length > 0 ? `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">${item.numeros.map(objNum => `<span class="linha-numero" style="background: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;"><i class="fas fa-phone" style="font-size: 10px;"></i> ${formatarTelefone(objNum.numero)}</span>`).join('')}</div>` : ''}
+                    ${item.numeros.length > 0 ? `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">${item.numeros.map(objNum => `<span class="linha-numero" style="background: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;"><i class="fas fa-phone" style="font-size: 10px;"></i> ${typeof formatarTelefone === 'function' ? formatarTelefone(objNum.numero) : objNum.numero}</span>`).join('')}</div>` : ''}
                   </div>
                   <div class="linha-valor" style="text-align: right; min-width: 100px;">
                     <span style="font-size: 11px; color: #64748b;">Valor mensal</span>
@@ -3870,7 +3874,7 @@ function renderizarDetalhes(pedido) {
           <div class="info-grid">
             <div class="info-item"><span class="info-label">Nome Completo</span><span class="info-value">${escapeHtml(pedido.nome_admin) || '—'}</span></div>
             <div class="info-item"><span class="info-label">E-mail</span><span class="info-value">${pedido.email ? `<a href="mailto:${escapeHtml(pedido.email)}">${escapeHtml(pedido.email)}</a>` : '—'}</span></div>
-            <div class="info-item"><span class="info-label">Telefone / WhatsApp</span><span class="info-value">${pedido.contato_financeiro ? `<a href="https://wa.me/55${String(pedido.contato_financeiro).replace(/\D/g, '')}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px;"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px;"></i> ${formatarTelefone(pedido.contato_financeiro)}</a>` : '—'}</span></div>
+            <div class="info-item"><span class="info-label">Telefone / WhatsApp</span><span class="info-value">${pedido.contato_financeiro ? `<a href="https://wa.me/55${String(pedido.contato_financeiro).replace(/\D/g, '')}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px;"><i class="fab fa-whatsapp" style="color: #25D366; font-size: 16px;"></i> ${typeof formatarTelefone === 'function' ? formatarTelefone(pedido.contato_financeiro) : pedido.contato_financeiro}</a>` : '—'}</span></div>
           </div>
         </div>
       </div>
@@ -3947,7 +3951,7 @@ function renderizarDetalhes(pedido) {
         <div style="display: flex; flex-direction: column; gap: 12px;">
           <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
             <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Data de Ativação RADAR:</label>
-            <input type="date" id="data-radar-input" value="${converterDataParaInput(pedido.data_radar || '')}" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
+            <input type="date" id="data-radar-input" value="${typeof converterDataParaInput === 'function' ? converterDataParaInput(pedido.data_radar || '') : (pedido.data_radar || '')}" style="padding: 6px 12px; border-radius: 8px; border: 1px solid #cbd5e1;">
             ${podeEditarDataRadar ? `<button id="btn-salvar-data-radar" class="btn-primary" data-mode="${btnMode}" style="padding: 6px 16px; background: ${btnBg};">${btnText}</button>` : ''}
           </div>
           <div style="font-size: 12px; color: #64748b;">
@@ -4008,9 +4012,11 @@ function renderizarDetalhes(pedido) {
         } else {
           if (!dataAtual) { showToast('Selecione uma data válida.', 'warning'); return; }
           const dataAnterior = pedido.data_radar || '';
-          const dataAnteriorFormatada = converterDataParaInput(dataAnterior);
+          const dataAnteriorFormatada = typeof converterDataParaInput === 'function' ? converterDataParaInput(dataAnterior) : dataAnterior;
           if (dataAtual === dataAnteriorFormatada) { showToast('Nenhuma alteração na data.', 'info'); return; }
-          salvarDataRadar(pedido.id_unico, pedido.origem, dataAtual, this);
+          if (typeof salvarDataRadar === 'function') {
+            salvarDataRadar(pedido.id_unico, pedido.origem, dataAtual, this);
+          }
         }
       });
     }
