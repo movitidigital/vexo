@@ -3987,7 +3987,7 @@ function renderizarDetalhes(pedido) {
       <div class="detail-card-body">
         <div class="info-grid">
           <div class="info-item"><span class="info-label">Origem do Pedido</span><span class="info-value">${pedido.origem === 'PARCEIRO' ? '📱 Pedido de Parceiro' : '🏢 Venda Direta'}</span></div>
-          <div class="info-item"><span class="info-label">📅 Dia de Vencimento</span><span class="info-value">${pedido.vencimento || pedido.dia_vencimento || '—'}</span></div>
+<div class="info-item"><span class="info-label">📅 Dia de Vencimento</span><span class="info-value">${pedido.vencimento || pedido.dia_vencimento || (pedido.faturamento && pedido.faturamento.dia_vencimento) || '—'}</span></div>
           <div class="info-item"><span class="info-label">Responsável pelo Cadastro</span><span class="info-value">${escapeHtml(pedido.responsavel_nome || pedido.parceiro_nome || pedido.vendedor) || '—'}</span></div>
         </div>
       </div>
