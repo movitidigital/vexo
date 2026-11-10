@@ -1301,72 +1301,94 @@ window.executarExclusao = function(pedidoId) {
       console.log("⏰ Polling iniciado (15s)");
     }
 
-    // --- Carregar Pedidos ---
-function carregarMeusPedidos() {
-  const tbody = document.getElementById('pedidos-tbody');
-  if (tbody) {
-    tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><div class="loading-spinner"></div>Carregando seus pedidos...</td></tr>';
-  }
 
-  const filtros = {
-    p_status: document.getElementById('filtro-status')?.value || 'todos',
-    p_busca: document.getElementById('filtro-busca')?.value || '',
-    p_incluir_concluidos: window.mostrarConcluidos
-  };
+// --- Carregar Pedidos ---
+  function carregarMeusPedidos() {
+    const tbody = document.getElementById('pedidos-tbody');
+    if (tbody) {
+      tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><div class="loading-spinner"></div>Carregando seus pedidos...</td></tr>';
+    }
 
-  window.sb.rpc('parceiro_listar_pedidos', filtros)
-    .then(function(r) {
-      if (r.error) throw r.error;
-      const res = r.data;
-      if (res && res.success) {
-        window.meusPedidos = res.pedidos || [];
-        aplicarFiltros();
-        atualizarKPIs();
-        document.querySelector('#polling-indicator')?.classList.remove('fa-fade');
-      } else {
-        tbody.innerHTML = `<tr><td colspan="6" class="loading-state"><i class="fas fa-exclamation-triangle"></i> ${res?.message || 'Falha ao carregar'}</td></tr>`;
-        window.showToast(res?.message || 'Falha ao carregar pedidos', 'error');
-      }
-    })
-    .catch(function(err) {
-      console.error("❌ Erro:", err);
-      tbody.innerHTML = `<tr><td colspan="6" class="loading-state"><i class="fas fa-wifi"></i> Erro: ${err.message || err}</td></tr>`;
-      window.showToast('Erro de comunicação', 'error');
-    });
-}
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const nomeUsuario = (sessao.nome + ' ' + (sessao.sobrenome || '')).trim().toUpperCase();
 
-function carregarMeusPedidosSilenciosamente() {
-  const filtros = {
-    p_status: document.getElementById('filtro-status')?.value || 'todos',
-    p_busca: document.getElementById('filtro-busca')?.value || '',
-    p_incluir_concluidos: window.mostrarConcluidos
-  };
+    const filtros = {
+      p_status: document.getElementById('filtro-status')?.value || 'todos',
+      p_busca: document.getElementById('filtro-busca')?.value || '',
+      p_incluir_concluidos: window.mostrarConcluidos,
+      p_nome_usuario: nomeUsuario // 👈 Parâmetro de segurança adicionado
+    };
 
-  window.sb.rpc('parceiro_listar_pedidos', filtros)
-    .then(function(r) {
-      if (r.error) throw r.error;
-      const res = r.data;
-      if (res && res.success) {
-        const novos = res.pedidos || [];
-        const idsAtuais = new Set(window.meusPedidos.map(p => p.id));
-        const idsNovos = new Set(novos.map(p => p.id));
-        const mudou = idsAtuais.size !== idsNovos.size ||
-                      [...idsAtuais].some(id => !idsNovos.has(id));
-
-        if (mudou) {
-          window.meusPedidos = novos;
+    window.sb.rpc('parceiro_listar_pedidos', filtros)
+      .then(function(r) {
+        if (r.error) throw r.error;
+        const res = r.data;
+        if (res && res.success) {
+          window.meusPedidos = res.pedidos || [];
           aplicarFiltros();
           atualizarKPIs();
-          const ind = document.querySelector('#polling-indicator');
-          if (ind) { ind.classList.add('fa-fade'); setTimeout(() => ind.classList.remove('fa-fade'), 1000); }
-          window.showToast('📦 Novas atualizações nos seus pedidos!', 'info');
+          document.querySelector('#polling-indicator')?.classList.remove('fa-fade');
         } else {
-          aplicarFiltros();
+          if (tbody) {
+            tbody.innerHTML = `<tr><td colspan="6" class="loading-state"><i class="fas fa-exclamation-triangle"></i> ${res?.message || 'Falha ao carregar'}</td></tr>`;
+          }
+          if (typeof window.showToast === 'function') {
+            window.showToast(res?.message || 'Falha ao carregar pedidos', 'error');
+          }
         }
-      }
-    })
-    .catch(function(err) { console.warn("Polling: erro", err); });
-}
+      })
+      .catch(function(err) {
+        console.error("❌ Erro:", err);
+        if (tbody) {
+          tbody.innerHTML = `<tr><td colspan="6" class="loading-state"><i class="fas fa-wifi"></i> Erro: ${err.message || err}</td></tr>`;
+        }
+        if (typeof window.showToast === 'function') {
+          window.showToast('Erro de comunicação', 'error');
+        }
+      });
+  }
+
+  function carregarMeusPedidosSilenciosamente() {
+    const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
+    const nomeUsuario = (sessao.nome + ' ' + (sessao.sobrenome || '')).trim().toUpperCase();
+
+    const filtros = {
+      p_status: document.getElementById('filtro-status')?.value || 'todos',
+      p_busca: document.getElementById('filtro-busca')?.value || '',
+      p_incluir_concluidos: window.mostrarConcluidos,
+      p_nome_usuario: nomeUsuario // 👈 Parâmetro de segurança adicionado
+    };
+
+    window.sb.rpc('parceiro_listar_pedidos', filtros)
+      .then(function(r) {
+        if (r.error) throw r.error;
+        const res = r.data;
+        if (res && res.success) {
+          const novos = res.pedidos || [];
+          const idsAtuais = new Set((window.meusPedidos || []).map(p => p.id));
+          const idsNovos = new Set(novos.map(p => p.id));
+          const mudou = idsAtuais.size !== idsNovos.size ||
+                        [...idsAtuais].some(id => !idsNovos.has(id));
+
+          if (mudou) {
+            window.meusPedidos = novos;
+            aplicarFiltros();
+            atualizarKPIs();
+            const ind = document.querySelector('#polling-indicator');
+            if (ind) { 
+              ind.classList.add('fa-fade'); 
+              setTimeout(() => ind.classList.remove('fa-fade'), 1000); 
+            }
+            if (typeof window.showToast === 'function') {
+              window.showToast('📦 Novas atualizações nos seus pedidos!', 'info');
+            }
+          } else {
+            aplicarFiltros();
+          }
+        }
+      })
+      .catch(function(err) { console.warn("Polling: erro", err); });
+  }
     // --- Filtros ---
 function aplicarFiltros() {
   const statusFiltro = document.getElementById('filtro-status')?.value || 'todos';
