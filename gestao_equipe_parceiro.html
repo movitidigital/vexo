@@ -262,6 +262,8 @@
 <script>
 (function () {
   'use strict';
+    if (window._vexoGestaoEquipeLoaded) return;
+  window._vexoGestaoEquipeLoaded = true;
 
   const MODALIDADES_COMISSAO = [
     { id: 'acessos_novos', label: 'Acessos Novos (%)', padrao: 10 },
