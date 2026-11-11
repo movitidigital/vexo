@@ -3823,7 +3823,55 @@ function renderizarDetalhes(pedido) {
                       <span class="linha-plano" style="font-weight: 800; font-size: 14px; color: #1e293b;">${escapeHtml(item.plano)}</span>
                       ${item.quantidade > 1 ? `<span class="linha-qtd" style="background: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 10px;">${item.quantidade}x</span>` : ''}
                     </div>
-                    ${item.numeros.length > 0 ? `<div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">${item.numeros.map(objNum => `<span class="linha-numero" style="background: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0;"><i class="fas fa-phone" style="font-size: 10px;"></i> ${typeof formatarTelefone === 'function' ? formatarTelefone(objNum.numero) : objNum.numero}</span>`).join('')}</div>` : ''}
+                    
+                    ${item.numeros.length > 0 ? `
+                      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
+                        ${item.numeros.map(objNum => {
+                          const modalidadeTexto = objNum.modalidade || 'PRIMEIRA ATIVAÇÃO';
+                          const modUpper = modalidadeTexto.toUpperCase();
+                          
+                          // Define as cores e ícones baseados na modalidade
+                          let bgBadge = '#dbeafe'; // Azul padrão (Primeira Ativação)
+                          let colorBadge = '#1e40af';
+                          let iconBadge = 'fa-plus-circle'; 
+                          
+                          if (modUpper.includes('PORTABILIDADE')) {
+                            bgBadge = '#ffedd5'; colorBadge = '#c2410c'; iconBadge = 'fa-exchange-alt';
+                          } else if (modUpper.includes('MIGRAÇÃO')) {
+                            bgBadge = '#f3e8ff'; colorBadge = '#6b21a5'; iconBadge = 'fa-shuffle';
+                          } else if (modUpper.includes('ADITIVO')) {
+                            bgBadge = '#e0e7ff'; colorBadge = '#4338ca'; iconBadge = 'fa-file-circle-plus';
+                          } else if (modUpper.includes('RENEG')) {
+                            bgBadge = '#dcfce7'; colorBadge = '#166534'; iconBadge = 'fa-handshake';
+                          }
+
+                          const isPortabilidade = modUpper.includes('PORTABILIDADE');
+
+                          return \`
+                            <span class="linha-numero" style="background: #f8fafc; padding: 5px 10px; border-radius: 8px; font-size: 12px; display: inline-flex; align-items: center; gap: 8px; border: 1px solid #e2e8f0; margin-bottom: 4px;">
+                              
+                              <!-- Número do Telefone -->
+                              <span onclick="copiarTelefone('\${objNum.numero}')" style="color: #475569; font-weight: 600; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px;" title="Clique para copiar o número"> 
+                                <i class="fas fa-phone" style="font-size: 10px;"></i> \${typeof formatarTelefone === 'function' ? formatarTelefone(objNum.numero) : objNum.numero} 
+                              </span>
+                              
+                              <!-- Tag da Modalidade -->
+                              <span style="background: \${bgBadge}; color: \${colorBadge}; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px;" title="Modalidade: \${escapeHtml(modalidadeTexto)}">
+                                <i class="fas \${iconBadge}"></i> \${escapeHtml(modalidadeTexto)}
+                              </span>
+
+                              <!-- Tag da Operadora (Apenas se for Portabilidade e tiver operadora) -->
+                              \${isPortabilidade && objNum.operadora ? \`
+                                <span style="background: #fee2e2; color: #b91c1c; padding: 2px 8px; border-radius: 12px; font-size: 10px; font-weight: 700; border: 1px solid #fecaca; display: inline-flex; align-items: center; gap: 4px;" title="Operadora Doadora: \${escapeHtml(objNum.operadora)}">
+                                  <i class="fas fa-building"></i> \${escapeHtml(objNum.operadora)}
+                                </span>
+                              \` : ''}
+
+                            </span>
+                          \`;
+                        }).join('')}
+                      </div>
+                    ` : ''}
                   </div>
                   <div class="linha-valor" style="text-align: right; min-width: 100px;">
                     <span style="font-size: 11px; color: #64748b;">Valor mensal</span>
@@ -4034,7 +4082,7 @@ function renderizarDetalhes(pedido) {
       novoBtnCod.addEventListener('click', function(e) { salvarCodigoCliente(); });
     }
   }
-}
+
 function fecharModal() {
   const modal = document.getElementById('modal-detalhes');
   if (!modal) return;
