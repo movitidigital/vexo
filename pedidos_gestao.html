@@ -3831,10 +3831,16 @@ function renderizarDetalhes(pedido) {
                   </div>
                 </div>
               `).join('')}
-              <div class="linha-total" style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; margin-top: 8px; border-top: 2px solid #e2e8f0;">
-                <span style="font-weight: 700; font-size: 14px;">TOTAL DO PEDIDO</span>
-                <strong style="font-size: 20px; color: #1e3c72;">${formatMoeda(pedido.valor)}</strong>
-              </div>
+                <div class="linha-total" style="display: flex; justify-content: space-between; align-items: center; padding-top: 16px; margin-top: 8px; border-top: 2px solid #e2e8f0;">
+                  <span style="font-weight: 700; font-size: 14px;">TOTAL DO PEDIDO</span>
+                  <strong style="font-size: 20px; color: #1e3c72;">
+                    ${formatMoeda(
+                      (pedido.linhas_agrupadas || []).reduce((acc, linhaAtual) => {
+                        return acc + (Number(linhaAtual.valor) || 0);
+                      }, 0)
+                    )}
+                  </strong>
+                </div>
             </div>
           </div>
         </div>
