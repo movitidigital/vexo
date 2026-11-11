@@ -327,7 +327,6 @@
             .single();
           if (prof?.role) {
             cargo = String(prof.role).toUpperCase().trim();
-            // Atualiza o sessionStorage também
             const s = getSessao();
             s.role = cargo;
             s.cargo = cargo;
@@ -345,8 +344,17 @@
     const roleEl = $('user-role');
     if (roleEl) roleEl.innerText = cargo || 'PARCEIRO';
 
-    // Menu Gestão: só ADMINISTRADOR, BACKOFFICE, GERENTE
-    const gestorRoles = ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE'];
+    // ─── LÓGICA DE EXIBIÇÃO DOS MENUS ───
+
+    // 1. Menu Gestão de Equipe (Novo): Parceiros, Freelancers e Admin
+    const rolesComEquipe = ['PARCEIRO', 'FREELANCER', 'ADMINISTRADOR', 'BACKOFFICE', 'MASTER'];
+    const menuEquipe = $('menu-gestao-equipe');
+    if (menuEquipe) {
+      menuEquipe.style.display = rolesComEquipe.includes(cargo) ? 'flex' : 'none';
+    }
+
+    // 2. Menu Gestão (Parceiros e Credenciamento): só ADMINISTRADOR, BACKOFFICE, GERENTE
+    const gestorRoles = ['ADMINISTRADOR', 'BACKOFFICE', 'GERENTE', 'MASTER'];
     const podeGestao = gestorRoles.includes(cargo);
 
     ['menu-parceiros', 'menu-credenciamento'].forEach(id => {
@@ -354,7 +362,7 @@
       if (el) el.style.display = podeGestao ? 'flex' : 'none';
     });
 
-    // Menu Configurações: só ADMINISTRADOR e MASTER
+    // 3. Menu Configurações: só ADMINISTRADOR e MASTER
     const adminRoles = ['ADMINISTRADOR', 'MASTER'];
     const menuConf = $('menu-configuracoes');
     if (menuConf) menuConf.style.display = adminRoles.includes(cargo) ? 'flex' : 'none';
