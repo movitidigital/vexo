@@ -691,9 +691,9 @@
 </div>
       </div>
 
-      <!-- ─── COMISSÃO ─── -->
+      <!-- ─── COMISSÃO DO PARCEIRO ─── -->
       <div class="up-fs">
-        <div class="up-fs-title">💰 Modelo de Comissão</div>
+        <div class="up-fs-title" style="color: #2563eb;">💼 Comissão do Parceiro (VEXO paga ao Parceiro)</div>
         <div class="up-com-tipo">
           <label>
             <input type="radio" name="up-com-tipo" value="SIMPLIFICADO" checked onchange="UP.trocarComissao()">
@@ -719,15 +719,42 @@
         </div>
 
         <div id="up-com-detalhado" class="up-com-extra">
+          <div class="up-row" id="grid-com-detalhado-parceiro">
+            <!-- Inputs gerados via JS -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ─── COMISSÃO DA EQUIPE (VENDEDOR) ─── -->
+      <div class="up-fs" style="border: 1px dashed #8b5cf6; background: #fcfaff;">
+        <div class="up-fs-title" style="color: #6d28d9;">🤝 Comissão da Equipe (Parceiro paga ao Vendedor)</div>
+        <div class="up-com-tipo">
+          <label>
+            <input type="radio" name="up-com-tipo-vendedor" value="SIMPLIFICADO" checked onchange="UP.trocarComissao()">
+            <span class="up-pill simplificado">Simplificado</span>
+          </label>
+          <label>
+            <input type="radio" name="up-com-tipo-vendedor" value="DETALHADO" onchange="UP.trocarComissao()">
+            <span class="up-pill detalhado" style="--cor-detalhado: #8b5cf6;">Detalhado</span>
+          </label>
+        </div>
+
+        <div id="up-com-vendedor-simplificado" class="up-com-extra active">
           <div class="up-row">
-            <div class="up-fg"><label>Acessos Novos (%)</label><input type="number" id="up-com-acessos_novos" class="up-input" value="10" step="0.5" min="0" max="100"></div>
-            <div class="up-fg"><label>Aditivo (%)</label><input type="number" id="up-com-aditivo" class="up-input" value="5" step="0.5" min="0" max="100"></div>
-            <div class="up-fg"><label>Migração (%)</label><input type="number" id="up-com-migracao" class="up-input" value="8" step="0.5" min="0" max="100"></div>
-            <div class="up-fg"><label>Portabilidade (%)</label><input type="number" id="up-com-portabilidade" class="up-input" value="12" step="0.5" min="0" max="100"></div>
-            <div class="up-fg"><label>Corporate M2M (%)</label><input type="number" id="up-com-m2m" class="up-input" value="15" step="0.5" min="0" max="100"></div>
-            <div class="up-fg"><label>VAS (%)</label><input type="number" id="up-com-vas" class="up-input" value="20" step="0.5" min="0" max="100"></div>
-            <div class="up-fg"><label>Renegociação (%)</label><input type="number" id="up-com-renegociacao" class="up-input" value="7" step="0.5" min="0" max="100"></div>
-            <div class="up-fg"><label>Ultra Fibra (%)</label><input type="number" id="up-com-ultra_fibra" class="up-input" value="10" step="0.5" min="0" max="100"></div>
+            <div class="up-fg">
+              <label>Vendas (%)</label>
+              <input type="number" id="up-com-vendedor-vendas" class="up-input" value="5" step="0.5" min="0" max="100">
+            </div>
+            <div class="up-fg">
+              <label>Renegociação (%)</label>
+              <input type="number" id="up-com-vendedor-reneg" class="up-input" value="3" step="0.5" min="0" max="100">
+            </div>
+          </div>
+        </div>
+
+        <div id="up-com-vendedor-detalhado" class="up-com-extra">
+          <div class="up-row" id="grid-com-detalhado-vendedor">
+            <!-- Inputs gerados via JS -->
           </div>
         </div>
       </div>
@@ -761,6 +788,20 @@
 
 <script>
 (function () {
+  // ─── CONFIGURAÇÃO DINÂMICA DE MODALIDADES ─────────────
+  // Para adicionar novas modalidades no futuro, basta incluir um novo objeto aqui.
+  const MODALIDADES_COMISSAO = [
+    { id: 'acessos_novos', label: 'Acessos Novos (%)', padrao: 10 },
+    { id: 'aditivo', label: 'Aditivo (%)', padrao: 5 },
+    { id: 'migracao', label: 'Migração (%)', padrao: 8 },
+    { id: 'portabilidade', label: 'Portabilidade (%)', padrao: 12 },
+    { id: 'm2m', label: 'Corporate M2M (%)', padrao: 15 },
+    { id: 'vas', label: 'VAS (%)', padrao: 20 },
+    { id: 'renegociacao', label: 'Renegociação (%)', padrao: 7 },
+    { id: 'ultra_fibra', label: 'Ultra Fibra (%)', padrao: 10 },
+    { id: 'tim_fixo', label: 'TIM Fixo (%)', padrao: 0 } // 👈 NOVA MODALIDADE AQUI
+  ];
+  
   'use strict';
 
   if (window._vexoParceirosLoaded) return;
@@ -1017,15 +1058,107 @@
   }
 
   // ─── MODAL ────────────────────────────────────────────
+
+
+  function fecharModal() {
+    $('up-modal').classList.remove('open');
+  }
+
+
+
+
+  function gerarSenha() {
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
+    let senha = '';
+    for (let i = 0; i < 10; i++) senha += chars[Math.floor(Math.random() * chars.length)];
+    $('up-senha').value = senha;
+  }
+
+  // Função para renderizar os inputs dinamicamente
+  function renderizarInputsComissao() {
+    const htmlInputs = MODALIDADES_COMISSAO.map(m => `
+      <div class="up-fg">
+        <label>${m.label}</label>
+        <input type="number" id="com-${m.id}" class="up-input input-com-dinamico" data-id="${m.id}" value="${m.padrao}" step="0.5" min="0" max="100">
+      </div>
+    `).join('');
+
+    const htmlInputsVendedor = MODALIDADES_COMISSAO.map(m => `
+      <div class="up-fg">
+        <label>${m.label}</label>
+        <input type="number" id="com-vendedor-${m.id}" class="up-input input-com-dinamico-vendedor" data-id="${m.id}" value="${m.padrao}" step="0.5" min="0" max="100">
+      </div>
+    `).join('');
+
+    document.getElementById('grid-com-detalhado-parceiro').innerHTML = htmlInputs;
+    document.getElementById('grid-com-detalhado-vendedor').innerHTML = htmlInputsVendedor;
+  }
+
+  // Chame isso uma vez ao carregar
+  renderizarInputsComissao();
+
+  function trocarComissao() {
+    // Parceiro
+    const tipoP = document.querySelector('input[name="up-com-tipo"]:checked').value;
+    $('up-com-simplificado').classList.toggle('active', tipoP === 'SIMPLIFICADO');
+    $('up-com-detalhado').classList.toggle('active', tipoP === 'DETALHADO');
+    
+    // Vendedor
+    const tipoV = document.querySelector('input[name="up-com-tipo-vendedor"]:checked').value;
+    $('up-com-vendedor-simplificado').classList.toggle('active', tipoV === 'SIMPLIFICADO');
+    $('up-com-vendedor-detalhado').classList.toggle('active', tipoV === 'DETALHADO');
+  }
+
+  function limparForm() {
+    $('up-nome').value = '';
+    $('up-fantasia').value = '';
+    $('up-cnpj').value = '';
+    $('up-telefone').value = '';
+    $('up-cidade').value = '';
+    $('up-uf').value = '';
+    $('up-email').value = '';
+    $('up-senha').value = '';
+    
+    // Reseta Comissão Parceiro
+    $('up-com-vendas').value = 10;
+    $('up-com-reneg').value = 8;
+    document.querySelector('input[name="up-com-tipo"][value="SIMPLIFICADO"]').checked = true;
+    
+    // Reseta Comissão Vendedor
+    $('up-com-vendedor-vendas').value = 5;
+    $('up-com-vendedor-reneg').value = 3;
+    document.querySelector('input[name="up-com-tipo-vendedor"][value="SIMPLIFICADO"]').checked = true;
+
+    // Reseta inputs dinâmicos para o padrão
+    document.querySelectorAll('.input-com-dinamico').forEach(input => {
+      const id = input.getAttribute('data-id');
+      const mod = MODALIDADES_COMISSAO.find(m => m.id === id);
+      input.value = mod ? mod.padrao : 0;
+    });
+    document.querySelectorAll('.input-com-dinamico-vendedor').forEach(input => {
+      const id = input.getAttribute('data-id');
+      const mod = MODALIDADES_COMISSAO.find(m => m.id === id);
+      input.value = mod ? mod.padrao : 0;
+    });
+
+    trocarComissao();
+
+    $('up-fs-acesso').style.display = '';
+    $('up-fs-status').style.display = 'none';
+
+    document.querySelectorAll('#up-modal .up-input, #up-modal input, #up-modal select').forEach(el => {
+      el.disabled = false;
+    });
+    $('up-btn-salvar').style.display = '';
+    $('up-btn-salvar').innerHTML = '<i class="fas fa-check"></i> Criar Parceiro';
+  }
+
   function abrirModal(parceiroId) {
     const edit = !!parceiroId;
     $('up-edit-id').value = parceiroId || '';
     $('up-modal-titulo').textContent = edit ? 'Editar Parceiro' : 'Novo Parceiro';
-    $('up-modal-sub').textContent = edit
-      ? 'Atualize os dados do parceiro'
-      : 'Preencha os dados e crie o acesso';
+    $('up-modal-sub').textContent = edit ? 'Atualize os dados do parceiro' : 'Preencha os dados e crie o acesso';
 
-    // Reset
     limparForm();
 
     if (edit) {
@@ -1039,35 +1172,45 @@
       $('up-telefone').value = p.telefone || '';
       $('up-cidade').value = p.cidade || '';
       $('up-uf').value = p.uf || '';
+      $('up-email').value = p.email_login || '';
+      $('up-status').value = p.status || 'ATIVO';
 
-      // Mostra a seção de acesso, mas esconde a senha (que não é editável aqui)
       $('up-fs-acesso').style.display = '';
       $('up-senha-row').style.display = 'none';
       $('up-fs-status').style.display = '';
 
-      // Preenche o e-mail atual do parceiro
-      $('up-email').value = p.email_login || '';
-
-      // Status atual
-      $('up-status').value = p.status || 'ATIVO';
-
-      // Config de comissão
+      // Preenche Comissão Parceiro
       const cfg = p.comissao_config || {};
       const tipoCom = cfg.tipo === 'DETALHADO' ? 'DETALHADO' : 'SIMPLIFICADO';
       document.querySelector(`input[name="up-com-tipo"][value="${tipoCom}"]`).checked = true;
-      trocarComissao();
-
+      
       if (tipoCom === 'SIMPLIFICADO') {
         $('up-com-vendas').value = cfg.vendas ?? 10;
         $('up-com-reneg').value  = cfg.renegociacao ?? 8;
       } else {
-        ['acessos_novos','aditivo','migracao','portabilidade','m2m','vas','renegociacao','ultra_fibra'].forEach(k => {
-          const el = $('up-com-' + k);
-          if (el) el.value = cfg[k] ?? 0;
+        MODALIDADES_COMISSAO.forEach(m => {
+          const el = document.getElementById('com-' + m.id);
+          if (el) el.value = cfg[m.id] ?? m.padrao;
         });
       }
 
-      // Bloqueia tudo se for só leitura
+      // Preenche Comissão Vendedor (Fallback seguro se a coluna estiver vazia)
+      const cfgV = p.comissao_vendedor_config || {};
+      const tipoComV = cfgV.tipo === 'DETALHADO' ? 'DETALHADO' : 'SIMPLIFICADO';
+      document.querySelector(`input[name="up-com-tipo-vendedor"][value="${tipoComV}"]`).checked = true;
+
+      if (tipoComV === 'SIMPLIFICADO') {
+        $('up-com-vendedor-vendas').value = cfgV.vendas ?? 5;
+        $('up-com-vendedor-reneg').value  = cfgV.renegociacao ?? 3;
+      } else {
+        MODALIDADES_COMISSAO.forEach(m => {
+          const el = document.getElementById('com-vendedor-' + m.id);
+          if (el) el.value = cfgV[m.id] ?? m.padrao;
+        });
+      }
+      
+      trocarComissao();
+
       if (!PERMITE_EDITAR) {
         document.querySelectorAll('#up-modal .up-input, #up-modal input, #up-modal select').forEach(el => {
           el.disabled = true;
@@ -1085,51 +1228,7 @@
     $('up-modal').classList.add('open');
   }
 
-  function fecharModal() {
-    $('up-modal').classList.remove('open');
-  }
-
- function limparForm() {
-  $('up-nome').value = '';
-  $('up-fantasia').value = '';
-  $('up-cnpj').value = '';
-  $('up-telefone').value = '';
-  $('up-cidade').value = '';
-  $('up-uf').value = '';
-  $('up-email').value = '';
-  $('up-senha').value = '';
-  $('up-com-vendas').value = 10;
-  $('up-com-reneg').value = 8;
-
-  document.querySelector('input[name="up-tipo"][value="TERCEIRO"]').checked = true;
-  document.querySelector('input[name="up-com-tipo"][value="SIMPLIFICADO"]').checked = true;
-  trocarComissao();
-
-  // 🔥 ESTA LINHA É A CORREÇÃO CRÍTICA:
-  $('up-fs-acesso').style.display = '';
-  $('up-fs-status').style.display = 'none';
-
-  document.querySelectorAll('#up-modal .up-input, #up-modal input, #up-modal select').forEach(el => {
-    el.disabled = false;
-  });
-  $('up-btn-salvar').style.display = '';
-  $('up-btn-salvar').innerHTML = '<i class="fas fa-check"></i> Criar Parceiro';
-}
-
-  function trocarComissao() {
-    const tipo = document.querySelector('input[name="up-com-tipo"]:checked').value;
-    $('up-com-simplificado').classList.toggle('active', tipo === 'SIMPLIFICADO');
-    $('up-com-detalhado').classList.toggle('active', tipo === 'DETALHADO');
-  }
-
-  function gerarSenha() {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-    let senha = '';
-    for (let i = 0; i < 10; i++) senha += chars[Math.floor(Math.random() * chars.length)];
-    $('up-senha').value = senha;
-  }
-
-  // ─── SALVAR ───────────────────────────────────────────
+  // ─── SALVAR ATUALIZADO ───────────────────────────────────────────
   async function salvar() {
     const editId = $('up-edit-id').value;
     const editando = !!editId;
@@ -1148,22 +1247,29 @@
       const cidade = $('up-cidade').value.trim() || null;
       const uf = ($('up-uf').value.trim() || '').toUpperCase() || null;
 
-      // Validações
       if (!nome) throw new Error('Nome / Razão Social é obrigatório.');
 
-      // Monta comissao_config
+      // Monta comissão do parceiro
       const tipoCom = document.querySelector('input[name="up-com-tipo"]:checked').value;
       let comissao_config;
       if (tipoCom === 'SIMPLIFICADO') {
-        comissao_config = {
-          tipo: 'SIMPLIFICADO',
-          vendas: parseFloat($('up-com-vendas').value) || 0,
-          renegociacao: parseFloat($('up-com-reneg').value) || 0
-        };
+        comissao_config = { tipo: 'SIMPLIFICADO', vendas: parseFloat($('up-com-vendas').value) || 0, renegociacao: parseFloat($('up-com-reneg').value) || 0 };
       } else {
         comissao_config = { tipo: 'DETALHADO' };
-        ['acessos_novos','aditivo','migracao','portabilidade','m2m','vas','renegociacao','ultra_fibra'].forEach(k => {
-          comissao_config[k] = parseFloat($('up-com-' + k).value) || 0;
+        MODALIDADES_COMISSAO.forEach(m => {
+          comissao_config[m.id] = parseFloat(document.getElementById('com-' + m.id).value) || 0;
+        });
+      }
+
+      // Monta comissão do vendedor
+      const tipoComV = document.querySelector('input[name="up-com-tipo-vendedor"]:checked').value;
+      let comissao_vendedor_config;
+      if (tipoComV === 'SIMPLIFICADO') {
+        comissao_vendedor_config = { tipo: 'SIMPLIFICADO', vendas: parseFloat($('up-com-vendedor-vendas').value) || 0, renegociacao: parseFloat($('up-com-vendedor-reneg').value) || 0 };
+      } else {
+        comissao_vendedor_config = { tipo: 'DETALHADO' };
+        MODALIDADES_COMISSAO.forEach(m => {
+          comissao_vendedor_config[m.id] = parseFloat(document.getElementById('com-vendedor-' + m.id).value) || 0;
         });
       }
 
@@ -1173,7 +1279,6 @@
         const novoEmail = $('up-email').value.trim().toLowerCase();
         const emailAntigo = (PARCEIROS.find(x => x.id === editId)?.email_login || '').toLowerCase();
 
-        // 1. Roda a RPC normal (atualiza parceiros + profiles)
         const { data, error } = await window.sb.rpc('admin_editar_parceiro', {
           p_parceiro_id: editId,
           p_nome_razao: nome,
@@ -1183,6 +1288,7 @@
           p_cidade: cidade,
           p_uf: uf,
           p_comissao_config: comissao_config,
+          p_comissao_vendedor_config: comissao_vendedor_config, // NOVO
           p_status: status,
           p_tipo: tipo,
           p_email: novoEmail
@@ -1191,23 +1297,13 @@
         if (error) throw error;
         if (!data?.success) throw new Error(data?.message || 'Erro ao salvar');
 
-        // 2. Se o e-mail mudou, chama a Edge Function para atualizar o auth.users
         if (novoEmail && novoEmail !== emailAntigo && data.profile_id) {
           try {
-            const { data: funcData, error: funcError } = await window.sb.functions.invoke(
-              'alterar-email-usuario',
-              {
-                body: {
-                  user_id: data.profile_id,
-                  novo_email: novoEmail, // 👈 NOME CORRETO QUE A EDGE FUNCTION ESPERA
-                  quem_alterou: PROFILE?.nome || PROFILE?.email || 'sistema'
-                }
-              }
-            );
-
+            const { data: funcData, error: funcError } = await window.sb.functions.invoke('alterar-email-usuario', {
+              body: { user_id: data.profile_id, novo_email: novoEmail, quem_alterou: PROFILE?.nome || PROFILE?.email || 'sistema' }
+            });
             if (funcError) throw funcError;
             if (!funcData?.success) throw new Error(funcData?.message || 'Erro ao atualizar login');
-
             toast('✅ Parceiro e login atualizados!', 'success');
           } catch (eAuth) {
             console.warn('⚠️ Perfil atualizado, mas login falhou:', eAuth);
@@ -1235,7 +1331,8 @@
           p_telefone: telefone,
           p_cidade: cidade,
           p_uf: uf,
-          p_comissao_config: comissao_config
+          p_comissao_config: comissao_config,
+          p_comissao_vendedor_config: comissao_vendedor_config // NOVO
         });
 
         if (error) throw error;
