@@ -1315,8 +1315,8 @@ window.executarExclusao = function(pedidoId) {
     const filtros = {
       p_status: document.getElementById('filtro-status')?.value || 'todos',
       p_busca: document.getElementById('filtro-busca')?.value || '',
-      p_incluir_concluidos: window.mostrarConcluidos,
-      p_nome_usuario: nomeUsuario // 👈 Parâmetro de segurança adicionado
+      p_incluir_concluidos: window.mostrarConcluidos
+      // 🔥 p_nome_usuario removido! O banco já sabe quem está logado.
     };
 
     window.sb.rpc('parceiro_listar_pedidos', filtros)
@@ -1355,8 +1355,8 @@ window.executarExclusao = function(pedidoId) {
     const filtros = {
       p_status: document.getElementById('filtro-status')?.value || 'todos',
       p_busca: document.getElementById('filtro-busca')?.value || '',
-      p_incluir_concluidos: window.mostrarConcluidos,
-      p_nome_usuario: nomeUsuario // 👈 Parâmetro de segurança adicionado
+      p_incluir_concluidos: window.mostrarConcluidos
+      // 🔥 p_nome_usuario removido! O banco já sabe quem está logado.
     };
 
     window.sb.rpc('parceiro_listar_pedidos', filtros)
