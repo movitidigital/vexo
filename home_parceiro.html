@@ -666,7 +666,6 @@
     catch { return {}; }
   }
 
-  // 🔥 NOVA FUNÇÃO: Responsável por atualizar os dados do topo (Nome, Badge, Data, Matrícula)
   function atualizarDadosTopo() {
     const user = getSessao();
 
@@ -678,6 +677,11 @@
     if (badge) {
       if (tipo === 'FREELANCER') {
         badge.innerHTML = '⚡ FREELANCER';
+      } else if (tipo === 'CONSULTOR') {
+        badge.innerHTML = '💼 CONSULTOR'; // 👈 NOVO BADGE
+        badge.style.background = 'rgba(139, 92, 246, 0.2)'; // Um roxo sutil para diferenciar
+        badge.style.borderColor = 'rgba(139, 92, 246, 0.4)';
+        badge.style.color = '#c4b5fd';
       } else {
         badge.innerHTML = '🤝 PARCEIRO';
       }
