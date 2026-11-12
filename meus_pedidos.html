@@ -1149,10 +1149,11 @@ window.editarPedido = function(pedidoId) {
         linhasPorModalidade[mod].push(l);
       });
 
-      // Monta objeto de edição
+      // 🔥 Monta objeto de edição mantendo o vendedor original
       const pedidoEdicao = {
         modo: 'EDITAR',
         pedido_id: pedidoId,
+        consultor_que_vendeu: p.consultor_que_vendeu || '', // 🔥 NOVO: Guarda o vendedor original
         cnpj:          p.cnpj || '',
         razaoSocial:   p.razao_social || '',
         inscricaoEstadual: p.inscricao_estadual || '',
