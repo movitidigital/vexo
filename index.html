@@ -442,7 +442,8 @@ if (!validarTipoAcesso(roleUsuario, tipoAcesso)) {
       ativo:       profile.ativo !== false,
       tenant_id:   profile.tenant_id,
       parceiro_id: profile.parceiro_id || null,
-      photoUrl:    profile.photo_url || null
+      photoUrl:    profile.photo_url || null,
+      comissao_config: profile.comissao_config || {}
     };
 
     sessionStorage.setItem('usuarioLogado', JSON.stringify(sessaoFinal));
