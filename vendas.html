@@ -738,6 +738,13 @@ window.gerarFormularioVenda = function() {
           <div><label style="font-size:11px; font-weight:700; color:#475569; display:block; margin-bottom:5px;">COMPL.</label><input type="text" id="v_compl" class="v-input"></div>
         </div>
 
+        <!-- 🔥 INÍCIO DO CAMPO DE OBSERVAÇÕES -->
+        <div style="margin-bottom:20px; background: #fffbeb; padding: 15px; border-radius: 10px; border: 1px solid #fde68a;">
+          <label style="font-size:11px; font-weight:700; color:#b45309; display:block; margin-bottom:5px;">📝 OBSERVAÇÕES IMPORTANTES</label>
+          <textarea id="v_obs" class="v-input" rows="3" placeholder="Detalhes adicionais da negociação para o Backoffice..." style="border-color: #fcd34d; resize: vertical;"></textarea>
+        </div>
+        <!-- FIM DO CAMPO DE OBSERVAÇÕES -->
+
         ${mostrarAtribuicaoInput ? `
         <div id="secao-consultor-input" style="margin-top:20px; padding:20px; background:#f8fafc; border:2px solid #cbd5e1; border-radius:15px; margin-bottom:20px;">
           <h4 style="color:#0f172a; margin-top:0; margin-bottom:15px; display:flex; align-items:center; gap:8px; font-size:14px; font-weight:800;">
@@ -777,7 +784,7 @@ window.gerarFormularioVenda = function() {
 
     const btn = document.getElementById('btn_finalizar');
     if (btn) btn.addEventListener('click', window._salvarVenda);
-  };
+};
   
 
   // ============================================================
@@ -1185,7 +1192,8 @@ function _coletarCamposComuns() {
     contato_financeiro:     get('v_contato_fin'),
     inscricao_estadual:     get('v_ie'),
     codigo_do_cliente:      nullIfEmpty(get('v_codigo_cliente')),
-    consultor_do_input_no_easy_vendas: get('v_consultor_input') || null
+    consultor_do_input_no_easy_vendas: get('v_consultor_input') || null,
+    obs:                    get('v_obs') || null // 🔥 CAMPO DE OBSERVAÇÕES ADICIONADO
   };
 }
 
