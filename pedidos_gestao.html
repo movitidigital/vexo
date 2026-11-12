@@ -2200,7 +2200,8 @@ function renderizarTabela() {
     
     const podeAvancar = podeEditar && pedido.status_etapa < 6;
     const podeVoltar = podeEditar && pedido.status_etapa > 0;
-    // 🔥 NOVA LÓGICA: CRIANDO TAGS SEPARADAS
+
+    // 🔥 LÓGICA NOVA E LIMPA: CRIANDO TAGS SEPARADAS
     let tagsOrigemHtml = '';
     
     if (pedido.origem === 'PARCEIRO') {
@@ -2242,29 +2243,6 @@ function renderizarTabela() {
             </div>
         `;
     }    
-    // 🔥 LÓGICA DUPLA: SEPARA CABEÇA E VENDEDOR
-    let origemText = pedido.origem === 'PARCEIRO' ? 'Parceiro' : 'Venda Direta';
-    let tooltipOrigem = pedido.origem === 'PARCEIRO' ? 'Pedido de Parceiro' : 'Venda Direta';
-
-    if (pedido.origem === 'PARCEIRO') {
-        const chefe = pedido.nome_parceiro;
-        const vendedor = pedido.responsavel_nome || '';
-
-        // Se tiver chefe E o vendedor for diferente do chefe, é um consultor vendendo
-        if (chefe && vendedor && chefe.toUpperCase() !== vendedor.toUpperCase()) {
-            const chefeCurto = chefe.length > 10 ? chefe.substring(0, 10) + '..' : chefe;
-            const vendCurto = vendedor.length > 10 ? vendedor.substring(0, 10) + '..' : vendedor;
-            
-            origemText = `P: ${chefeCurto} | V: ${vendCurto}`;
-            tooltipOrigem = `Parceiro: ${chefe} | Vendedor: ${vendedor}`;
-        } else {
-            // Se não tiver chefe, é o próprio parceiro que vendeu
-            const nomeFinal = chefe || vendedor || 'Parceiro';
-            const nomeCurto = nomeFinal.length > 20 ? nomeFinal.substring(0, 20) + '..' : nomeFinal;
-            origemText = `Parceiro: ${nomeCurto}`;
-            tooltipOrigem = `Parceiro: ${nomeFinal}`;
-        }
-    }
     
     const timeline = gerarTimeline(pedido.status_etapa);
     const isPendente = (statusRaw === 'PENDENTE DE INPUT' || statusRaw.includes('PENDENTE'));
@@ -2302,7 +2280,7 @@ function renderizarTabela() {
       <tr>
         <td style="font-family: monospace; font-weight: 600;">
           ${pedido.id}
-          <span class="origin-badge ${origemClass}" title="${tooltipOrigem}">${tagsOrigemHtml}</span>
+          ${tagsOrigemHtml}
         </td>
         <td>
           <div style="font-weight: 700; color: #1e293b;">${(pedido.cliente || "").substring(0, 50)}${(pedido.cliente || "").length > 50 ? '...' : ''}</div>
