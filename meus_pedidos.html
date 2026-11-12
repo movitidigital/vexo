@@ -1453,79 +1453,85 @@ function aplicarFiltros() {
   carregarMeusPedidos();
 }
 
-    // --- Renderização ---
+  // --- Renderização ---
   function renderizarTabela() {
-  const tbody = document.getElementById('pedidos-tbody');
-  if (!tbody) return;
+    const tbody = document.getElementById('pedidos-tbody');
+    if (!tbody) return;
 
-  const filtrados = window.pedidosFiltrados || [];
-  const total = filtrados.length;
-  const totalPaginas = Math.ceil(total / window.itensPorPagina);
-  const inicio = (window.paginaAtual - 1) * window.itensPorPagina;
-  const paginados = filtrados.slice(inicio, inicio + window.itensPorPagina);
+    const filtrados = window.pedidosFiltrados || [];
+    const total = filtrados.length;
+    const totalPaginas = Math.ceil(total / window.itensPorPagina);
+    const inicio = (window.paginaAtual - 1) * window.itensPorPagina;
+    const paginados = filtrados.slice(inicio, inicio + window.itensPorPagina);
 
-  if (paginados.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><i class="fas fa-inbox"></i> Nenhum pedido encontrado</td></tr>';
-    document.getElementById('pagination-container').style.display = 'none';
-    return;
-  }
-
-  const formatMoeda = function(v) {
-    return `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-  };
-
-  const cargo = window.userCargo;
-  const isFreelancer = (cargo === 'FREELANCER' || cargo === 'PARCEIRO' || cargo === 'TERCEIRO');
-
-  tbody.innerHTML = paginados.map(function(pedido) {
-    let statusRaw = pedido.status_raw || 'PENDENTE DE INPUT';
-    const status = STATUS_INFO[statusRaw] || STATUS_INFO["PENDENTE DE INPUT"];
-
-    const isPendente = statusRaw.includes('PENDENTE');
-
-    let btnEditar = '';
-    let btnExcluir = '';
-    if (isFreelancer && isPendente) {
-      btnEditar = `<button class="btn-action btn-edit" onclick="window.editarPedido('${pedido.pedido_id}')" style="background:#fef3c7; color:#b45309;"><i class="fas fa-pen"></i> Editar</button>`;
-      btnExcluir = `<button class="btn-action btn-delete" onclick="window.excluirPedido('${pedido.pedido_id}')" style="background:#fee2e2; color:#ef4444;"><i class="fas fa-trash"></i> Excluir</button>`;
+    if (paginados.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="6" class="loading-state"><i class="fas fa-inbox"></i> Nenhum pedido encontrado</td></tr>';
+      document.getElementById('pagination-container').style.display = 'none';
+      return;
     }
 
-    const timeline = gerarTimeline(pedido.status_etapa);
-    const pedidoIdCurto = (pedido.id || '').substring(0, 8).toUpperCase();
+    const formatMoeda = function(v) {
+      return `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    };
 
-    return `
-      <tr>
-        <td style="font-family: monospace; font-weight: 600;">#${pedidoIdCurto}</td>
-        <td>
-          <div style="font-weight: 700; color: #1e293b;">${(pedido.razao_social || "").substring(0, 50)}</div>
-          <div style="font-size: 10px; color: #64748b;">CNPJ: ${pedido.cnpj || '—'}</div>
-        </td>
-        <td style="font-weight: 700; color: #1e293b;">${formatMoeda(pedido.valor)}</td>
-        <td style="font-size: 12px;">${pedido.data_venda || '—'}</td>
-        <td>
-          <span class="status-badge ${status.classe}">${status.icone} ${status.label}</span>
-          <div class="timeline-wrapper">${timeline}</div>
-        </td>
-        <td>
-          <div class="action-buttons">
-            <button class="btn-action btn-detail" onclick="window.abrirDetalhes('${pedido.pedido_id}')"><i class="fas fa-eye"></i> Detalhes</button>
-            ${btnEditar}
-            ${btnExcluir}
-          </div>
-        </td>
-      </tr>`;
-  }).join('');
+    const cargo = window.userCargo;
+    const isFreelancer = (cargo === 'FREELANCER' || cargo === 'PARCEIRO' || cargo === 'TERCEIRO');
 
-  const pagContainer = document.getElementById('pagination-container');
-  if (totalPaginas > 1) {
-    pagContainer.style.display = 'flex';
-    document.getElementById('page-info').innerHTML = `Página ${window.paginaAtual} de ${totalPaginas}`;
-    document.getElementById('btn-prev').disabled = (window.paginaAtual === 1);
-    document.getElementById('btn-next').disabled = (window.paginaAtual === totalPaginas);
-  } else {
-    pagContainer.style.display = 'none';
+    tbody.innerHTML = paginados.map(function(pedido) {
+      let statusRaw = pedido.status_raw || 'PENDENTE DE INPUT';
+      const status = STATUS_INFO[statusRaw] || STATUS_INFO["PENDENTE DE INPUT"];
+
+      const isPendente = statusRaw.includes('PENDENTE');
+
+      let btnEditar = '';
+      let btnExcluir = '';
+      if (isFreelancer && isPendente) {
+        btnEditar = `<button class="btn-action btn-edit" onclick="window.editarPedido('${pedido.pedido_id}')" style="background:#fef3c7; color:#b45309;"><i class="fas fa-pen"></i> Editar</button>`;
+        btnExcluir = `<button class="btn-action btn-delete" onclick="window.excluirPedido('${pedido.pedido_id}')" style="background:#fee2e2; color:#ef4444;"><i class="fas fa-trash"></i> Excluir</button>`;
+      }
+
+      const timeline = gerarTimeline(pedido.status_etapa);
+      const pedidoIdCurto = (pedido.id || '').substring(0, 8).toUpperCase();
+
+      return `
+        <tr>
+          <td style="font-family: monospace; font-weight: 600;">#${pedidoIdCurto}</td>
+          <td>
+            <!-- 🔥 CORREÇÃO AQUI: pedido.cliente em vez de pedido.razao_social -->
+            <div style="font-weight: 700; color: #1e293b;">${(pedido.cliente || "").substring(0, 50)}</div>
+            <div style="font-size: 10px; color: #64748b;">CNPJ: ${pedido.cnpj || '—'}</div>
+            
+            <!-- 🔥 ADICIONADO: Mostra o nome do consultor se houver -->
+            ${pedido.consultor_que_vendeu && pedido.consultor_que_vendeu !== '—' 
+              ? `<div style="font-size: 10px; color: #3b82f6; margin-top:4px;"><i class="fas fa-user-tie"></i> Vendedor: ${pedido.consultor_que_vendeu}</div>` 
+              : ''}
+          </td>
+          <td style="font-weight: 700; color: #1e293b;">${formatMoeda(pedido.valor)}</td>
+          <td style="font-size: 12px;">${pedido.data_venda || '—'}</td>
+          <td>
+            <span class="status-badge ${status.classe}">${status.icone} ${status.label}</span>
+            <div class="timeline-wrapper">${timeline}</div>
+          </td>
+          <td>
+            <div class="action-buttons">
+              <button class="btn-action btn-detail" onclick="window.abrirDetalhes('${pedido.pedido_id}')"><i class="fas fa-eye"></i> Detalhes</button>
+              ${btnEditar}
+              ${btnExcluir}
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+
+    const pagContainer = document.getElementById('pagination-container');
+    if (totalPaginas > 1) {
+      pagContainer.style.display = 'flex';
+      document.getElementById('page-info').innerHTML = `Página ${window.paginaAtual} de ${totalPaginas}`;
+      document.getElementById('btn-prev').disabled = (window.paginaAtual === 1);
+      document.getElementById('btn-next').disabled = (window.paginaAtual === totalPaginas);
+    } else {
+      pagContainer.style.display = 'none';
+    }
   }
-}
 
     function gerarTimeline(etapaAtual) {
       const steps = [
@@ -1732,7 +1738,10 @@ function aplicarFiltros() {
       const body = document.getElementById('modal-body-detalhes');
       if (!body) return;
 
-      const status = STATUS_INFO[pedido.status_raw] || STATUS_INFO["PENDENTE DE INPUT"];
+      // 🔥 Ajuste 1: Lendo o status correto do banco
+      const statusRaw = pedido.status_do_pedido || 'PENDENTE DE INPUT';
+      const status = STATUS_INFO[statusRaw] || STATUS_INFO["PENDENTE DE INPUT"];
+      
       const formatMoeda = function(v) {
         return `R$ ${(v || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
       };
@@ -1749,7 +1758,7 @@ function aplicarFiltros() {
 
       const formatarDataBR = function(dataStr) {
         if (!dataStr) return '—';
-        const apenasData = String(dataStr).split('T')[0]; // Pega só a parte YYYY-MM-DD
+        const apenasData = String(dataStr).split('T')[0];
         const partes = apenasData.split('-');
         if (partes.length === 3) {
           return `${partes[2]}/${partes[1]}/${partes[0]}`;
@@ -1771,7 +1780,7 @@ function aplicarFiltros() {
         let html = '<div class="timeline-detalhes" style="background: #f8fafc; padding: 24px; border-radius: 16px; margin-bottom: 24px;">';
         html += '<div style="margin-bottom: 16px; font-size: 12px; font-weight: 600; color: #64748b;">';
         html += '<i class="fas fa-chart-line"></i> Fluxo de Aprovação';
-        html += '<span style="margin-left: 8px; font-size: 11px; font-weight: 400;">(passe o mouse sobre as etapas concluídas para ver detalhes)</span>';
+        html += '<span style="margin-left: 8px; font-size: 11px; font-weight: 400;">(passe o mouse sobre as etapas para ver detalhes)</span>';
         html += '</div>';
         html += '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">';
         
@@ -1805,9 +1814,11 @@ function aplicarFiltros() {
       };
 
       let linhasHtml = '';
-      if (pedido.linhas_agrupadas && pedido.linhas_agrupadas.length) {
+      // 🔥 Ajuste 2: Lendo o array 'linhas' em vez de 'linhas_agrupadas'
+      if (pedido.linhas && pedido.linhas.length) {
         const linhasPorPlano = {};
-        pedido.linhas_agrupadas.forEach(function(linha) {
+        
+        pedido.linhas.forEach(function(linha) {
           const key = linha.plano || 'Plano não informado';
           if (!linhasPorPlano[key]) {
             linhasPorPlano[key] = {
@@ -1815,13 +1826,14 @@ function aplicarFiltros() {
               quantidade: 0,
               valorTotal: 0,
               numeros: [],
-              modalidades: new Set(),
-              data: linha.data || pedido.data_criacao
+              modalidades: new Set()
             };
           }
           linhasPorPlano[key].quantidade++;
-          linhasPorPlano[key].valorTotal += linha.valor;
-          if (linha.numero) linhasPorPlano[key].numeros.push(linha.numero);
+          linhasPorPlano[key].valorTotal += Number(linha.valor) || 0;
+          
+          // 🔥 Ajuste 3: Lendo 'numero_da_linha'
+          if (linha.numero_da_linha) linhasPorPlano[key].numeros.push(linha.numero_da_linha);
           if (linha.modalidade) linhasPorPlano[key].modalidades.add(linha.modalidade);
         });
 
@@ -1829,7 +1841,7 @@ function aplicarFiltros() {
           <div class="detail-card">
             <div class="detail-card-header">
               <i class="fas fa-sim-card"></i> Linhas / Planos
-              <span class="detail-count">${pedido.linhas_agrupadas.length} linha(s)</span>
+              <span class="detail-count">${pedido.linhas.length} linha(s)</span>
             </div>
             <div class="detail-card-body">
               <div class="linhas-list">
@@ -1840,7 +1852,6 @@ function aplicarFiltros() {
                         <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 6px;">
                           <span class="linha-plano" style="font-weight: 800; font-size: 14px; color: #1e293b;">${escapeHtml(item.plano)}</span>
                           ${item.quantidade > 1 ? `<span class="linha-qtd" style="background: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 10px;">${item.quantidade}x</span>` : ''}
-                          <span class="linha-data" style="font-size: 10px; color: #64748b;"><i class="fas fa-calendar-alt"></i> ${item.data || pedido.data_criacao}</span>
                         </div>
                         ${item.numeros.length > 0 ? `
                           <div style="margin-bottom: 6px;">
@@ -1860,7 +1871,6 @@ function aplicarFiltros() {
                       <div class="linha-valor" style="text-align: right; min-width: 100px;">
                         <span style="font-size: 11px; color: #64748b;">Valor mensal</span>
                         <div style="font-weight: 800; color: #1e293b; font-size: 16px;">${formatMoeda(item.valorTotal)}</div>
-                        ${item.quantidade > 1 ? `<span style="font-size: 10px; color: #64748b;">${formatMoeda(item.valorTotal / item.quantidade)}/linha</span>` : ''}
                       </div>
                     </div>
                   `;
@@ -1869,7 +1879,7 @@ function aplicarFiltros() {
                   <span style="font-weight: 700; font-size: 14px;">TOTAL DO PEDIDO</span>
                   <strong style="font-size: 20px; color: #1e3c72;">
                     ${formatMoeda(
-                      (pedido.linhas_agrupadas || []).reduce((acc, linhaAtual) => {
+                      (pedido.linhas || []).reduce((acc, linhaAtual) => {
                         return acc + (Number(linhaAtual.valor) || 0);
                       }, 0)
                     )}
@@ -1883,241 +1893,50 @@ function aplicarFiltros() {
 
       const html = `
         <style>
-          .detail-card {
-            background: white;
-            border-radius: 16px;
-            margin-bottom: 24px;
-            border: 1px solid #e2e8f0;
-            overflow: hidden;
-            transition: all 0.2s;
-          }
-          .detail-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-          }
-          .detail-card-header {
-            background: #f8fafc;
-            padding: 14px 20px;
-            font-weight: 700;
-            font-size: 14px;
-            color: #1e293b;
-            border-bottom: 1px solid #e2e8f0;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-          }
-          .detail-card-header i {
-            color: #3b82f6;
-            font-size: 16px;
-          }
-          .detail-count {
-            margin-left: auto;
-            font-size: 11px;
-            background: #e2e8f0;
-            padding: 2px 8px;
-            border-radius: 20px;
-            color: #475569;
-          }
-          .detail-card-body {
-            padding: 20px;
-          }
-          .info-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 16px;
-          }
-          .info-item {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-          }
-          .info-label {
-            font-size: 10px;
-            font-weight: 700;
-            color: #64748b;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-          }
-          .info-value {
-            font-size: 14px;
-            font-weight: 600;
-            color: #1e293b;
-            word-break: break-word;
-          }
-          .info-value a {
-            color: #3b82f6;
-            text-decoration: none;
-          }
-          .info-value a:hover {
-            text-decoration: underline;
-          }
-          .linhas-list {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-          }
-          .linha-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: flex-start;
-            padding: 12px;
-            background: #f8fafc;
-            border-radius: 12px;
-            border-left: 3px solid #3b82f6;
-          }
-          .linha-info {
-            flex: 2;
-          }
-          .linha-plano {
-            font-weight: 700;
-            color: #1e293b;
-            font-size: 13px;
-          }
-          .linha-qtd {
-            background: #e2e8f0;
-            padding: 2px 8px;
-            border-radius: 12px;
-            font-size: 10px;
-          }
-          .linha-data {
-            font-size: 10px;
-            color: #64748b;
-          }
-          .linha-numero {
-            background: #f1f5f9;
-            padding: 4px 10px;
-            border-radius: 16px;
-            font-size: 11px;
-            display: inline-block;
-            margin-right: 6px;
-            margin-bottom: 4px;
-          }
-          .linha-modalidade {
-            font-size: 10px;
-            color: #3b82f6;
-            background: #dbeafe;
-            padding: 2px 8px;
-            border-radius: 12px;
-            display: inline-block;
-            margin-right: 6px;
-          }
-          .linha-valor {
-            text-align: right;
-            min-width: 100px;
-          }
-          .linha-total {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-top: 16px;
-            margin-top: 8px;
-            border-top: 2px solid #e2e8f0;
-          }
-          .linha-total strong {
-            font-size: 20px;
-            color: #1e3c72;
-          }
-          .status-header-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: ${status.classe === 'status-0' ? '#f1f5f9' : ''};
-            padding: 8px 16px;
-            border-radius: 30px;
-            font-size: 13px;
-            font-weight: 600;
-          }
-          .timeline-step-item {
-            position: relative;
-          }
-          .timeline-step-item[data-tooltip]:hover::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b;
-            color: white;
-            font-size: 11px;
-            font-weight: 500;
-            padding: 8px 14px;
-            border-radius: 10px;
-            white-space: nowrap;
-            z-index: 1000;
-            margin-bottom: 10px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            pointer-events: none;
-          }
-          .timeline-step-item[data-tooltip]:hover::before {
-            content: '';
-            position: absolute;
-            bottom: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border: 7px solid transparent;
-            border-top-color: #1e293b;
-            margin-bottom: 3px;
-            pointer-events: none;
-          }
-          .timeline-connector {
-            flex: 1;
-            height: 2px;
-            background: #e2e8f0;
-            border-radius: 2px;
-          }
-          .timeline-connector.completed {
-            background: #10b981;
-          }
-          @media (max-width: 768px) {
-            .info-grid {
-              grid-template-columns: 1fr;
-              gap: 12px;
-            }
-            .timeline-detalhes {
-              overflow-x: auto;
-              padding: 16px;
-            }
-            .timeline-detalhes > div {
-              min-width: 500px;
-            }
-            .timeline-step-item .timeline-label {
-              font-size: 8px;
-            }
-            .timeline-dot-large {
-              width: 36px !important;
-              height: 36px !important;
-              font-size: 16px !important;
-            }
-            .linha-item {
-              flex-direction: column;
-              align-items: flex-start;
-              gap: 12px;
-            }
-            .linha-valor {
-              text-align: left;
-              width: 100%;
-            }
-            .status-header-badge {
-              font-size: 11px;
-              padding: 6px 12px;
-            }
-          }
+          .detail-card { background: white; border-radius: 16px; margin-bottom: 24px; border: 1px solid #e2e8f0; overflow: hidden; transition: all 0.2s; }
+          .detail-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.05); }
+          .detail-card-header { background: #f8fafc; padding: 14px 20px; font-weight: 700; font-size: 14px; color: #1e293b; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 10px; }
+          .detail-card-header i { color: #3b82f6; font-size: 16px; }
+          .detail-count { margin-left: auto; font-size: 11px; background: #e2e8f0; padding: 2px 8px; border-radius: 20px; color: #475569; }
+          .detail-card-body { padding: 20px; }
+          .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+          .info-item { display: flex; flex-direction: column; gap: 4px; }
+          .info-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+          .info-value { font-size: 14px; font-weight: 600; color: #1e293b; word-break: break-word; }
+          .info-value a { color: #3b82f6; text-decoration: none; }
+          .linhas-list { display: flex; flex-direction: column; gap: 12px; }
+          .linha-item { display: flex; justify-content: space-between; align-items: flex-start; padding: 12px; background: #f8fafc; border-radius: 12px; border-left: 3px solid #3b82f6; }
+          .linha-plano { font-weight: 700; color: #1e293b; font-size: 13px; }
+          .linha-qtd { background: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 10px; }
+          .linha-numero { background: #f1f5f9; padding: 4px 10px; border-radius: 16px; font-size: 11px; display: inline-block; margin-right: 6px; margin-bottom: 4px; }
+          .linha-modalidade { font-size: 10px; color: #3b82f6; background: #dbeafe; padding: 2px 8px; border-radius: 12px; display: inline-block; margin-right: 6px; }
+          .linha-valor { text-align: right; min-width: 100px; }
+          .linha-total { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; margin-top: 8px; border-top: 2px solid #e2e8f0; }
+          .linha-total strong { font-size: 20px; color: #1e3c72; }
+          .status-header-badge { display: inline-flex; align-items: center; gap: 8px; background: ${status.classe === 'status-0' ? '#f1f5f9' : ''}; padding: 8px 16px; border-radius: 30px; font-size: 13px; font-weight: 600; }
+          .timeline-step-item { position: relative; }
+          .timeline-step-item[data-tooltip]:hover::after { content: attr(data-tooltip); position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; font-size: 11px; font-weight: 500; padding: 8px 14px; border-radius: 10px; white-space: nowrap; z-index: 1000; margin-bottom: 10px; box-shadow: 0 4px 15px rgba(0,0,0,0.2); pointer-events: none; }
+          .timeline-step-item[data-tooltip]:hover::before { content: ''; position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); border: 7px solid transparent; border-top-color: #1e293b; margin-bottom: 3px; pointer-events: none; }
+          .timeline-connector { flex: 1; height: 2px; background: #e2e8f0; border-radius: 2px; }
+          .timeline-connector.completed { background: #10b981; }
+          @media (max-width: 768px) { .info-grid { grid-template-columns: 1fr; gap: 12px; } .timeline-detalhes { overflow-x: auto; padding: 16px; } .timeline-detalhes > div { min-width: 500px; } .linha-item { flex-direction: column; align-items: flex-start; gap: 12px; } .linha-valor { text-align: left; width: 100%; } }
         </style>
 
         <!-- STATUS HEADER -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
-          <div class="status-header-badge" style="background:${status.classe === 'status-0' ? '#f1f5f9' : ''}; padding:6px 16px; border-radius:30px; font-weight:600;">
+          <div class="status-header-badge">
             <i class="fas ${status.icone === '📥' ? 'fa-inbox' : status.icone === '📝' ? 'fa-pen' : status.icone === '🔒' ? 'fa-lock' : status.icone === '📋' ? 'fa-clipboard-list' : status.icone === '📄' ? 'fa-file-invoice' : status.icone === '🚚' ? 'fa-truck' : status.icone === '✅' ? 'fa-check-circle' : 'fa-circle-info'}"></i>
             Status atual: <strong>${escapeHtml(status.label)}</strong>
           </div>
           <div style="font-size: 12px; color: #64748b;">
-            <i class="fas fa-clock"></i> Última atualização: ${escapeHtml(pedido.data_ultima_atualizacao || pedido.data_criacao || '—')}
+            <i class="fas fa-clock"></i> Data da Venda: ${pedido.data_venda || '—'}
           </div>
         </div>
 
         <!-- TIMELINE INTERATIVA -->
-        ${gerarTimelineDetalhes(pedido.status_etapa)}
+        ${gerarTimelineDetalhes(pedido.status_etapa || 0)}
 
-        <!-- DATA DE ATIVAÇÃO RADAR (somente visualização) -->
+        <!-- DATA DE ATIVAÇÃO RADAR -->
         <div class="detail-card">
           <div class="detail-card-header">
             <i class="fas fa-calendar-check"></i> Ativação no Sistema RADAR
@@ -2125,11 +1944,9 @@ function aplicarFiltros() {
           <div class="detail-card-body">
             <div style="display: flex; flex-direction: column; gap: 12px;">
               <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 10px;">
-                <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Data de Ativação RADAR:</label>
-                <span style="font-weight: 600; color: #1e293b;">${pedido.data_radar ? formatarDataBR(pedido.data_radar) : '—'}</span>
-              </div>
-              <div style="font-size: 12px; color: #64748b;">
-                <i class="fas fa-info-circle"></i> Esta data é obrigatória para finalizar o pedido na etapa 6 (Ativado).
+                <label style="font-size: 13px; font-weight: 600; color: #1e293b;">Data de Ativação:</label>
+                <!-- 🔥 Ajuste 4: Lendo 'data_de_ativacao_no_radar' -->
+                <span style="font-weight: 600; color: #1e293b;">${pedido.data_de_ativacao_no_radar ? formatarDataBR(pedido.data_de_ativacao_no_radar) : '—'}</span>
               </div>
             </div>
           </div>
@@ -2142,9 +1959,10 @@ function aplicarFiltros() {
           </div>
           <div class="detail-card-body">
             <div class="info-grid">
-              <div class="info-item"><span class="info-label">Razão Social</span><span class="info-value">${escapeHtml(pedido.cliente) || '—'}</span></div>
+              <!-- 🔥 Ajuste 5: Lendo os nomes originais do SQL -->
+              <div class="info-item"><span class="info-label">Razão Social</span><span class="info-value">${escapeHtml(pedido.razao_social) || '—'}</span></div>
               <div class="info-item"><span class="info-label">CNPJ</span><span class="info-value">${escapeHtml(pedido.cnpj) || '—'}</span></div>
-              <div class="info-item"><span class="info-label">Inscrição Estadual</span><span class="info-value">${escapeHtml(pedido.ie) || '—'}</span></div>
+              <div class="info-item"><span class="info-label">Inscrição Estadual</span><span class="info-value">${escapeHtml(pedido.inscricao_estadual) || '—'}</span></div>
             </div>
           </div>
         </div>
@@ -2158,7 +1976,7 @@ function aplicarFiltros() {
           <div class="detail-card-body">
             <div class="info-grid">
               <div class="info-item"><span class="info-label">CEP</span><span class="info-value">${escapeHtml(pedido.cep) || '—'}</span></div>
-              <div class="info-item"><span class="info-label">Endereço</span><span class="info-value">${escapeHtml(pedido.endereco) || '—'}, ${escapeHtml(pedido.numero_endereco) || ''}</span></div>
+              <div class="info-item"><span class="info-label">Endereço</span><span class="info-value">${escapeHtml(pedido.endereco) || '—'}, ${escapeHtml(pedido.numero) || ''}</span></div>
               <div class="info-item"><span class="info-label">Cidade / UF</span><span class="info-value">${escapeHtml(pedido.cidade) || '—'} / ${escapeHtml(pedido.uf) || '—'}</span></div>
             </div>
           </div>
@@ -2169,7 +1987,7 @@ function aplicarFiltros() {
           <div class="detail-card-header"><i class="fas fa-user-tie"></i> Responsável Legal</div>
           <div class="detail-card-body">
             <div class="info-grid">
-              <div class="info-item"><span class="info-label">Nome Completo</span><span class="info-value">${escapeHtml(pedido.nome_admin) || '—'}</span></div>
+              <div class="info-item"><span class="info-label">Nome Completo</span><span class="info-value">${escapeHtml(pedido.nome_administrador) || '—'}</span></div>
               <div class="info-item"><span class="info-label">E-mail</span><span class="info-value">${pedido.email ? `<a href="mailto:${escapeHtml(pedido.email)}">${escapeHtml(pedido.email)}</a>` : '—'}</span></div>
               <div class="info-item"><span class="info-label">Telefone / WhatsApp</span><span class="info-value">${pedido.contato_financeiro ? `<a href="https://wa.me/55${String(pedido.contato_financeiro).replace(/\D/g, '')}" target="_blank">${escapeHtml(pedido.contato_financeiro)}</a>` : '—'}</span></div>
             </div>
@@ -2182,9 +2000,7 @@ function aplicarFiltros() {
           <div class="detail-card-body">
             <div class="info-grid">
               <div class="info-item"><span class="info-label">Origem do Pedido</span><span class="info-value">${pedido.origem === 'PARCEIRO' ? '📱 Pedido de Parceiro' : '🏢 Venda Direta'}</span></div>
-              <div class="info-item"><span class="info-label">Responsável pelo Cadastro</span><span class="info-value">${escapeHtml(pedido.responsavel_nome) || '—'}</span></div>
-              ${pedido.data_ativacao ? `<div class="info-item"><span class="info-label">Data de Ativação</span><span class="info-value">✅ ${escapeHtml(pedido.data_ativacao)}</span></div>` : ''}
-              ${pedido.data_aprovacao_boc ? `<div class="info-item"><span class="info-label">Data Aprovação BOC</span><span class="info-value">📋 ${escapeHtml(pedido.data_aprovacao_boc)}</span></div>` : ''}
+              <div class="info-item"><span class="info-label">Vendedor / Consultor</span><span class="info-value">${escapeHtml(pedido.consultor_que_vendeu) || '—'}</span></div>
             </div>
           </div>
         </div>
