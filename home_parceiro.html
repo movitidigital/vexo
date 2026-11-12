@@ -858,6 +858,7 @@
     const porMod = d.por_modalidade || {};
     const chaves = Object.keys(porMod);
 
+    // Se não houver nenhuma venda no mês, renderiza todos os blocos zerados
     if (chaves.length === 0) {
       const percentuais = cfg.tipo === 'DETALHADO'
         ? {
@@ -868,7 +869,8 @@
             'Corporate M2M':    cfg.m2m ?? 0,
             'VAS':              cfg.vas ?? 0,
             'Renegociação':     cfg.renegociacao ?? 0,
-            'Ultra Fibra':      cfg.ultra_fibra ?? 0
+            'Ultra Fibra':      cfg.ultra_fibra ?? 0,
+            'TIM Fixo':         cfg.tim_fixo ?? 0 // 👈 NOVO BLOCO AQUI
           }
         : {
             'Vendas / Primeira Ativação': cfg.vendas ?? 0,
@@ -904,18 +906,24 @@
       return;
     }
 
+    // Se houver vendas, renderiza os blocos baseados no que veio do banco
     let html = '';
     Object.entries(porMod).forEach(([nome, info]) => {
       const cfgKey = nome.toUpperCase();
       let perc = 0;
+      
       if (cfg.tipo === 'SIMPLIFICADO' && !cfgKey.includes('RENEG')) {
         perc = cfg.vendas ?? 0;
       } else if (cfg.tipo === 'SIMPLIFICADO' && cfgKey.includes('RENEG')) {
         perc = cfg.renegociacao ?? 0;
       } else {
+        // Melhora a busca para lidar com "TIM_FIXO" ou "TIM FIXO"
         for (const [k, v] of Object.entries(cfg)) {
           if (k === 'tipo') continue;
-          if (cfgKey.includes(k.toUpperCase()) || k.toUpperCase().includes(cfgKey)) {
+          const kNormalizado = k.toUpperCase().replace(/_/g, ' ');
+          const cfgKeyNormalizado = cfgKey.replace(/_/g, ' ');
+          
+          if (cfgKeyNormalizado.includes(kNormalizado) || kNormalizado.includes(cfgKeyNormalizado)) {
             perc = v;
             break;
           }
@@ -924,7 +932,7 @@
 
       html += `
         <div class="comissao-card">
-          <div class="modalidade">${nome}</div>
+          <div class="modalidade">${nome.replace(/_/g, ' ')}</div>
           <div class="percentual">${perc}%</div>
           <div class="info"><strong>${fmtBRL(info.faturamento)}</strong> em ${info.qtd} pedido(s)</div>
           <div class="detalhes">
