@@ -1624,12 +1624,14 @@ window.salvarAgora = function() {
 
   // 🔥 Detecta modo EDIÇÃO
   let modoEdicao = null;
+  let vendedorOriginal = null; // 👈 NOVO
   try {
     const raw = sessionStorage.getItem('pedidoEmEdicao');
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed.modo === 'EDITAR' && parsed.pedido_id) {
         modoEdicao = parsed.pedido_id;
+        vendedorOriginal = parsed.consultor_que_vendeu; // 👈 NOVO
       }
     }
   } catch (e) {}
@@ -1700,6 +1702,7 @@ window.salvarAgora = function() {
     matriculaUsuario: user.matricula || user.email || user.username,
     bancoDeDadosId: user.bancoDeDadosId || null,
     parceiroNome: user.username || user.nome || "Parceiro HUB",
+    consultorVendeu: vendedorOriginal,
     cnpj: document.getElementById("cnpj").value,
     razaoSocial: document.getElementById("razaoSocial").value,
     inscricaoEstadual: document.getElementById("inscricaoEstadual").value,
@@ -1749,7 +1752,6 @@ window.salvarAgora = function() {
       }
 
       if (r.data && r.data.success) {
-        sessionStorage.removeItem('pedidoEmEdicao');
 
         // Ajusta o modal de sucesso
         const modal = document.getElementById("modalSucesso");
@@ -1766,6 +1768,7 @@ window.salvarAgora = function() {
             btnModal.innerText = 'OK, VOLTAR PARA MEUS PEDIDOS';
             btnModal.onclick = function() {
               modal.style.display = 'none';
+                 sessionStorage.removeItem('pedidoEmEdicao');
               if (typeof window.navegar === 'function') {
                 window.navegar('meus_pedidos');
               } else {
