@@ -507,7 +507,7 @@
       Olá, <span id="partner-name">Parceiro</span>! 👋
       <span class="hero-badge" id="partner-badge">🤝 PARCEIRO</span>
     </h1>
-    <p>Aqui está o resumo da sua operação e das suas comissões.</p>
+    <p id="hero-subtitle">Aqui está o resumo da sua operação e das suas comissões.</p>
     <div class="hero-meta">
       <span>📅 <span id="data-atual">—</span></span>
       <span>🆔 <span id="partner-matricula">—</span></span>
@@ -696,6 +696,11 @@
 
     const matEl = $('partner-matricula');
     if (matEl) matEl.innerText = user.username || user.matricula || '—';
+
+       const subEl = document.getElementById('hero-subtitle');
+    if (subEl && tipo === 'CONSULTOR') {
+      subEl.innerText = "Aqui está o resumo das suas vendas e das suas comissões individuais.";
+    }
   }
 
   // ── TRAVA DE SEGURANÇA ATUALIZADA ──
