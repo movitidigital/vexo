@@ -856,92 +856,77 @@
 
     const cfg = d.comissao_config || {};
     const porMod = d.por_modalidade || {};
-    const chaves = Object.keys(porMod);
+    
+    let html = '';
 
-    // Se não houver nenhuma venda no mês, renderiza todos os blocos zerados
-    if (chaves.length === 0) {
-      const percentuais = cfg.tipo === 'DETALHADO'
-        ? {
-            'Acessos Novos':    cfg.acessos_novos ?? 0,
-            'Aditivo':          cfg.aditivo ?? 0,
-            'Migração':         cfg.migracao ?? 0,
-            'Portabilidade':    cfg.portabilidade ?? 0,
-            'Corporate M2M':    cfg.m2m ?? 0,
-            'VAS':              cfg.vas ?? 0,
-            'Renegociação':     cfg.renegociacao ?? 0,
-            'Ultra Fibra':      cfg.ultra_fibra ?? 0,
-            'TIM Fixo':         cfg.tim_fixo ?? 0 // 👈 NOVO BLOCO AQUI
-          }
-        : {
-            'Vendas / Primeira Ativação': cfg.vendas ?? 0,
-            'Renegociação':               cfg.renegociacao ?? 0
-          };
+    // Mapeamento das chaves do banco para os nomes bonitos na tela
+    const modalidadesMap = {
+      'ACESSOS_NOVOS': { label: 'Acessos Novos', key: 'acessos_novos' },
+      'ADITIVO': { label: 'Aditivo', key: 'aditivo' },
+      'MIGRACAO': { label: 'Migração', key: 'migracao' },
+      'PORTABILIDADE': { label: 'Portabilidade', key: 'portabilidade' },
+      'CORPORATE_M2M': { label: 'Corporate M2M', key: 'm2m' },
+      'VAS': { label: 'VAS', key: 'vas' },
+      'RENEGOCIACAO': { label: 'Renegociação', key: 'renegociacao' },
+      'ULTRA_FIBRA': { label: 'Ultra Fibra', key: 'ultra_fibra' },
+      'TIM_FIXO': { label: 'TIM Fixo', key: 'tim_fixo' }
+    };
 
-      let html = '';
-      Object.entries(percentuais).forEach(([nome, perc]) => {
+    if (cfg.tipo === 'DETALHADO') {
+      // Itera sobre TODAS as modalidades para garantir que os cards apareçam
+      Object.entries(modalidadesMap).forEach(([modKey, mapInfo]) => {
+        const perc = cfg[mapInfo.key] ?? 0;
+        // Se não veio do banco (sem venda), zera os valores
+        const info = porMod[modKey] || { faturamento: 0, comissao: 0, qtd: 0 };
+        
         html += `
           <div class="comissao-card">
-            <div class="modalidade">${nome}</div>
+            <div class="modalidade">${mapInfo.label}</div>
             <div class="percentual">${perc}%</div>
-            <div class="info">Sem movimento no mês</div>
+            <div class="info">${info.qtd > 0 ? `<strong>${fmtBRL(info.faturamento)}</strong> em ${info.qtd} pedido(s)` : 'Sem movimento no mês'}</div>
             <div class="detalhes">
               <span>Comissão</span>
-              <span>R$ 0,00</span>
+              <span>${fmtBRL(info.comissao)}</span>
             </div>
           </div>`;
       });
-
-      html += `
-        <div class="comissao-card total">
-          <div class="modalidade">💰 TOTAL DO MÊS</div>
-          <div class="percentual">R$ 0,00</div>
-          <div class="info">Nenhuma comissão no período</div>
-          <div class="detalhes">
-            <span>Faturamento</span>
-            <span>R$ 0,00</span>
-          </div>
-        </div>`;
-
-      container.innerHTML = html;
-      return;
-    }
-
-    // Se houver vendas, renderiza os blocos baseados no que veio do banco
-    let html = '';
-    Object.entries(porMod).forEach(([nome, info]) => {
-      const cfgKey = nome.toUpperCase();
-      let perc = 0;
-      
-      if (cfg.tipo === 'SIMPLIFICADO' && !cfgKey.includes('RENEG')) {
-        perc = cfg.vendas ?? 0;
-      } else if (cfg.tipo === 'SIMPLIFICADO' && cfgKey.includes('RENEG')) {
-        perc = cfg.renegociacao ?? 0;
-      } else {
-        // Melhora a busca para lidar com "TIM_FIXO" ou "TIM FIXO"
-        for (const [k, v] of Object.entries(cfg)) {
-          if (k === 'tipo') continue;
-          const kNormalizado = k.toUpperCase().replace(/_/g, ' ');
-          const cfgKeyNormalizado = cfgKey.replace(/_/g, ' ');
-          
-          if (cfgKeyNormalizado.includes(kNormalizado) || kNormalizado.includes(cfgKeyNormalizado)) {
-            perc = v;
-            break;
-          }
+    } else {
+      // Modo SIMPLIFICADO
+      // Agrupa todas as vendas (exceto renegociação) no card principal
+      let fatVendas = 0, comVendas = 0, qtdVendas = 0;
+      Object.entries(porMod).forEach(([k, v]) => {
+        if (k !== 'RENEGOCIACAO') {
+          fatVendas += Number(v.faturamento) || 0;
+          comVendas += Number(v.comissao) || 0;
+          qtdVendas += Number(v.qtd) || 0;
         }
-      }
+      });
 
       html += `
         <div class="comissao-card">
-          <div class="modalidade">${nome.replace(/_/g, ' ')}</div>
-          <div class="percentual">${perc}%</div>
-          <div class="info"><strong>${fmtBRL(info.faturamento)}</strong> em ${info.qtd} pedido(s)</div>
+          <div class="modalidade">Vendas / Primeira Ativação</div>
+          <div class="percentual">${cfg.vendas ?? 0}%</div>
+          <div class="info">${qtdVendas > 0 ? `<strong>${fmtBRL(fatVendas)}</strong> em ${qtdVendas} pedido(s)` : 'Sem movimento no mês'}</div>
           <div class="detalhes">
             <span>Comissão</span>
-            <span>${fmtBRL(info.comissao)}</span>
+            <span>${fmtBRL(comVendas)}</span>
           </div>
         </div>`;
-    });
 
+      let infoReneg = porMod['RENEGOCIACAO'] || { faturamento: 0, comissao: 0, qtd: 0 };
+      html += `
+        <div class="comissao-card">
+          <div class="modalidade">Renegociação</div>
+          <div class="percentual">${cfg.renegociacao ?? 0}%</div>
+          <div class="info">${infoReneg.qtd > 0 ? `<strong>${fmtBRL(infoReneg.faturamento)}</strong> em ${infoReneg.qtd} pedido(s)` : 'Sem movimento no mês'}</div>
+          <div class="detalhes">
+            <span>Comissão</span>
+            <span>${fmtBRL(infoReneg.comissao)}</span>
+          </div>
+        </div>`;
+    }
+
+    // Adiciona o Card Total no final
     html += `
       <div class="comissao-card total">
         <div class="modalidade">💰 TOTAL DO MÊS</div>
