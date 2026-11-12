@@ -1252,6 +1252,10 @@ window.executarExclusao = function(pedidoId) {
   // FUNÇÕES PRINCIPAIS DO MÓDULO (dentro da IIFE)
   // ============================================
   (function() {
+    // 🔥 TRAVA DE SEGURANÇA: Impede recarregamento duplo
+    if (window._vexoMeusPedidosLoaded) return;
+    window._vexoMeusPedidosLoaded = true;
+
     // --- STATUS INFO ---
     const STATUS_INFO = {
       "PENDENTE DE INPUT": { etapa: 0, label: "Pendente de Input", icone: "📥", classe: "status-0" },
@@ -1274,7 +1278,6 @@ window.executarExclusao = function(pedidoId) {
     ];
 
     console.log("🚀 Inicializando Meus Pedidos...");
-
     // --- Inicialização ---
     function inicializar() {
       const sessao = JSON.parse(sessionStorage.getItem('usuarioLogado') || '{}');
