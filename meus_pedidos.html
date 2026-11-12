@@ -846,17 +846,6 @@
   window.userNome = '';
   window.userPodeEditar = false;
 
-  // --- STATUS INFO ---
-  const STATUS_INFO = {
-    "PENDENTE DE INPUT": { etapa: 0, label: "Pendente de Input", icone: "📥", classe: "status-0" },
-    "1. INPUT REALIZADO": { etapa: 1, label: "Input Realizado", icone: "📝", classe: "status-1" },
-    "2. ANTIFRAUDE APROVADO": { etapa: 2, label: "Antifraude Aprovado", icone: "🔒", classe: "status-2" },
-    "3. DOCS VALIDADOS BOC": { etapa: 3, label: "Docs Validados BOC", icone: "📋", classe: "status-3" },
-    "4. NOTA FISCAL EMITIDA": { etapa: 4, label: "Nota Fiscal Emitida", icone: "📄", classe: "status-4" },
-    "5. CONFIRMAÇÃO LOGÍSTICA": { etapa: 5, label: "Confirmação Logística", icone: "🚚", classe: "status-5" },
-    "6. ATIVADO": { etapa: 6, label: "Ativado", icone: "✅", classe: "status-6" }
-  };
-
   const STATUS_LIST = [
     "PENDENTE DE INPUT",
     "1. INPUT REALIZADO",
@@ -1263,6 +1252,27 @@ window.executarExclusao = function(pedidoId) {
   // FUNÇÕES PRINCIPAIS DO MÓDULO (dentro da IIFE)
   // ============================================
   (function() {
+    // --- STATUS INFO ---
+    const STATUS_INFO = {
+      "PENDENTE DE INPUT": { etapa: 0, label: "Pendente de Input", icone: "📥", classe: "status-0" },
+      "1. INPUT REALIZADO": { etapa: 1, label: "Input Realizado", icone: "📝", classe: "status-1" },
+      "2. ANTIFRAUDE APROVADO": { etapa: 2, label: "Antifraude Aprovado", icone: "🔒", classe: "status-2" },
+      "3. DOCS VALIDADOS BOC": { etapa: 3, label: "Docs Validados BOC", icone: "📋", classe: "status-3" },
+      "4. NOTA FISCAL EMITIDA": { etapa: 4, label: "Nota Fiscal Emitida", icone: "📄", classe: "status-4" },
+      "5. CONFIRMAÇÃO LOGÍSTICA": { etapa: 5, label: "Confirmação Logística", icone: "🚚", classe: "status-5" },
+      "6. ATIVADO": { etapa: 6, label: "Ativado", icone: "✅", classe: "status-6" }
+    };
+
+    const STATUS_LIST = [
+      "PENDENTE DE INPUT",
+      "1. INPUT REALIZADO",
+      "2. ANTIFRAUDE APROVADO",
+      "3. DOCS VALIDADOS BOC",
+      "4. NOTA FISCAL EMITIDA",
+      "5. CONFIRMAÇÃO LOGÍSTICA",
+      "6. ATIVADO"
+    ];
+
     console.log("🚀 Inicializando Meus Pedidos...");
 
     // --- Inicialização ---
