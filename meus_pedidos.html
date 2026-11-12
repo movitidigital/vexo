@@ -1141,7 +1141,7 @@ window.editarPedido = function(pedidoId) {
 
       const p = res.pedido;
 
-      // 🔥 Agrupa linhas por modalidade
+      // Agrupa linhas por modalidade
       const linhasPorModalidade = {};
       (p.linhas || []).forEach(function(l) {
         const mod = (l.modalidade || 'PRIMEIRA ATIVAÇÃO').toUpperCase();
@@ -1149,12 +1149,10 @@ window.editarPedido = function(pedidoId) {
         linhasPorModalidade[mod].push(l);
       });
 
-      // 🔥 Monta objeto de edição
+      // Monta objeto de edição
       const pedidoEdicao = {
         modo: 'EDITAR',
         pedido_id: pedidoId,
-
-        // Dados da empresa
         cnpj:          p.cnpj || '',
         razaoSocial:   p.razao_social || '',
         inscricaoEstadual: p.inscricao_estadual || '',
@@ -1169,12 +1167,8 @@ window.editarPedido = function(pedidoId) {
         nomeAdmin:     p.nome_admin || '',
         email:         p.email || '',
         contatoFinanceiro: p.contato_financeiro || '',
-
-        // Venda
         dataVenda:     p.data_venda || '',
         dataVenc:      p.data_de_venc ? String(p.data_de_venc).padStart(2, '0') : '',
-
-        // Lista de modalidades e linhas
         modalidadesList: Object.keys(linhasPorModalidade),
         linhasPorModalidade: linhasPorModalidade
       };
@@ -1188,12 +1182,9 @@ window.editarPedido = function(pedidoId) {
 
       window.showToast('📝 Abrindo pedido para edição...', 'info');
 
-      // Navega para o módulo de vendas
       setTimeout(function() {
         if (typeof window.navegar === 'function') {
           window.navegar('vendas_parceiro');
-        } else if (typeof window.irParaVendas === 'function') {
-          window.irParaVendas();
         } else {
           window.location.href = 'vendas_parceiro.html';
         }
@@ -1475,8 +1466,7 @@ function aplicarFiltros() {
     };
 
     const cargo = window.userCargo;
-    const isFreelancer = (cargo === 'FREELANCER' || cargo === 'PARCEIRO' || cargo === 'TERCEIRO');
-
+const isFreelancer = (cargo === 'FREELANCER' || cargo === 'PARCEIRO' || cargo === 'TERCEIRO' || cargo === 'CONSULTOR');
     tbody.innerHTML = paginados.map(function(pedido) {
       let statusRaw = pedido.status_raw || 'PENDENTE DE INPUT';
       const status = STATUS_INFO[statusRaw] || STATUS_INFO["PENDENTE DE INPUT"];
