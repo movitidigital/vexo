@@ -3591,14 +3591,9 @@ function renderizarDetalhes(pedido) {
           // 🔥 3. Atualiza o input na tela
           if (input) {
              input.value = codigo;
-             // Opcional: Dar um feedback visual no input
              input.style.borderColor = '#10b981';
              setTimeout(() => input.style.borderColor = '', 1500);
           }
-
-          // 🔥 4. Removemos o abrirDetalhes() para não piscar a tela
-          // abrirDetalhes(pedidoAtual.linha, pedidoAtual.origem); 
-          
         } else {
           showToast(res.message || 'Erro ao salvar', 'error');
         }
@@ -3680,7 +3675,6 @@ function renderizarDetalhes(pedido) {
   let conteudoPrincipalHtml = '';
 
   if (isFibra) {
-    // ─── LAYOUT DETALHADO PARA ULTRAFIBRA ───
     const c = pedido.cliente || {};
     const ct = pedido.contato || {};
     const end = pedido.endereco_instalacao || {};
@@ -3840,7 +3834,6 @@ function renderizarDetalhes(pedido) {
     conteudoPrincipalHtml = dadosClienteHtml + contatosHtml + enderecoInstalacaoHtml + enderecoClienteHtml + faturamentoHtml + enderecoCobrancaHtml + sociosHtml;
 
   } else {
-    // ─── LAYOUT MÓVEL (MANTIDO COMO ESTAVA, COM AS NOVAS TAGS) ───
     let linhasHtml = '';
     if (pedido.linhas_agrupadas && pedido.linhas_agrupadas.length) {
       const linhasPorPlano = {};
@@ -3866,7 +3859,6 @@ function renderizarDetalhes(pedido) {
                       ${item.quantidade > 1 ? `<span class="linha-qtd" style="background: #e2e8f0; padding: 2px 8px; border-radius: 12px; font-size: 10px;">${item.quantidade}x</span>` : ''}
                     </div>
                     
-                    <!-- 🔥 AQUI ESTÃO AS NOVAS TAGS DE MODALIDADE E OPERADORA -->
                     ${item.numeros.length > 0 ? `
                       <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px;">
                         ${item.numeros.map(objNum => {
@@ -4074,12 +4066,15 @@ function renderizarDetalhes(pedido) {
           <div class="info-item"><span class="info-label">Origem do Pedido</span><span class="info-value">${pedido.origem === 'PARCEIRO' ? '📱 Pedido de Parceiro' : '🏢 Venda Direta'}</span></div>
           <div class="info-item"><span class="info-label">📅 Dia de Vencimento</span><span class="info-value">${pedido.vencimento || pedido.dia_vencimento || (pedido.faturamento && pedido.faturamento.dia_vencimento) || '—'}</span></div>
           <div class="info-item"><span class="info-label">Responsável pelo Cadastro</span><span class="info-value">${escapeHtml(pedido.responsavel_nome || pedido.parceiro_nome || pedido.vendedor) || '—'}</span></div>
-		  ${pedido.obs ? `
-  <div class="info-item" style="grid-column: span 2; background: #fffbeb; padding: 10px; border-radius: 8px; border: 1px solid #fde68a; margin-top: 10px;">
-    <span class="info-label" style="color: #b45309;">📝 Observações do Parceiro</span>
-    <span class="info-value" style="color: #92400e; font-weight: 500;">${escapeHtml(pedido.obs)}</span>
-  </div>
-` : ''}
+          
+          <!-- 🔥 OBSERVAÇÕES DO VENDEDOR -->
+          ${pedido.obs ? `
+          <div class="info-item" style="grid-column: span 2; background: #fffbeb; padding: 12px; border-radius: 8px; border: 1px solid #fde68a; margin-top: 10px;">
+            <span class="info-label" style="color: #b45309;">📝 Observações do Vendedor</span>
+            <span class="info-value" style="color: #92400e; font-weight: 500;">${escapeHtml(pedido.obs)}</span>
+          </div>
+          ` : ''}
+
         </div>
       </div>
     </div>
