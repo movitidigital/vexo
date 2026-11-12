@@ -1387,29 +1387,22 @@ function salvarDataRadar(idUnico, origem, dataRadar, btnElement) {
     return;
   }
 
-  // 🔥 SANIDADE (Patch 4): valida antes de enviar
+  // Validação de data
   const d = parseDataBR(dataRadar);
   if (d) {
     const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
-
     if (d > hoje) {
       showToast('⚠️ A data do RADAR não pode estar no futuro.', 'warning');
       return;
     }
-
     const diasAtras = Math.floor((hoje - d) / (1000 * 60 * 60 * 24));
     if (diasAtras > 180) {
-      showToast(
-        `⚠️ Essa data tem <b>${diasAtras} dias</b> (mais de 6 meses). Confira se não é engano.`,
-        'warning'
-      );
-      // Não bloqueia — só avisa.
+      showToast(`⚠️ Essa data tem <b>${diasAtras} dias</b> (mais de 6 meses). Confira se não é engano.`, 'warning');
     }
   }
 
-  const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico && p.origem === origem);
+  const pedido = window.todosPedidos?.find(p => p.id_unico === idUnico);
   const bancoDeDadosId = pedido ? pedido.bancoDeDadosId : null;
-  console.log(`🏦 bancoDeDadosId para salvar data RADAR: ${bancoDeDadosId || 'NULL'}`);
 
   showLoading('Salvando data RADAR...');
 
@@ -1419,14 +1412,19 @@ function salvarDataRadar(idUnico, origem, dataRadar, btnElement) {
       if (res && res.success) {
         showToast('Data RADAR salva com sucesso!', 'success');
 
-        // Atualiza o objeto global
+        // 🔥 ATUALIZA A LISTA GLOBAL
         if (pedido) pedido.data_radar = dataRadar;
 
-        // Atualiza o input no modal (se ainda estiver aberto)
+        // 🔥 ATUALIZA O OBJETO DO MODAL (Para não dar conflito)
+        if (window._pedidoDetalhesAtual && window._pedidoDetalhesAtual.id_unico === idUnico) {
+            window._pedidoDetalhesAtual.data_radar = dataRadar;
+        }
+
+        // Atualiza o input na tela
         const input = document.getElementById('data-radar-input');
         if (input) input.value = converterDataParaInput(dataRadar);
 
-        // Atualiza o botão (se foi passado)
+        // Atualiza o botão
         if (btnElement) {
           btnElement.textContent = 'Editar';
           btnElement.dataset.mode = 'edit';
@@ -3560,6 +3558,7 @@ function renderizarDetalhes(pedido) {
   function salvarCodigoCliente() {
     const input = document.getElementById('codigo-cliente-input');
     const codigo = input?.value?.trim() || '';
+    
     if (!codigo) {
       showToast('Informe um código de cliente válido.', 'warning');
       return;
@@ -3572,17 +3571,34 @@ function renderizarDetalhes(pedido) {
     }
 
     showLoading('Salvando código do cliente...');
+    
     google.script.run
       .withSuccessHandler(function(res) {
         hideLoading();
+        
         if (res.success) {
           showToast('Código do cliente salvo com sucesso!', 'success');
+          
+          // 🔥 1. Atualiza a lista global (para o botão Avançar funcionar)
           const pedidoGlobal = window.todosPedidos?.find(p => p.id_unico === pedidoAtual.id_unico && p.origem === pedidoAtual.origem);
           if (pedidoGlobal) {
             pedidoGlobal.codigoCliente = codigo;
           }
+          
+          // 🔥 2. Atualiza o objeto atual do modal
           pedidoAtual.codigoCliente = codigo;
-          abrirDetalhes(pedidoAtual.linha, pedidoAtual.origem);
+          
+          // 🔥 3. Atualiza o input na tela
+          if (input) {
+             input.value = codigo;
+             // Opcional: Dar um feedback visual no input
+             input.style.borderColor = '#10b981';
+             setTimeout(() => input.style.borderColor = '', 1500);
+          }
+
+          // 🔥 4. Removemos o abrirDetalhes() para não piscar a tela
+          // abrirDetalhes(pedidoAtual.linha, pedidoAtual.origem); 
+          
         } else {
           showToast(res.message || 'Erro ao salvar', 'error');
         }
