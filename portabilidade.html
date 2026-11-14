@@ -310,8 +310,22 @@
             <div class="det-item"><strong>Valor</strong>{{ fmtBRL(vendaAtual.valor_contratado) }}</div>
             <div class="det-item"><strong>Data venda</strong>{{ fmtData(vendaAtual.data_da_venda) }}</div>
             <div class="det-item"><strong>SLA vencimento</strong>{{ fmtData(vendaAtual._slaVenc) }}</div>
-            <div class="det-item"><strong>Etapa atual</strong>{{ vendaAtual.status_etapa || '—' }}</div>
-            
+<div class="det-item">
+  <strong>Etapa atual</strong>
+  
+  <!-- Se for 6 ou maior, mostra o selo verde de Ativada -->
+  <div v-if="Number(vendaAtual.status_etapa) >= 6" style="margin-top: 4px;">
+    <span class="badge badge-aprovada" style="padding: 3px 8px; font-size: 10px;">✅ Ativada</span>
+  </div>
+  
+  <!-- Se for menor que 6, mostra um selo amarelo de em andamento -->
+  <div v-else-if="vendaAtual.status_etapa || vendaAtual.status_etapa === 0" style="margin-top: 4px;">
+    <span class="badge badge-pendente" style="padding: 3px 8px; font-size: 10px;">⏳ Em andamento (Etapa {{ vendaAtual.status_etapa }})</span>
+  </div>
+  
+  <!-- Se estiver vazio -->
+  <div v-else style="margin-top: 4px; color: var(--g400);">—</div>
+</div>            
             <div class="det-item" style="grid-column: 1 / -1; background: #e0f2fe; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; margin-top: 4px;">
               <strong style="color: #0284c7;">📱 Linha para Conferência</strong>
               <span @click="copiarTelefone(vendaAtual)" class="telefone-clickable" style="font-size: 16px; padding: 6px 10px; background: #fff; margin-top: 6px;">
