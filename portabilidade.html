@@ -209,7 +209,7 @@
     </div>
 
     <div class="port-filters">
-      <input type="text" v-model="busca" placeholder="🔍 Buscar cliente, consultor ou telefone..." class="filter-search">
+      <input type="text" v-model="busca" placeholder="🔍 Buscar cliente, CNPJ, consultor ou telefone..." class="filter-search">
       
       <select v-model="filtroData" class="filter-select">
         <option value="7">Últimos 7 dias</option>
@@ -218,7 +218,6 @@
         <option value="all">Todo o histórico</option>
       </select>
 
-      <!-- 🔥 NOVO FILTRO PADRONIZADO COM A TIM -->
       <select v-model="filtroStatus" class="filter-select">
         <option value="pendentes_acao">Ações Pendentes (Padrão)</option>
         <option value="em_analise">Em Análise</option>
@@ -316,7 +315,6 @@
             <div class="det-item"><strong>Data venda</strong>{{ fmtData(vendaAtual.data_da_venda) }}</div>
             <div class="det-item"><strong>SLA vencimento</strong>{{ fmtData(vendaAtual._slaVenc) }}</div>
             
-            <!-- ETAPA ATUAL COM SELINHO -->
             <div class="det-item">
               <strong>Etapa atual</strong>
               <div v-if="Number(vendaAtual.status_etapa) >= 6" style="margin-top: 4px;">
@@ -341,12 +339,10 @@
           <label>Resultado da verificação</label>
           <select v-model="form.status">
             <option value="">Selecione o status...</option>
-            <!-- 🔥 NOVAS OPÇÕES TIM -->
+            <!-- 🔥 OPÇÕES LIMPAS CONFORME SOLICITADO -->
             <option value="aprovada">✅ Aprovada — portabilidade concluída</option>
             <option value="cancelada">❌ Cancelada — criar novo bilhete</option>
             <option value="reagendar">📅 Reagendar — solicitar nova data</option>
-            <option value="em_analise">🔍 Em análise — checando com operadora</option>
-            <option value="reprocessar">🔁 Reprocessar — reenviar para TIM</option>
           </select>
         </div>
 
@@ -426,8 +422,6 @@
       const salvando = ref(false);
       
       const busca = ref('');
-      
-      // 🔥 FORÇA O FILTRO A INICIAR EM "AÇÕES PENDENTES" (Para os cards sumirem ao salvar)
       const filtroStatus = ref('pendentes_acao'); 
       const ordenacao = ref('sla');
       const filtroData = ref('all'); 
@@ -494,7 +488,6 @@
         });
       };
 
-      // 🔥 NOVAS LABELS DA TIM
       const labelStatus = (s) => ({
         pendente:'Pendente', em_analise:'Em análise',
         aprovada:'Aprovada', cancelada:'Cancelada',
@@ -546,29 +539,39 @@
 
       const vendasFiltradas = computed(() => {
         let arr = vendas.value.slice();
-        
-        arr = arr.filter(v => dentroDoPeriodo(v.data_da_venda));
 
+        // 🔥 A MÁGICA DA BUSCA: Se o usuário digitou algo, ignoramos os filtros e buscamos em TUDO.
         if (busca.value.trim()) {
-          const q = busca.value.toLowerCase();
-          arr = arr.filter(v => 
-            String(v.razao_social||'').toLowerCase().includes(q) || 
-            String(v.consultor_que_vendeu||'').toLowerCase().includes(q) ||
-            String(getTelefone(v)).includes(q)
-          );
-        }
-        
-        // 🔥 LÓGICA DO NOVO FILTRO: "pendentes_acao" junta pendentes e atrasadas.
-        // Se o status salvo for "aprovada", ele deixa de ser "pendente_acao" e some da tela.
-        if (filtroStatus.value === 'pendentes_acao') {
+          const q = busca.value.toLowerCase().trim();
+          const qNumeros = q.replace(/\D/g, ''); // Limpa formatação (ex: CNPJ/Telefone)
+          
           arr = arr.filter(v => {
-            const s = statusEfetivo(v);
-            return s === 'pendente' || s === 'atrasada';
+            const razao = String(v.razao_social || '').toLowerCase();
+            const consultor = String(v.consultor_que_vendeu || '').toLowerCase();
+            // Tenta achar o CNPJ em várias colunas possíveis do seu banco
+            const cnpj = String(v.cnpj || v.cpf_cnpj || v.documento || v.cnpj_cpf || '').toLowerCase();
+            const tel = getTelefone(v);
+            
+            return razao.includes(q) || 
+                   consultor.includes(q) || 
+                   (qNumeros && cnpj.includes(qNumeros)) || 
+                   (qNumeros && tel.includes(qNumeros));
           });
-        } else if (filtroStatus.value !== 'all') {
-          arr = arr.filter(v => statusEfetivo(v) === filtroStatus.value);
+        } else {
+          // Se não houver busca, aí sim aplicamos os filtros normais
+          arr = arr.filter(v => dentroDoPeriodo(v.data_da_venda));
+          
+          if (filtroStatus.value === 'pendentes_acao') {
+            arr = arr.filter(v => {
+              const s = statusEfetivo(v);
+              return s === 'pendente' || s === 'atrasada';
+            });
+          } else if (filtroStatus.value !== 'all') {
+            arr = arr.filter(v => statusEfetivo(v) === filtroStatus.value);
+          }
         }
         
+        // Ordenação
         arr.sort((a,b) => {
           if (ordenacao.value === 'recente') return (parseData(b.data_da_venda) || 0) - (parseData(a.data_da_venda) || 0);
           if (ordenacao.value === 'antigo') return (parseData(a.data_da_venda) || 0) - (parseData(b.data_da_venda) || 0);
@@ -653,7 +656,7 @@
 
           showToast('✅ Verificação salva com sucesso', 'ok');
           fecharModal();
-          await carregar(); // Recarrega os dados, fazendo o card sumir da tela
+          await carregar(); 
         } catch(e) {
           console.error('❌ Erro ao salvar:', e);
           showToast('Falha ao salvar verificação: ' + e.message, 'err');
