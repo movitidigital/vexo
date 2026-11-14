@@ -1105,6 +1105,10 @@
 <div class="sidebar-item" id="side-gestao-pedidos" onclick="abrirModulo('pedidos_gestao')">
   <i>📦</i><span>Gestão de Pedidos</span>
 </div>
+  <div class="sidebar-item" id="side-portabilidade"
+     onclick="abrirModulo('portabilidade')" title="Verificação Portabilidade">
+  <i>🔄</i><span>Verificação Portabilidade</span>
+</div>
 
   <div class="sidebar-item" id="side-ofertas" onclick="abrirModulo('ofertas')" title="Ofertas TIM">
     <i>🏷️</i><span>Ofertas TIM</span>
@@ -2055,6 +2059,7 @@ async function abrirModulo(nome) {
       'clientes':       'clientes.html',
       'prospeccao':     'prospeccao.html',
       'pedidos_gestao': 'pedidos_gestao.html',
+      'portabilidade':  'portabilidade.html',
       'ofertas':        'ofertas.html',
       'faturas':        'faturas.html',
       'metas':          'metas.html',
@@ -2746,20 +2751,45 @@ async function sincronizarPerfil() {
 function aplicarMenuPorCargo(role, permissoesCustom, permissoesDoCargo) {
   const cargo = String(role || '').toUpperCase().trim();
 
-  // 🔥 ADMIN / DIRETORIA — vê TUDO
-  if (['ADMINISTRADOR','ADMIN','DIRETORIA'].includes(cargo)) {
-    document.querySelectorAll('.sidebar-item').forEach(el => el.style.display = 'flex');
+  // 🔒 TRAVA DE SEGURANÇA: Portabilidade (Restrito a Gestão, Backoffice e Admin)
+  const cargosPermitidosPortabilidade = [
+    'ADMINISTRADOR', 'ADMIN', 'DIRETORIA', 
+    'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR', 'SUPERVISOR'
+  ];
+  const podePortabilidade = cargosPermitidosPortabilidade.includes(cargo);
+  
+  const elPortMenu = document.getElementById('side-portabilidade');
+  if (elPortMenu && !podePortabilidade) {
+    elPortMenu.style.display = 'none';
+  }
+
+  // 🔥 ADMIN / DIRETORIA — vê TUDO (respeitando a trava de portabilidade acima, se aplicável)
+  if (['ADMINISTRADOR', 'ADMIN', 'DIRETORIA'].includes(cargo)) {
+    document.querySelectorAll('.sidebar-item').forEach(el => {
+      // Se não tiver permissão de portabilidade por regra dura, mantém oculto mesmo para admin se necessário, 
+      // mas mantemos o comportamento padrão global para admins:
+      if (el.id === 'side-portabilidade' && !podePortabilidade) return;
+      el.style.display = 'flex';
+    });
     console.log(`✅ [MENU] ${cargo} — todos os itens visíveis`);
     return;
   }
 
   const MAPA_PERMISSOES = {
-    'vendas':'side-vendas','agenda':'side-agenda','clientes':'side-clientes',
-    'prospeccao':'side-prospeccao','pedidos':'side-gestao-pedidos',
-    'gestao_pedidos':'side-gestao-pedidos','ofertas':'side-ofertas',
-    'faturas':'side-faturas','metas':'side-metas','usuarios':'side-usuarios',
-    'financeiro':'side-financeiro','relatorios':'side-relatorios',
-    'suporte':'side-suporte'
+    'vendas': 'side-vendas',
+    'agenda': 'side-agenda',
+    'clientes': 'side-clientes',
+    'prospeccao': 'side-prospeccao',
+    'pedidos': 'side-gestao-pedidos',
+    'gestao_pedidos': 'side-gestao-pedidos',
+    'ofertas': 'side-ofertas',
+    'portabilidade': 'side-portabilidade',
+    'faturas': 'side-faturas',
+    'metas': 'side-metas',
+    'usuarios': 'side-usuarios',
+    'financeiro': 'side-financeiro',
+    'relatorios': 'side-relatorios',
+    'suporte': 'side-suporte'
   };
   const TODOS_IDS = Object.values(MAPA_PERMISSOES);
 
@@ -2778,18 +2808,25 @@ function aplicarMenuPorCargo(role, permissoesCustom, permissoesDoCargo) {
     ? permissoesDoCargo.map(p => String(p).toLowerCase()) : [];
 
   // 🔥 UNIÃO: cargo + custom. Ninguém perde acesso a algo que o cargo concede.
-  // Se você quiser que custom SOBRESCREVA (remova), troque por: `const finais = custom.length ? custom : doCargo;`
   const finais = Array.from(new Set([...doCargo, ...custom]));
 
   TODOS_IDS.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
+
   finais.forEach(perm => {
     const id = MAPA_PERMISSOES[perm];
     if (id) {
       const el = document.getElementById(id);
-      if (el) el.style.display = 'flex';
+      if (el) {
+        // Aplicação final garantindo que se não puder ver portabilidade, ela continua bloqueada
+        if (id === 'side-portabilidade' && !podePortabilidade) {
+          el.style.display = 'none';
+          return;
+        }
+        el.style.display = 'flex';
+      }
     }
   });
 
