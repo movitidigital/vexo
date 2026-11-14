@@ -2,217 +2,185 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
+<title>Verificação de Portabilidade - VEXO</title>
 <style>
-  /* ====== ESCOPO .port-* (o motor escopa tudo no dashboard) ====== */
+  /* ============================================================
+     ESCOPO: .port-wrap (O motor do dashboard isola isso)
+     ============================================================ */
   .port-wrap {
     --teal-50:#e6f7f8; --teal-100:#b3e8ea; --teal-200:#7dd3d8;
     --teal-500:#008d95; --teal-600:#007a80; --teal-700:#006068;
     --danger:#ef4444; --warn:#f59e0b; --ok:#10b981; --purple:#8b5cf6;
     --g50:#f8fafc; --g100:#f1f5f9; --g200:#e2e8f0;
     --g400:#94a3b8; --g500:#64748b; --g700:#334155; --g900:#0f172a;
-    padding:24px; font-family:'Poppins',sans-serif; background:#f4f7fa;
-    min-height:calc(100vh - 130px); color:var(--g900);
+    padding: 24px; font-family: 'Poppins', sans-serif; background: #f4f7fa;
+    min-height: calc(100vh - 130px); color: var(--g900);
+    box-sizing: border-box;
   }
-  .port-wrap *{box-sizing:border-box;}
+  .port-wrap * { box-sizing: border-box; }
 
   /* HEADER */
-  .port-header{display:flex;justify-content:space-between;align-items:flex-start;
-    gap:16px;flex-wrap:wrap;margin-bottom:24px;}
-  .port-eyebrow{font-size:11px;font-weight:800;letter-spacing:1px;
-    text-transform:uppercase;color:var(--teal-600);}
-  .port-title{font-size:28px;font-weight:800;margin:2px 0 4px;letter-spacing:-.5px;}
-  .port-subtitle{font-size:13px;color:var(--g500);margin:0;}
-  .btn-refresh{background:var(--g900);color:#fff;border:none;padding:10px 18px;
-    border-radius:10px;font-family:inherit;font-weight:700;font-size:12px;
-    cursor:pointer;display:inline-flex;align-items:center;gap:6px;
-    transition:all .2s;box-shadow:0 4px 12px rgba(15,23,42,.15);}
-  .btn-refresh:hover{background:var(--teal-600);transform:translateY(-1px);}
-  .btn-refresh:disabled{opacity:.6;cursor:not-allowed;}
-  .spin{display:inline-block;animation:spin 1s linear infinite;}
-  @keyframes spin{to{transform:rotate(360deg);}}
+  .port-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; }
+  .port-eyebrow { font-size: 11px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: var(--teal-600); }
+  .port-title { font-size: 28px; font-weight: 800; margin: 2px 0 4px; letter-spacing: -.5px; }
+  .port-subtitle { font-size: 13px; color: var(--g500); margin: 0; }
+  
+  .btn-refresh {
+    background: var(--g900); color: #fff; border: none; padding: 10px 18px; border-radius: 10px;
+    font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; display: inline-flex;
+    align-items: center; gap: 6px; transition: all .2s; box-shadow: 0 4px 12px rgba(15,23,42,.15);
+  }
+  .btn-refresh:hover { background: var(--teal-600); transform: translateY(-1px); }
+  .btn-refresh:disabled { opacity: .6; cursor: not-allowed; transform: none; }
+  .spin { display: inline-block; animation: spin 1s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
   /* STATS */
-  .port-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-    gap:14px;margin-bottom:20px;}
-  .stat-card{background:#fff;border:1px solid var(--g200);border-radius:16px;
-    padding:18px 20px;position:relative;overflow:hidden;
-    box-shadow:0 2px 8px rgba(0,0,0,.02);transition:all .2s;}
-  .stat-card:hover{transform:translateY(-2px);
-    box-shadow:0 8px 20px rgba(0,0,0,.06);}
-  .stat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;
-    width:4px;background:var(--teal-500);}
-  .stat-pendente::before{background:var(--warn);}
-  .stat-atrasada::before{background:var(--danger);}
-  .stat-aprovada::before{background:var(--ok);}
-  .stat-rejeitada::before{background:var(--purple);}
-  .stat-label{font-size:11px;font-weight:800;color:var(--g500);
-    text-transform:uppercase;letter-spacing:.5px;}
-  .stat-value{font-size:30px;font-weight:900;line-height:1.1;margin:6px 0 2px;}
-  .stat-sub{font-size:11px;color:var(--g400);font-weight:600;}
+  .port-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .stat-card {
+    background: #fff; border: 1px solid var(--g200); border-radius: 16px; padding: 18px 20px;
+    position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.02); transition: all .2s;
+  }
+  .stat-card:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,.06); }
+  .stat-card::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--teal-500); }
+  .stat-pendente::before { background: var(--warn); }
+  .stat-atrasada::before { background: var(--danger); }
+  .stat-aprovada::before { background: var(--ok); }
+  .stat-rejeitada::before { background: var(--purple); }
+  
+  .stat-label { font-size: 11px; font-weight: 800; color: var(--g500); text-transform: uppercase; letter-spacing: .5px; }
+  .stat-value { font-size: 30px; font-weight: 900; line-height: 1.1; margin: 6px 0 2px; }
+  .stat-sub { font-size: 11px; color: var(--g400); font-weight: 600; }
 
   /* FILTROS */
-  .port-filters{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px;
-    background:#fff;padding:12px;border-radius:14px;border:1px solid var(--g200);
-    box-shadow:0 2px 8px rgba(0,0,0,.02);}
-  .filter-search{flex:1;min-width:220px;border:1px solid var(--g200);
-    background:var(--g50);padding:10px 14px;border-radius:10px;
-    font-family:inherit;font-size:13px;outline:none;transition:.2s;}
-  .filter-search:focus{border-color:var(--teal-500);
-    box-shadow:0 0 0 3px var(--teal-50);}
-  .filter-select{border:1px solid var(--g200);background:var(--g50);
-    padding:10px 14px;border-radius:10px;font-family:inherit;font-size:13px;
-    font-weight:600;outline:none;cursor:pointer;transition:.2s;}
-  .filter-select:focus{border-color:var(--teal-500);}
+  .port-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; background: #fff; padding: 12px; border-radius: 14px; border: 1px solid var(--g200); box-shadow: 0 2px 8px rgba(0,0,0,.02); }
+  .filter-search { flex: 1; min-width: 220px; border: 1px solid var(--g200); background: var(--g50); padding: 10px 14px; border-radius: 10px; font-family: inherit; font-size: 13px; outline: none; transition: .2s; }
+  .filter-search:focus { border-color: var(--teal-500); box-shadow: 0 0 0 3px var(--teal-50); }
+  .filter-select { border: 1px solid var(--g200); background: var(--g50); padding: 10px 14px; border-radius: 10px; font-family: inherit; font-size: 13px; font-weight: 600; outline: none; cursor: pointer; transition: .2s; }
+  .filter-select:focus { border-color: var(--teal-500); }
 
-  /* GRID */
-  .port-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(330px,1fr));
-    gap:14px;}
-  .port-card{background:#fff;border:1px solid var(--g200);border-radius:16px;
-    overflow:hidden;transition:all .25s;position:relative;}
-  .port-card:hover{transform:translateY(-3px);
-    box-shadow:0 12px 28px rgba(0,0,0,.08);border-color:var(--teal-200);}
-  .port-card.card-atrasada{border-left:4px solid var(--danger);}
-  .port-card.card-pendente{border-left:4px solid var(--warn);}
-  .port-card.card-aprovada{border-left:4px solid var(--ok);}
-  .port-card.card-rejeitada{border-left:4px solid var(--purple);}
-  .port-card.card-em_analise{border-left:4px solid var(--teal-500);}
+  /* GRID DE CARDS */
+  .port-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 16px; }
+  .port-card {
+    background: #fff; border: 1px solid var(--g200); border-radius: 16px; overflow: hidden;
+    transition: all .25s; position: relative; display: flex; flex-direction: column;
+  }
+  .port-card:hover { transform: translateY(-3px); box-shadow: 0 12px 28px rgba(0,0,0,.08); border-color: var(--teal-200); }
+  .port-card.card-atrasada { border-left: 4px solid var(--danger); }
+  .port-card.card-pendente { border-left: 4px solid var(--warn); }
+  .port-card.card-aprovada { border-left: 4px solid var(--ok); }
+  .port-card.card-rejeitada { border-left: 4px solid var(--purple); }
+  .port-card.card-em_analise { border-left: 4px solid var(--teal-500); }
 
-  .card-header{display:flex;justify-content:space-between;align-items:flex-start;
-    gap:10px;padding:16px 18px 8px;}
-  .card-cliente{min-width:0;}
-  .cliente-nome{font-size:14px;font-weight:800;color:var(--g900);
-    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-  .cliente-consultor{font-size:11px;color:var(--g500);margin-top:2px;}
+  .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 16px 18px 8px; }
+  .card-cliente { min-width: 0; }
+  .cliente-nome { font-size: 14px; font-weight: 800; color: var(--g900); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .cliente-consultor { font-size: 11px; color: var(--g500); margin-top: 2px; }
 
-  .badge{font-size:9px;font-weight:800;padding:4px 8px;border-radius:6px;
-    text-transform:uppercase;letter-spacing:.5px;white-space:nowrap;}
-  .badge-pendente   {background:#fef3c7;color:#92400e;}
-  .badge-atrasada   {background:#fee2e2;color:#991b1b;}
-  .badge-aprovada   {background:#d1fae5;color:#065f46;}
-  .badge-rejeitada  {background:#ede9fe;color:#5b21b6;}
-  .badge-em_analise {background:var(--teal-50);color:var(--teal-700);}
-  .badge-reprocessar{background:#e0e7ff;color:#3730a3;}
+  .badge { font-size: 9px; font-weight: 800; padding: 4px 8px; border-radius: 6px; text-transform: uppercase; letter-spacing: .5px; white-space: nowrap; }
+  .badge-pendente   { background: #fef3c7; color: #92400e; }
+  .badge-atrasada   { background: #fee2e2; color: #991b1b; }
+  .badge-aprovada   { background: #d1fae5; color: #065f46; }
+  .badge-rejeitada  { background: #ede9fe; color: #5b21b6; }
+  .badge-em_analise { background: var(--teal-50); color: var(--teal-700); }
+  .badge-reprocessar{ background: #e0e7ff; color: #3730a3; }
 
-  .card-body{padding:10px 18px 14px;display:grid;grid-template-columns:1fr 1fr;
-    gap:10px;}
-  .card-info{display:flex;flex-direction:column;}
-  .info-label{font-size:9px;font-weight:800;color:var(--g400);
-    text-transform:uppercase;letter-spacing:.5px;}
-  .info-value{font-size:13px;font-weight:700;color:var(--g900);margin-top:2px;}
-  .sla-critico{color:var(--danger);}
-  .sla-atencao{color:var(--warn);}
-  .sla-ok{color:var(--ok);}
+  .card-body { padding: 10px 18px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: 1; }
+  .card-info { display: flex; flex-direction: column; }
+  .info-label { font-size: 9px; font-weight: 800; color: var(--g400); text-transform: uppercase; letter-spacing: .5px; }
+  .info-value { font-size: 13px; font-weight: 700; color: var(--g900); margin-top: 2px; }
+  
+  /* CLASSE PARA O TELEFONE CLICÁVEL */
+  .telefone-clickable {
+    color: var(--teal-600); cursor: pointer; display: inline-flex; align-items: center; gap: 4px;
+    transition: color 0.2s; background: var(--teal-50); padding: 4px 8px; border-radius: 6px;
+    font-weight: 800; border: 1px dashed var(--teal-200); margin-top: 2px; width: fit-content;
+  }
+  .telefone-clickable:hover { color: var(--teal-700); background: var(--teal-100); border-color: var(--teal-500); }
+  .telefone-clickable span { font-size: 12px; }
 
-  .card-footer{padding:0 18px 16px;}
-  .btn-primary{width:100%;background:linear-gradient(135deg,var(--teal-500),var(--teal-600));
-    color:#fff;border:none;padding:11px;border-radius:10px;
-    font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;
-    transition:all .2s;box-shadow:0 4px 12px rgba(0,141,149,.25);}
-  .btn-primary:hover{transform:translateY(-1px);
-    box-shadow:0 6px 18px rgba(0,141,149,.35);}
-  .btn-ver{width:100%;background:var(--g50);color:var(--g700);
-    border:1px solid var(--g200);padding:11px;border-radius:10px;
-    font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;
-    transition:all .2s;}
-  .btn-ver:hover{background:var(--teal-50);border-color:var(--teal-200);
-    color:var(--teal-700);}
+  .sla-critico { color: var(--danger); }
+  .sla-atencao { color: var(--warn); }
+  .sla-ok { color: var(--ok); }
+
+  .card-footer { padding: 0 18px 16px; }
+  .btn-primary {
+    width: 100%; background: linear-gradient(135deg, var(--teal-500), var(--teal-600));
+    color: #fff; border: none; padding: 11px; border-radius: 10px; font-family: inherit;
+    font-weight: 700; font-size: 12px; cursor: pointer; transition: all .2s;
+    box-shadow: 0 4px 12px rgba(0,141,149,.25); display: flex; justify-content: center; align-items: center; gap: 6px;
+  }
+  .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 6px 18px rgba(0,141,149,.35); }
+  .btn-ver { width: 100%; background: var(--g50); color: var(--g700); border: 1px solid var(--g200); padding: 11px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; transition: all .2s; display: flex; justify-content: center; align-items: center; gap: 6px; }
+  .btn-ver:hover { background: var(--teal-50); border-color: var(--teal-200); color: var(--teal-700); }
 
   /* EMPTY / LOADING */
-  .port-empty,.port-loading{display:flex;flex-direction:column;
-    align-items:center;justify-content:center;padding:60px 20px;
-    color:var(--g400);text-align:center;background:#fff;
-    border-radius:16px;border:1px dashed var(--g200);}
-  .empty-icon{font-size:40px;margin-bottom:12px;}
-  .port-loading .spinner{width:36px;height:36px;border-radius:50%;
-    border:3px solid var(--g200);border-top-color:var(--teal-500);
-    animation:spin .8s linear infinite;margin-bottom:12px;}
+  .port-empty, .port-loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--g400); text-align: center; background: #fff; border-radius: 16px; border: 1px dashed var(--g200); }
+  .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .port-loading .spinner { width: 36px; height: 36px; border-radius: 50%; border: 3px solid var(--g200); border-top-color: var(--teal-500); animation: spin .8s linear infinite; margin-bottom: 12px; }
 
   /* MODAL */
-  .modal-overlay{position:fixed;inset:0;background:rgba(15,23,42,.6);
-    backdrop-filter:blur(6px);display:flex;align-items:center;
-    justify-content:center;z-index:9999;padding:20px;
-    animation:fadeIn .2s ease;}
-  .modal-box{background:#fff;border-radius:20px;width:100%;max-width:560px;
-    max-height:90vh;overflow:hidden;display:flex;flex-direction:column;
-    box-shadow:0 25px 60px rgba(0,0,0,.35);animation:scaleIn .25s ease;}
-  .modal-header{padding:20px 24px;background:linear-gradient(135deg,var(--g900),var(--teal-700));
-    color:#fff;display:flex;justify-content:space-between;align-items:center;}
-  .modal-header h3{margin:0;font-size:16px;font-weight:800;}
-  .modal-header button{background:rgba(255,255,255,.15);border:none;
-    color:#fff;width:32px;height:32px;border-radius:50%;
-    font-size:18px;cursor:pointer;transition:.2s;}
-  .modal-header button:hover{background:rgba(255,255,255,.25);}
-  .modal-body{padding:22px 24px;overflow-y:auto;flex:1;}
-  .detalhes-venda{background:var(--g50);padding:16px;border-radius:12px;
-    border:1px solid var(--g200);margin-bottom:20px;}
-  .detalhes-venda h4{margin:0 0 10px;font-size:15px;font-weight:800;}
-  .detalhes-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
-  .det-item{font-size:12px;}
-  .det-item strong{display:block;font-size:9px;color:var(--g500);
-    text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px;}
-  .form-group{margin-bottom:14px;}
-  .form-group label{display:block;font-size:11px;font-weight:800;
-    color:var(--g700);text-transform:uppercase;letter-spacing:.5px;
-    margin-bottom:6px;}
-  .form-group select,.form-group textarea{width:100%;border:1px solid var(--g200);
-    background:var(--g50);padding:11px 14px;border-radius:10px;
-    font-family:inherit;font-size:13px;outline:none;transition:.2s;resize:vertical;}
-  .form-group select:focus,.form-group textarea:focus{
-    border-color:var(--teal-500);box-shadow:0 0 0 3px var(--teal-50);}
-  .modal-footer{padding:16px 24px;background:var(--g50);
-    border-top:1px solid var(--g200);display:flex;
-    justify-content:space-between;gap:10px;}
-  .btn-secondary{background:#fff;border:1px solid var(--g200);
-    color:var(--g700);padding:10px 18px;border-radius:10px;
-    font-family:inherit;font-weight:700;font-size:12px;cursor:pointer;}
-  .btn-secondary:hover{background:var(--g100);}
-  .btn-salvar{background:linear-gradient(135deg,var(--teal-500),var(--teal-600));
-    color:#fff;border:none;padding:10px 22px;border-radius:10px;
-    font-family:inherit;font-weight:800;font-size:12px;cursor:pointer;
-    transition:.2s;box-shadow:0 4px 12px rgba(0,141,149,.25);}
-  .btn-salvar:hover{transform:translateY(-1px);}
-  .btn-salvar:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .modal-overlay { position: fixed; inset: 0; background: rgba(15,23,42,.6); backdrop-filter: blur(6px); display: flex; align-items: center; justify-content: center; z-index: 9999; padding: 20px; animation: fadeIn .2s ease; }
+  .modal-box { background: #fff; border-radius: 20px; width: 100%; max-width: 580px; max-height: 90vh; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 25px 60px rgba(0,0,0,.35); animation: scaleIn .25s ease; }
+  .modal-header { padding: 20px 24px; background: linear-gradient(135deg, var(--g900), var(--teal-700)); color: #fff; display: flex; justify-content: space-between; align-items: center; }
+  .modal-header h3 { margin: 0; font-size: 16px; font-weight: 800; }
+  .modal-header button { background: rgba(255,255,255,.15); border: none; color: #fff; width: 32px; height: 32px; border-radius: 50%; font-size: 18px; cursor: pointer; transition: .2s; }
+  .modal-header button:hover { background: rgba(255,255,255,.25); }
+  .modal-body { padding: 22px 24px; overflow-y: auto; flex: 1; }
+  
+  .detalhes-venda { background: var(--g50); padding: 16px; border-radius: 12px; border: 1px solid var(--g200); margin-bottom: 20px; }
+  .detalhes-venda h4 { margin: 0 0 10px; font-size: 15px; font-weight: 800; }
+  .detalhes-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .det-item { font-size: 12px; }
+  .det-item strong { display: block; font-size: 9px; color: var(--g500); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 2px; }
+
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 11px; font-weight: 800; color: var(--g700); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+  .form-group select, .form-group textarea { width: 100%; border: 1px solid var(--g200); background: var(--g50); padding: 11px 14px; border-radius: 10px; font-family: inherit; font-size: 13px; outline: none; transition: .2s; resize: vertical; }
+  .form-group select:focus, .form-group textarea:focus { border-color: var(--teal-500); box-shadow: 0 0 0 3px var(--teal-50); }
+
+  .modal-footer { padding: 16px 24px; background: var(--g50); border-top: 1px solid var(--g200); display: flex; justify-content: space-between; gap: 10px; }
+  .btn-secondary { background: #fff; border: 1px solid var(--g200); color: var(--g700); padding: 10px 18px; border-radius: 10px; font-family: inherit; font-weight: 700; font-size: 12px; cursor: pointer; }
+  .btn-secondary:hover { background: var(--g100); }
+  .btn-salvar { background: linear-gradient(135deg, var(--teal-500), var(--teal-600)); color: #fff; border: none; padding: 10px 22px; border-radius: 10px; font-family: inherit; font-weight: 800; font-size: 12px; cursor: pointer; transition: .2s; box-shadow: 0 4px 12px rgba(0,141,149,.25); }
+  .btn-salvar:hover { transform: translateY(-1px); }
+  .btn-salvar:disabled { opacity: .5; cursor: not-allowed; transform: none; }
 
   /* TOAST */
-  .toast{position:fixed;bottom:24px;right:24px;background:var(--g900);
-    color:#fff;padding:14px 20px;border-radius:12px;font-size:13px;
-    font-weight:600;box-shadow:0 12px 30px rgba(0,0,0,.3);
-    z-index:99999;animation:slideIn .3s ease;display:flex;
-    align-items:center;gap:10px;max-width:380px;}
-  .toast.toast-ok{background:var(--ok);}
-  .toast.toast-err{background:var(--danger);}
-  @keyframes slideIn{from{transform:translateX(100%);opacity:0;}
-    to{transform:translateX(0);opacity:1;}}
-  @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
-  @keyframes scaleIn{from{transform:scale(.94);opacity:0;}
-    to{transform:scale(1);opacity:1;}}
+  .toast { position: fixed; bottom: 24px; right: 24px; background: var(--g900); color: #fff; padding: 14px 20px; border-radius: 12px; font-size: 13px; font-weight: 600; box-shadow: 0 12px 30px rgba(0,0,0,.3); z-index: 99999; animation: slideIn .3s ease; display: flex; align-items: center; gap: 10px; max-width: 380px; }
+  .toast.toast-ok { background: var(--ok); }
+  .toast.toast-err { background: var(--danger); }
+  @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes scaleIn { from { transform: scale(.94); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
-  @media(max-width:640px){
-    .port-wrap{padding:14px;}
-    .port-stats{grid-template-columns:1fr 1fr;}
-    .detalhes-grid{grid-template-columns:1fr;}
+  @media(max-width: 640px) {
+    .port-wrap { padding: 14px; }
+    .port-stats { grid-template-columns: 1fr 1fr; }
+    .detalhes-grid { grid-template-columns: 1fr; }
   }
 </style>
 </head>
 <body>
-<div id="port-app" class="port-wrap">
 
+<div id="port-app" class="port-wrap">
+  
   <!-- LOADING -->
   <div v-if="carregando && !vendas.length" class="port-loading">
     <div class="spinner"></div>
-    <p>Carregando portabilidades...</p>
+    <p>Buscando portabilidades no banco...</p>
   </div>
 
   <template v-else>
     <!-- HEADER -->
     <header class="port-header">
       <div>
-        <div class="port-eyebrow">Backoffice</div>
+        <div class="port-eyebrow">Backoffice / Operações</div>
         <h1 class="port-title">Verificação de Portabilidade</h1>
         <p class="port-subtitle">Confira as portabilidades após o prazo de 3 dias úteis da operadora</p>
       </div>
       <button class="btn-refresh" @click="carregar" :disabled="carregando">
-        <span :class="{spin:carregando}">⟳</span> Atualizar
+        <span :class="{spin:carregando}">⟳</span> Atualizar Dados
       </button>
     </header>
 
@@ -229,7 +197,7 @@
         <div class="stat-sub">Passou dos 3 dias úteis</div>
       </div>
       <div class="stat-card stat-aprovada">
-        <div class="stat-label">Aprovadas (mês)</div>
+        <div class="stat-label">Aprovadas</div>
         <div class="stat-value">{{ stats.aprovadas }}</div>
         <div class="stat-sub">{{ fmtBRL(stats.valorAprovado) }}</div>
       </div>
@@ -242,8 +210,15 @@
 
     <!-- FILTROS -->
     <div class="port-filters">
-      <input type="text" v-model="busca" placeholder="🔍 Buscar cliente, consultor..."
-             class="filter-search">
+      <input type="text" v-model="busca" placeholder="🔍 Buscar cliente, consultor..." class="filter-search">
+      
+      <select v-model="filtroData" class="filter-select">
+        <option value="7">Últimos 7 dias</option>
+        <option value="30">Últimos 30 dias</option>
+        <option value="90">Últimos 90 dias</option>
+        <option value="all">Todo o histórico</option>
+      </select>
+
       <select v-model="filtroStatus" class="filter-select">
         <option value="">Todos os status</option>
         <option value="pendente">Pendentes</option>
@@ -252,6 +227,7 @@
         <option value="rejeitada">Rejeitadas</option>
         <option value="atrasada">SLA estourado</option>
       </select>
+      
       <select v-model="ordenacao" class="filter-select">
         <option value="sla">SLA mais crítico</option>
         <option value="recente">Mais recentes</option>
@@ -260,19 +236,18 @@
       </select>
     </div>
 
-    <!-- GRID -->
+    <!-- GRID DE VENDAS -->
     <div v-if="vendasFiltradas.length === 0" class="port-empty">
       <div class="empty-icon">✨</div>
       <p>Nenhuma portabilidade encontrada com esses filtros.</p>
     </div>
 
     <div v-else class="port-grid">
-      <div v-for="v in vendasFiltradas" :key="v._key"
-           class="port-card" :class="'card-' + statusEfetivo(v)">
-
+      <div v-for="v in vendasFiltradas" :key="v._key" class="port-card" :class="'card-' + statusEfetivo(v)">
+        
         <div class="card-header">
           <div class="card-cliente">
-            <div class="cliente-nome">{{ v.razao_social || 'Sem razão social' }}</div>
+            <div class="cliente-nome" :title="v.razao_social">{{ v.razao_social || 'Sem razão social' }}</div>
             <div class="cliente-consultor">👤 {{ v.consultor_que_vendeu || '—' }}</div>
           </div>
           <span class="badge" :class="'badge-' + statusEfetivo(v)">
@@ -301,16 +276,25 @@
               {{ Number(v.status_etapa) >= 6 ? '✅ Ativada' : '⏳ Em andamento' }}
             </span>
           </div>
+          
+          <!-- TELEFONE NO CARD -->
+          <div class="card-info" style="grid-column: 1 / -1;">
+            <span class="info-label">Linha para Conferência</span>
+            <span class="telefone-clickable" @click="copiarTelefone(v)" title="Clique para copiar">
+              {{ formatarTelefone(v) }} <span>📋</span>
+            </span>
+          </div>
         </div>
 
         <div class="card-footer">
           <button v-if="v._verif" class="btn-ver" @click="abrirDetalhes(v)">
-            👁 Ver detalhes
+            👁 Ver Detalhes
           </button>
           <button v-else class="btn-primary" @click="abrirDetalhes(v)">
-            ✓ Verificar agora
+            ✓ Verificar Agora
           </button>
         </div>
+
       </div>
     </div>
   </template>
@@ -322,9 +306,10 @@
         <h3>Verificação — {{ vendaAtual.razao_social }}</h3>
         <button @click="fecharModal">×</button>
       </div>
+      
       <div class="modal-body">
         <div class="detalhes-venda">
-          <h4>Detalhes da venda</h4>
+          <h4>Detalhes da Venda</h4>
           <div class="detalhes-grid">
             <div class="det-item"><strong>Consultor</strong>{{ vendaAtual.consultor_que_vendeu || '—' }}</div>
             <div class="det-item"><strong>Modalidade</strong>{{ vendaAtual.modalidade || 'PORTABILIDADE' }}</div>
@@ -332,13 +317,21 @@
             <div class="det-item"><strong>Data venda</strong>{{ fmtData(vendaAtual.data_da_venda) }}</div>
             <div class="det-item"><strong>SLA vencimento</strong>{{ fmtData(vendaAtual._slaVenc) }}</div>
             <div class="det-item"><strong>Etapa atual</strong>{{ vendaAtual.status_etapa || '—' }}</div>
+            
+            <!-- TELEFONE NO MODAL -->
+            <div class="det-item" style="grid-column: 1 / -1; background: #e0f2fe; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; margin-top: 4px;">
+              <strong style="color: #0284c7;">📱 Linha para Conferência</strong>
+              <span @click="copiarTelefone(vendaAtual)" class="telefone-clickable" style="font-size: 16px; padding: 6px 10px; background: #fff; margin-top: 6px;">
+                {{ formatarTelefone(vendaAtual) }} <span style="font-size: 16px;">📋</span>
+              </span>
+            </div>
           </div>
         </div>
 
         <div class="form-group">
           <label>Resultado da verificação</label>
           <select v-model="form.status">
-            <option value="">Selecione...</option>
+            <option value="">Selecione o status...</option>
             <option value="aprovada">✅ Aprovada — portabilidade concluída</option>
             <option value="rejeitada">❌ Rejeitada — portabilidade falhou</option>
             <option value="em_analise">🔍 Em análise — checando com operadora</option>
@@ -347,18 +340,15 @@
         </div>
 
         <div class="form-group">
-          <label>Observações</label>
-          <textarea v-model="form.observacao" rows="3"
-                    placeholder="Detalhes da verificação, protocolo da operadora, etc."></textarea>
+          <label>Observações (opcional)</label>
+          <textarea v-model="form.observacao" rows="3" placeholder="Detalhes da verificação, protocolo da operadora, etc."></textarea>
         </div>
 
-        <div v-if="vendaAtual._verif" style="background:var(--g50);padding:12px;
-             border-radius:10px;font-size:11px;color:var(--g500);">
-          Última verificação: <b>{{ labelStatus(vendaAtual._verif.status) }}</b>
-          por {{ vendaAtual._verif.verificado_por_nome || '—' }}
-          em {{ fmtDataHora(vendaAtual._verif.verificado_em) }}
+        <div v-if="vendaAtual._verif" style="background:var(--g50); padding:12px; border-radius:10px; font-size:11px; color:var(--g500);">
+          Última verificação: <b>{{ labelStatus(vendaAtual._verif.status) }}</b> por {{ vendaAtual._verif.verificado_por_nome || '—' }} em {{ fmtDataHora(vendaAtual._verif.verificado_em) }}
         </div>
       </div>
+
       <div class="modal-footer">
         <button class="btn-secondary" @click="fecharModal">Cancelar</button>
         <button class="btn-salvar" @click="salvar" :disabled="!form.status || salvando">
@@ -368,15 +358,16 @@
     </div>
   </div>
 
-  <!-- TOAST -->
+  <!-- TOAST NOTIFICATION -->
   <div v-if="toast.show" :class="['toast', 'toast-' + toast.tipo]">
     {{ toast.msg }}
   </div>
+
 </div>
 
 <script>
 (async function bootPortabilidade() {
-  // Carrega Vue dinamicamente se ainda não existir
+  // Carrega Vue dinamicamente se ainda não estiver no window
   if (typeof window.Vue === 'undefined') {
     await new Promise((res, rej) => {
       const s = document.createElement('script');
@@ -389,6 +380,7 @@
   const { createApp, ref, computed, onMounted } = window.Vue;
   const sb = window.sb;
 
+  // --- FUNÇÕES AUXILIARES ---
   function buildChave(v) {
     if (v.id) return 'ID#' + v.id;
     const rz = String(v.razao_social || '').trim();
@@ -427,9 +419,14 @@
       const vendas = ref([]);
       const carregando = ref(true);
       const salvando = ref(false);
+      
+      // Filtros e Ordenação
       const busca = ref('');
       const filtroStatus = ref('');
       const ordenacao = ref('sla');
+      const filtroData = ref('90'); 
+      
+      // Modal e UI
       const modalAberto = ref(false);
       const vendaAtual = ref(null);
       const form = ref({ status: '', observacao: '' });
@@ -440,6 +437,7 @@
         catch(e) { return {}; }
       })();
 
+      // --- FUNÇÕES DE FORMATAÇÃO E CÓPIA ---
       const showToast = (msg, tipo='ok') => {
         toast.value = { show: true, msg, tipo };
         setTimeout(() => toast.value.show = false, 3200);
@@ -457,23 +455,47 @@
         const d = parseData(s);
         return d ? d.toLocaleDateString('pt-BR') : '—';
       };
+      
       const fmtDataHora = (s) => {
         if (!s) return '—';
         const d = new Date(s);
         return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
       };
 
+      // Tenta buscar o telefone de várias colunas possíveis
+      const getTelefone = (v) => {
+        let tel = v.telefone || v.numero_linha || v.celular || v.numero || v.linha_tim || '';
+        return String(tel).replace(/\D/g, ''); 
+      };
+
+      const formatarTelefone = (v) => {
+        const tel = getTelefone(v);
+        if (!tel) return 'Não informado';
+        if (tel.length === 11) return `(${tel.slice(0,2)}) ${tel.slice(2,7)}-${tel.slice(7)}`;
+        if (tel.length === 10) return `(${tel.slice(0,2)}) ${tel.slice(2,6)}-${tel.slice(6)}`;
+        return tel;
+      };
+
+      const copiarTelefone = (v) => {
+        const tel = getTelefone(v);
+        if (!tel) {
+          showToast('Número de telefone não cadastrado nesta venda.', 'err');
+          return;
+        }
+        navigator.clipboard.writeText(tel).then(() => {
+          showToast(`📋 Número copiado: ${formatarTelefone(v)}`, 'ok');
+        }).catch(err => {
+          console.error('Erro ao copiar:', err);
+          showToast('Erro ao copiar. Tente manualmente.', 'err');
+        });
+      };
+
+      // --- LÓGICA DE NEGÓCIO ---
       const labelStatus = (s) => ({
         pendente:'Pendente', em_analise:'Em análise',
         aprovada:'Aprovada', rejeitada:'Rejeitada',
         reprocessar:'Reprocessar', atrasada:'SLA estourado'
       }[s] || s);
-
-      const statusEfetivo = (v) => {
-        if (v._verif) return v._verif.status;
-        if (slaInfo(v).cls === 'critico') return 'atrasada';
-        return 'pendente';
-      };
 
       const slaInfo = (v) => {
         const dVenda = parseData(v.data_da_venda);
@@ -486,43 +508,63 @@
         return { cls:'ok', texto:`Faltam ${diff}d`, dias:diff };
       };
 
+      const statusEfetivo = (v) => {
+        if (v._verif) return v._verif.status;
+        if (slaInfo(v).cls === 'critico') return 'atrasada';
+        return 'pendente';
+      };
+
+      const dentroDoPeriodo = (dataStr) => {
+        if (filtroData.value === 'all') return true;
+        const d = parseData(dataStr);
+        if (!d) return false;
+        const dias = parseInt(filtroData.value);
+        const corte = new Date();
+        corte.setDate(corte.getDate() - dias);
+        corte.setHours(0,0,0,0);
+        return d >= corte;
+      };
+
+      // --- COMPUTEDS (ESTATÍSTICAS E FILTROS) ---
       const stats = computed(() => {
         let p=0, vp=0, a=0, va=0, r=0, at=0;
         vendas.value.forEach(v => {
           const s = statusEfetivo(v);
           const valor = parseFloat(String(v.valor_contratado||'0').replace(/[^\d.-]/g,'')) || 0;
+          
           if (s === 'atrasada') { at++; p++; vp += valor; }
           else if (s === 'pendente' || s === 'em_analise') { p++; vp += valor; }
           else if (s === 'aprovada') { a++; va += valor; }
           else if (s === 'rejeitada' || s === 'reprocessar') { r++; }
         });
-        return { pendentes:p, valorPendente:vp, atrasadas:at,
-                 aprovadas:a, valorAprovado:va, rejeitadas:r };
+        return { pendentes:p, valorPendente:vp, atrasadas:at, aprovadas:a, valorAprovado:va, rejeitadas:r };
       });
 
       const vendasFiltradas = computed(() => {
         let arr = vendas.value.slice();
+        
+        arr = arr.filter(v => dentroDoPeriodo(v.data_da_venda));
+
         if (busca.value.trim()) {
           const q = busca.value.toLowerCase();
-          arr = arr.filter(v =>
-            String(v.razao_social||'').toLowerCase().includes(q) ||
-            String(v.consultor_que_vendeu||'').toLowerCase().includes(q)
+          arr = arr.filter(v => 
+            String(v.razao_social||'').toLowerCase().includes(q) || 
+            String(v.consultor_que_vendeu||'').toLowerCase().includes(q) ||
+            String(getTelefone(v)).includes(q)
           );
         }
         if (filtroStatus.value) {
           arr = arr.filter(v => statusEfetivo(v) === filtroStatus.value);
         }
+        
         arr.sort((a,b) => {
-          if (ordenacao.value === 'recente')
-            return (parseData(b.data_da_venda) || 0) - (parseData(a.data_da_venda) || 0);
-          if (ordenacao.value === 'antigo')
-            return (parseData(a.data_da_venda) || 0) - (parseData(b.data_da_venda) || 0);
+          if (ordenacao.value === 'recente') return (parseData(b.data_da_venda) || 0) - (parseData(a.data_da_venda) || 0);
+          if (ordenacao.value === 'antigo') return (parseData(a.data_da_venda) || 0) - (parseData(b.data_da_venda) || 0);
           if (ordenacao.value === 'valor') {
             const va = parseFloat(String(a.valor_contratado||'0').replace(/[^\d.-]/g,'')) || 0;
             const vb = parseFloat(String(b.valor_contratado||'0').replace(/[^\d.-]/g,'')) || 0;
             return vb - va;
           }
-          // sla (mais crítico primeiro)
           const da = slaInfo(a).dias ?? 999;
           const db = slaInfo(b).dias ?? 999;
           return da - db;
@@ -530,23 +572,19 @@
         return arr;
       });
 
+      // --- AÇÕES BANCO DE DADOS ---
       const carregar = async () => {
         carregando.value = true;
         try {
-          // 1) Busca portabilidades na VENDAS
-          const { data: raw, error } = await sb.from('VENDAS').select('*')
-            .ilike('modalidade', '%PORTABIL%');
+          const { data: raw, error } = await sb.from('VENDAS').select('*').ilike('modalidade', '%PORTABIL%');
           if (error) throw error;
 
-          // 2) Busca verificações existentes
-          const { data: verif, error: errV } = await sb
-            .from('portabilidade_verificacoes').select('*');
-          if (errV) console.warn('⚠️ verif:', errV.message);
+          const { data: verif, error: errV } = await sb.from('portabilidade_verificacoes').select('*');
+          if (errV) console.warn('⚠️ Aviso ao buscar verificações:', errV.message);
 
           const mapaVerif = new Map();
           (verif||[]).forEach(x => mapaVerif.set(x.venda_chave, x));
 
-          // 3) Merge
           vendas.value = (raw||[])
             .filter(v => !String(v.status_do_pedido||'').toUpperCase().includes('CANCELADO'))
             .map(v => {
@@ -560,8 +598,8 @@
               };
             });
         } catch(e) {
-          console.error('❌ port carregar:', e);
-          showToast('Erro ao carregar: ' + e.message, 'err');
+          console.error('❌ Erro ao carregar:', e);
+          showToast('Erro ao buscar portabilidades: ' + e.message, 'err');
         } finally {
           carregando.value = false;
         }
@@ -584,31 +622,29 @@
       const salvar = async () => {
         if (!form.value.status || !vendaAtual.value) return;
         salvando.value = true;
+        
         try {
           const v = vendaAtual.value;
           const payload = {
             venda_chave: v._key,
-            venda_id: v.id || null,
+            venda_id: v.id || null, 
             status: form.value.status,
             observacao: form.value.observacao || null,
             verificado_por: perfilLogado.id || null,
-            verificado_por_nome: perfilLogado.nome
-              ? `${perfilLogado.nome} ${perfilLogado.sobrenome||''}`.trim()
-              : (perfilLogado.email || 'Sistema'),
+            verificado_por_nome: perfilLogado.nome ? `${perfilLogado.nome} ${perfilLogado.sobrenome||''}`.trim() : (perfilLogado.email || 'Sistema'),
             verificado_em: new Date().toISOString(),
             sla_vencimento: v._slaVenc ? v._slaVenc.toISOString().slice(0,10) : null
           };
 
-          const { error } = await sb.from('portabilidade_verificacoes')
-            .upsert(payload, { onConflict: 'venda_chave' });
+          const { error } = await sb.from('portabilidade_verificacoes').upsert(payload, { onConflict: 'venda_chave' });
           if (error) throw error;
 
           showToast('✅ Verificação salva com sucesso', 'ok');
           fecharModal();
           await carregar();
         } catch(e) {
-          console.error('❌ salvar:', e);
-          showToast('Erro: ' + e.message, 'err');
+          console.error('❌ Erro ao salvar:', e);
+          showToast('Falha ao salvar verificação: ' + e.message, 'err');
         } finally {
           salvando.value = false;
         }
@@ -617,9 +653,10 @@
       onMounted(carregar);
 
       return {
-        vendas, carregando, salvando, busca, filtroStatus, ordenacao,
+        vendas, carregando, salvando, busca, filtroStatus, ordenacao, filtroData,
         modalAberto, vendaAtual, form, toast, stats, vendasFiltradas,
         fmtBRL, fmtData, fmtDataHora, labelStatus, statusEfetivo, slaInfo,
+        formatarTelefone, copiarTelefone,
         carregar, abrirDetalhes, fecharModal, salvar
       };
     }
