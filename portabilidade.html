@@ -36,7 +36,7 @@
   @keyframes spin { to { transform: rotate(360deg); } }
 
   /* STATS */
-  .port-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 20px; }
+  .port-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 14px; margin-bottom: 20px; }
   .stat-card {
     background: #fff; border: 1px solid var(--g200); border-radius: 16px; padding: 18px 20px;
     position: relative; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,.02); transition: all .2s;
@@ -46,7 +46,8 @@
   .stat-pendente::before { background: var(--warn); }
   .stat-atrasada::before { background: var(--danger); }
   .stat-aprovada::before { background: var(--ok); }
-  .stat-rejeitada::before { background: var(--purple); }
+  .stat-reagendada::before { background: var(--purple); }
+  .stat-cancelada::before { background: var(--danger); }
   
   .stat-label { font-size: 11px; font-weight: 800; color: var(--g500); text-transform: uppercase; letter-spacing: .5px; }
   .stat-value { font-size: 30px; font-weight: 900; line-height: 1.1; margin: 6px 0 2px; }
@@ -70,7 +71,7 @@
   .port-card.card-pendente { border-left: 4px solid var(--warn); }
   .port-card.card-aprovada { border-left: 4px solid var(--ok); }
   .port-card.card-cancelada { border-left: 4px solid var(--danger); }
-  .port-card.card-reagendar { border-left: 4px solid var(--warn); }
+  .port-card.card-reagendar { border-left: 4px solid var(--purple); }
   .port-card.card-reprocessar { border-left: 4px solid var(--purple); }
   .port-card.card-em_analise { border-left: 4px solid var(--teal-500); }
 
@@ -84,7 +85,7 @@
   .badge-atrasada   { background: #fee2e2; color: #991b1b; }
   .badge-aprovada   { background: #d1fae5; color: #065f46; }
   .badge-cancelada  { background: #fee2e2; color: #991b1b; }
-  .badge-reagendar  { background: #fef3c7; color: #92400e; }
+  .badge-reagendar  { background: #f3e8ff; color: #6b21a8; }
   .badge-reprocessar{ background: #e0e7ff; color: #3730a3; }
   .badge-em_analise { background: var(--teal-50); color: var(--teal-700); }
 
@@ -185,6 +186,7 @@
       </button>
     </header>
 
+    <!-- 🔥 5 CARDS DE ESTATÍSTICAS -->
     <div class="port-stats">
       <div class="stat-card stat-pendente">
         <div class="stat-label">Pendentes / Ação</div>
@@ -201,15 +203,20 @@
         <div class="stat-value">{{ stats.aprovadas }}</div>
         <div class="stat-sub">{{ fmtBRL(stats.valorAprovado) }}</div>
       </div>
-      <div class="stat-card stat-rejeitada">
-        <div class="stat-label">Canceladas / Outros</div>
-        <div class="stat-value">{{ stats.rejeitadas }}</div>
-        <div class="stat-sub">Reagendar / Reprocessar</div>
+      <div class="stat-card stat-reagendada">
+        <div class="stat-label">Reagendadas</div>
+        <div class="stat-value">{{ stats.reagendadas }}</div>
+        <div class="stat-sub">Solicitada nova data</div>
+      </div>
+      <div class="stat-card stat-cancelada">
+        <div class="stat-label">Canceladas</div>
+        <div class="stat-value">{{ stats.canceladas }}</div>
+        <div class="stat-sub">Criar novo bilhete</div>
       </div>
     </div>
 
     <div class="port-filters">
-      <input type="text" v-model="busca" placeholder="🔍 Buscar cliente, CNPJ, consultor ou telefone..." class="filter-search">
+      <input type="text" v-model="busca" placeholder="🔍 Buscar cliente, CNPJ, consultor, telefone ou status..." class="filter-search">
       
       <select v-model="filtroData" class="filter-select">
         <option value="7">Últimos 7 dias</option>
@@ -220,11 +227,9 @@
 
       <select v-model="filtroStatus" class="filter-select">
         <option value="pendentes_acao">Ações Pendentes (Padrão)</option>
-        <option value="em_analise">Em Análise</option>
         <option value="aprovada">Aprovadas</option>
+        <option value="reagendar">Reagendadas</option>
         <option value="cancelada">Canceladas</option>
-        <option value="reagendar">Reagendar</option>
-        <option value="reprocessar">Reprocessar</option>
         <option value="all">Todo o Histórico</option>
       </select>
       
@@ -339,7 +344,6 @@
           <label>Resultado da verificação</label>
           <select v-model="form.status">
             <option value="">Selecione o status...</option>
-            <!-- 🔥 OPÇÕES LIMPAS CONFORME SOLICITADO -->
             <option value="aprovada">✅ Aprovada — portabilidade concluída</option>
             <option value="cancelada">❌ Cancelada — criar novo bilhete</option>
             <option value="reagendar">📅 Reagendar — solicitar nova data</option>
@@ -523,8 +527,9 @@
         return d >= corte;
       };
 
+      // 🔥 NOVOS CARDS: Reagendadas e Canceladas separadas
       const stats = computed(() => {
-        let p=0, vp=0, a=0, va=0, r=0, at=0;
+        let p=0, vp=0, a=0, va=0, r=0, c=0, at=0;
         vendas.value.forEach(v => {
           const s = statusEfetivo(v);
           const valor = parseFloat(String(v.valor_contratado||'0').replace(/[^\d.-]/g,'')) || 0;
@@ -532,15 +537,16 @@
           if (s === 'atrasada') { at++; p++; vp += valor; }
           else if (s === 'pendente' || s === 'em_analise') { p++; vp += valor; }
           else if (s === 'aprovada') { a++; va += valor; }
-          else if (['cancelada', 'reagendar', 'reprocessar'].includes(s)) { r++; }
+          else if (s === 'reagendar') { r++; }
+          else if (s === 'cancelada' || s === 'reprocessar') { c++; }
         });
-        return { pendentes:p, valorPendente:vp, atrasadas:at, aprovadas:a, valorAprovado:va, rejeitadas:r };
+        return { pendentes:p, valorPendente:vp, atrasadas:at, aprovadas:a, valorAprovado:va, reagendadas:r, canceladas:c };
       });
 
       const vendasFiltradas = computed(() => {
         let arr = vendas.value.slice();
 
-        // 🔥 A MÁGICA DA BUSCA: Se o usuário digitou algo, ignoramos os filtros e buscamos em TUDO.
+        // 🔥 BUSCA PROFUNDA: Se o usuário digitou, ignora filtros e busca em TUDO
         if (busca.value.trim()) {
           const q = busca.value.toLowerCase().trim();
           const qNumeros = q.replace(/\D/g, ''); // Limpa formatação (ex: CNPJ/Telefone)
@@ -548,17 +554,25 @@
           arr = arr.filter(v => {
             const razao = String(v.razao_social || '').toLowerCase();
             const consultor = String(v.consultor_que_vendeu || '').toLowerCase();
-            // Tenta achar o CNPJ em várias colunas possíveis do seu banco
+            // Tenta achar o CNPJ em várias colunas possíveis
             const cnpj = String(v.cnpj || v.cpf_cnpj || v.documento || v.cnpj_cpf || '').toLowerCase();
             const tel = getTelefone(v);
+            
+            // Dados da verificação (para buscar por status, obs ou quem verificou)
+            const verifStatus = v._verif ? labelStatus(v._verif.status).toLowerCase() : '';
+            const verifObs = v._verif && v._verif.observacao ? v._verif.observacao.toLowerCase() : '';
+            const verifPor = v._verif && v._verif.verificado_por_nome ? v._verif.verificado_por_nome.toLowerCase() : '';
             
             return razao.includes(q) || 
                    consultor.includes(q) || 
                    (qNumeros && cnpj.includes(qNumeros)) || 
-                   (qNumeros && tel.includes(qNumeros));
+                   (qNumeros && tel.includes(qNumeros)) ||
+                   verifStatus.includes(q) ||
+                   verifObs.includes(q) ||
+                   verifPor.includes(q);
           });
         } else {
-          // Se não houver busca, aí sim aplicamos os filtros normais
+          // Se não houver busca, aí sim aplicamos os filtros normais de data e status
           arr = arr.filter(v => dentroDoPeriodo(v.data_da_venda));
           
           if (filtroStatus.value === 'pendentes_acao') {
