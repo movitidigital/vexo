@@ -69,7 +69,9 @@
   .port-card.card-atrasada { border-left: 4px solid var(--danger); }
   .port-card.card-pendente { border-left: 4px solid var(--warn); }
   .port-card.card-aprovada { border-left: 4px solid var(--ok); }
-  .port-card.card-rejeitada { border-left: 4px solid var(--purple); }
+  .port-card.card-cancelada { border-left: 4px solid var(--danger); }
+  .port-card.card-reagendar { border-left: 4px solid var(--warn); }
+  .port-card.card-reprocessar { border-left: 4px solid var(--purple); }
   .port-card.card-em_analise { border-left: 4px solid var(--teal-500); }
 
   .card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; padding: 16px 18px 8px; }
@@ -81,9 +83,10 @@
   .badge-pendente   { background: #fef3c7; color: #92400e; }
   .badge-atrasada   { background: #fee2e2; color: #991b1b; }
   .badge-aprovada   { background: #d1fae5; color: #065f46; }
-  .badge-rejeitada  { background: #ede9fe; color: #5b21b6; }
-  .badge-em_analise { background: var(--teal-50); color: var(--teal-700); }
+  .badge-cancelada  { background: #fee2e2; color: #991b1b; }
+  .badge-reagendar  { background: #fef3c7; color: #92400e; }
   .badge-reprocessar{ background: #e0e7ff; color: #3730a3; }
+  .badge-em_analise { background: var(--teal-50); color: var(--teal-700); }
 
   .card-body { padding: 10px 18px 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; flex: 1; }
   .card-info { display: flex; flex-direction: column; }
@@ -184,7 +187,7 @@
 
     <div class="port-stats">
       <div class="stat-card stat-pendente">
-        <div class="stat-label">Pendentes</div>
+        <div class="stat-label">Pendentes / Ação</div>
         <div class="stat-value">{{ stats.pendentes }}</div>
         <div class="stat-sub">{{ fmtBRL(stats.valorPendente) }}</div>
       </div>
@@ -199,9 +202,9 @@
         <div class="stat-sub">{{ fmtBRL(stats.valorAprovado) }}</div>
       </div>
       <div class="stat-card stat-rejeitada">
-        <div class="stat-label">Rejeitadas</div>
+        <div class="stat-label">Canceladas / Outros</div>
         <div class="stat-value">{{ stats.rejeitadas }}</div>
-        <div class="stat-sub">Aguardando ação</div>
+        <div class="stat-sub">Reagendar / Reprocessar</div>
       </div>
     </div>
 
@@ -212,17 +215,18 @@
         <option value="7">Últimos 7 dias</option>
         <option value="30">Últimos 30 dias</option>
         <option value="90">Últimos 90 dias</option>
-        <!-- 🔥 Alterado para ser o padrão -->
         <option value="all">Todo o histórico</option>
       </select>
 
+      <!-- 🔥 NOVO FILTRO PADRONIZADO COM A TIM -->
       <select v-model="filtroStatus" class="filter-select">
-        <option value="">Todos os status</option>
-        <option value="pendente">Pendentes</option>
-        <option value="em_analise">Em análise</option>
+        <option value="pendentes_acao">Ações Pendentes (Padrão)</option>
+        <option value="em_analise">Em Análise</option>
         <option value="aprovada">Aprovadas</option>
-        <option value="rejeitada">Rejeitadas</option>
-        <option value="atrasada">SLA estourado</option>
+        <option value="cancelada">Canceladas</option>
+        <option value="reagendar">Reagendar</option>
+        <option value="reprocessar">Reprocessar</option>
+        <option value="all">Todo o Histórico</option>
       </select>
       
       <select v-model="ordenacao" class="filter-select">
@@ -236,6 +240,7 @@
     <div v-if="vendasFiltradas.length === 0" class="port-empty">
       <div class="empty-icon">✨</div>
       <p>Nenhuma portabilidade encontrada com esses filtros.</p>
+      <p style="font-size: 11px; margin-top: 10px;">Se você acabou de verificar uma venda, mude o filtro acima para "Aprovadas" ou "Todo o Histórico" para vê-la novamente.</p>
     </div>
 
     <div v-else class="port-grid">
@@ -310,22 +315,19 @@
             <div class="det-item"><strong>Valor</strong>{{ fmtBRL(vendaAtual.valor_contratado) }}</div>
             <div class="det-item"><strong>Data venda</strong>{{ fmtData(vendaAtual.data_da_venda) }}</div>
             <div class="det-item"><strong>SLA vencimento</strong>{{ fmtData(vendaAtual._slaVenc) }}</div>
-<div class="det-item">
-  <strong>Etapa atual</strong>
-  
-  <!-- Se for 6 ou maior, mostra o selo verde de Ativada -->
-  <div v-if="Number(vendaAtual.status_etapa) >= 6" style="margin-top: 4px;">
-    <span class="badge badge-aprovada" style="padding: 3px 8px; font-size: 10px;">✅ Ativada</span>
-  </div>
-  
-  <!-- Se for menor que 6, mostra um selo amarelo de em andamento -->
-  <div v-else-if="vendaAtual.status_etapa || vendaAtual.status_etapa === 0" style="margin-top: 4px;">
-    <span class="badge badge-pendente" style="padding: 3px 8px; font-size: 10px;">⏳ Em andamento (Etapa {{ vendaAtual.status_etapa }})</span>
-  </div>
-  
-  <!-- Se estiver vazio -->
-  <div v-else style="margin-top: 4px; color: var(--g400);">—</div>
-</div>            
+            
+            <!-- ETAPA ATUAL COM SELINHO -->
+            <div class="det-item">
+              <strong>Etapa atual</strong>
+              <div v-if="Number(vendaAtual.status_etapa) >= 6" style="margin-top: 4px;">
+                <span class="badge badge-aprovada" style="padding: 3px 8px; font-size: 10px;">✅ Ativada</span>
+              </div>
+              <div v-else-if="vendaAtual.status_etapa || vendaAtual.status_etapa === 0" style="margin-top: 4px;">
+                <span class="badge badge-pendente" style="padding: 3px 8px; font-size: 10px;">⏳ Em andamento (Etapa {{ vendaAtual.status_etapa }})</span>
+              </div>
+              <div v-else style="margin-top: 4px; color: var(--g400);">—</div>
+            </div>
+
             <div class="det-item" style="grid-column: 1 / -1; background: #e0f2fe; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; margin-top: 4px;">
               <strong style="color: #0284c7;">📱 Linha para Conferência</strong>
               <span @click="copiarTelefone(vendaAtual)" class="telefone-clickable" style="font-size: 16px; padding: 6px 10px; background: #fff; margin-top: 6px;">
@@ -339,8 +341,10 @@
           <label>Resultado da verificação</label>
           <select v-model="form.status">
             <option value="">Selecione o status...</option>
+            <!-- 🔥 NOVAS OPÇÕES TIM -->
             <option value="aprovada">✅ Aprovada — portabilidade concluída</option>
-            <option value="rejeitada">❌ Rejeitada — portabilidade falhou</option>
+            <option value="cancelada">❌ Cancelada — criar novo bilhete</option>
+            <option value="reagendar">📅 Reagendar — solicitar nova data</option>
             <option value="em_analise">🔍 Em análise — checando com operadora</option>
             <option value="reprocessar">🔁 Reprocessar — reenviar para TIM</option>
           </select>
@@ -422,10 +426,10 @@
       const salvando = ref(false);
       
       const busca = ref('');
-      const filtroStatus = ref('');
-      const ordenacao = ref('sla');
       
-      // 🔥 MUDANÇA AQUI: Define "Todo o histórico" como padrão para não sumir com os clientes antigos
+      // 🔥 FORÇA O FILTRO A INICIAR EM "AÇÕES PENDENTES" (Para os cards sumirem ao salvar)
+      const filtroStatus = ref('pendentes_acao'); 
+      const ordenacao = ref('sla');
       const filtroData = ref('all'); 
       
       const modalAberto = ref(false);
@@ -462,16 +466,10 @@
         return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
       };
 
-      // 🔥 FUNÇÃO DO TELEFONE CORRIGIDA
       const getTelefone = (v) => {
-        // Puxa prioridade da coluna que descobrimos no banco, se não tiver tenta as outras
         let tel = v.numero_da_linha || v.numero || v.telefone || v.celular || '';
-        
         let numLimpo = String(tel).replace(/\D/g, '');
-        
-        // Se por acaso vier um ID ou número muito curto, ignora.
         if (numLimpo.length < 10) return ''; 
-        
         return numLimpo;
       };
 
@@ -496,10 +494,12 @@
         });
       };
 
+      // 🔥 NOVAS LABELS DA TIM
       const labelStatus = (s) => ({
         pendente:'Pendente', em_analise:'Em análise',
-        aprovada:'Aprovada', rejeitada:'Rejeitada',
-        reprocessar:'Reprocessar', atrasada:'SLA estourado'
+        aprovada:'Aprovada', cancelada:'Cancelada',
+        reagendar:'Reagendar', reprocessar:'Reprocessar',
+        atrasada:'SLA estourado'
       }[s] || s);
 
       const slaInfo = (v) => {
@@ -539,7 +539,7 @@
           if (s === 'atrasada') { at++; p++; vp += valor; }
           else if (s === 'pendente' || s === 'em_analise') { p++; vp += valor; }
           else if (s === 'aprovada') { a++; va += valor; }
-          else if (s === 'rejeitada' || s === 'reprocessar') { r++; }
+          else if (['cancelada', 'reagendar', 'reprocessar'].includes(s)) { r++; }
         });
         return { pendentes:p, valorPendente:vp, atrasadas:at, aprovadas:a, valorAprovado:va, rejeitadas:r };
       });
@@ -557,7 +557,15 @@
             String(getTelefone(v)).includes(q)
           );
         }
-        if (filtroStatus.value) {
+        
+        // 🔥 LÓGICA DO NOVO FILTRO: "pendentes_acao" junta pendentes e atrasadas.
+        // Se o status salvo for "aprovada", ele deixa de ser "pendente_acao" e some da tela.
+        if (filtroStatus.value === 'pendentes_acao') {
+          arr = arr.filter(v => {
+            const s = statusEfetivo(v);
+            return s === 'pendente' || s === 'atrasada';
+          });
+        } else if (filtroStatus.value !== 'all') {
           arr = arr.filter(v => statusEfetivo(v) === filtroStatus.value);
         }
         
@@ -629,7 +637,6 @@
         try {
           const v = vendaAtual.value;
           
-          // 🔥 AUDITORIA (Data, Hora e Usuário logado)
           const payload = {
             venda_chave: v._key,
             venda_id: v.id || null, 
@@ -646,7 +653,7 @@
 
           showToast('✅ Verificação salva com sucesso', 'ok');
           fecharModal();
-          await carregar();
+          await carregar(); // Recarrega os dados, fazendo o card sumir da tela
         } catch(e) {
           console.error('❌ Erro ao salvar:', e);
           showToast('Falha ao salvar verificação: ' + e.message, 'err');
