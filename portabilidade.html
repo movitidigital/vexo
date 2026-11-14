@@ -165,14 +165,12 @@
 
 <div id="port-app" class="port-wrap">
   
-  <!-- LOADING -->
   <div v-if="carregando && !vendas.length" class="port-loading">
     <div class="spinner"></div>
     <p>Buscando portabilidades no banco...</p>
   </div>
 
   <template v-else>
-    <!-- HEADER -->
     <header class="port-header">
       <div>
         <div class="port-eyebrow">Backoffice / Operações</div>
@@ -184,7 +182,6 @@
       </button>
     </header>
 
-    <!-- STATS -->
     <div class="port-stats">
       <div class="stat-card stat-pendente">
         <div class="stat-label">Pendentes</div>
@@ -208,14 +205,14 @@
       </div>
     </div>
 
-    <!-- FILTROS -->
     <div class="port-filters">
-      <input type="text" v-model="busca" placeholder="🔍 Buscar cliente, consultor..." class="filter-search">
+      <input type="text" v-model="busca" placeholder="🔍 Buscar cliente, consultor ou telefone..." class="filter-search">
       
       <select v-model="filtroData" class="filter-select">
         <option value="7">Últimos 7 dias</option>
         <option value="30">Últimos 30 dias</option>
         <option value="90">Últimos 90 dias</option>
+        <!-- 🔥 Alterado para ser o padrão -->
         <option value="all">Todo o histórico</option>
       </select>
 
@@ -236,7 +233,6 @@
       </select>
     </div>
 
-    <!-- GRID DE VENDAS -->
     <div v-if="vendasFiltradas.length === 0" class="port-empty">
       <div class="empty-icon">✨</div>
       <p>Nenhuma portabilidade encontrada com esses filtros.</p>
@@ -277,7 +273,6 @@
             </span>
           </div>
           
-          <!-- TELEFONE NO CARD -->
           <div class="card-info" style="grid-column: 1 / -1;">
             <span class="info-label">Linha para Conferência</span>
             <span class="telefone-clickable" @click="copiarTelefone(v)" title="Clique para copiar">
@@ -299,7 +294,6 @@
     </div>
   </template>
 
-  <!-- MODAL -->
   <div v-if="modalAberto && vendaAtual" class="modal-overlay" @click.self="fecharModal">
     <div class="modal-box">
       <div class="modal-header">
@@ -318,7 +312,6 @@
             <div class="det-item"><strong>SLA vencimento</strong>{{ fmtData(vendaAtual._slaVenc) }}</div>
             <div class="det-item"><strong>Etapa atual</strong>{{ vendaAtual.status_etapa || '—' }}</div>
             
-            <!-- TELEFONE NO MODAL -->
             <div class="det-item" style="grid-column: 1 / -1; background: #e0f2fe; padding: 12px; border-radius: 8px; border: 1px solid #bae6fd; margin-top: 4px;">
               <strong style="color: #0284c7;">📱 Linha para Conferência</strong>
               <span @click="copiarTelefone(vendaAtual)" class="telefone-clickable" style="font-size: 16px; padding: 6px 10px; background: #fff; margin-top: 6px;">
@@ -358,7 +351,6 @@
     </div>
   </div>
 
-  <!-- TOAST NOTIFICATION -->
   <div v-if="toast.show" :class="['toast', 'toast-' + toast.tipo]">
     {{ toast.msg }}
   </div>
@@ -367,7 +359,6 @@
 
 <script>
 (async function bootPortabilidade() {
-  // Carrega Vue dinamicamente se ainda não estiver no window
   if (typeof window.Vue === 'undefined') {
     await new Promise((res, rej) => {
       const s = document.createElement('script');
@@ -380,13 +371,9 @@
   const { createApp, ref, computed, onMounted } = window.Vue;
   const sb = window.sb;
 
-  // --- FUNÇÕES AUXILIARES ---
   function buildChave(v) {
     if (v.id) return 'ID#' + v.id;
-    const rz = String(v.razao_social || '').trim();
-    const dt = String(v.data_da_venda || '').trim();
-    const vl = String(v.valor_contratado || '').trim();
-    return `C#${rz}#${dt}#${vl}`;
+    return `C#${String(v.razao_social||'').trim()}#${String(v.data_da_venda||'').trim()}#${String(v.valor_contratado||'').trim()}`;
   }
 
   function addDiasUteis(date, dias) {
@@ -420,13 +407,13 @@
       const carregando = ref(true);
       const salvando = ref(false);
       
-      // Filtros e Ordenação
       const busca = ref('');
       const filtroStatus = ref('');
       const ordenacao = ref('sla');
-      const filtroData = ref('90'); 
       
-      // Modal e UI
+      // 🔥 MUDANÇA AQUI: Define "Todo o histórico" como padrão para não sumir com os clientes antigos
+      const filtroData = ref('all'); 
+      
       const modalAberto = ref(false);
       const vendaAtual = ref(null);
       const form = ref({ status: '', observacao: '' });
@@ -437,7 +424,6 @@
         catch(e) { return {}; }
       })();
 
-      // --- FUNÇÕES DE FORMATAÇÃO E CÓPIA ---
       const showToast = (msg, tipo='ok') => {
         toast.value = { show: true, msg, tipo };
         setTimeout(() => toast.value.show = false, 3200);
@@ -462,10 +448,17 @@
         return isNaN(d) ? '—' : d.toLocaleString('pt-BR');
       };
 
-      // Tenta buscar o telefone de várias colunas possíveis
+      // 🔥 FUNÇÃO DO TELEFONE CORRIGIDA
       const getTelefone = (v) => {
-        let tel = v.telefone || v.numero_linha || v.celular || v.numero || v.linha_tim || '';
-        return String(tel).replace(/\D/g, ''); 
+        // Puxa prioridade da coluna que descobrimos no banco, se não tiver tenta as outras
+        let tel = v.numero_da_linha || v.numero || v.telefone || v.celular || '';
+        
+        let numLimpo = String(tel).replace(/\D/g, '');
+        
+        // Se por acaso vier um ID ou número muito curto, ignora.
+        if (numLimpo.length < 10) return ''; 
+        
+        return numLimpo;
       };
 
       const formatarTelefone = (v) => {
@@ -479,18 +472,16 @@
       const copiarTelefone = (v) => {
         const tel = getTelefone(v);
         if (!tel) {
-          showToast('Número de telefone não cadastrado nesta venda.', 'err');
+          showToast('Número de telefone não cadastrado ou inválido.', 'err');
           return;
         }
         navigator.clipboard.writeText(tel).then(() => {
           showToast(`📋 Número copiado: ${formatarTelefone(v)}`, 'ok');
         }).catch(err => {
-          console.error('Erro ao copiar:', err);
           showToast('Erro ao copiar. Tente manualmente.', 'err');
         });
       };
 
-      // --- LÓGICA DE NEGÓCIO ---
       const labelStatus = (s) => ({
         pendente:'Pendente', em_analise:'Em análise',
         aprovada:'Aprovada', rejeitada:'Rejeitada',
@@ -525,7 +516,6 @@
         return d >= corte;
       };
 
-      // --- COMPUTEDS (ESTATÍSTICAS E FILTROS) ---
       const stats = computed(() => {
         let p=0, vp=0, a=0, va=0, r=0, at=0;
         vendas.value.forEach(v => {
@@ -572,7 +562,6 @@
         return arr;
       });
 
-      // --- AÇÕES BANCO DE DADOS ---
       const carregar = async () => {
         carregando.value = true;
         try {
@@ -625,6 +614,8 @@
         
         try {
           const v = vendaAtual.value;
+          
+          // 🔥 AUDITORIA (Data, Hora e Usuário logado)
           const payload = {
             venda_chave: v._key,
             venda_id: v.id || null, 
