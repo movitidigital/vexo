@@ -2751,47 +2751,12 @@ async function sincronizarPerfil() {
 function aplicarMenuPorCargo(role, permissoesCustom, permissoesDoCargo) {
   const cargo = String(role || '').toUpperCase().trim();
 
-  // 🔒 TRAVA DE SEGURANÇA: Portabilidade (Restrito a Gestão, Backoffice e Admin)
-  const cargosPermitidosPortabilidade = [
-    'ADMINISTRADOR', 'ADMIN', 'DIRETORIA', 
-    'BACKOFFICE', 'GERENTE', 'GERENTE/SUPERVISOR', 'SUPERVISOR'
-  ];
-  const podePortabilidade = cargosPermitidosPortabilidade.includes(cargo);
-  
-  const elPortMenu = document.getElementById('side-portabilidade');
-  if (elPortMenu && !podePortabilidade) {
-    elPortMenu.style.display = 'none';
-  }
-
-  // 🔥 ADMIN / DIRETORIA — vê TUDO (respeitando a trava de portabilidade acima, se aplicável)
-  if (['ADMINISTRADOR', 'ADMIN', 'DIRETORIA'].includes(cargo)) {
-    document.querySelectorAll('.sidebar-item').forEach(el => {
-      // Se não tiver permissão de portabilidade por regra dura, mantém oculto mesmo para admin se necessário, 
-      // mas mantemos o comportamento padrão global para admins:
-      if (el.id === 'side-portabilidade' && !podePortabilidade) return;
-      el.style.display = 'flex';
-    });
+  // 🔥 ADMIN / DIRETORIA — vê TUDO
+  if (['ADMINISTRADOR','ADMIN','DIRETORIA'].includes(cargo)) {
+    document.querySelectorAll('.sidebar-item').forEach(el => el.style.display = 'flex');
     console.log(`✅ [MENU] ${cargo} — todos os itens visíveis`);
     return;
   }
-
-  const MAPA_PERMISSOES = {
-    'vendas': 'side-vendas',
-    'agenda': 'side-agenda',
-    'clientes': 'side-clientes',
-    'prospeccao': 'side-prospeccao',
-    'pedidos': 'side-gestao-pedidos',
-    'gestao_pedidos': 'side-gestao-pedidos',
-    'ofertas': 'side-ofertas',
-    'portabilidade': 'side-portabilidade',
-    'faturas': 'side-faturas',
-    'metas': 'side-metas',
-    'usuarios': 'side-usuarios',
-    'financeiro': 'side-financeiro',
-    'relatorios': 'side-relatorios',
-    'suporte': 'side-suporte'
-  };
-  const TODOS_IDS = Object.values(MAPA_PERMISSOES);
 
   // 🎯 BACKOFFICE — vê tudo exceto Gestão de Time (regra fixa do sistema)
   if (cargo === 'BACKOFFICE') {
@@ -2802,31 +2767,42 @@ function aplicarMenuPorCargo(role, permissoesCustom, permissoesDoCargo) {
     return;
   }
 
+  const MAPA_PERMISSOES = {
+    'vendas':'side-vendas','agenda':'side-agenda','clientes':'side-clientes',
+    'prospeccao':'side-prospeccao','pedidos':'side-gestao-pedidos',
+    'gestao_pedidos':'side-gestao-pedidos','ofertas':'side-ofertas',
+    'faturas':'side-faturas','metas':'side-metas','usuarios':'side-usuarios',
+    'financeiro':'side-financeiro','relatorios':'side-relatorios',
+    'suporte':'side-suporte',
+    'portabilidade':'side-portabilidade'
+  };
+  const TODOS_IDS = Object.values(MAPA_PERMISSOES);
+
   const custom = Array.isArray(permissoesCustom)
     ? permissoesCustom.map(p => String(p).toLowerCase()) : [];
   const doCargo = Array.isArray(permissoesDoCargo)
     ? permissoesDoCargo.map(p => String(p).toLowerCase()) : [];
 
-  // 🔥 UNIÃO: cargo + custom. Ninguém perde acesso a algo que o cargo concede.
+  // 🔥 UNIÃO: cargo + custom
   const finais = Array.from(new Set([...doCargo, ...custom]));
+
+  // 🚨 REGRA DE OURO PARA GESTÃO: Gerentes e Supervisores sempre veem a portabilidade
+  if (['GERENTE', 'GERENTE/SUPERVISOR', 'SUPERVISOR'].includes(cargo)) {
+    if (!finais.includes('portabilidade')) {
+      finais.push('portabilidade');
+    }
+  }
 
   TODOS_IDS.forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
-
+  
   finais.forEach(perm => {
     const id = MAPA_PERMISSOES[perm];
     if (id) {
       const el = document.getElementById(id);
-      if (el) {
-        // Aplicação final garantindo que se não puder ver portabilidade, ela continua bloqueada
-        if (id === 'side-portabilidade' && !podePortabilidade) {
-          el.style.display = 'none';
-          return;
-        }
-        el.style.display = 'flex';
-      }
+      if (el) el.style.display = 'flex';
     }
   });
 
