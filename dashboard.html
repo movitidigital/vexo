@@ -1487,7 +1487,9 @@ async function inicializarDados() {
 
     const mapaUsuarios = {};
     const mapaFotos = {};
+    const mapaRoles = {}; // 🔥 NOVO: Mapear quem é consultor
     const listaConsultores = [];
+    
     try {
       const { data: users } = await sb.from('profiles').select('*');
       (users || []).forEach(u => {
@@ -1497,7 +1499,12 @@ async function inicializarDados() {
         const foto = u.photo_url || '';
         if (!nome && !sobrenome) return;
         const nomeCompleto = `${nome} ${sobrenome}`.trim().toUpperCase();
-        if (matricula) mapaUsuarios[matricula] = nomeCompleto;
+        
+        if (matricula) {
+          mapaUsuarios[matricula] = nomeCompleto;
+          mapaRoles[matricula] = String(u.role || '').toUpperCase().trim(); // 🔥 Mapeando cargo
+        }
+        mapaRoles[nomeCompleto] = String(u.role || '').toUpperCase().trim(); // Fallback por nome
         mapaFotos[nomeCompleto] = foto;
         if (!listaConsultores.includes(nomeCompleto)) listaConsultores.push(nomeCompleto);
       });
@@ -1525,7 +1532,7 @@ async function inicializarDados() {
       }
     } catch (e) { console.warn('⚠️ metas_loja:', e.message); }
 
-    // 🔥 META INDIVIDUAL (se não for gestão)
+    // 🔥 META INDIVIDUAL
     let metaConsultorFat = 0, metaConsultorPort = 0, metaConsultorReneg = 0;
     if (!isGestao && perfilLogado) {
       try {
@@ -1552,16 +1559,15 @@ async function inicializarDados() {
     const ranking = {};
     const listaVendasDashboard = [];
     
-    let ativoHojeGlobal = 0, fatInputGlobal = 0, fatAtivoGlobal = 0;
+    // 🔥 SEPARAÇÃO DE VARIÁVEIS: Loja (Interno) vs Global (Tudo)
+    let ativoHojeGlobal = 0, fatInputGlobal = 0, fatAtivoGlobal = 0, entranteHojeGlobal = 0;
+    let ativoHojeLoja = 0, fatInputLoja = 0, fatAtivoLoja = 0, entranteHojeLoja = 0;
+    
     const matriculaLogada = String(perfilLogado?.matricula || '').trim().toUpperCase();
     const nomeLogado = perfilLogado ? `${perfilLogado.nome} ${perfilLogado.sobrenome}`.trim().toUpperCase() : '';
-    let ativoHojeIndiv = 0, fatInputIndiv = 0, fatAtivoIndiv = 0;
+    
+    let ativoHojeIndiv = 0, fatInputIndiv = 0, fatAtivoIndiv = 0, entranteHojeIndiv = 0;
 
-    // 🔥 VARIÁVEIS DE ENTRANTES ADICIONADAS
-    let entranteHojeGlobal = 0;
-    let entranteHojeIndiv = 0;
-
-    // 🔥 CÁLCULO DE PEDIDOS PARADOS
     let qtdPedidosParados = 0;
     let valorPedidosParados = 0;
 
@@ -1570,25 +1576,22 @@ async function inicializarDados() {
       if (statusBruto.includes('CANCELADO')) return;
 
       const origem = String(v.origem || '').toUpperCase().trim();
-      if (!isGestao && origem === 'PARCEIRO') return;
+      if (!isGestao && origem === 'PARCEIRO') return; // Consultor não vê dados de parceiros
 
       const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
       const dataVenda = parseDataBR(v.data_da_venda);
       const valor = parseValor(v.valor_contratado);
 
-      // Verifica Pedidos Parados (Status menor que 6 e data da venda > 3 dias atrás)
       const estaAtivado = Number(v.status_etapa) === 6;
+      
+      // Alertas de pedidos parados
       if (!estaAtivado && dataVenda) {
         const diasParado = Math.floor((hoje - dataVenda) / (1000 * 60 * 60 * 24));
-        if (diasParado >= 3) { // Alerta se estiver parado há 3 dias ou mais
+        if (diasParado >= 3) { 
           const matriculaVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
           const nomeParaExibir = mapaUsuarios[matriculaVenda] || matriculaVenda || 'DESCONHECIDO';
           const isDono = (matriculaVenda === matriculaLogada || nomeParaExibir === nomeLogado);
-          
-          if (isGestao || isDono) {
-            qtdPedidosParados++;
-            valorPedidosParados += valor;
-          }
+          if (isGestao || isDono) { qtdPedidosParados++; valorPedidosParados += valor; }
         }
       }
 
@@ -1603,6 +1606,9 @@ async function inicializarDados() {
 
       const matriculaVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
       const nomeParaExibir = mapaUsuarios[matriculaVenda] || matriculaVenda || 'DESCONHECIDO';
+      
+      // Descobre o cargo de quem vendeu para usar no ranking depois
+      const roleVendedor = mapaRoles[matriculaVenda] || mapaRoles[nomeParaExibir] || 'DESCONHECIDO';
 
       let incluir = false;
       let statusFinalPainel = 'ENTRANTE';
@@ -1610,14 +1616,11 @@ async function inicializarDados() {
       let ativouHoje = false;
 
       if (estaAtivado) {
-        // 🔥 FALLBACK: Se ativou mas não tem data de ativação, usa a data da venda
         const dataRefAtivacao = dataAtivacao || dataVenda;
-        
         if (dataRefAtivacao && (dataRefAtivacao.getMonth() + 1) === mesNumericoSelecionado && dataRefAtivacao.getFullYear() === anoSelecionado) {
           incluir = true;
           statusFinalPainel = 'ATIVADO';
           dataParaDashboard = dataRefAtivacao;
-          
           if (dataRefAtivacao.getDate() === hoje.getDate() && dataRefAtivacao.getMonth() === hoje.getMonth() && dataRefAtivacao.getFullYear() === hoje.getFullYear()) {
             ativouHoje = true;
           }
@@ -1629,45 +1632,44 @@ async function inicializarDados() {
           dataParaDashboard = dataVenda;
         }
       }
+      
       if (incluir) {
-        ranking[nomeParaExibir] = (ranking[nomeParaExibir] || 0) + valor;
+        // Atualiza ranking (agora com objeto contendo valor e role)
+        if (!ranking[nomeParaExibir]) ranking[nomeParaExibir] = { valor: 0, role: roleVendedor };
+        ranking[nomeParaExibir].valor += valor;
+        
         listaVendasDashboard.push({
-          cliente: v.razao_social,
-          valor: valor,
-          modalidade: modalidadeParaPainel,
-          status: statusFinalPainel,
-          data: dataParaDashboard,
-          vendedor: nomeParaExibir
+          cliente: v.razao_social, valor: valor, modalidade: modalidadeParaPainel,
+          status: statusFinalPainel, data: dataParaDashboard, vendedor: nomeParaExibir
         });
 
-        if (origem === 'INTERNO') {
-          fatInputGlobal += valor;
-          if (estaAtivado) fatAtivoGlobal += valor;
-          if (ativouHoje) ativoHojeGlobal += valor;
-        }
-
-        const isDono = (matriculaVenda === matriculaLogada || nomeParaExibir === nomeLogado);
-        
-        // --- INÍCIO DA INCLUSÃO: CÁLCULO DE ENTRANTES ---
         const isVendaHoje = dataVenda && dataVenda.getDate() === hoje.getDate() && dataVenda.getMonth() === hoje.getMonth() && dataVenda.getFullYear() === hoje.getFullYear();
-        
-        if (isVendaHoje && origem === 'INTERNO') {
-          entranteHojeGlobal += valor;
-          if (isDono) {
-            entranteHojeIndiv += valor;
-          }
-        }
-        // --- FIM DA INCLUSÃO ---
 
+        // 🔥 1. CÁLCULO GLOBAL (Interno + Parceiro) - Visão Macro
+        fatInputGlobal += valor;
+        if (estaAtivado) fatAtivoGlobal += valor;
+        if (ativouHoje) ativoHojeGlobal += valor;
+        if (isVendaHoje) entranteHojeGlobal += valor;
+
+        // 🔥 2. CÁLCULO DA LOJA (Apenas Interno) - Usado nas metas
+        if (origem === 'INTERNO') {
+          fatInputLoja += valor;
+          if (estaAtivado) fatAtivoLoja += valor;
+          if (ativouHoje) ativoHojeLoja += valor;
+          if (isVendaHoje) entranteHojeLoja += valor;
+        }
+
+        // 🔥 3. CÁLCULO INDIVIDUAL (Consultor Logado)
+        const isDono = (matriculaVenda === matriculaLogada || nomeParaExibir === nomeLogado);
         if (isDono) {
           fatInputIndiv += valor;
           if (estaAtivado) fatAtivoIndiv += valor;
           if (ativouHoje) ativoHojeIndiv += valor;
+          if (isVendaHoje) entranteHojeIndiv += valor;
         }
       }
     });
 
-    // Salva globalmente para usar no bloco de alertas
     qtdPedidosParadosGlobal = qtdPedidosParados;
     valorPedidosParadosGlobal = valorPedidosParados;
 
@@ -1678,18 +1680,17 @@ async function inicializarDados() {
       renegMeta: metaRenegociacao,
       diasUteis: diasUteis,
       diasTrabalhados: diasTrabalhados,
-      ativoHojeGlobal: ativoHojeGlobal,
-      fatInputGlobal: fatInputGlobal,
-      fatAtivoGlobal: fatAtivoGlobal,
-      // 🔥 NOVAS PROPRIEDADES DE ENTRANTES
-      entranteHojeGlobal: entranteHojeGlobal,
-      entranteHojeIndiv: entranteHojeIndiv,
+      
+      // Valores para a Meta da Loja
+      ativoHojeLoja, fatInputLoja, fatAtivoLoja, entranteHojeLoja,
+      // Valores Globais (para Visão Global)
+      ativoHojeGlobal, fatInputGlobal, fatAtivoGlobal, entranteHojeGlobal,
+      // Valores Individuais
+      ativoHojeIndiv, fatInputIndiv, fatAtivoIndiv, entranteHojeIndiv,
+
       metaIndivFat: metaConsultorFat,
       metaIndivPort: metaConsultorPort,
       metaIndivReneg: metaConsultorReneg,
-      ativoHojeIndiv: ativoHojeIndiv,
-      fatInputIndiv: fatInputIndiv,
-      fatAtivoIndiv: fatAtivoIndiv,
       ranking: ranking,
       fotos: mapaFotos, 
       vendas: listaVendasDashboard
@@ -1697,7 +1698,6 @@ async function inicializarDados() {
 
     renderizarDashboard(dados);
     
-    // 🔥 Busca os leads parados da Prospecção e renderiza os alertas
     carregarAlertasProspeccao(isGestao, nomeLogado);
     
     const areaPrincipal = document.getElementById('main-content-area');
@@ -1709,6 +1709,7 @@ async function inicializarDados() {
 
     const perfisPermitidos = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE'];
     const blocoGlobal = document.getElementById('bloco-visao-global');
+    
     if (perfisPermitidos.includes(roleLogado) && blocoGlobal) {
       blocoGlobal.style.display = 'block';
       let gEntrFat = 0, gEntrQtd = 0, gAtivFat = 0, gAtivQtd = 0;
@@ -1735,7 +1736,7 @@ async function inicializarDados() {
         document.getElementById('global-ativos-qtd').innerText = `${gAtivQtd} pedidos faturados`;
       }
     } else if (blocoGlobal) {
-      blocoGlobal.style.display = 'none';
+      blocoGlobal.style.display = 'none'; // Esconde para consultores
     }
 
   } catch (e) {
@@ -1773,16 +1774,13 @@ function renderizarDashboard(dados) {
     });
   }
 
-  // Define os valores baseados no perfil
-  const calcFatInput = dados.isGestao ? dados.fatInputGlobal : dados.fatInputIndiv;
-  const calcFatAtivo = dados.isGestao ? dados.fatAtivoGlobal : dados.fatAtivoIndiv;
-  const calcAtivoHoje = dados.isGestao ? dados.ativoHojeGlobal : dados.ativoHojeIndiv;
-  
-  // 🔥 VARIÁVEL DE ENTRANTES ADICIONADA
-  const calcEntranteHoje = dados.isGestao ? dados.entranteHojeGlobal : dados.entranteHojeIndiv;
+  // 🔥 Para a Loja (Gestão) usamos os valores Loja. Para o Consultor, os valores Individuais.
+  const calcFatInput = dados.isGestao ? dados.fatInputLoja : dados.fatInputIndiv;
+  const calcFatAtivo = dados.isGestao ? dados.fatAtivoLoja : dados.fatAtivoIndiv;
+  const calcAtivoHoje = dados.isGestao ? dados.ativoHojeLoja : dados.ativoHojeIndiv;
+  const calcEntranteHoje = dados.isGestao ? dados.entranteHojeLoja : dados.entranteHojeIndiv;
 
   const calcMetaFat = dados.isGestao ? dados.metaValor : dados.metaIndivFat;
-  
   const metaPortTopo = dados.isGestao ? dados.portMeta : dados.metaIndivPort;
 
   const percFaturamento = calcMetaFat > 0 ? Math.min(((calcFatAtivo / calcMetaFat) * 100), 100).toFixed(1) : 0;
@@ -1806,30 +1804,19 @@ function renderizarDashboard(dados) {
   const faltaParaMeta = calcMetaFat - calcFatAtivo;
   const metaDiaria = faltaParaMeta > 0 ? (faltaParaMeta / diasRestantes) : 0;
   const percMetaDiaria = metaDiaria > 0 ? Math.min(((calcAtivoHoje / metaDiaria) * 100), 100).toFixed(0) : (calcAtivoHoje > 0 ? 100 : 0);
-  
-  // 🔥 CÁLCULO DE PERCENTUAL DE ENTRANTES
   const percEntrantes = metaDiaria > 0 ? Math.min(((calcEntranteHoje / metaDiaria) * 100), 100).toFixed(0) : (calcEntranteHoje > 0 ? 100 : 0);
 
-  // =====================================================================
-  // 🔥 ATUALIZAÇÃO DOS NOVOS BLOCOS (ENTRANTES e ATIVOS) E GRID
-  // =====================================================================
-
-  // 1. Ajusta o Grid de acordo com o perfil
+  // Atualiza Blocos Entrantes/Ativos
   const gridMetasDiarias = document.getElementById('grid-metas-diarias');
-  if (gridMetasDiarias) {
-    gridMetasDiarias.style.gridTemplateColumns = dados.isGestao ? '1fr 1fr' : '1fr 1fr 1fr';
-  }
+  if (gridMetasDiarias) gridMetasDiarias.style.gridTemplateColumns = dados.isGestao ? '1fr 1fr' : '1fr 1fr 1fr';
 
-  // 2. Atualiza os textos dos rótulos
   const labelEntrantes = document.getElementById('label-meta-entrantes');
   const labelAtivos = document.getElementById('label-meta-ativos');
-
   if (labelEntrantes && labelAtivos) {
     labelEntrantes.innerText = dados.isGestao ? 'Meta de Entrantes da Loja Hoje' : 'Sua Meta de Entrantes Hoje';
     labelAtivos.innerText = dados.isGestao ? 'Meta de Ativos da Loja Hoje' : 'Sua Meta de Ativos Hoje';
   }
 
-  // 3. Preenche Bloco ENTRANTES
   const elDiasEntrantes = document.getElementById('dias-uteis-txt-entrantes');
   if (elDiasEntrantes) {
     elDiasEntrantes.innerText = diasRestantes; 
@@ -1840,7 +1827,6 @@ function renderizarDashboard(dados) {
     document.getElementById('meta-entrantes-falta').innerText = (metaDiaria - calcEntranteHoje > 0 ? metaDiaria - calcEntranteHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  // 4. Preenche Bloco ATIVOS
   const elDiasAtivos = document.getElementById('dias-uteis-txt-ativos');
   if (elDiasAtivos) {
     elDiasAtivos.innerText = diasRestantes; 
@@ -1851,32 +1837,24 @@ function renderizarDashboard(dados) {
     document.getElementById('meta-ativos-falta').innerText = (metaDiaria - calcAtivoHoje > 0 ? metaDiaria - calcAtivoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  // =====================================================================
-  // 🔥 LÓGICA DO TERCEIRO BLOCO: TERMÔMETRO DA LOJA (SÓ PARA CONSULTOR)
-  // =====================================================================
+  // Bloco da Loja (Consultor)
   const blocoMetaLoja = document.getElementById('bloco-meta-loja-consultor');
-  
   if (!dados.isGestao && blocoMetaLoja) {
-    // Mostra o bloco para o consultor
     blocoMetaLoja.style.display = 'block';
-
-    // Cálculos Globais da Loja (usando os dados que vieram do inicializarDados)
-    const faltaParaMetaLoja = dados.metaValor - dados.fatAtivoGlobal;
+    const faltaParaMetaLoja = dados.metaValor - dados.fatAtivoLoja; // Usa Loja
     const metaDiariaLoja = faltaParaMetaLoja > 0 ? (faltaParaMetaLoja / diasRestantes) : 0;
-    const percLoja = dados.metaValor > 0 ? Math.min(((dados.fatAtivoGlobal / dados.metaValor) * 100), 100).toFixed(1) : 0;
+    const percLoja = dados.metaValor > 0 ? Math.min(((dados.fatAtivoLoja / dados.metaValor) * 100), 100).toFixed(1) : 0;
 
     document.getElementById('meta-loja-total').innerText = dados.metaValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     document.getElementById('meta-loja-diaria').innerText = metaDiariaLoja.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     document.getElementById('meta-loja-perc').innerText = percLoja + '%';
     document.getElementById('meta-loja-bar').style.width = percLoja + '%';
-    document.getElementById('meta-loja-realizado').innerText = dados.fatAtivoGlobal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    
+    document.getElementById('meta-loja-realizado').innerText = dados.fatAtivoLoja.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   } else if (blocoMetaLoja) {
-    // Se for gestão, garante que ele fique escondido
     blocoMetaLoja.style.display = 'none';
   }
 
-  // Atualiza Header do mês
+  // Atualiza Header
   const statusMeta = document.getElementById('status-meta');
   if (statusMeta) {
     statusMeta.innerHTML = `REALIZADO MÊS: <b style="color:#10b981">${calcFatAtivo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b> (${percFaturamento}%)`;
@@ -1967,10 +1945,8 @@ function renderizarDashboard(dados) {
   if (containerVendas && dados.vendas) {
     containerVendas.innerHTML = "";
     const vendasAtivas = dados.vendas.filter(v => v.status === 'ATIVADO');
-    
     const countVendas = document.getElementById('count-vendas');
     if (countVendas) countVendas.innerText = vendasAtivas.length;
-    
     const ultimasVendas = vendasAtivas.slice(0, 5);
     
     if (ultimasVendas.length === 0) {
@@ -1995,14 +1971,27 @@ function renderizarDashboard(dados) {
   const containerRanking = document.getElementById('crm-ranking');
   if (containerRanking && dados.ranking) {
     containerRanking.innerHTML = "";
-    const rankingOrdenado = Object.entries(dados.ranking).sort((a,b) => b[1]-a[1]);
     
-    if (rankingOrdenado.length === 0) {
+    let rankingArray = Object.entries(dados.ranking);
+    
+    // 🔥 FILTRO CRUCIAL: Se não for gestão, só vê CONSULTOR e CONSULTOR DE VENDAS
+    if (!dados.isGestao) {
+      rankingArray = rankingArray.filter(item => {
+        const role = item[1].role;
+        return role === 'CONSULTOR DE VENDAS' || role === 'CONSULTOR';
+      });
+    }
+    
+    // Ordena pelo valor (que agora está dentro de .valor)
+    rankingArray.sort((a,b) => b[1].valor - a[1].valor);
+    
+    if (rankingArray.length === 0) {
        containerRanking.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Sem dados de ranking para este mês.</div>`;
     } else {
-      rankingOrdenado.slice(0, 5).forEach((c, i) => {
+      rankingArray.slice(0, 5).forEach((c, i) => {
         const medalha = i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : (i + 1) + 'º';
         const nome = c[0];
+        const valor = c[1].valor;
 
         const fotoUrl = (dados.fotos && dados.fotos[nome] && dados.fotos[nome].trim() !== '') 
           ? dados.fotos[nome] 
@@ -2016,7 +2005,7 @@ function renderizarDashboard(dados) {
                <span style="font-size:11px; font-weight:800; color:#0f172a;">${nome}</span>
             </div>
             <span style="font-weight:800; color:#047857; background:#dcfce7; padding:4px 10px; border-radius:10px; font-size: 12px;">
-              ${c[1].toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              ${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
             </span>
           </div>`;
       });
