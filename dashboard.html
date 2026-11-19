@@ -1339,6 +1339,17 @@
       </div>
     </div>
   </div>
+
+  <!-- BLOCO DE DESEMPENHO DA EQUIPE (SÓ GESTÃO) -->
+<div id="bloco-desempenho-equipe" style="display: none; margin-top: 30px;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+    <h3 style="color: #0f172a; font-size: 16px; font-weight: 800; margin: 0; display: flex; align-items: center; gap: 10px;">
+      <span style="font-size: 18px;">👥</span> Desempenho da Equipe Própria para a Meta da Loja
+    </h3>
+  </div>
+  <div id="container-equipe-propria" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 15px;"></div>
+</div>
+  
 </div>
 
         <!-- KANBAN CLEAN -->
@@ -1487,7 +1498,8 @@ async function inicializarDados() {
 
     const mapaUsuarios = {};
     const mapaFotos = {};
-    const mapaRoles = {}; // Mapear quem é consultor
+    const mapaRoles = {};
+    const perfisPorId = {}; // 🔥 NOVO
     const listaConsultores = [];
     
     try {
@@ -1497,15 +1509,19 @@ async function inicializarDados() {
         const nome = String(u.nome || '').trim();
         const sobrenome = String(u.sobrenome || '').trim();
         const foto = u.photo_url || '';
+        const roleUser = String(u.role || '').toUpperCase().trim();
+        
         if (!nome && !sobrenome) return;
         const nomeCompleto = `${nome} ${sobrenome}`.trim().toUpperCase();
         
         if (matricula) {
           mapaUsuarios[matricula] = nomeCompleto;
-          mapaRoles[matricula] = String(u.role || '').toUpperCase().trim();
+          mapaRoles[matricula] = roleUser;
         }
-        mapaRoles[nomeCompleto] = String(u.role || '').toUpperCase().trim(); // Fallback por nome
+        mapaRoles[nomeCompleto] = roleUser;
         mapaFotos[nomeCompleto] = foto;
+        perfisPorId[u.id] = { nome: nomeCompleto, role: roleUser, foto: foto };
+        
         if (!listaConsultores.includes(nomeCompleto)) listaConsultores.push(nomeCompleto);
       });
       listaConsultores.sort();
@@ -1514,7 +1530,7 @@ async function inicializarDados() {
     const roleLogado = String(perfilLogado?.role || '').toUpperCase().trim();
     const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE', 'DIRETORIA'].includes(roleLogado);
 
-    // META DA LOJA
+    // 🔥 META DA LOJA
     let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0, diasUteis = 22;
     let diasTrabalhados = [];
 
@@ -1532,8 +1548,10 @@ async function inicializarDados() {
       }
     } catch (e) { console.warn('⚠️ metas_loja:', e.message); }
 
-    // META INDIVIDUAL
+    // 🔥 META INDIVIDUAL / EQUIPE
     let metaConsultorFat = 0, metaConsultorPort = 0, metaConsultorReneg = 0;
+    let metasConsultorDb = [];
+    
     if (!isGestao && perfilLogado) {
       try {
         const { data: metaC } = await sb.from('metas_consultor')
@@ -1548,6 +1566,14 @@ async function inicializarDados() {
           metaConsultorReneg = Number(metaC.reneg_target) || 0;
         }
       } catch (e) { console.warn('⚠️ metas_consultor:', e.message); }
+    } else if (isGestao) {
+      try {
+        const { data: mC } = await sb.from('metas_consultor')
+          .select('*')
+          .eq('mes_referencia', mesNumericoSelecionado)
+          .eq('ano_referencia', anoSelecionado);
+        metasConsultorDb = mC || [];
+      } catch (e) { console.warn('⚠️ metas_consultor gestão:', e.message); }
     }
 
     const { data: dataVendas, error } = await sb.from('VENDAS').select('*');
@@ -1559,35 +1585,31 @@ async function inicializarDados() {
     const ranking = {};
     const listaVendasDashboard = [];
     
-    // 🔥 SEPARAÇÃO DE VARIÁVEIS: Loja (Interno) vs Global (Tudo)
     let ativoHojeGlobal = 0, fatInputGlobal = 0, fatAtivoGlobal = 0, entranteHojeGlobal = 0;
     let ativoHojeLoja = 0, fatInputLoja = 0, fatAtivoLoja = 0, entranteHojeLoja = 0;
     
-    // 🔥 NOVA VARIÁVEL: Guarda apenas o faturamento ativado interno feito por consultores
-    let fatAtivoLojaConsultores = 0; 
-    
+    // 🔥 NOVAS VARIÁVEIS PARA A EQUIPE
+    let fatAtivoLojaConsultores = 0;
+    let resumoEquipe = {}; 
+
     const matriculaLogada = String(perfilLogado?.matricula || '').trim().toUpperCase();
     const nomeLogado = perfilLogado ? `${perfilLogado.nome} ${perfilLogado.sobrenome}`.trim().toUpperCase() : '';
     
     let ativoHojeIndiv = 0, fatInputIndiv = 0, fatAtivoIndiv = 0, entranteHojeIndiv = 0;
-
-    let qtdPedidosParados = 0;
-    let valorPedidosParados = 0;
+    let qtdPedidosParados = 0, valorPedidosParados = 0;
 
     (dataVendas || []).forEach(v => {
       const statusBruto = String(v.status_do_pedido || '').toUpperCase().trim();
       if (statusBruto.includes('CANCELADO')) return;
 
       const origem = String(v.origem || '').toUpperCase().trim();
-      if (!isGestao && origem === 'PARCEIRO') return; // Consultor não vê dados de parceiros
+      if (!isGestao && origem === 'PARCEIRO') return; 
 
       const dataAtivacao = parseDataBR(v.data_de_ativacao_no_radar);
       const dataVenda = parseDataBR(v.data_da_venda);
       const valor = parseValor(v.valor_contratado);
-
       const estaAtivado = Number(v.status_etapa) === 6;
       
-      // Alertas de pedidos parados
       if (!estaAtivado && dataVenda) {
         const diasParado = Math.floor((hoje - dataVenda) / (1000 * 60 * 60 * 24));
         if (diasParado >= 3) { 
@@ -1609,8 +1631,6 @@ async function inicializarDados() {
 
       const matriculaVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
       const nomeParaExibir = mapaUsuarios[matriculaVenda] || matriculaVenda || 'DESCONHECIDO';
-      
-      // Descobre o cargo de quem vendeu para usar no ranking e nas regras de metas
       const roleVendedor = mapaRoles[matriculaVenda] || mapaRoles[nomeParaExibir] || 'DESCONHECIDO';
 
       let incluir = false;
@@ -1637,7 +1657,6 @@ async function inicializarDados() {
       }
       
       if (incluir) {
-        // Atualiza ranking
         if (!ranking[nomeParaExibir]) ranking[nomeParaExibir] = { valor: 0, role: roleVendedor };
         ranking[nomeParaExibir].valor += valor;
         
@@ -1648,28 +1667,29 @@ async function inicializarDados() {
 
         const isVendaHoje = dataVenda && dataVenda.getDate() === hoje.getDate() && dataVenda.getMonth() === hoje.getMonth() && dataVenda.getFullYear() === hoje.getFullYear();
 
-        // 1. CÁLCULO GLOBAL (Interno + Parceiro) - Visão Macro
         fatInputGlobal += valor;
         if (estaAtivado) fatAtivoGlobal += valor;
         if (ativouHoje) ativoHojeGlobal += valor;
         if (isVendaHoje) entranteHojeGlobal += valor;
 
-        // 2. CÁLCULO DA LOJA (Apenas Interno)
         if (origem === 'INTERNO') {
           fatInputLoja += valor;
           if (estaAtivado) {
             fatAtivoLoja += valor;
             
-            // 🔥 NOVA REGRA: Só soma no faturamento de consultores se quem vendeu for consultor
+            // 🔥 CÁLCULO DA EQUIPE PARA A GESTÃO
             if (roleVendedor === 'CONSULTOR DE VENDAS' || roleVendedor === 'CONSULTOR') {
               fatAtivoLojaConsultores += valor;
+              if (!resumoEquipe[nomeParaExibir]) {
+                resumoEquipe[nomeParaExibir] = { metaFat: 0, realizadoFat: 0, foto: mapaFotos[nomeParaExibir] || '' };
+              }
+              resumoEquipe[nomeParaExibir].realizadoFat += valor;
             }
           }
           if (ativouHoje) ativoHojeLoja += valor;
           if (isVendaHoje) entranteHojeLoja += valor;
         }
 
-        // 3. CÁLCULO INDIVIDUAL (Consultor Logado)
         const isDono = (matriculaVenda === matriculaLogada || nomeParaExibir === nomeLogado);
         if (isDono) {
           fatInputIndiv += valor;
@@ -1679,6 +1699,26 @@ async function inicializarDados() {
         }
       }
     });
+
+    // 🔥 JUNTANDO AS METAS COM O REALIZADO DA EQUIPE
+    if (isGestao && metasConsultorDb) {
+      metasConsultorDb.forEach(m => {
+        const perfil = perfisPorId[m.consultor_id];
+        if (perfil && (perfil.role === 'CONSULTOR' || perfil.role === 'CONSULTOR DE VENDAS')) {
+          if (!resumoEquipe[perfil.nome]) {
+            resumoEquipe[perfil.nome] = { metaFat: 0, realizadoFat: 0, foto: perfil.foto };
+          }
+          resumoEquipe[perfil.nome].metaFat = Number(m.fat_target) || 0;
+        }
+      });
+    }
+
+    const desempenhoEquipe = Object.keys(resumoEquipe).map(nome => ({
+      nome,
+      metaFat: resumoEquipe[nome].metaFat,
+      realizadoFat: resumoEquipe[nome].realizadoFat,
+      foto: resumoEquipe[nome].foto || `https://ui-avatars.com/api/?background=eff6ff&color=1e40af&name=${encodeURIComponent(nome)}`
+    })).sort((a,b) => b.realizadoFat - a.realizadoFat);
 
     qtdPedidosParadosGlobal = qtdPedidosParados;
     valorPedidosParadosGlobal = valorPedidosParados;
@@ -1690,16 +1730,11 @@ async function inicializarDados() {
       renegMeta: metaRenegociacao,
       diasUteis: diasUteis,
       diasTrabalhados: diasTrabalhados,
-      
-      // Valores para a Meta da Loja
       ativoHojeLoja, fatInputLoja, fatAtivoLoja, entranteHojeLoja,
-      fatAtivoLojaConsultores, // Nova propriedade exportada para uso no painel se necessário
-      
-      // Valores Globais (para Visão Global)
       ativoHojeGlobal, fatInputGlobal, fatAtivoGlobal, entranteHojeGlobal,
-      // Valores Individuais
       ativoHojeIndiv, fatInputIndiv, fatAtivoIndiv, entranteHojeIndiv,
-
+      fatAtivoLojaConsultores: fatAtivoLojaConsultores,
+      desempenhoEquipe: desempenhoEquipe, // 🔥 NOVO
       metaIndivFat: metaConsultorFat,
       metaIndivPort: metaConsultorPort,
       metaIndivReneg: metaConsultorReneg,
@@ -1748,7 +1783,7 @@ async function inicializarDados() {
         document.getElementById('global-ativos-qtd').innerText = `${gAtivQtd} pedidos faturados`;
       }
     } else if (blocoGlobal) {
-      blocoGlobal.style.display = 'none'; // Esconde para consultores
+      blocoGlobal.style.display = 'none';
     }
 
   } catch (e) {
@@ -1768,7 +1803,7 @@ function renderizarDashboard(dados) {
     dados.vendas.forEach(v => {
       const mod = v.modalidade ? v.modalidade.toUpperCase() : "";
       const isAtivo = v.status === "ATIVADO";
-      const valor = v.valor || 0;
+      const valor = Number(v.valor) || 0;
       
       if (mod.includes("RENEG")) {
         renegInput++;
@@ -1786,21 +1821,21 @@ function renderizarDashboard(dados) {
     });
   }
 
-  // 🔥 Para a Loja (Gestão) usamos os valores Loja. Para o Consultor, os valores Individuais.
-  const calcFatInput = dados.isGestao ? dados.fatInputLoja : dados.fatInputIndiv;
-  const calcFatAtivo = dados.isGestao ? dados.fatAtivoLoja : dados.fatAtivoIndiv;
-  const calcAtivoHoje = dados.isGestao ? dados.ativoHojeLoja : dados.ativoHojeIndiv;
-  const calcEntranteHoje = dados.isGestao ? dados.entranteHojeLoja : dados.entranteHojeIndiv;
+  // Para a Loja (Gestão) usamos os valores Loja. Para o Consultor, os valores Individuais.
+  const calcFatInput = dados.isGestao ? (Number(dados.fatInputLoja) || 0) : (Number(dados.fatInputIndiv) || 0);
+  const calcFatAtivo = dados.isGestao ? (Number(dados.fatAtivoLoja) || 0) : (Number(dados.fatAtivoIndiv) || 0);
+  const calcAtivoHoje = dados.isGestao ? (Number(dados.ativoHojeLoja) || 0) : (Number(dados.ativoHojeIndiv) || 0);
+  const calcEntranteHoje = dados.isGestao ? (Number(dados.entranteHojeLoja) || 0) : (Number(dados.entranteHojeIndiv) || 0);
 
-  const calcMetaFat = dados.isGestao ? dados.metaValor : dados.metaIndivFat;
-  const metaPortTopo = dados.isGestao ? dados.portMeta : dados.metaIndivPort;
+  const calcMetaFat = dados.isGestao ? (Number(dados.metaValor) || 0) : (Number(dados.metaIndivFat) || 0);
+  const metaPortTopo = dados.isGestao ? (Number(dados.portMeta) || 0) : (Number(dados.metaIndivPort) || 0);
 
   const percFaturamento = calcMetaFat > 0 ? Math.min(((calcFatAtivo / calcMetaFat) * 100), 100).toFixed(1) : 0;
   const percPort = metaPortTopo > 0 ? Math.min(((portAtivo / metaPortTopo) * 100), 100).toFixed(1) : 0;
 
   // Cálculo do Pacing (Meta Diária)
   const hj = new Date();
-  hj.setHours(0,0,0,0);
+  hj.setHours(0, 0, 0, 0);
   let diasRestantes = 0;
 
   if (dados.diasTrabalhados && dados.diasTrabalhados.length > 0) {
@@ -1809,7 +1844,7 @@ function renderizarDashboard(dados) {
       if (dataObj >= hj) diasRestantes++;
     });
   } else {
-    diasRestantes = dados.diasUteis || 22; 
+    diasRestantes = Number(dados.diasUteis) || 22; 
   }
   if (diasRestantes === 0) diasRestantes = 1; 
 
@@ -1829,43 +1864,45 @@ function renderizarDashboard(dados) {
     labelAtivos.innerText = dados.isGestao ? 'Meta de Ativos da Loja Hoje' : 'Sua Meta de Ativos Hoje';
   }
 
+  const formatMoeda = (v) => (Number(v) || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
   const elDiasEntrantes = document.getElementById('dias-uteis-txt-entrantes');
   if (elDiasEntrantes) {
     elDiasEntrantes.innerText = diasRestantes; 
-    document.getElementById('meta-entrantes-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-entrantes-valor').innerText = formatMoeda(metaDiaria);
     document.getElementById('meta-entrantes-perc').innerText = percEntrantes + '%';
     document.getElementById('meta-entrantes-bar').style.width = percEntrantes + '%';
-    document.getElementById('meta-entrantes-realizado').innerText = calcEntranteHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('meta-entrantes-falta').innerText = (metaDiaria - calcEntranteHoje > 0 ? metaDiaria - calcEntranteHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-entrantes-realizado').innerText = formatMoeda(calcEntranteHoje);
+    document.getElementById('meta-entrantes-falta').innerText = formatMoeda(Math.max(metaDiaria - calcEntranteHoje, 0));
   }
 
   const elDiasAtivos = document.getElementById('dias-uteis-txt-ativos');
   if (elDiasAtivos) {
     elDiasAtivos.innerText = diasRestantes; 
-    document.getElementById('meta-ativos-valor').innerText = metaDiaria.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-ativos-valor').innerText = formatMoeda(metaDiaria);
     document.getElementById('meta-ativos-perc').innerText = percMetaDiaria + '%';
     document.getElementById('meta-ativos-bar').style.width = percMetaDiaria + '%';
-    document.getElementById('meta-ativos-realizado').innerText = calcAtivoHoje.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('meta-ativos-falta').innerText = (metaDiaria - calcAtivoHoje > 0 ? metaDiaria - calcAtivoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-ativos-realizado').innerText = formatMoeda(calcAtivoHoje);
+    document.getElementById('meta-ativos-falta').innerText = formatMoeda(Math.max(metaDiaria - calcAtivoHoje, 0));
   }
 
   // Bloco da Loja (Termômetro do Consultor)
+  const metaLojaTotal = Number(dados.metaValor) || 0;
+  const faturamentoRealConsultores = Number(dados.fatAtivoLojaConsultores) || 0;
   const blocoMetaLoja = document.getElementById('bloco-meta-loja-consultor');
+
   if (!dados.isGestao && blocoMetaLoja) {
     blocoMetaLoja.style.display = 'block';
     
-    // 🔥 AQUI ESTÁ A ALTERAÇÃO: Usa apenas a soma das vendas dos consultores
-    const faturamentoRealConsultores = dados.fatAtivoLojaConsultores || 0;
-    
-    const faltaParaMetaLoja = dados.metaValor - faturamentoRealConsultores;
+    const faltaParaMetaLoja = metaLojaTotal - faturamentoRealConsultores;
     const metaDiariaLoja = faltaParaMetaLoja > 0 ? (faltaParaMetaLoja / diasRestantes) : 0;
-    const percLoja = dados.metaValor > 0 ? Math.min(((faturamentoRealConsultores / dados.metaValor) * 100), 100).toFixed(1) : 0;
+    const percLoja = metaLojaTotal > 0 ? Math.min(((faturamentoRealConsultores / metaLojaTotal) * 100), 100).toFixed(1) : 0;
 
-    document.getElementById('meta-loja-total').innerText = dados.metaValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-    document.getElementById('meta-loja-diaria').innerText = metaDiariaLoja.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-loja-total').innerText = formatMoeda(metaLojaTotal);
+    document.getElementById('meta-loja-diaria').innerText = formatMoeda(metaDiariaLoja);
     document.getElementById('meta-loja-perc').innerText = percLoja + '%';
     document.getElementById('meta-loja-bar').style.width = percLoja + '%';
-    document.getElementById('meta-loja-realizado').innerText = faturamentoRealConsultores.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-loja-realizado').innerText = formatMoeda(faturamentoRealConsultores);
   } else if (blocoMetaLoja) {
     blocoMetaLoja.style.display = 'none';
   }
@@ -1873,13 +1910,12 @@ function renderizarDashboard(dados) {
   // Atualiza Header
   const statusMeta = document.getElementById('status-meta');
   if (statusMeta) {
-    statusMeta.innerHTML = `REALIZADO MÊS: <b style="color:#10b981">${calcFatAtivo.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b> (${percFaturamento}%)`;
+    statusMeta.innerHTML = `REALIZADO MÊS: <b style="color:#10b981">${formatMoeda(calcFatAtivo)}</b> (${percFaturamento}%)`;
   }
 
   // Renderiza os 4 Cards Menores
   const gridMetas = document.getElementById('container-grid-metas');
   if (gridMetas) {
-    const formatMoeda = (v) => v.toLocaleString('pt-BR', {style: 'currency', currency: 'BRL'});
     const percEntranteFat = calcMetaFat > 0 ? Math.min(((calcFatInput - calcFatAtivo) / calcMetaFat) * 100, 100 - percFaturamento) : 0;
 
     gridMetas.innerHTML = `
@@ -1976,7 +2012,7 @@ function renderizarDashboard(dados) {
             </strong>
             <div style="display:flex; justify-content:space-between; margin-top:6px; align-items:center;">
               <span style="font-size:10px; color:#64748b; font-weight: 600;">${v.modalidade || '—'}</span>
-              <span style="font-weight:800; color:#0f172a; font-size:13px;">${v.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</span>
+              <span style="font-weight:800; color:#0f172a; font-size:13px;">${formatMoeda(v.valor)}</span>
             </div>
           </div>`;
       });
@@ -1990,7 +2026,7 @@ function renderizarDashboard(dados) {
     
     let rankingArray = Object.entries(dados.ranking);
     
-    // 🔥 FILTRO CRUCIAL: Se não for gestão, só vê CONSULTOR e CONSULTOR DE VENDAS
+    // Se não for gestão, só vê CONSULTOR e CONSULTOR DE VENDAS
     if (!dados.isGestao) {
       rankingArray = rankingArray.filter(item => {
         const role = item[1].role;
@@ -1998,8 +2034,7 @@ function renderizarDashboard(dados) {
       });
     }
     
-    // Ordena pelo valor (que agora está dentro de .valor)
-    rankingArray.sort((a,b) => b[1].valor - a[1].valor);
+    rankingArray.sort((a, b) => b[1].valor - a[1].valor);
     
     if (rankingArray.length === 0) {
        containerRanking.innerHTML = `<div style="text-align:center; padding:20px; color:#94a3b8; font-size:12px;">Sem dados de ranking para este mês.</div>`;
@@ -2021,7 +2056,7 @@ function renderizarDashboard(dados) {
                <span style="font-size:11px; font-weight:800; color:#0f172a;">${nome}</span>
             </div>
             <span style="font-weight:800; color:#047857; background:#dcfce7; padding:4px 10px; border-radius:10px; font-size: 12px;">
-              ${valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+              ${formatMoeda(valor)}
             </span>
           </div>`;
       });
@@ -2032,6 +2067,64 @@ function renderizarDashboard(dados) {
   const areaFiltroGestao = document.getElementById('area-filtro-gestao');
   if (areaFiltroGestao) {
     areaFiltroGestao.style.display = dados.isGestao ? 'flex' : 'none';
+  }
+
+  // --- DESEMPENHO DA EQUIPE (APENAS GESTÃO) ---
+  const blocoEquipe = document.getElementById('bloco-desempenho-equipe');
+  const containerEquipe = document.getElementById('container-equipe-propria');
+  
+  if (dados.isGestao && blocoEquipe && containerEquipe && Array.isArray(dados.desempenhoEquipe)) {
+    blocoEquipe.style.display = 'block';
+    
+    let cardsHtml = '';
+    dados.desempenhoEquipe.forEach(c => {
+      const metaFatConsultor = Number(c.metaFat) || 0;
+      const realizadoFatConsultor = Number(c.realizadoFat) || 0;
+      const perc = metaFatConsultor > 0 ? Math.min((realizadoFatConsultor / metaFatConsultor) * 100, 100) : 0;
+      const avatarFallback = `https://ui-avatars.com/api/?background=eff6ff&color=1e40af&name=${encodeURIComponent(c.nome || 'Consultor')}`;
+      const fotoConsultor = (c.foto && c.foto.trim() !== '') ? c.foto : avatarFallback;
+      
+      cardsHtml += `
+        <div style="background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 16px; display: flex; align-items: center; gap: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.02);">
+          <img src="${fotoConsultor}" alt="${c.nome || 'Consultor'}" style="width: 48px; height: 48px; border-radius: 50%; object-fit: cover; border: 2px solid #e2e8f0;">
+          <div style="flex: 1;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <span style="font-weight: 800; color: #0f172a; font-size: 14px;">${c.nome}</span>
+              <span style="font-size: 11px; font-weight: 800; color: #3b82f6; background: #eff6ff; padding: 2px 6px; border-radius: 4px;">${perc.toFixed(1)}%</span>
+            </div>
+            <div style="font-size: 11px; color: #64748b; font-weight: 600; margin-bottom: 6px;">
+              ${formatMoeda(realizadoFatConsultor)} / ${formatMoeda(metaFatConsultor)}
+            </div>
+            <div style="width: 100%; height: 6px; background: #f1f5f9; border-radius: 10px; overflow: hidden;">
+              <div style="width: ${perc}%; height: 100%; background: #3b82f6; border-radius: 10px;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    const faltaMetaLoja = metaLojaTotal - faturamentoRealConsultores;
+    const percEquipeLoja = metaLojaTotal > 0 ? Math.min((faturamentoRealConsultores / metaLojaTotal) * 100, 100).toFixed(1) : 0;
+    
+    const summaryHtml = `
+      <div style="background: linear-gradient(135deg, #0f172a, #1e3c72); color: white; border-radius: 16px; padding: 20px; grid-column: 1 / -1; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 15px; box-shadow: 0 10px 25px rgba(15,23,42,0.2); margin-bottom: 10px;">
+        <div>
+          <div style="font-size: 12px; font-weight: 800; color: #93c5fd; text-transform: uppercase; margin-bottom: 5px;">🏆 Progresso da Equipe para a Meta da Loja (${percEquipeLoja}%)</div>
+          <div style="font-size: 28px; font-weight: 900;">${formatMoeda(faturamentoRealConsultores)}</div>
+          <div style="font-size: 12px; color: #cbd5e1; margin-top: 4px;">Meta Loja: ${formatMoeda(metaLojaTotal)}</div>
+        </div>
+        <div style="text-align: right;">
+          <div style="font-size: 12px; color: #cbd5e1; font-weight: 600; margin-bottom: 5px;">Falta para a equipe bater a meta</div>
+          <div style="font-size: 24px; font-weight: 900; color: ${faltaMetaLoja > 0 ? '#fcd34d' : '#10b981'};">
+            ${faltaMetaLoja > 0 ? formatMoeda(faltaMetaLoja) : 'Meta Atingida!'}
+          </div>
+        </div>
+      </div>
+    `;
+    
+    containerEquipe.innerHTML = summaryHtml + cardsHtml;
+  } else if (blocoEquipe) {
+    blocoEquipe.style.display = 'none';
   }
 }
 // ============================================================
