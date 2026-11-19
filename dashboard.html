@@ -1487,7 +1487,7 @@ async function inicializarDados() {
 
     const mapaUsuarios = {};
     const mapaFotos = {};
-    const mapaRoles = {}; // 🔥 NOVO: Mapear quem é consultor
+    const mapaRoles = {}; // Mapear quem é consultor
     const listaConsultores = [];
     
     try {
@@ -1502,7 +1502,7 @@ async function inicializarDados() {
         
         if (matricula) {
           mapaUsuarios[matricula] = nomeCompleto;
-          mapaRoles[matricula] = String(u.role || '').toUpperCase().trim(); // 🔥 Mapeando cargo
+          mapaRoles[matricula] = String(u.role || '').toUpperCase().trim();
         }
         mapaRoles[nomeCompleto] = String(u.role || '').toUpperCase().trim(); // Fallback por nome
         mapaFotos[nomeCompleto] = foto;
@@ -1514,7 +1514,7 @@ async function inicializarDados() {
     const roleLogado = String(perfilLogado?.role || '').toUpperCase().trim();
     const isGestao = ['ADMINISTRADOR', 'ADMIN', 'GERENTE', 'GERENTE/SUPERVISOR', 'BACKOFFICE', 'DIRETORIA'].includes(roleLogado);
 
-    // 🔥 META DA LOJA
+    // META DA LOJA
     let metaFaturamento = 0, metaPortabilidade = 0, metaRenegociacao = 0, diasUteis = 22;
     let diasTrabalhados = [];
 
@@ -1532,7 +1532,7 @@ async function inicializarDados() {
       }
     } catch (e) { console.warn('⚠️ metas_loja:', e.message); }
 
-    // 🔥 META INDIVIDUAL
+    // META INDIVIDUAL
     let metaConsultorFat = 0, metaConsultorPort = 0, metaConsultorReneg = 0;
     if (!isGestao && perfilLogado) {
       try {
@@ -1562,6 +1562,9 @@ async function inicializarDados() {
     // 🔥 SEPARAÇÃO DE VARIÁVEIS: Loja (Interno) vs Global (Tudo)
     let ativoHojeGlobal = 0, fatInputGlobal = 0, fatAtivoGlobal = 0, entranteHojeGlobal = 0;
     let ativoHojeLoja = 0, fatInputLoja = 0, fatAtivoLoja = 0, entranteHojeLoja = 0;
+    
+    // 🔥 NOVA VARIÁVEL: Guarda apenas o faturamento ativado interno feito por consultores
+    let fatAtivoLojaConsultores = 0; 
     
     const matriculaLogada = String(perfilLogado?.matricula || '').trim().toUpperCase();
     const nomeLogado = perfilLogado ? `${perfilLogado.nome} ${perfilLogado.sobrenome}`.trim().toUpperCase() : '';
@@ -1607,7 +1610,7 @@ async function inicializarDados() {
       const matriculaVenda = String(v.consultor_que_vendeu || '').trim().toUpperCase();
       const nomeParaExibir = mapaUsuarios[matriculaVenda] || matriculaVenda || 'DESCONHECIDO';
       
-      // Descobre o cargo de quem vendeu para usar no ranking depois
+      // Descobre o cargo de quem vendeu para usar no ranking e nas regras de metas
       const roleVendedor = mapaRoles[matriculaVenda] || mapaRoles[nomeParaExibir] || 'DESCONHECIDO';
 
       let incluir = false;
@@ -1634,7 +1637,7 @@ async function inicializarDados() {
       }
       
       if (incluir) {
-        // Atualiza ranking (agora com objeto contendo valor e role)
+        // Atualiza ranking
         if (!ranking[nomeParaExibir]) ranking[nomeParaExibir] = { valor: 0, role: roleVendedor };
         ranking[nomeParaExibir].valor += valor;
         
@@ -1645,21 +1648,28 @@ async function inicializarDados() {
 
         const isVendaHoje = dataVenda && dataVenda.getDate() === hoje.getDate() && dataVenda.getMonth() === hoje.getMonth() && dataVenda.getFullYear() === hoje.getFullYear();
 
-        // 🔥 1. CÁLCULO GLOBAL (Interno + Parceiro) - Visão Macro
+        // 1. CÁLCULO GLOBAL (Interno + Parceiro) - Visão Macro
         fatInputGlobal += valor;
         if (estaAtivado) fatAtivoGlobal += valor;
         if (ativouHoje) ativoHojeGlobal += valor;
         if (isVendaHoje) entranteHojeGlobal += valor;
 
-        // 🔥 2. CÁLCULO DA LOJA (Apenas Interno) - Usado nas metas
+        // 2. CÁLCULO DA LOJA (Apenas Interno)
         if (origem === 'INTERNO') {
           fatInputLoja += valor;
-          if (estaAtivado) fatAtivoLoja += valor;
+          if (estaAtivado) {
+            fatAtivoLoja += valor;
+            
+            // 🔥 NOVA REGRA: Só soma no faturamento de consultores se quem vendeu for consultor
+            if (roleVendedor === 'CONSULTOR DE VENDAS' || roleVendedor === 'CONSULTOR') {
+              fatAtivoLojaConsultores += valor;
+            }
+          }
           if (ativouHoje) ativoHojeLoja += valor;
           if (isVendaHoje) entranteHojeLoja += valor;
         }
 
-        // 🔥 3. CÁLCULO INDIVIDUAL (Consultor Logado)
+        // 3. CÁLCULO INDIVIDUAL (Consultor Logado)
         const isDono = (matriculaVenda === matriculaLogada || nomeParaExibir === nomeLogado);
         if (isDono) {
           fatInputIndiv += valor;
@@ -1683,6 +1693,8 @@ async function inicializarDados() {
       
       // Valores para a Meta da Loja
       ativoHojeLoja, fatInputLoja, fatAtivoLoja, entranteHojeLoja,
+      fatAtivoLojaConsultores, // Nova propriedade exportada para uso no painel se necessário
+      
       // Valores Globais (para Visão Global)
       ativoHojeGlobal, fatInputGlobal, fatAtivoGlobal, entranteHojeGlobal,
       // Valores Individuais
@@ -1837,19 +1849,23 @@ function renderizarDashboard(dados) {
     document.getElementById('meta-ativos-falta').innerText = (metaDiaria - calcAtivoHoje > 0 ? metaDiaria - calcAtivoHoje : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
 
-  // Bloco da Loja (Consultor)
+  // Bloco da Loja (Termômetro do Consultor)
   const blocoMetaLoja = document.getElementById('bloco-meta-loja-consultor');
   if (!dados.isGestao && blocoMetaLoja) {
     blocoMetaLoja.style.display = 'block';
-    const faltaParaMetaLoja = dados.metaValor - dados.fatAtivoLoja; // Usa Loja
+    
+    // 🔥 AQUI ESTÁ A ALTERAÇÃO: Usa apenas a soma das vendas dos consultores
+    const faturamentoRealConsultores = dados.fatAtivoLojaConsultores || 0;
+    
+    const faltaParaMetaLoja = dados.metaValor - faturamentoRealConsultores;
     const metaDiariaLoja = faltaParaMetaLoja > 0 ? (faltaParaMetaLoja / diasRestantes) : 0;
-    const percLoja = dados.metaValor > 0 ? Math.min(((dados.fatAtivoLoja / dados.metaValor) * 100), 100).toFixed(1) : 0;
+    const percLoja = dados.metaValor > 0 ? Math.min(((faturamentoRealConsultores / dados.metaValor) * 100), 100).toFixed(1) : 0;
 
     document.getElementById('meta-loja-total').innerText = dados.metaValor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     document.getElementById('meta-loja-diaria').innerText = metaDiariaLoja.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     document.getElementById('meta-loja-perc').innerText = percLoja + '%';
     document.getElementById('meta-loja-bar').style.width = percLoja + '%';
-    document.getElementById('meta-loja-realizado').innerText = dados.fatAtivoLoja.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+    document.getElementById('meta-loja-realizado').innerText = faturamentoRealConsultores.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   } else if (blocoMetaLoja) {
     blocoMetaLoja.style.display = 'none';
   }
